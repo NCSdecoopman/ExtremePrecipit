@@ -1,8 +1,11 @@
 /data/raw/*
 /data/external/naturalearth/*
 /data/processed/*
-/data/binaires/individuels/*
-/data/binaires/split/*
+
+# Ignorer tout le dossier binaires
+/data/binaires/*
+# Sauf metadata.json
+!/data/binaires/metadata.json
 
 # Ignorer tout le dossier result
 /data/result/*
