@@ -23,9 +23,10 @@ jobs:
 
           # Le répertoire courant devient la racine
           git init
-          git config user.email "ncs@decoopman.com"
+          git config user.email "ncsdecoopman@github.com"
           git config user.name "NCSdecoopman"
+          git branch -M main  # ici on renomme master en main pour HF
           git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/extreme-precip-app.git
           git add .
           git commit -m "Deploy app to HF Space"
-          git push hf master --force
+          git push hf main --force
