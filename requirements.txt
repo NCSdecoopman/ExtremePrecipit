@@ -1,0 +1,9 @@
+streamlit
+bcrypt
+huggingface_hub
+numpy
+pandas
+scipy
+plotly
+streamlit_plotly_events 
+matplotlib

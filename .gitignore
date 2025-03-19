@@ -1,0 +1,11 @@
+/data/raw/*
+/data/external/naturalearth/*
+/data/processed/*
+/data/binaires/individuels/*
+/data/binaires/split/*
+/data/result/*
+
+
+__pycache__/
+**/__pycache__/
+*.pyc

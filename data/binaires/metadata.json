@@ -1,0 +1,7 @@
+{
+    "min_time": "1959-01-01 00:29:00",
+    "time_step_hours": 1,
+    "num_points": 87536,
+    "scale_factor": 10,
+    "sentinel_value": -32768
+}
