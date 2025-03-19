@@ -36,6 +36,7 @@ if option == "Statistiques descriptives":
     series.show(OUTPUT_DIR, years)
 
 elif option =="Test":
+
     # DataFrame de test
     df_test = pd.DataFrame({
         'lat': [46.5, 46.6, 46.7],

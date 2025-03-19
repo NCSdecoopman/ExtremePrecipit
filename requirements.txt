@@ -4,6 +4,6 @@ huggingface_hub
 numpy
 pandas
 scipy
-plotly
+plotly==5.14.1
 streamlit_plotly_events 
 matplotlib
