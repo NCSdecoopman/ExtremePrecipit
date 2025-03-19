@@ -398,41 +398,25 @@ def show(OUTPUT_DIR, years):
             [0.80, "darkred"],  
             [1.0, "#654321"]
         ]
-
+        st.write(df_agg)
         st.write(f"**{title_map}**")
-
-        fig_map = go.Figure(go.Scattermapbox(
-            lat=df_agg["lat"],
-            lon=df_agg["lon"],
-            mode='markers',
-            marker=go.scattermapbox.Marker(
-                size=9,
-                color=df_agg["pr"],
-                colorscale=custom_colorscale,
-                colorbar=dict(
-                    title=dict(
-                        text=cbar_legend,
-                        font=dict(color="white")
-                    ),
-                    tickfont=dict(color="white"),
-                    bgcolor="rgba(0,0,0,0)"
-                ),
-                showscale=True
-            ),
-            hoverinfo='lat+lon+text',
-            text=[f"{pr:.2f} {cbar_legend}" for pr in df_agg["pr"]]
-        ))
-
+        fig_map = px.scatter_mapbox(
+            df_agg,
+            lat="lat",
+            lon="lon",
+            color="pr",
+            color_continuous_scale=custom_colorscale,
+            title=title_map,
+            height=500,
+            zoom=4.5,
+            center=dict(lat=46.6, lon=2.2),
+        )
         fig_map.update_layout(
-            mapbox=dict(
-                style="carto-darkmatter",
-                center=dict(lat=46.6, lon=2.2),
-                zoom=4.5
-            ),
-            margin=dict(l=0, r=0, t=0, b=5),
+            mapbox_style="carto-darkmatter",
+            margin=dict(l=0,r=0,t=0,b=5),
             paper_bgcolor="rgba(0,0,0,0)"
         )
-
+        
         # If date, set custom tick vals
         if stat_key == "date" and tick_positions is not None and tick_labels is not None:
             fig_map.update_layout(
