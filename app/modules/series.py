@@ -399,51 +399,41 @@ def show(OUTPUT_DIR, years):
             [1.0, "#654321"]
         ]
 
-        fig_map = go.Figure(go.Scattermapbox(
-            lat=df_agg["lat"],
-            lon=df_agg["lon"],
-            mode='markers',
-            marker=go.scattermapbox.Marker(
-                size=9,
+
+
+        fig_map = go.Figure(go.Scattergeo(
+            lon = df_agg["lon"],
+            lat = df_agg["lat"],
+            text = [f"{pr:.2f} {cbar_legend}" for pr in df_agg["pr"]],
+            marker = dict(
+                size=6,
                 color=df_agg["pr"],
                 colorscale=custom_colorscale,
                 colorbar=dict(
-                    title=dict(
-                        text=cbar_legend,
-                        font=dict(color="white")
-                    ),
-                    tickfont=dict(color="white"),
-                    bgcolor="rgba(0,0,0,0)"
+                    title=cbar_legend
                 ),
-                showscale=True
+                showscale=True,
+                line=dict(width=0)
             ),
-            hoverinfo='lat+lon+text',
-            text=[f"{pr:.2f} {cbar_legend}" for pr in df_agg["pr"]]
+            mode="markers"
         ))
 
+        fig_map.update_geos(
+            projection_type="mercator",
+            showcountries=True, 
+            lataxis_range=[41, 52],  # France
+            lonaxis_range=[-6, 10], 
+            visible=False
+        )
+
         fig_map.update_layout(
-            mapbox=dict(
-                style="open-street-map",
-                center=dict(lat=46.6, lon=2.2),
-                zoom=4.5
-            ),
-            margin=dict(l=0, r=0, t=0, b=5),
+            title=title_map,
+            margin=dict(l=0, r=0, t=50, b=0),
             paper_bgcolor="rgba(0,0,0,0)"
         )
 
-        # 🎯 Utilisation du "clickData"
-        clicked = st.plotly_chart(fig_map, use_container_width=True)
+        st.plotly_chart(fig_map, use_container_width=True)
 
-        # Écoute d'événement depuis Streamlit
-        if "plotly_click" not in st.session_state:
-            st.session_state["plotly_click"] = None
-
-        st.session_state["plotly_click"] = st.session_state.get("plotly_click")
-
-        # Astuce Streamlit pour lire le clickData
-        clicked_point = st.session_state.get("plotly_click")
-
-        st.write("⏺️ Debug clickData:", clicked_point)
 
 
 
