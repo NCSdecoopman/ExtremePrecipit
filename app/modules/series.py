@@ -399,45 +399,6 @@ def show(OUTPUT_DIR, years):
             [1.0, "#654321"]
         ]
 
-
-
-        fig_map = go.Figure(go.Scattergeo(
-            lon = df_agg["lon"],
-            lat = df_agg["lat"],
-            text = [f"{pr:.2f} {cbar_legend}" for pr in df_agg["pr"]],
-            marker = dict(
-                size=6,
-                color=df_agg["pr"],
-                colorscale=custom_colorscale,
-                colorbar=dict(
-                    title=cbar_legend
-                ),
-                showscale=True,
-                line=dict(width=0)
-            ),
-            mode="markers"
-        ))
-
-        fig_map.update_geos(
-            projection_type="mercator",
-            showcountries=True, 
-            lataxis_range=[41, 52],  # France
-            lonaxis_range=[-6, 10], 
-            visible=False
-        )
-
-        fig_map.update_layout(
-            title=title_map,
-            margin=dict(l=0, r=0, t=50, b=0),
-            paper_bgcolor="rgba(0,0,0,0)"
-        )
-
-        st.plotly_chart(fig_map, use_container_width=True)
-
-
-
-
-
         st.write(f"**{title_map}**")
         fig_map = px.scatter_mapbox(
             df_agg,
@@ -451,7 +412,7 @@ def show(OUTPUT_DIR, years):
             center=dict(lat=46.6, lon=2.2),
         )
         fig_map.update_layout(
-            mapbox_style="carto-darkmatter",
+            mapbox_style="open-street-map",
             margin=dict(l=0,r=0,t=0,b=5),
             paper_bgcolor="rgba(0,0,0,0)"
         )
