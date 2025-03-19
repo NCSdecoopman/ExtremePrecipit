@@ -18,19 +18,12 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # Crée un dossier temporaire
-          mkdir hf-space
-          
-          # Copie juste ce qu'il faut
-          cp app.py hf-space/
-          cp requirements.txt hf-space/
-          cp -r app hf-space/
-          
-          cd hf-space
-          
-          # Init Git propre dans le dossier temporaire
+          # Supprime tout sauf ce qu'on veut
+          rm -rf .git .github data src
+
+          # Le répertoire courant devient la racine
           git init
-          git config user.email "ci-bot@ncsdecoopman.dev"
+          git config user.email "ncs@decoopman.com"
           git config user.name "NCSdecoopman"
           git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/extreme-precip-app.git
           git add .
