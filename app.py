@@ -20,7 +20,7 @@ import plotly.express as px
 st.sidebar.title("Navigation")
 option = st.sidebar.radio(
     "Données à analyser :", 
-    ["Test", "Statistiques descriptives"]#, "GEV stationnaire"] #, "Périodes de retours"]
+    ["Statistiques descriptives"]#, "GEV stationnaire"] #, "Périodes de retours"]
 )
 
 # Définition des répertoires
@@ -34,33 +34,6 @@ if not years:
 
 if option == "Statistiques descriptives":
     series.show(OUTPUT_DIR, years)
-
-elif option =="Test":
-
-    # DataFrame de test
-    df_test = pd.DataFrame({
-        'lat': [46.5, 46.6, 46.7],
-        'lon': [2.0, 2.2, 2.4],
-        'pr':  [1, 2, 3]
-    })
-
-    fig_test = px.scatter_mapbox(
-        df_test,
-        lat="lat",
-        lon="lon",
-        color="pr",
-        color_continuous_scale=px.colors.sequential.Viridis,  # Couleurs standard
-        zoom=4.5,
-        center={"lat": 46.6, "lon": 2.2},
-        height=500,
-        title="Carte de test"
-    )
-    fig_test.update_layout(
-        mapbox_style="open-street-map",  # Style sans token
-        margin=dict(l=0, r=0, t=30, b=0)
-    )
-
-    st.plotly_chart(fig_test, use_container_width=True)
 
 # elif option == "GEV stationnaire":
 #     gev_stationnaire.show(OUTPUT_DIR, years)
