@@ -3,7 +3,9 @@
 /data/processed/*
 /data/binaires/individuels/*
 /data/binaires/split/*
+# Ignorer tout le dossier result sauf ce fichier
 /data/result/*
+!/data/result/preanalysis/nan_resol_temp.csv
 
 
 __pycache__/

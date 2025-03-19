@@ -18,14 +18,14 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # Supprime tout sauf ce qu'on veut
-          rm -rf .git .github data src
+          # Supprime juste ce qui est inutile mais garde /data/result/preanalysis
+          rm -rf .git .github src data/raw data/external data/processed data/binaires
 
           # Le répertoire courant devient la racine
           git init
           git config user.email "ncsdecoopman@github.com"
           git config user.name "NCSdecoopman"
-          git branch -M main  # ici on renomme master en main pour HF
+          git branch -M main
           git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/extreme-precip-app.git
           git add .
           git commit -m "Deploy app to HF Space"
