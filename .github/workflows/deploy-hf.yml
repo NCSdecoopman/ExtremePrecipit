@@ -18,8 +18,8 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # Supprime juste ce qui est inutile mais garde /data/result/preanalysis
-          rm -rf .git .github src data/raw data/external data/processed data/binaires
+          # Supprime juste ce qui est inutile mais garde /data/result/preanalysis et data/binaires
+          rm -rf .git .github src data/raw data/external data/processed 
 
           # Le répertoire courant devient la racine
           git init
