@@ -63,7 +63,7 @@ api.upload_large_folder(
     repo_id=repo_id,
     folder_path=r"C:\Users\nicod\Documents\GitHub\ExtremePrecipit\data\binaires\split",
     repo_type="dataset",
-    num_workers=16
+    num_workers=4
 )
 
 print("🚀 Upload terminé binaires sur Hugging Face Hub")

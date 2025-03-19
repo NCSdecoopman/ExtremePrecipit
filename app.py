@@ -17,11 +17,11 @@ import plotly.express as px
 #     st.stop()  # Stoppe l'exécution si l'utilisateur n'est pas connecté
 
 # Menu latéral
-st.sidebar.title("Navigation")
-option = st.sidebar.radio(
-    "Données à analyser :", 
-    ["Statistiques descriptives"]#, "GEV stationnaire"] #, "Périodes de retours"]
-)
+# st.sidebar.title("Navigation")
+# option = st.sidebar.radio(
+#     "Données à analyser :", 
+#     ["Statistiques descriptives"]#, "GEV stationnaire"] #, "Périodes de retours"]
+# )
 
 # Définition des répertoires
 OUTPUT_DIR = os.path.join("data", "result")
@@ -32,8 +32,8 @@ if not years:
     st.error("Aucune donnée disponible. Vérifie le dossier de sortie.")
     st.stop()
 
-if option == "Statistiques descriptives":
-    series.show(OUTPUT_DIR, years)
+# if option == "Statistiques descriptives":
+series.show(OUTPUT_DIR, years)
 
 # elif option == "GEV stationnaire":
 #     gev_stationnaire.show(OUTPUT_DIR, years)
