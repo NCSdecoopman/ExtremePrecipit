@@ -2,15 +2,16 @@ import os
 
 import streamlit as st
 
-from app.utils.login import login
+
 from app.utils.data import get_available_years
 
 from app.modules import series#, gev_stationnaire
 
-# Vérifie l'authentification avant d'afficher le reste de l'application
-if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
-    login()
-    st.stop()  # Stoppe l'exécution si l'utilisateur n'est pas connecté
+# from app.utils.login import login
+# # Vérifie l'authentification avant d'afficher le reste de l'application
+# if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
+#     login()
+#     st.stop()  # Stoppe l'exécution si l'utilisateur n'est pas connecté
 
 # Menu latéral
 st.sidebar.title("Navigation")
