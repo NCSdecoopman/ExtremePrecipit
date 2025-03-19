@@ -400,20 +400,26 @@ def show(OUTPUT_DIR, years):
         ]
 
         st.write(f"**{title_map}**")
-        fig_map = px.scatter_mapbox(
-            df_agg,
-            lat="lat",
-            lon="lon",
-            color="pr",
-            color_continuous_scale=custom_colorscale,
-            title=title_map,
-            height=500,
-            zoom=4.5,
-            center=dict(lat=46.6, lon=2.2),
-        )
+        fig_map = go.Figure(go.Scattermapbox(
+            lat=df_agg["lat"],
+            lon=df_agg["lon"],
+            mode='markers',
+            marker=go.scattermapbox.Marker(
+                size=9,
+                color=df_agg["pr"],
+                colorscale=custom_colorscale,
+                colorbar=dict(title=cbar_legend),
+                showscale=True,
+            ),
+        ))
+
         fig_map.update_layout(
-            mapbox_style="carto-positron",
-            margin=dict(l=0,r=0,t=0,b=5),
+            mapbox=dict(
+                style="carto-darkmatter",
+                center=dict(lat=46.6, lon=2.2),
+                zoom=4.5
+            ),
+            margin=dict(l=0, r=0, t=0, b=5),
             paper_bgcolor="rgba(0,0,0,0)"
         )
         # If date, set custom tick vals
