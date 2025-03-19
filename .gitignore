@@ -3,8 +3,13 @@
 /data/processed/*
 /data/binaires/individuels/*
 /data/binaires/split/*
-# Ignorer tout le dossier result sauf ce fichier
+
+# Ignorer tout le dossier result
 /data/result/*
+# Mais autoriser ce dossier parent spécifique
+!/data/result/preanalysis/
+/data/result/preanalysis/*
+# Mais ignorer tous les autres fichiers de preanalysis sauf celui-ci
 !/data/result/preanalysis/nan_resol_temp.csv
 
 
