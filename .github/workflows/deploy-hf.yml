@@ -14,9 +14,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Push to HF Space
+      - name: Deploy to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
+          # Crée un dossier temporaire
+          mkdir hf-space
+          
+          # Copie juste ce qu'il faut
+          cp app.py hf-space/
+          cp requirements.txt hf-space/
+          cp -r app hf-space/
+          
+          cd hf-space
+          
+          # Init Git propre dans le dossier temporaire
+          git init
+          git config user.email "ci-bot@ncsdecoopman.dev"
+          git config user.name "NCSdecoopman"
           git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/extreme-precip-app.git
+          git add .
+          git commit -m "Deploy app to HF Space"
           git push hf master --force
