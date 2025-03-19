@@ -232,37 +232,58 @@ def get_line_indices(season_key: str, start_year: int, end_year: int, min_time: 
 # -----------------------------------------------------------
 def show(OUTPUT_DIR, years):
 
+    st.markdown("<h3>Visualisation des précipitations</h3>", unsafe_allow_html=True)
+
     if "selected_point" not in st.session_state:
         st.session_state["selected_point"] = None
 
     # D'abord on définit stat_label pour l'utiliser plus tard :
-    col1, col2, col3 = st.columns([1.3,1.3,2])
+    col1, col3 = st.columns([1,2])
     with col1:
-        stat_label = st.selectbox("Statistique", list(STATS.keys()))
-    with col2:
-        onglet_label = st.selectbox("Échelle spatiale", ["Locale","Nationale"])
+        stat_label = st.selectbox("Choix de la statistique étudiée", list(STATS.keys()))
     with col3:
+
+        st.markdown("""
+            <style>
+            /* Cacher les ticks-bar min et max sous la barre du slider */
+            div[data-testid="stSliderTickBarMin"],
+            div[data-testid="stSliderTickBarMax"] {
+                display: none !important;
+            }
+            /* Réduire l'espace vertical du slider */
+            .stSlider > div[data-baseweb="slider"] {
+                margin-bottom: -10px;
+            }
+            /* Remonter la barre + les poignées */
+            .stSlider {
+                transform: translateY(-17px);
+            }
+            </style>
+        """, unsafe_allow_html=True)
+
         start_year, end_year = st.slider(
-            "Années",
+            f"Sélection temporelle entre {min(years)} et {max(years)}",
             min_value=min(years),
             max_value=max(years),
             value=(min(years), max(years))
         )
 
     # Ensuite on peut utiliser stat_label dans ce bloc
-    col1, col2 = st.columns([4,1])
+    col1, col2, col3 = st.columns([1, 1, 1])
     with col1:
-        saison_selection = st.radio(
-            "Saison",
-            list(SEASON_MAP.keys()),
-            horizontal=True
+        saison_selection = st.selectbox(
+            "Choix de la saison",
+            list(SEASON_MAP.keys())
         )
 
     with col2:
         if stat_label in ["Cumul","Jour de pluie"]:
-            echelle_selection = st.selectbox("Échelle", ["Journalière"])
+            echelle_selection = st.selectbox("Choix de l'échelle temporelle", ["Journalière"])
         else:
-            echelle_selection = st.selectbox("Échelle", ["Horaire","Journalière"])
+            echelle_selection = st.selectbox("Choix de l'échelle temporelle", ["Horaire","Journalière"])
+
+    with col3:
+        onglet_label = st.selectbox("Choix de l'échelle spatiale", ["Locale","Nationale"])
 
     # Logique de validation
     if saison_selection in ["Année hydrologique", "Hiver"] and start_year == end_year:
@@ -398,7 +419,8 @@ def show(OUTPUT_DIR, years):
             [1.0, "#654321"]
         ]
 
-        st.write(f"**{title_map}**")
+        st.markdown(f"<br>**{title_map}**", unsafe_allow_html=True)
+
         fig_map = px.scatter_mapbox(
             df_agg,
             lat="lat",
@@ -512,14 +534,13 @@ def show(OUTPUT_DIR, years):
                         name="Précip."
                     ))
                     fig_ts.update_layout(
-                        title=(
-                            f"Série temporelle au point ({lat_clicked:.3f}, {lon_clicked:.3f}) du {date_title_map}"
-                        ),
+                        title="",
                         xaxis_title="Date",
                         yaxis_title=LEGEND_MAP[echelle_selection],
                         template="plotly_white",
                         height=500
                     )
+                    st.markdown(f"<br>**Série temporelle au point ({lat_clicked:.3f}, {lon_clicked:.3f}) du {date_title_map}**", unsafe_allow_html=True)
                     st.plotly_chart(fig_ts, use_container_width=True)
         else:
             st.info("Cliquer sur la carte ci-dessus pour afficher une série temporelle.")
