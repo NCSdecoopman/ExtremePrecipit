@@ -410,9 +410,12 @@ def show(OUTPUT_DIR, years):
                 color=df_agg["pr"],
                 colorscale=custom_colorscale,
                 colorbar=dict(
-                    title=cbar_legend,
+                    title=dict(
+                        text=cbar_legend,
+                        font=dict(color="white")
+                    ),
                     tickfont=dict(color="white"),
-                    titlefont=dict(color="white")
+                    bgcolor="rgba(0,0,0,0)"
                 ),
                 showscale=True
             ),
@@ -427,8 +430,7 @@ def show(OUTPUT_DIR, years):
                 zoom=4.5
             ),
             margin=dict(l=0, r=0, t=0, b=5),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)"
+            paper_bgcolor="rgba(0,0,0,0)"
         )
 
         # If date, set custom tick vals
