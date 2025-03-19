@@ -419,7 +419,15 @@ def show(OUTPUT_DIR, years):
             [1.0, "#654321"]
         ]
 
-        st.markdown(f"<br>**{title_map}**", unsafe_allow_html=True)
+        st.markdown(
+            f"""
+            <div style='text-align: center; font-weight: bold; margin-top: 15px'>
+                {title_map}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
 
         fig_map = px.scatter_mapbox(
             df_agg,
@@ -463,6 +471,16 @@ def show(OUTPUT_DIR, years):
             hover_event=False,
             override_height=500
         )
+        # Source alignée à droite sous la carte
+        st.markdown(
+            """
+            <div style='text-align: left; font-size: 0.8em; color: lightgray; margin-top: -15px;'>
+                Données CP-RCM, 2.5 km, forçage ERA5, réanalyse ECMWF
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
 
         # -------------------------------------------------------
         # If a point is clicked, display its time series
@@ -540,8 +558,26 @@ def show(OUTPUT_DIR, years):
                         template="plotly_white",
                         height=500
                     )
-                    st.markdown(f"<br>**Série temporelle au point ({lat_clicked:.3f}, {lon_clicked:.3f}) du {date_title_map}**", unsafe_allow_html=True)
+                    
+                    st.markdown(
+                        f"""
+                        <div style='text-align: center; font-weight: bold; margin-top: 15px'>
+                            Série temporelle au point ({lat_clicked:.3f}, {lon_clicked:.3f}) du {date_title_map}
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                    
                     st.plotly_chart(fig_ts, use_container_width=True)
+                    # Source
+                    st.markdown(
+                        """
+                        <div style='text-align: left; font-size: 0.8em; color: lightgray; margin-top: -15px;'>
+                            Données CP-RCM, 2.5 km, forçage ERA5, réanalyse ECMWF
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
         else:
             st.info("Cliquer sur la carte ci-dessus pour afficher une série temporelle.")
 
@@ -563,7 +599,7 @@ def show(OUTPUT_DIR, years):
                 y="mean", 
                 error_y="std", 
                 markers=True,
-                title=f"Moyenne et écart-type de précipitation {STATS_NATIONALE[stat_key]} à l'échelle nationale<br>du {date_title_map}",
+                title="",
                 labels={"year": "Année", "mean": cbar_legend},
                 width=900,
                 height=500
@@ -583,8 +619,28 @@ def show(OUTPUT_DIR, years):
                 yaxis=dict(range=[0, y_max])
             )
 
+
+            st.markdown(
+                f"""
+                <div style='text-align: center; font-weight: bold; margin-top: 15px'>
+                    Moyenne et écart-type de précipitation {STATS_NATIONALE[stat_key]} à l'échelle nationale<br>du {date_title_map}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
             # Affichage de la courbe
             st.plotly_chart(fig_time_series)
+          
+            # Source
+            st.markdown(
+                """
+                <div style='text-align: left; font-size: 0.8em; color: lightgray; margin-top: -15px;'>
+                    Données CP-RCM, 2.5 km, forçage ERA5, réanalyse ECMWF
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
         elif stat_key == "date":
             # On compte le nombre d'occurrences par date et on trie par date croissante
