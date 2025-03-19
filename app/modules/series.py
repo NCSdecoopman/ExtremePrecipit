@@ -412,7 +412,7 @@ def show(OUTPUT_DIR, years):
             center=dict(lat=46.6, lon=2.2),
         )
         fig_map.update_layout(
-            mapbox_style="stamen-toner", #carto-darkmatter
+            mapbox_style="carto-darkmatter",
             margin=dict(l=0,r=0,t=0,b=5),
             paper_bgcolor="rgba(0,0,0,0)"
         )
@@ -434,6 +434,7 @@ def show(OUTPUT_DIR, years):
             )
         )
 
+        st.plotly_chart(fig_map)
 
         # Use plotly_events to capture click
         selected_points = plotly_events(
