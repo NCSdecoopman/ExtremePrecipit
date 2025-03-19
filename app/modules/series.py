@@ -434,7 +434,21 @@ def show(OUTPUT_DIR, years):
             )
         )
 
-        st.plotly_chart(fig_map)
+        fig_map = px.scatter_mapbox(
+            df_agg,
+            lat="lat",
+            lon="lon",
+            color="pr",
+            color_continuous_scale=custom_colorscale,
+            title=title_map,
+            height=500,
+            zoom=4.5,
+            center=dict(lat=46.6, lon=2.2),
+        )
+
+        # Mise à jour de la layout, etc.
+
+        st.plotly_chart(fig_map, use_container_width=True)
 
         # Use plotly_events to capture click
         selected_points = plotly_events(
