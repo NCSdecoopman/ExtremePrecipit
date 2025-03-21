@@ -470,32 +470,63 @@ def show(OUTPUT_DIR, years):
         )
 
         if stat_key == "month":
+
+            mois_order = ["Janvier", "Février", "Mars", "Avril", 
+                        "Mai", "Juin", "Juillet", "Août", 
+                        "Septembre", "Octobre", "Novembre", "Décembre"]
+
+            # On assure que tous les mois sont bien présents dans la colonne 'pr'
+            df_agg['pr'] = pd.Categorical(df_agg['pr'], categories=mois_order, ordered=True)
+            # Identifier les mois absents
+            mois_absents = set(mois_order) - set(df_agg['pr'].dropna().unique())
+
+            # On ajoute des points fictifs "invisibles" avec lat/lon à 0
+            if mois_absents:
+                df_fictif = pd.DataFrame({
+                    'lat': [0]*len(mois_absents),
+                    'lon': [0]*len(mois_absents),
+                    'pr': list(mois_absents)
+                })
+                df_agg = pd.concat([df_agg, df_fictif], ignore_index=True)
+
             fig_map = px.scatter_mapbox(
                 df_agg,
                 lat="lat",
                 lon="lon",
                 color="pr",
-                color_discrete_sequence=px.colors.qualitative.Bold,
-                category_orders={
-                    "pr": [
-                        "Janvier", "Février", "Mars", "Avril",
-                        "Mai", "Juin", "Juillet", "Août",
-                        "Septembre", "Octobre", "Novembre", "Décembre"
-                    ]
-                },
+                color_discrete_sequence=px.colors.qualitative.Safe,
+                category_orders={"pr": mois_order},  # Ordre forcé ici aussi
                 title=title_map,
                 height=500,
-                zoom=4.5,
+                zoom=4.25,
                 center=dict(lat=46.6, lon=2.2),
             )
 
             fig_map.update_layout(
                 legend=dict(
+                    y=0.5,  # Ajuste la position verticale sous la carte
                     title=dict(text="", font=dict(color="white")),
-                    font=dict(color="white"),
-                    bgcolor="rgba(0,0,0,0)"
+                    font=dict(color="white", size=14),
+                    bgcolor="rgba(0,0,0,0)"),
+                legend_itemclick="toggleothers",  # Optionnel pour interactivité
+            )
+
+
+            # Ici : on réduit la taille des points sur la map
+            fig_map.update_traces(
+                marker=dict(
+                    size=2.5  # Taille des points uniquement sur la carte
+                ),
+                selector=dict(mode='markers')
+            )
+
+            # Pour la légende : c'est `itemsizing="constant"` qui va "forcer" les symboles plus gros
+            fig_map.update_layout(
+                legend=dict(
+                    itemsizing="constant"  # Symboles plus gros dans la légende
                 )
             )
+
 
         else:
             fig_map = px.scatter_mapbox(
@@ -558,17 +589,34 @@ def show(OUTPUT_DIR, years):
             st.bar_chart(count_by_date)
 
         elif stat_key == "month":
-            count_by_month = df_agg['pr'].value_counts()
-            # On le transforme en DataFrame pour Plotly
-            count_df = count_by_month.reset_index()
-            count_df.columns = ['Mois', 'Occurrences']
+            # Liste fixe des mois
+            mois_order = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 
+                        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
 
-            # Graph Plotly respectant l'ordre
-            fig = px.bar(count_df, x='Mois', y='Occurrences', 
-                        title="",
-                        category_orders={'Mois': count_df['Mois'].tolist()})  # Respecte l'ordre custom
+            # Calcule des pourcentages
+            count_by_month = (df_agg['pr'].value_counts() / df_agg['pr'].value_counts().sum() * 100).round(1)
+
+            # Transformation en DataFrame
+            count_df = count_by_month.reset_index()
+            count_df.columns = ['Mois', 'Pourcentage de points']
+
+            # Remplir les mois manquants avec 0
+            count_df = count_df.set_index('Mois').reindex(mois_order).fillna(0).reset_index()
+
+            # Graph Plotly respectant l'ordre custom
+            fig = px.bar(
+                count_df, 
+                x='Mois', 
+                y='Pourcentage de points', 
+                title="",
+                text='Pourcentage de points',
+                category_orders={'Mois': mois_order}  # Ordre forcé
+            )
+
+            fig.update_traces(textposition='outside')
 
             st.plotly_chart(fig, use_container_width=True)
+
 
         else:
             df_agg_year = groupe_by_year(df_filt)
