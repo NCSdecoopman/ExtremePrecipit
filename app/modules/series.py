@@ -15,8 +15,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 import streamlit as st
-from streamlit_plotly_events import plotly_events
 
+from streamlit_plotly_events import plotly_events
 from huggingface_hub import hf_hub_download
 
 # -----------------------------------------------------------
@@ -43,8 +43,10 @@ LEGEND_MAP = {
 STATS = {
     "Moyenne": "mean",
     "Maximum": "max",
+    "Moyenne des maxima": "mean-max",
     "Cumul": "sum",      # valable en échelle Journalière
     "Date du maximum": "date",
+    "Mois comptabilisant le plus de maximas": "month",
     "Jour de pluie": "numday",  # valable en échelle Journalière
 }
 
@@ -53,6 +55,7 @@ STATS_NATIONALE = {
     "max": "maximale",
     "sum": "cumulée",      # valable en échelle Journalière
     "date": "",
+    "Mois contenant le plus de maximas": "",
     "numday": "en jour de pluie",  # valable en échelle Journalière
 }
 
@@ -106,7 +109,6 @@ def load_stats_parquet(file_name: str, base_dir: str = None, repo_id: str = "ncs
 #     full_path = os.path.join(output_dir, "preanalysis", "stats", f"{file_name}.parquet")
 #     return pd.read_parquet(full_path)
 
-@st.cache_data
 def load_metadata(metadata_path="data/binaires/metadata.json"):
     """
     Reads metadata.json to get scale_factor, sentinel_value, start time, etc.
@@ -185,6 +187,41 @@ def group_by_coord(df: pd.DataFrame, stat: str) -> pd.DataFrame:
         # i.e. the row where 'max' is largest, so we can store the corresponding 'date'
         df_max = df.loc[df.groupby(['lat','lon'])['max'].idxmax(), ['lat','lon','date','max']]
         return df_max.rename(columns={'date':'pr'})  # store the date into a 'pr' col
+    elif stat == "mean-max":
+        grouped = df.groupby(["lat", "lon", "year"])["pr"].max().reset_index()
+        mean_max = grouped.groupby(["lat", "lon"])["pr"].mean().reset_index()
+        return mean_max
+    
+    elif stat == "month":
+        df = df.copy()  # <<< Ajout clé pour éviter le warning
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
+        df["month"] = df["date"].dt.month
+
+        result = (
+            df.groupby(["lat", "lon", "month"])
+            .size()
+            .reset_index(name="count")
+            .pivot(index=["lat", "lon"], columns="month", values="count")
+            .fillna(0)
+            .astype(int)
+            .reset_index()
+        )
+
+        result.columns.name = None  # pour enlever le nom de colonne "month"
+
+        for m in range(1, 13):
+            if m not in result.columns:
+                result[m] = 0
+
+        month_cols = list(range(1, 13))
+        result["pr_num"] = result[month_cols].idxmax(axis=1)
+        result["pr"] = result["pr_num"].map({
+            1: "Janvier", 2: "Février", 3: "Mars", 4: "Avril",
+            5: "Mai", 6: "Juin", 7: "Juillet", 8: "Août",
+            9: "Septembre", 10: "Octobre", 11: "Novembre", 12: "Décembre"
+        })
+        return result
+
     else:
         agg_col = "mean" if stat == "numday" else stat
         grouped = df.groupby(["lat", "lon"])["pr"].agg(agg_col).reset_index()
@@ -238,10 +275,10 @@ def show(OUTPUT_DIR, years):
         st.session_state["selected_point"] = None
 
     # D'abord on définit stat_label pour l'utiliser plus tard :
-    col1, col3 = st.columns([1,2])
+    col1, col2, col3, col4 = st.columns([1, 1, 0.75, 0.65])
     with col1:
         stat_label = st.selectbox("Choix de la statistique étudiée", list(STATS.keys()))
-    with col3:
+    with col2:
 
         st.markdown("""
             <style>
@@ -268,22 +305,17 @@ def show(OUTPUT_DIR, years):
             value=(min(years), max(years))
         )
 
-    # Ensuite on peut utiliser stat_label dans ce bloc
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col1:
+    with col3:
         saison_selection = st.selectbox(
             "Choix de la saison",
             list(SEASON_MAP.keys())
         )
 
-    with col2:
+    with col4:
         if stat_label in ["Cumul","Jour de pluie"]:
             echelle_selection = st.selectbox("Choix de l'échelle temporelle", ["Journalière"])
         else:
             echelle_selection = st.selectbox("Choix de l'échelle temporelle", ["Horaire","Journalière"])
-
-    with col3:
-        onglet_label = st.selectbox("Choix de l'échelle spatiale", ["Locale","Nationale"])
 
     # Logique de validation
     if saison_selection in ["Année hydrologique", "Hiver"] and start_year == end_year:
@@ -308,13 +340,18 @@ def show(OUTPUT_DIR, years):
     stat_key  = STATS[stat_label]             # "mean","max","sum","date","numday"
     season_key = SEASON_MAP[saison_selection] # "djf","mam","hy", etc.
 
-    file_name = f"{scale_key}_{season_key}_{stat_key}"
+    if stat_key == "mean-max":
+        file_name = f"{scale_key}_{season_key}_max"
+    elif stat_key == "month":
+        file_name = f"{scale_key}_{season_key}_date"
+    else:
+        file_name = f"{scale_key}_{season_key}_{stat_key}"
 
     with st.spinner(f"Génération de la carte..."):
         df = load_stats_parquet(file_name)
 
         # If stat is "date", we also need the "max" to find the row that gave that date
-        if stat_key == "date":
+        if stat_key in ["date", "month"]:
             df_max = load_stats_parquet(f"{scale_key}_{season_key}_max")
             df = df.rename(columns={"pr":"date"})
             df_max = df_max.rename(columns={"pr":"max"})
@@ -357,6 +394,8 @@ def show(OUTPUT_DIR, years):
 
     if stat_key == "date":
         title_map = f"Survenue de la précipitation maximale du {date_title_map}"
+    elif stat_key == "month":
+        title_map = f"{stat_label} du {date_title_map}"
     elif stat_key == "numday":
         title_map = f"Nombre de jours (>1 mm) du {date_title_map}"
     else:
@@ -402,7 +441,9 @@ def show(OUTPUT_DIR, years):
         df_agg = df_agg.drop(columns=["pr"])
         df_agg = df_agg.rename(columns={"days_since_start":"pr"})
 
-    if onglet_label == "Locale":
+    col_local, col_national = st.columns([1.2, 1])  # Largeur plus importante pour la carte
+
+    with col_local:
 
         # -------------------------------------------------------
         # Make the interactive map with px.scatter_mapbox
@@ -428,18 +469,46 @@ def show(OUTPUT_DIR, years):
             unsafe_allow_html=True
         )
 
+        if stat_key == "month":
+            fig_map = px.scatter_mapbox(
+                df_agg,
+                lat="lat",
+                lon="lon",
+                color="pr",
+                color_discrete_sequence=px.colors.qualitative.Bold,
+                category_orders={
+                    "pr": [
+                        "Janvier", "Février", "Mars", "Avril",
+                        "Mai", "Juin", "Juillet", "Août",
+                        "Septembre", "Octobre", "Novembre", "Décembre"
+                    ]
+                },
+                title=title_map,
+                height=500,
+                zoom=4.5,
+                center=dict(lat=46.6, lon=2.2),
+            )
 
-        fig_map = px.scatter_mapbox(
-            df_agg,
-            lat="lat",
-            lon="lon",
-            color="pr",
-            color_continuous_scale=custom_colorscale,
-            title=title_map,
-            height=500,
-            zoom=4.5,
-            center=dict(lat=46.6, lon=2.2),
-        )
+            fig_map.update_layout(
+                legend=dict(
+                    title=dict(text="", font=dict(color="white")),
+                    font=dict(color="white"),
+                    bgcolor="rgba(0,0,0,0)"
+                )
+            )
+
+        else:
+            fig_map = px.scatter_mapbox(
+                df_agg,
+                lat="lat",
+                lon="lon",
+                color="pr",
+                color_continuous_scale=custom_colorscale,
+                title=title_map,
+                height=500,
+                zoom=4.5,
+                center=dict(lat=46.6, lon=2.2),
+            )
         fig_map.update_layout(
             mapbox_style="carto-darkmatter",
             margin=dict(l=0,r=0,t=0,b=5),
@@ -481,108 +550,27 @@ def show(OUTPUT_DIR, years):
             unsafe_allow_html=True
         )
 
+    with col_national:
 
-        # -------------------------------------------------------
-        # If a point is clicked, display its time series
-        # -------------------------------------------------------
-        if selected_points:
-            # figure out which row was clicked
-            idx = selected_points[0]["pointIndex"]
-            lat_clicked = df_agg.iloc[idx]["lat"]
-            lon_clicked = df_agg.iloc[idx]["lon"]
+        if stat_key == "date":
+            # On compte le nombre d'occurrences par date et on trie par date croissante
+            count_by_date = df_filt['date'].value_counts().sort_index()
+            st.bar_chart(count_by_date)
 
-            # Mise à jour de la session
-            st.session_state["selected_point"] = {"lat": lat_clicked, "lon": lon_clicked}
+        elif stat_key == "month":
+            count_by_month = df_agg['pr'].value_counts()
+            # On le transforme en DataFrame pour Plotly
+            count_df = count_by_month.reset_index()
+            count_df.columns = ['Mois', 'Occurrences']
 
-        if st.session_state["selected_point"] is not None:
-            lat_clicked = st.session_state["selected_point"]["lat"]
-            lon_clicked = st.session_state["selected_point"]["lon"]
-
-            # Load the timeseries
-            sf, sentinel, min_time, time_step_hours = load_metadata()
-            # Because in your .bin.xz naming, lat/lon are stored as strings,
-            # we need the same exact format used in the file. So let's find them
-            # in the original data or just create string formats:
-            # We'll assume 3 decimals for lat/lon or you can do a more direct approach:
-            lat_str = f"{lat_clicked:.4f}" # forcer 4 décimales
-            lon_str = f"{lon_clicked:.4f}"
-
-            # Sometimes your data may not store trailing zeros, e.g. "5.0" => "5"
-            # If that is your case, you'll have to match that pattern. For example:
-            # lat_str = str(float(f"{lat_clicked:.4f}"))
-            # lon_str = str(float(f"{lon_clicked:.4f}"))
-
-            # In any case, adapt so it matches exactly your file naming scheme:
-            # "ts_45.75_3.25.bin.xz", etc.
-
-            data_arr = load_time_series(lat_str, lon_str, sentinel, sf)
-
-            if data_arr is None:
-                st.warning(f"Pas de série temporelle disponible pour le point ({lat_clicked:.3f}, {lon_clicked:.3f}).")
-
-            else:
-                # Figure out the correct "season key"
-                s_key = SEASON_MAP[saison_selection]
-                # For the timeseries, we do not shift the start year for "Hiver" or "hy" because
-                # the date slicing is done in get_season_dates(...) anyway. We'll just pass the user-chosen range
-                # i.e. "1980 to 1985", that function knows "djf" means Dec(1979)->Feb(1980).
-
-                with st.spinner(f"Génération de la série temporelle du point ({lat_str}, {lon_str})..."):
-                    indices, dates = get_line_indices(s_key, start_year, end_year, min_time)
-
-                    # Build a Pandas time series at hourly resolution
-                    series_hr = pd.Series(data_arr[indices], index=dates, name="Prec (hr)")
-
-                    # If "Journalière", sum from 06h to 06h
-                    if echelle_selection == "Journalière":
-                        # sum every 1D with offset of 6H
-                        daily = series_hr.resample("1D", offset="6h").sum()
-                        # shift index by 6 hours
-                        daily.index = daily.index + pd.Timedelta(hours=6)
-                        final_series = daily
-                    else:
-                        final_series = series_hr
-
-                    # Plot with Plotly
-                    fig_ts = go.Figure()
-                    fig_ts.add_trace(go.Scatter(
-                        x=final_series.index,
-                        y=final_series.values,
-                        mode='lines',
-                        name="Précip."
-                    ))
-                    fig_ts.update_layout(
+            # Graph Plotly respectant l'ordre
+            fig = px.bar(count_df, x='Mois', y='Occurrences', 
                         title="",
-                        xaxis_title="Date",
-                        yaxis_title=LEGEND_MAP[echelle_selection],
-                        template="plotly_white",
-                        height=500
-                    )
-                    
-                    st.markdown(
-                        f"""
-                        <div style='text-align: center; font-weight: bold; margin-top: 15px'>
-                            Série temporelle au point ({lat_clicked:.3f}, {lon_clicked:.3f}) du {date_title_map}
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-                    
-                    st.plotly_chart(fig_ts, use_container_width=True)
-                    # Source
-                    st.markdown(
-                        """
-                        <div style='text-align: left; font-size: 0.8em; color: lightgray; margin-top: -15px;'>
-                            Données CP-RCM, 2.5 km, forçage ERA5, réanalyse ECMWF
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-        else:
-            st.info("Cliquer sur la carte ci-dessus pour afficher une série temporelle.")
+                        category_orders={'Mois': count_df['Mois'].tolist()})  # Respecte l'ordre custom
 
-    elif onglet_label == "Nationale":
-        if stat_key != "date":
+            st.plotly_chart(fig, use_container_width=True)
+
+        else:
             df_agg_year = groupe_by_year(df_filt)
 
             if stat_key == "sum":
@@ -593,7 +581,7 @@ def show(OUTPUT_DIR, years):
             y_max = (df_agg_year["mean"] + df_agg_year["std"]).max() * 1.05  # Ajout de 5% de marge
 
             # Création du graphique avec barres d'erreur
-            fig_time_series = px.line(
+            fig_nationale = px.line(
                 df_agg_year, 
                 x="year", 
                 y="mean", 
@@ -606,7 +594,7 @@ def show(OUTPUT_DIR, years):
             )
 
             # Ajustement du style des barres d'erreur
-            fig_time_series.update_traces(
+            fig_nationale.update_traces(
                 error_y=dict(
                     thickness=0.5,  # Réduction de l'épaisseur
                     width=0,  # Rendre les barres plus courtes horizontalement
@@ -615,35 +603,109 @@ def show(OUTPUT_DIR, years):
             )
 
             # Ajustement de l'axe Y pour commencer à 0 et finir au max ajusté
-            fig_time_series.update_layout(
+            fig_nationale.update_layout(
                 yaxis=dict(range=[0, y_max])
             )
 
-
-            st.markdown(
-                f"""
-                <div style='text-align: center; font-weight: bold; margin-top: 15px'>
-                    Moyenne et écart-type de précipitation {STATS_NATIONALE[stat_key]} à l'échelle nationale<br>du {date_title_map}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
             # Affichage de la courbe
-            st.plotly_chart(fig_time_series)
-          
-            # Source
-            st.markdown(
-                """
-                <div style='text-align: left; font-size: 0.8em; color: lightgray; margin-top: -15px;'>
-                    Données CP-RCM, 2.5 km, forçage ERA5, réanalyse ECMWF
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            st.plotly_chart(fig_nationale)  
 
-        elif stat_key == "date":
-            # On compte le nombre d'occurrences par date et on trie par date croissante
-            count_by_date = df_filt['date'].value_counts().sort_index()
-            st.write(f"**Occurence des précipitations maximales nationale du {date_title_map}**")
-            st.bar_chart(count_by_date)
+    # -------------------------------------------------------
+    # If a point is clicked, display its time series
+    # -------------------------------------------------------
+    if selected_points:
+
+        # figure out which row was clicked
+        idx = selected_points[0]["pointIndex"]
+        lat_clicked = df_agg.iloc[idx]["lat"]
+        lon_clicked = df_agg.iloc[idx]["lon"]
+
+        # Mise à jour de la session
+        st.session_state["selected_point"] = {"lat": lat_clicked, "lon": lon_clicked}
+
+    if st.session_state["selected_point"] is not None:
+        lat_clicked = st.session_state["selected_point"]["lat"]
+        lon_clicked = st.session_state["selected_point"]["lon"]
+
+        # Load the timeseries
+        sf, sentinel, min_time, time_step_hours = load_metadata()
+        # Because in your .bin.xz naming, lat/lon are stored as strings,
+        # we need the same exact format used in the file. So let's find them
+        # in the original data or just create string formats:
+        # We'll assume 3 decimals for lat/lon or you can do a more direct approach:
+        lat_str = f"{lat_clicked:.4f}" # forcer 4 décimales
+        lon_str = f"{lon_clicked:.4f}"
+
+        # Sometimes your data may not store trailing zeros, e.g. "5.0" => "5"
+        # If that is your case, you'll have to match that pattern. For example:
+        # lat_str = str(float(f"{lat_clicked:.4f}"))
+        # lon_str = str(float(f"{lon_clicked:.4f}"))
+
+        # In any case, adapt so it matches exactly your file naming scheme:
+        # "ts_45.75_3.25.bin.xz", etc.
+
+        data_arr = load_time_series(lat_str, lon_str, sentinel, sf)
+
+        if data_arr is None:
+            st.warning(f"Pas de série temporelle disponible pour le point ({lat_clicked:.3f}, {lon_clicked:.3f}).")
+
+        else:
+            # Figure out the correct "season key"
+            s_key = SEASON_MAP[saison_selection]
+            # For the timeseries, we do not shift the start year for "Hiver" or "hy" because
+            # the date slicing is done in get_season_dates(...) anyway. We'll just pass the user-chosen range
+            # i.e. "1980 to 1985", that function knows "djf" means Dec(1979)->Feb(1980).
+
+            with st.spinner(f"Génération de la série temporelle du point ({lat_str}, {lon_str})..."):
+                indices, dates = get_line_indices(s_key, start_year, end_year, min_time)
+
+                # Build a Pandas time series at hourly resolution
+                series_hr = pd.Series(data_arr[indices], index=dates, name="Prec (hr)")
+
+                # If "Journalière", sum from 06h to 06h
+                if echelle_selection == "Journalière":
+                    # sum every 1D with offset of 6H
+                    daily = series_hr.resample("1D", offset="6h").sum()
+                    # shift index by 6 hours
+                    daily.index = daily.index + pd.Timedelta(hours=6)
+                    final_series = daily
+                else:
+                    final_series = series_hr
+
+                # Plot with Plotly
+                fig_ts = go.Figure()
+                fig_ts.add_trace(go.Scatter(
+                    x=final_series.index,
+                    y=final_series.values,
+                    mode='lines',
+                    name="Précip."
+                ))
+                fig_ts.update_layout(
+                    title="",
+                    xaxis_title="Date",
+                    yaxis_title=LEGEND_MAP[echelle_selection],
+                    template="plotly_white",
+                    height=500
+                )
+                
+                st.markdown(
+                    f"""
+                    <div style='text-align: center; font-weight: bold; margin-top: 15px'>
+                        Série temporelle au point ({lat_clicked:.3f}, {lon_clicked:.3f}) du {date_title_map}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                
+                st.plotly_chart(fig_ts, use_container_width=True)
+                # Source
+                st.markdown(
+                    """
+                    <div style='text-align: left; font-size: 0.8em; color: lightgray; margin-top: -15px;'>
+                        Données CP-RCM, 2.5 km, forçage ERA5, réanalyse ECMWF
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+    else:
+        st.info("Cliquer sur la carte ci-dessus pour afficher une série temporelle.")

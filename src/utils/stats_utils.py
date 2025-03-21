@@ -1,6 +1,10 @@
 import numpy as np
+import pandas as pd
+from typing import Tuple
+
 from scipy.stats import kendalltau
 from statsmodels.tsa.stattools import adfuller, kpss
+from hades_stats import sp_dist
 
 def mann_kendall_test(years, series, alpha=0.05):
     """Teste la tendance d'une série avec Kendall's tau."""
@@ -29,3 +33,7 @@ def kpss_test(series, alpha=0.05):
     pvalue = result[1]
     
     return pvalue < alpha
+
+def gev_stationnaire(serie: pd.Series) -> Tuple[float, float, float]:
+    """Renvoie xi, mu, sigma pour une GEV stationnaire."""
+    return sp_dist('genextreme').fit(serie)
