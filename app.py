@@ -12,6 +12,7 @@ from app.modules import series#, gev_sans_bootstrap
 import pandas as pd
 import plotly.express as px
 
+# A activer
 # from app.utils.login import login
 # # Vérifie l'authentification avant d'afficher le reste de l'application
 # if "authenticated" not in st.session_state or not st.session_state["authenticated"]:

@@ -520,7 +520,7 @@ def show(OUTPUT_DIR, years):
                 selector=dict(mode='markers')
             )
 
-            # Pour la légende : c'est `itemsizing="constant"` qui va "forcer" les symboles plus gros
+            # Pour la légende : c'est `itemsizing="constant"` qui va forcer les symboles plus gros
             fig_map.update_layout(
                 legend=dict(
                     itemsizing="constant"  # Symboles plus gros dans la légende
