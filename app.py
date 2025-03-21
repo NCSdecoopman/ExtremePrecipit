@@ -4,6 +4,26 @@ st.set_page_config(
     page_title="Visualisation Précipitations",
     page_icon="🌧️"
 )
+
+st.markdown("""
+    <style>
+        /* Empêche les colonnes de dépasser 100% */
+        .block-container {
+            max-width: 1200px; /* ou 90% si tu préfères */
+            margin: auto;
+        }
+        /* Fixe les colonnes en ligne même sur petits écrans */
+        @media (max-width: 1000px) {
+            .st-emotion-cache-z5fcl4 {
+                flex-direction: row !important;
+                flex-wrap: wrap !important;
+            }
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+
+
 import os
 from app.utils.data import get_available_years
 
