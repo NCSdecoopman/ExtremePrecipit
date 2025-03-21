@@ -514,7 +514,7 @@ def show(OUTPUT_DIR, years):
                 category_orders={"pr": mois_order},  # Ordre forcé ici aussi
                 title=title_map,
                 height=500,
-                zoom=4.25,
+                zoom=4.5,
                 center=dict(lat=46.6, lon=2.2),
             )
 
