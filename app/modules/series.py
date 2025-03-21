@@ -652,9 +652,7 @@ def show(OUTPUT_DIR, years):
                 error_y="std", 
                 markers=True,
                 title="",
-                labels={"year": "Année", "mean": cbar_legend},
-                width=900,
-                height=500
+                labels={"year": "Année", "mean": cbar_legend}
             )
 
             # Ajustement du style des barres d'erreur
