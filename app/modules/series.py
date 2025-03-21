@@ -489,12 +489,28 @@ def show(OUTPUT_DIR, years):
                 })
                 df_agg = pd.concat([df_agg, df_fictif], ignore_index=True)
 
+            custom_colors = [
+                "#1f77b4",  # Bleu
+                "#ff7f0e",  # Orange
+                "#2ca02c",  # Vert
+                "#d62728",  # Rouge
+                "#9467bd",  # Violet
+                "#8c564b",  # Brun
+                "#e377c2",  # Rose
+                "#7f7f7f",  # Gris
+                "#bcbd22",  # Vert-jaune
+                "#17becf",  # Cyan
+                "#ffa500",  # Orange clair
+                "#ff1493",  # Rose fuchsia
+            ]
+
+
             fig_map = px.scatter_mapbox(
                 df_agg,
                 lat="lat",
                 lon="lon",
                 color="pr",
-                color_discrete_sequence=px.colors.qualitative.Safe,
+                color_discrete_sequence=custom_colors,
                 category_orders={"pr": mois_order},  # Ordre forcé ici aussi
                 title=title_map,
                 height=500,
