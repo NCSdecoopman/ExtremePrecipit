@@ -9,7 +9,7 @@ st.markdown("""
     <style>
         /* Empêche les colonnes de dépasser 100% */
         .block-container {
-            max-width: 1200px; /* ou 90% si tu préfères */
+            max-width: 90%;
             margin: auto;
         }
         /* Fixe les colonnes en ligne même sur petits écrans */
