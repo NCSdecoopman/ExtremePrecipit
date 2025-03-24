@@ -1,0 +1,50 @@
+Résumé du pipeline NetCDF -> Zarr
+====================================================================================================
+
+Année    | .nc trouvé  | .zarr généré   | Nombre de NaN  | Structure du .zarr             | Chunks config             | Scale factor pr      | Sentinelle pr  
+----------------------------------------------------------------------------------------------------
+1959     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1960     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1961     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1962     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1963     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1964     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1965     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1966     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1967     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1968     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1969     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1970     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1971     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1972     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1973     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1974     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1975     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1976     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1977     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1978     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1979     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1980     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1981     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1982     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1983     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1984     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1985     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1986     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1987     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1988     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1989     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1990     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1991     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1992     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1993     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1994     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1995     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1996     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1997     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1998     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+1999     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+2000     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+2001     | oui         | oui            | 0            | {'pr': ('time', 'points')}     | {'time': inf, 'points':... | 10                   | -9999          
+
+Pipeline terminé avec succés.

@@ -6,3 +6,21 @@ __pycache__/
 
 # Ajouter les config streamlit au git
 !/.streamlit/*
+# Ignorer tous les fichiers lourds et géospatiaux
+*.nc
+*.zarr
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+
+# On garde les .keep
+!data/**/.keep
+
+# Ignore aussi d'éventuels fichiers temporaires et artefacts
+*.tmp
+*.bak
+*.DS_Store
+__pycache__/
+*.pyc
