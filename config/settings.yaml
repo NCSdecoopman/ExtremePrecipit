@@ -1,13 +1,14 @@
 nc:
   path:
-    inputdir: "data/raw/"
+    inputdir: "data/raw/modelised"
 
 spatial_filter:
   ne_directory: "data/external/naturalearth"
 
 zarr:
   path:
-    outputdir: "data/process/zarr"
+    outputdir: "data/processed/modelised/zarr"
+  overwrite: false  # Ne pas écraser les .zarr existants par défaut
   chunks:
     time: .inf  # on garde full time
     points: 100  # par 100 points

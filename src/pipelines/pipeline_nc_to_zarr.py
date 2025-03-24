@@ -285,6 +285,16 @@ def pipeline_nc_to_zarr(config_path: str):
         entry["Sentinelle pr"] = pr_conf.get("fill_value", "N/A")
 
         output_path = os.path.join(zarr_dir, f"{year}.zarr")
+
+        overwrite = config["zarr"].get("overwrite", False)
+
+        if os.path.exists(output_path) and not overwrite:
+            logger.info(f"Le fichier Zarr existe déjà et la réécriture est désactivée : la génération est ignorée")
+            entry[".zarr généré"] = "non (déjà existant)"
+            summary.append(entry)
+            ds.close()
+            continue
+
         save_to_zarr(ds, output_path, chunk_config, compressor_config)
         ds.close()
 
@@ -295,7 +305,7 @@ def pipeline_nc_to_zarr(config_path: str):
     os.makedirs(log_dir, exist_ok=True)
     log_path = os.path.join(log_dir, "pipeline_nc_to_zarr_resume.log")
 
-    with open(log_path, "w") as f:
+    with open(log_path, "a") as f:
         f.write("Résumé du pipeline NetCDF -> Zarr\n")
         f.write("="*100 + "\n\n")
         f.write("{:<8} | {:<11} | {:<14} | {:<14} | {:<30} | {:<25} | {:<20} | {:<15}\n".format(
