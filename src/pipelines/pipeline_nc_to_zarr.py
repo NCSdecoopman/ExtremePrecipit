@@ -243,6 +243,15 @@ def pipeline_nc_to_zarr(config_path: str):
             summary.append(entry)
             continue
 
+        output_path = os.path.join(zarr_dir, f"{year}.zarr")
+        overwrite = config["zarr"].get("overwrite", False)
+
+        if os.path.exists(output_path) and not overwrite:
+            logger.info(f"Le fichier Zarr pour l'année {year} existe déjà et overwrite=False : skipping.")
+            entry[".zarr généré"] = "non (déjà existant)"
+            summary.append(entry)
+            continue
+
         ds = load_nc_file(nc_file, variables_config, chunk_config, ne_directory)
 
         nan_total = 0
@@ -283,17 +292,6 @@ def pipeline_nc_to_zarr(config_path: str):
         pr_conf = variables_config.get("pr", {})
         entry["Facteur d'échelle pr"] = pr_conf.get("scale_factor", "1 (aucun)")
         entry["Sentinelle pr"] = pr_conf.get("fill_value", "N/A")
-
-        output_path = os.path.join(zarr_dir, f"{year}.zarr")
-
-        overwrite = config["zarr"].get("overwrite", False)
-
-        if os.path.exists(output_path) and not overwrite:
-            logger.info(f"Le fichier Zarr existe déjà et la réécriture est désactivée : la génération est ignorée")
-            entry[".zarr généré"] = "non (déjà existant)"
-            summary.append(entry)
-            ds.close()
-            continue
 
         save_to_zarr(ds, output_path, chunk_config, compressor_config)
         ds.close()
