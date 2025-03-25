@@ -14,6 +14,7 @@ __pycache__/
 *.dbf
 *.prj
 *.cpg
+*.parquet
 
 # On garde les .keep
 !data/**/.keep

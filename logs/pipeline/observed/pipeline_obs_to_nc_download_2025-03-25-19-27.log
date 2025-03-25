@@ -1,0 +1,423 @@
+2025-03-25 19:27:39,399 | __main__ | INFO | Logger initialisé avec fichier : logs/pipeline/observed\pipeline_obs_to_nc_download_2025-03-25-19-27.log
+2025-03-25 19:27:39,400 | __main__ | INFO | Démarrage du pipeline observations (ZIP) → .nc avec la config : config/observed_settings.yaml
+2025-03-25 19:27:39,400 | __main__ | INFO | [DL] Début du téléchargement de tous les ZIP.
+2025-03-25 19:27:39,401 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_01_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:40,072 | __main__ | INFO | Téléchargement terminé pour le département 01
+2025-03-25 19:27:40,312 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_02_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:40,749 | __main__ | INFO | Téléchargement terminé pour le département 02
+2025-03-25 19:27:40,816 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_03_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:41,256 | __main__ | INFO | Téléchargement terminé pour le département 03
+2025-03-25 19:27:41,380 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_04_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:41,742 | __main__ | INFO | Téléchargement terminé pour le département 04
+2025-03-25 19:27:41,818 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_05_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:42,210 | __main__ | INFO | Téléchargement terminé pour le département 05
+2025-03-25 19:27:42,278 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_06_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:42,801 | __main__ | INFO | Téléchargement terminé pour le département 06
+2025-03-25 19:27:42,890 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_07_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:43,540 | __main__ | INFO | Téléchargement terminé pour le département 07
+2025-03-25 19:27:43,614 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_08_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:43,961 | __main__ | INFO | Téléchargement terminé pour le département 08
+2025-03-25 19:27:44,030 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_09_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:44,402 | __main__ | INFO | Téléchargement terminé pour le département 09
+2025-03-25 19:27:44,490 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_10_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:44,869 | __main__ | INFO | Téléchargement terminé pour le département 10
+2025-03-25 19:27:44,938 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_11_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:45,353 | __main__ | INFO | Téléchargement terminé pour le département 11
+2025-03-25 19:27:45,433 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_12_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:45,940 | __main__ | INFO | Téléchargement terminé pour le département 12
+2025-03-25 19:27:46,035 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_13_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:46,484 | __main__ | INFO | Téléchargement terminé pour le département 13
+2025-03-25 19:27:46,558 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_14_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:46,905 | __main__ | INFO | Téléchargement terminé pour le département 14
+2025-03-25 19:27:46,980 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_15_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:47,383 | __main__ | INFO | Téléchargement terminé pour le département 15
+2025-03-25 19:27:47,493 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_16_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:47,847 | __main__ | INFO | Téléchargement terminé pour le département 16
+2025-03-25 19:27:47,920 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_17_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:48,292 | __main__ | INFO | Téléchargement terminé pour le département 17
+2025-03-25 19:27:48,368 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_18_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:48,846 | __main__ | INFO | Téléchargement terminé pour le département 18
+2025-03-25 19:27:48,943 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_19_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:49,301 | __main__ | INFO | Téléchargement terminé pour le département 19
+2025-03-25 19:27:49,374 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_20_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:49,896 | __main__ | INFO | Téléchargement terminé pour le département 20
+2025-03-25 19:27:49,967 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_21_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:50,343 | __main__ | INFO | Téléchargement terminé pour le département 21
+2025-03-25 19:27:50,438 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_22_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:50,896 | __main__ | INFO | Téléchargement terminé pour le département 22
+2025-03-25 19:27:50,968 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_23_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:51,421 | __main__ | INFO | Téléchargement terminé pour le département 23
+2025-03-25 19:27:51,501 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_24_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:51,908 | __main__ | INFO | Téléchargement terminé pour le département 24
+2025-03-25 19:27:52,007 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_25_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:52,389 | __main__ | INFO | Téléchargement terminé pour le département 25
+2025-03-25 19:27:52,474 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_26_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:52,904 | __main__ | INFO | Téléchargement terminé pour le département 26
+2025-03-25 19:27:52,983 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_27_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:53,353 | __main__ | INFO | Téléchargement terminé pour le département 27
+2025-03-25 19:27:53,449 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_28_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:53,818 | __main__ | INFO | Téléchargement terminé pour le département 28
+2025-03-25 19:27:53,901 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_29_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:54,318 | __main__ | INFO | Téléchargement terminé pour le département 29
+2025-03-25 19:27:54,401 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_30_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:54,894 | __main__ | INFO | Téléchargement terminé pour le département 30
+2025-03-25 19:27:54,998 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_31_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:55,433 | __main__ | INFO | Téléchargement terminé pour le département 31
+2025-03-25 19:27:55,507 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_32_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:55,866 | __main__ | INFO | Téléchargement terminé pour le département 32
+2025-03-25 19:27:55,944 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_33_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:56,422 | __main__ | INFO | Téléchargement terminé pour le département 33
+2025-03-25 19:27:56,541 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_34_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:57,012 | __main__ | INFO | Téléchargement terminé pour le département 34
+2025-03-25 19:27:57,097 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_35_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:57,466 | __main__ | INFO | Téléchargement terminé pour le département 35
+2025-03-25 19:27:57,542 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_36_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:57,985 | __main__ | INFO | Téléchargement terminé pour le département 36
+2025-03-25 19:27:58,080 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_37_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:58,450 | __main__ | INFO | Téléchargement terminé pour le département 37
+2025-03-25 19:27:58,532 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_38_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:59,048 | __main__ | INFO | Téléchargement terminé pour le département 38
+2025-03-25 19:27:59,164 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_39_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:27:59,555 | __main__ | INFO | Téléchargement terminé pour le département 39
+2025-03-25 19:27:59,635 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_40_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:00,099 | __main__ | INFO | Téléchargement terminé pour le département 40
+2025-03-25 19:28:00,188 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_41_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:00,492 | __main__ | INFO | Téléchargement terminé pour le département 41
+2025-03-25 19:28:00,587 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_42_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:01,064 | __main__ | INFO | Téléchargement terminé pour le département 42
+2025-03-25 19:28:01,153 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_43_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:01,564 | __main__ | INFO | Téléchargement terminé pour le département 43
+2025-03-25 19:28:01,641 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_44_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:01,990 | __main__ | INFO | Téléchargement terminé pour le département 44
+2025-03-25 19:28:02,084 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_45_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:02,488 | __main__ | INFO | Téléchargement terminé pour le département 45
+2025-03-25 19:28:02,573 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_46_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:02,941 | __main__ | INFO | Téléchargement terminé pour le département 46
+2025-03-25 19:28:03,024 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_47_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:03,453 | __main__ | INFO | Téléchargement terminé pour le département 47
+2025-03-25 19:28:03,549 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_48_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:04,029 | __main__ | INFO | Téléchargement terminé pour le département 48
+2025-03-25 19:28:04,138 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_49_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:04,496 | __main__ | INFO | Téléchargement terminé pour le département 49
+2025-03-25 19:28:04,605 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_50_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:04,981 | __main__ | INFO | Téléchargement terminé pour le département 50
+2025-03-25 19:28:05,087 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_51_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:05,533 | __main__ | INFO | Téléchargement terminé pour le département 51
+2025-03-25 19:28:05,613 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_52_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:06,012 | __main__ | INFO | Téléchargement terminé pour le département 52
+2025-03-25 19:28:06,098 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_53_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:06,422 | __main__ | INFO | Téléchargement terminé pour le département 53
+2025-03-25 19:28:06,528 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_54_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:06,884 | __main__ | INFO | Téléchargement terminé pour le département 54
+2025-03-25 19:28:06,961 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_55_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:07,316 | __main__ | INFO | Téléchargement terminé pour le département 55
+2025-03-25 19:28:07,397 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_56_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:07,821 | __main__ | INFO | Téléchargement terminé pour le département 56
+2025-03-25 19:28:07,918 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_57_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:08,313 | __main__ | INFO | Téléchargement terminé pour le département 57
+2025-03-25 19:28:08,395 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_58_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:08,765 | __main__ | INFO | Téléchargement terminé pour le département 58
+2025-03-25 19:28:08,849 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_59_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:09,223 | __main__ | INFO | Téléchargement terminé pour le département 59
+2025-03-25 19:28:09,326 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_60_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:09,718 | __main__ | INFO | Téléchargement terminé pour le département 60
+2025-03-25 19:28:09,795 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_61_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:10,179 | __main__ | INFO | Téléchargement terminé pour le département 61
+2025-03-25 19:28:10,268 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_62_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:10,670 | __main__ | INFO | Téléchargement terminé pour le département 62
+2025-03-25 19:28:10,768 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_63_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:11,223 | __main__ | INFO | Téléchargement terminé pour le département 63
+2025-03-25 19:28:11,301 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_64_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:11,813 | __main__ | INFO | Téléchargement terminé pour le département 64
+2025-03-25 19:28:11,896 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_65_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:12,303 | __main__ | INFO | Téléchargement terminé pour le département 65
+2025-03-25 19:28:12,415 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_66_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:12,878 | __main__ | INFO | Téléchargement terminé pour le département 66
+2025-03-25 19:28:12,956 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_67_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:13,306 | __main__ | INFO | Téléchargement terminé pour le département 67
+2025-03-25 19:28:13,387 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_68_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:13,810 | __main__ | INFO | Téléchargement terminé pour le département 68
+2025-03-25 19:28:13,920 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_69_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:14,368 | __main__ | INFO | Téléchargement terminé pour le département 69
+2025-03-25 19:28:14,441 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_70_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:14,808 | __main__ | INFO | Téléchargement terminé pour le département 70
+2025-03-25 19:28:14,893 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_71_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:15,364 | __main__ | INFO | Téléchargement terminé pour le département 71
+2025-03-25 19:28:15,460 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_72_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:15,954 | __main__ | INFO | Téléchargement terminé pour le département 72
+2025-03-25 19:28:16,025 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_73_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:16,682 | __main__ | INFO | Téléchargement terminé pour le département 73
+2025-03-25 19:28:17,906 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_74_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:18,383 | __main__ | INFO | Téléchargement terminé pour le département 74
+2025-03-25 19:28:18,495 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_75_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:18,794 | __main__ | INFO | Téléchargement terminé pour le département 75
+2025-03-25 19:28:18,878 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_76_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:19,282 | __main__ | INFO | Téléchargement terminé pour le département 76
+2025-03-25 19:28:19,367 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_77_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:19,797 | __main__ | INFO | Téléchargement terminé pour le département 77
+2025-03-25 19:28:19,905 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_78_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:20,273 | __main__ | INFO | Téléchargement terminé pour le département 78
+2025-03-25 19:28:20,358 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_79_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:20,710 | __main__ | INFO | Téléchargement terminé pour le département 79
+2025-03-25 19:28:20,787 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_80_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:21,155 | __main__ | INFO | Téléchargement terminé pour le département 80
+2025-03-25 19:28:21,271 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_81_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:21,709 | __main__ | INFO | Téléchargement terminé pour le département 81
+2025-03-25 19:28:21,787 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_82_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:22,109 | __main__ | INFO | Téléchargement terminé pour le département 82
+2025-03-25 19:28:22,183 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_83_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:22,679 | __main__ | INFO | Téléchargement terminé pour le département 83
+2025-03-25 19:28:22,774 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_84_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:23,196 | __main__ | INFO | Téléchargement terminé pour le département 84
+2025-03-25 19:28:23,279 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_85_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:23,721 | __main__ | INFO | Téléchargement terminé pour le département 85
+2025-03-25 19:28:23,796 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_86_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:24,184 | __main__ | INFO | Téléchargement terminé pour le département 86
+2025-03-25 19:28:24,285 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_87_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:24,666 | __main__ | INFO | Téléchargement terminé pour le département 87
+2025-03-25 19:28:24,744 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_88_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:25,159 | __main__ | INFO | Téléchargement terminé pour le département 88
+2025-03-25 19:28:25,243 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_89_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:25,686 | __main__ | INFO | Téléchargement terminé pour le département 89
+2025-03-25 19:28:25,785 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_90_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:26,023 | __main__ | INFO | Téléchargement terminé pour le département 90
+2025-03-25 19:28:26,102 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_91_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:26,402 | __main__ | INFO | Téléchargement terminé pour le département 91
+2025-03-25 19:28:26,474 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_92_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:26,710 | __main__ | INFO | Téléchargement terminé pour le département 92
+2025-03-25 19:28:26,800 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_93_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:27,037 | __main__ | INFO | Téléchargement terminé pour le département 93
+2025-03-25 19:28:27,111 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_94_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:27,408 | __main__ | INFO | Téléchargement terminé pour le département 94
+2025-03-25 19:28:27,479 | __main__ | INFO | Téléchargement quotidien : https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_95_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:27,791 | __main__ | INFO | Téléchargement terminé pour le département 95
+2025-03-25 19:28:27,883 | __main__ | INFO | [DL] Téléchargement terminé.
+2025-03-25 19:28:27,888 | __main__ | INFO | 0 stations détectées pour l'échelle horaire
+2025-03-25 19:28:27,888 | __main__ | INFO | 0 stations détectées pour l'échelle quotidienne
+2025-03-25 19:28:27,889 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_195901010000-195912312359.nc
+2025-03-25 19:28:27,936 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_196001010000-196012312359.nc
+2025-03-25 19:28:27,941 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_196101010000-196112312359.nc
+2025-03-25 19:28:27,945 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_196201010000-196212312359.nc
+2025-03-25 19:28:27,950 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_196301010000-196312312359.nc
+2025-03-25 19:28:27,954 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_196401010000-196412312359.nc
+2025-03-25 19:28:27,958 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_196501010000-196512312359.nc
+2025-03-25 19:28:27,963 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_196601010000-196612312359.nc
+2025-03-25 19:28:27,968 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_196701010000-196712312359.nc
+2025-03-25 19:28:27,972 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_196801010000-196812312359.nc
+2025-03-25 19:28:27,976 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_196901010000-196912312359.nc
+2025-03-25 19:28:27,981 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_197001010000-197012312359.nc
+2025-03-25 19:28:27,986 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_197101010000-197112312359.nc
+2025-03-25 19:28:27,991 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_197201010000-197212312359.nc
+2025-03-25 19:28:27,996 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_197301010000-197312312359.nc
+2025-03-25 19:28:28,000 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_197401010000-197412312359.nc
+2025-03-25 19:28:28,006 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_197501010000-197512312359.nc
+2025-03-25 19:28:28,011 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_197601010000-197612312359.nc
+2025-03-25 19:28:28,016 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_197701010000-197712312359.nc
+2025-03-25 19:28:28,020 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_197801010000-197812312359.nc
+2025-03-25 19:28:28,024 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_197901010000-197912312359.nc
+2025-03-25 19:28:28,029 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_198001010000-198012312359.nc
+2025-03-25 19:28:28,033 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_198101010000-198112312359.nc
+2025-03-25 19:28:28,037 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_198201010000-198212312359.nc
+2025-03-25 19:28:28,042 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_198301010000-198312312359.nc
+2025-03-25 19:28:28,047 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_198401010000-198412312359.nc
+2025-03-25 19:28:28,051 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_198501010000-198512312359.nc
+2025-03-25 19:28:28,055 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_198601010000-198612312359.nc
+2025-03-25 19:28:28,060 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_198701010000-198712312359.nc
+2025-03-25 19:28:28,065 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_198801010000-198812312359.nc
+2025-03-25 19:28:28,070 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_198901010000-198912312359.nc
+2025-03-25 19:28:28,074 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_199001010000-199012312359.nc
+2025-03-25 19:28:28,079 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_199101010000-199112312359.nc
+2025-03-25 19:28:28,083 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_199201010000-199212312359.nc
+2025-03-25 19:28:28,087 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_199301010000-199312312359.nc
+2025-03-25 19:28:28,092 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_199401010000-199412312359.nc
+2025-03-25 19:28:28,097 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_199501010000-199512312359.nc
+2025-03-25 19:28:28,101 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_199601010000-199612312359.nc
+2025-03-25 19:28:28,106 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_199701010000-199712312359.nc
+2025-03-25 19:28:28,110 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_199801010000-199812312359.nc
+2025-03-25 19:28:28,115 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_199901010000-199912312359.nc
+2025-03-25 19:28:28,119 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_200001010000-200012312359.nc
+2025-03-25 19:28:28,124 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_200101010000-200112312359.nc
+2025-03-25 19:28:28,129 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_200201010000-200212312359.nc
+2025-03-25 19:28:28,133 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_200301010000-200312312359.nc
+2025-03-25 19:28:28,137 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_200401010000-200412312359.nc
+2025-03-25 19:28:28,142 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_200501010000-200512312359.nc
+2025-03-25 19:28:28,146 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_200601010000-200612312359.nc
+2025-03-25 19:28:28,152 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_200701010000-200712312359.nc
+2025-03-25 19:28:28,156 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_200801010000-200812312359.nc
+2025-03-25 19:28:28,162 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_200901010000-200912312359.nc
+2025-03-25 19:28:28,166 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_201001010000-201012312359.nc
+2025-03-25 19:28:28,171 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_201101010000-201112312359.nc
+2025-03-25 19:28:28,175 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_201201010000-201212312359.nc
+2025-03-25 19:28:28,180 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_201301010000-201312312359.nc
+2025-03-25 19:28:28,185 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_201401010000-201412312359.nc
+2025-03-25 19:28:28,189 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_201501010000-201512312359.nc
+2025-03-25 19:28:28,193 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_201601010000-201612312359.nc
+2025-03-25 19:28:28,197 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_201701010000-201712312359.nc
+2025-03-25 19:28:28,202 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_201801010000-201812312359.nc
+2025-03-25 19:28:28,205 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_201901010000-201912312359.nc
+2025-03-25 19:28:28,212 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_202001010000-202012312359.nc
+2025-03-25 19:28:28,216 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_202101010000-202112312359.nc
+2025-03-25 19:28:28,221 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\horaire\observed_202201010000-202212312359.nc
+2025-03-25 19:28:28,226 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_195901010000-195912312359.nc
+2025-03-25 19:28:28,230 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_196001010000-196012312359.nc
+2025-03-25 19:28:28,234 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_196101010000-196112312359.nc
+2025-03-25 19:28:28,238 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_196201010000-196212312359.nc
+2025-03-25 19:28:28,242 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_196301010000-196312312359.nc
+2025-03-25 19:28:28,246 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_196401010000-196412312359.nc
+2025-03-25 19:28:28,251 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_196501010000-196512312359.nc
+2025-03-25 19:28:28,254 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_196601010000-196612312359.nc
+2025-03-25 19:28:28,257 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_196701010000-196712312359.nc
+2025-03-25 19:28:28,261 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_196801010000-196812312359.nc
+2025-03-25 19:28:28,265 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_196901010000-196912312359.nc
+2025-03-25 19:28:28,269 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_197001010000-197012312359.nc
+2025-03-25 19:28:28,274 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_197101010000-197112312359.nc
+2025-03-25 19:28:28,278 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_197201010000-197212312359.nc
+2025-03-25 19:28:28,282 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_197301010000-197312312359.nc
+2025-03-25 19:28:28,286 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_197401010000-197412312359.nc
+2025-03-25 19:28:28,290 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_197501010000-197512312359.nc
+2025-03-25 19:28:28,295 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_197601010000-197612312359.nc
+2025-03-25 19:28:28,299 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_197701010000-197712312359.nc
+2025-03-25 19:28:28,303 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_197801010000-197812312359.nc
+2025-03-25 19:28:28,307 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_197901010000-197912312359.nc
+2025-03-25 19:28:28,313 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_198001010000-198012312359.nc
+2025-03-25 19:28:28,317 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_198101010000-198112312359.nc
+2025-03-25 19:28:28,320 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_198201010000-198212312359.nc
+2025-03-25 19:28:28,323 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_198301010000-198312312359.nc
+2025-03-25 19:28:28,329 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_198401010000-198412312359.nc
+2025-03-25 19:28:28,332 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_198501010000-198512312359.nc
+2025-03-25 19:28:28,336 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_198601010000-198612312359.nc
+2025-03-25 19:28:28,340 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_198701010000-198712312359.nc
+2025-03-25 19:28:28,346 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_198801010000-198812312359.nc
+2025-03-25 19:28:28,350 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_198901010000-198912312359.nc
+2025-03-25 19:28:28,354 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_199001010000-199012312359.nc
+2025-03-25 19:28:28,359 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_199101010000-199112312359.nc
+2025-03-25 19:28:28,363 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_199201010000-199212312359.nc
+2025-03-25 19:28:28,367 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_199301010000-199312312359.nc
+2025-03-25 19:28:28,372 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_199401010000-199412312359.nc
+2025-03-25 19:28:28,379 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_199501010000-199512312359.nc
+2025-03-25 19:28:28,383 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_199601010000-199612312359.nc
+2025-03-25 19:28:28,387 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_199701010000-199712312359.nc
+2025-03-25 19:28:28,391 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_199801010000-199812312359.nc
+2025-03-25 19:28:28,396 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_199901010000-199912312359.nc
+2025-03-25 19:28:28,400 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_200001010000-200012312359.nc
+2025-03-25 19:28:28,404 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_200101010000-200112312359.nc
+2025-03-25 19:28:28,408 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_200201010000-200212312359.nc
+2025-03-25 19:28:28,413 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_200301010000-200312312359.nc
+2025-03-25 19:28:28,417 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_200401010000-200412312359.nc
+2025-03-25 19:28:28,421 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_200501010000-200512312359.nc
+2025-03-25 19:28:28,425 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_200601010000-200612312359.nc
+2025-03-25 19:28:28,430 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_200701010000-200712312359.nc
+2025-03-25 19:28:28,434 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_200801010000-200812312359.nc
+2025-03-25 19:28:28,438 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_200901010000-200912312359.nc
+2025-03-25 19:28:28,442 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_201001010000-201012312359.nc
+2025-03-25 19:28:28,447 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_201101010000-201112312359.nc
+2025-03-25 19:28:28,451 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_201201010000-201212312359.nc
+2025-03-25 19:28:28,455 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_201301010000-201312312359.nc
+2025-03-25 19:28:28,459 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_201401010000-201412312359.nc
+2025-03-25 19:28:28,464 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_201501010000-201512312359.nc
+2025-03-25 19:28:28,468 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_201601010000-201612312359.nc
+2025-03-25 19:28:28,472 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_201701010000-201712312359.nc
+2025-03-25 19:28:28,477 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_201801010000-201812312359.nc
+2025-03-25 19:28:28,481 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_201901010000-201912312359.nc
+2025-03-25 19:28:28,486 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_202001010000-202012312359.nc
+2025-03-25 19:28:28,490 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_202101010000-202112312359.nc
+2025-03-25 19:28:28,495 | __main__ | INFO | [INIT] Création du NC pour data\raw\observed\quotidien\observed_202201010000-202212312359.nc
+2025-03-25 19:28:28,500 | __main__ | INFO | Suppression des fichiers .csv.gz après traitement
+2025-03-25 19:28:28,501 | __main__ | INFO | Dossier supprimé : data\horaire_zip
+2025-03-25 19:28:28,504 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_01_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,506 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_02_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,509 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_03_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,511 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_04_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,513 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_05_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,516 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_06_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,519 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_07_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,521 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_08_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,523 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_09_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,525 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_10_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,527 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_11_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,529 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_12_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,531 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_13_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,532 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_14_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,534 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_15_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,535 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_16_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,537 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_17_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,539 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_18_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,540 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_19_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,544 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_20_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,546 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_21_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,548 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_22_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,549 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_23_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,551 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_24_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,553 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_25_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,555 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_26_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,557 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_27_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,558 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_28_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,561 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_29_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,563 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_30_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,565 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_31_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,566 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_32_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,569 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_33_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,571 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_34_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,573 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_35_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,575 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_36_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,577 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_37_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,579 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_38_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,581 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_39_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,583 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_40_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,585 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_41_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,587 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_42_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,589 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_43_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,591 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_44_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,592 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_45_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,594 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_46_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,595 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_47_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,597 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_48_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,598 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_49_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,600 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_50_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,602 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_51_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,603 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_52_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,604 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_53_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,606 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_54_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,607 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_55_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,610 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_56_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,611 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_57_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,613 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_58_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,615 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_59_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,616 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_60_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,618 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_61_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,619 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_62_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,622 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_63_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,624 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_64_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,625 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_65_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,627 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_66_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,629 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_67_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,631 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_68_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,632 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_69_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,634 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_70_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,636 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_71_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,638 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_72_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,640 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_73_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,643 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_74_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,644 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_75_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,646 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_76_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,647 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_77_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,649 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_78_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,650 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_79_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,652 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_80_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,654 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_81_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,655 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_82_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,658 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_83_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,660 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_84_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,661 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_85_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,663 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_86_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,665 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_87_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,666 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_88_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,668 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_89_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,669 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_90_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,670 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_91_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,671 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_92_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,671 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_93_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,672 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_94_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,695 | __main__ | INFO | Supprimé : data\quotidien_zip\Q_95_previous-1950-2023_RR-T-Vent.csv.gz
+2025-03-25 19:28:28,695 | __main__ | INFO | Dossier supprimé : data\quotidien_zip
+2025-03-25 19:28:28,696 | __main__ | INFO | Pipeline terminé

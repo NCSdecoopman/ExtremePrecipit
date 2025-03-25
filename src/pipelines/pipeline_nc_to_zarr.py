@@ -1,17 +1,17 @@
+import sys
 import os
+import argparse
 import re
 import numcodecs
 import xarray as xr
 import numpy as np
 import geopandas as gpd
-from shapely.geometry import Point
 from tqdm.dask import TqdmCallback
 from typing import Dict, Union, Optional
+from datetime import datetime
 
 from src.utils.config_tools import load_config
 from src.utils.logger import get_logger
-
-logger = get_logger(__name__)
 
 # ---------------------------------------------------------------------------
 # 1) Liste des fichiers .nc
@@ -60,43 +60,51 @@ def build_xarray_chunks(ds: xr.Dataset, chunk_config: Dict[str, Union[int, float
     return computed_chunks
 
 # ---------------------------------------------------------------------------
-# 4) Filtrage spatial France sans NaN (grille aplatie en "points")
+# 4) Filtrage spatial France 
 
 def filter_ds_to_france(ds: xr.Dataset, ne_directory: str) -> xr.Dataset:
     """
     Filtre un dataset pour ne conserver que les points strictement à l'intérieur de la France
     et remplace (y, x) par une dimension unique 'points'.
     """
+    from shapely.geometry import Point
+
     shapefile_path = os.path.join(ne_directory, "ne_10m_admin_0_countries.shp")
     gdf = gpd.read_file(shapefile_path, engine="pyogrio")
     gdf_france = gdf[gdf["ADMIN"] == "France"].to_crs(epsg=4326)
     geom_france = gdf_france.geometry.iloc[0]
 
-    lat2d = ds["lat"].values  # (ny, nx)
-    lon2d = ds["lon"].values  # (ny, nx)
-    ny, nx = lat2d.shape
+    # 🔍 Gestion de la grille lat/lon
+    lat = ds["lat"]
+    lon = ds["lon"]
 
+    # Cas 2D
+    if lat.ndim == 2 and lon.ndim == 2:
+        lat2d, lon2d = lat.values, lon.values
+    # Cas 1D (lat(y), lon(x))
+    elif lat.ndim == 1 and lon.ndim == 1:
+        lat2d, lon2d = np.meshgrid(lat.values, lon.values, indexing="ij")
+    else:
+        raise ValueError("lat/lon ne sont pas dans un format reconnu")
+
+    ny, nx = lat2d.shape
     lat_flat = lat2d.ravel()
     lon_flat = lon2d.ravel()
-    points = [Point(lon, lat) for lon, lat in zip(lon_flat, lat_flat)]
-    inside_mask_flat = np.array([geom_france.intersects(pt) for pt in points])
 
+    points = [Point(lon, lat) for lon, lat in zip(lon_flat, lat_flat)]
+    inside_mask_flat = np.array([geom_france.contains(pt) for pt in points])
     inside_indices = np.where(inside_mask_flat)[0]
-    lat_inside = lat_flat[inside_indices]
-    lon_inside = lon_flat[inside_indices]
+
+    lat_inside = lat_flat[inside_indices].astype(np.float32)
+    lon_inside = lon_flat[inside_indices].astype(np.float32)
     y_indices, x_indices = np.unravel_index(inside_indices, (ny, nx))
 
-    # Sélection
     ds_france = ds.isel(
         y=("points", y_indices),
         x=("points", x_indices)
     )
 
-    # Supprimer les coords y/x (xarray garde les "anciennes" coords même après isel)
-    ds_france = ds_france.drop_vars(["lat", "lon"])
-    ds_france = ds_france.drop_vars(["y", "x"], errors="ignore")  # <- clé ici
-
-    # Réattribuer coords lat/lon sous forme aplatie
+    ds_france = ds_france.drop_vars(["y", "x"], errors="ignore")
     ds_france = ds_france.assign_coords({
         "lat": (("points",), lat_inside),
         "lon": (("points",), lon_inside)
@@ -129,27 +137,59 @@ def load_nc_file(
     ds = ds.chunk(computed_chunks)
     logger.info(f"Dataset rechunké : { {k: v.chunks for k, v in ds.data_vars.items()} }")
 
-    for var, var_conf in variables_config.items():
-        if var in ds.variables:
-            desired_dtype = var_conf.get("dtype", None)
-            scale_factor = var_conf.get("scale_factor", None)
-            fill_value = var_conf.get("fill_value", None)
-            if desired_dtype is not None:
-                logger.info(f"Conversion de {var} vers {desired_dtype}")
-                if scale_factor is not None:
-                    logger.info(f"Application d'un facteur d'échelle {scale_factor} pour {var}")
-                    ds[var] = ds[var] * scale_factor
-                if fill_value is not None:
-                    logger.info(f"Remplacement des NaN de {var} par la sentinelle {fill_value}")
-                    ds[var] = ds[var].fillna(fill_value)
-                ds[var] = ds[var].round().astype(desired_dtype)
-            else:
-                logger.info(f"Aucun dtype spécifié pour {var}")
+def load_nc_file(
+    nc_path: str,
+    variables_config: Dict[str, Dict[str, Union[str, int]]],
+    chunk_config: Dict[str, Union[int, float]],
+    ne_directory: str
+) -> xr.Dataset:
+    logger.info(f"--- Traitement du fichier NetCDF : {nc_path} ---")
+    vars_to_keep = list(variables_config.keys())
+    logger.info(f"Variables demandées : {vars_to_keep}")
+
+    # Ouverture du dataset avec uniquement les variables demandées
+    ds = xr.open_dataset(nc_path, chunks="auto")[vars_to_keep]
+    logger.info(f"Dataset ouvert avec chunks natifs. Dimensions : {dict(ds.sizes)}")
+
+    # Filtrage spatial
+    logger.info("Application du filtre spatial pur France (points)")
+    ds = filter_ds_to_france(ds, ne_directory=ne_directory)
+    logger.info(f"Dataset réduit aux points France. Dimensions : {dict(ds.sizes)}")
+
+    # Chunking
+    computed_chunks = build_xarray_chunks(ds, chunk_config)
+    ds = ds.chunk(computed_chunks)
+    logger.info(f"Dataset rechunké : { {k: v.chunks for k, v in ds.data_vars.items()} }")
+
+    # On traite uniquement les data_vars (évite de toucher aux coordonnées !)
+    for var in ds.data_vars:
+        var_conf = variables_config.get(var, {})
+        desired_dtype = var_conf.get("dtype", None)
+        scale_factor = var_conf.get("scale_factor", None)
+        unit_conversion = var_conf.get("unit_conversion", 1.0)
+        fill_value = var_conf.get("fill_value", None)
+
+        if desired_dtype is not None:
+            logger.info(f"Conversion de {var} vers {desired_dtype}")
+            if unit_conversion != 1.0:
+                logger.info(f"Conversion d’unité de {var} avec un facteur {unit_conversion}")
+                ds[var] = ds[var] * unit_conversion
+
+            if scale_factor is not None:
+                logger.info(f"Application d’un facteur d’encodage {scale_factor} pour {var}")
+                ds[var] = ds[var] * scale_factor
+
+            if fill_value is not None:
+                logger.info(f"Remplacement des NaN de {var} par la sentinelle {fill_value}")
+                ds[var] = ds[var].fillna(fill_value)
+
+            ds[var] = ds[var].round().astype(desired_dtype)
         else:
-            logger.warning(f"Variable {var} non trouvée dans {nc_path}")
+            logger.info(f"Aucun dtype spécifié pour {var}")
 
     logger.info(f"Chargement finalisé pour {nc_path}")
     return ds
+
 
 # ---------------------------------------------------------------------------
 # 6) Sauvegarde Zarr adaptée à "points"
@@ -209,10 +249,7 @@ def save_to_zarr(
 # ---------------------------------------------------------------------------
 # 7) Pipeline principal
 
-def pipeline_nc_to_zarr(config_path: str):
-    logger.info(f"Démarrage du pipeline avec la config : {config_path}")
-
-    config = load_config(config_path)
+def pipeline_nc_to_zarr(config):
     nc_dir = config["nc"]["path"]["inputdir"]
     zarr_dir = config["zarr"]["path"]["outputdir"]
     chunk_config = config["zarr"]["chunks"]
@@ -332,4 +369,20 @@ def pipeline_nc_to_zarr(config_path: str):
 # 8) Entrypoint
 
 if __name__ == "__main__":
-    pipeline_nc_to_zarr("config/settings.yaml")
+    # Parser la config
+    parser = argparse.ArgumentParser(description="Pipeline NetCDF vers Zarr avec filtrage spatial et encodage.")
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="config/modelised_settings.yaml",
+        help="Chemin vers le fichier de configuration YAML (par défaut : config/modelised_settings.yaml)"
+    )
+    args = parser.parse_args()
+    config_path = args.config
+    config = load_config(config_path)
+    
+    log_dir = config.get("log", {}).get("directory", "logs")
+    logger = get_logger(__name__, log_to_file=True, log_dir=log_dir)
+
+    logger.info(f"Démarrage du pipeline NetCDF → Zarr avec la config : {config_path}")
+    pipeline_nc_to_zarr(config)
