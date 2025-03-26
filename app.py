@@ -41,9 +41,6 @@ st.markdown("""
 
 from app.modules import statisticals
 
-import pandas as pd
-import plotly.express as px
-
 option = "Statistiques descriptives"
 
 config_path = "app/config/config.yaml"
