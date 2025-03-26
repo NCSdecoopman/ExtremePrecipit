@@ -20,7 +20,10 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
         run: |
           # Crée un dossier temporaire pour le push
-          mkdir deploy && cp -r * deploy/ && cd deploy
+          mkdir deploy
+          shopt -s extglob
+          cp -r !(deploy|.git|.github) deploy/
+          cd deploy
 
           # Initialisation du dépôt dans ce dossier
           git init
