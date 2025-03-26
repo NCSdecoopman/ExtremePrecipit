@@ -61,11 +61,12 @@ def load_arome_data(min_year_choice: int, max_year_choice: int, months: list[int
     dataframes = []
     errors = []
 
-    progress_bar = st.progress(0)
-    total = len(tasks)
-    completed = 0
+    with st.spinner("Chargement des fichiers..."):
+        progress_bar = st.progress(0)
+        total = len(tasks)
+        completed = 0
 
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=6) as executor:
         futures = {
             executor.submit(load_parquet_from_huggingface_cached, y, m, repo_id, base_path): (y, m)
             for y, m in tasks
@@ -80,6 +81,8 @@ def load_arome_data(min_year_choice: int, max_year_choice: int, months: list[int
                 errors.append(f"{y}-{m:02d} : {e}")
             completed += 1
             progress_bar.progress(completed / total)
+
+    progress_bar.empty()  # Efface la barre de progression
 
     if errors:
         for err in errors:
