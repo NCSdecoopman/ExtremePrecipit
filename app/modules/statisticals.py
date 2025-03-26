@@ -67,7 +67,9 @@ def load_arome_data(min_year_choice: int, max_year_choice: int, months: list[int
             tasks.append((actual_year, month))
 
     dataframes = []
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    errors = []
+
+    with ThreadPoolExecutor(max_workers=32) as executor:
         futures = {
             executor.submit(load_parquet_from_huggingface_cached, y, m, repo_id, base_path): (y, m)
             for y, m in tasks
@@ -79,9 +81,12 @@ def load_arome_data(min_year_choice: int, max_year_choice: int, months: list[int
                 df = future.result()
                 dataframes.append(df)
             except Exception as e:
-                st.warning(f"Erreur lors du chargement de {y}-{m:02d} : {e}")
+                errors.append((y, m, str(e)))
 
-    return dataframes
+    # Affichage Streamlit : seulement ici
+    for y, m, err in errors:
+        st.warning(f"Erreur lors du chargement de {y}-{m:02d} : {err}")
+
 
 
 def show(config_path):
