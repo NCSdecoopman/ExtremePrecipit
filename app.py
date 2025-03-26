@@ -39,14 +39,16 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-from app.modules import statisticals
+st.write("TEST")
 
-import pandas as pd
-import plotly.express as px
+# from app.modules import statisticals
 
-option = "Statistiques descriptives"
+# import pandas as pd
+# import plotly.express as px
 
-config_path = "app/config/config.yaml"
+# option = "Statistiques descriptives"
 
-if option == "Statistiques descriptives":
-    statisticals.show(config_path)
+# config_path = "app/config/config.yaml"
+
+# if option == "Statistiques descriptives":
+#     statisticals.show(config_path)

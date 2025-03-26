@@ -1,0 +1,37 @@
+name: Deploy viz app to Hugging Face Spaces
+
+on:
+  push:
+    branches:
+      - app
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Deploy viz app to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
+        run: |
+          # Crée un dossier temporaire pour le push
+          mkdir deploy && cp -r * deploy/ && cd deploy
+
+          # Initialisation du dépôt dans ce dossier
+          git init
+          git config user.email "ncsdecoopman@github.com"
+          git config user.name "NCSdecoopman"
+          git branch -M main
+          
+          # Ajoute le remote Hugging Face
+          git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
+
+          # Push en force vers HF
+          git add .
+          git commit -m "Deploy app to HF Space"
+          git push hf main --force
