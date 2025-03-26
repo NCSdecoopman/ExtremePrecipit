@@ -1,0 +1,130 @@
+2025-03-26 09:19:05,760 | __main__ | INFO | Logger initialisé avec fichier : logs/pipeline/observed\pipeline_obs_to_nc_download_2025-03-26-09-19.log
+2025-03-26 09:19:05,760 | __main__ | INFO | Démarrage du pipeline observations (ZIP) → .nc avec la config : config/observed_settings.yaml
+2025-03-26 09:19:05,760 | __main__ | INFO | --- Début du téléchargement des ZIP
+2025-03-26 09:19:05,761 | __main__ | INFO | Fichier quotdien déjà présent pour le département 01
+2025-03-26 09:19:05,872 | __main__ | INFO | Fichier quotdien déjà présent pour le département 02
+2025-03-26 09:19:05,955 | __main__ | INFO | Fichier quotdien déjà présent pour le département 03
+2025-03-26 09:19:06,007 | __main__ | INFO | Fichier quotdien déjà présent pour le département 04
+2025-03-26 09:19:06,057 | __main__ | INFO | Fichier quotdien déjà présent pour le département 05
+2025-03-26 09:19:06,127 | __main__ | INFO | Fichier quotdien déjà présent pour le département 06
+2025-03-26 09:19:06,177 | __main__ | INFO | Fichier quotdien déjà présent pour le département 07
+2025-03-26 09:19:06,225 | __main__ | INFO | Fichier quotdien déjà présent pour le département 08
+2025-03-26 09:19:06,294 | __main__ | INFO | Fichier quotdien déjà présent pour le département 09
+2025-03-26 09:19:06,345 | __main__ | INFO | Fichier quotdien déjà présent pour le département 10
+2025-03-26 09:19:06,396 | __main__ | INFO | Fichier quotdien déjà présent pour le département 11
+2025-03-26 09:19:06,466 | __main__ | INFO | Fichier quotdien déjà présent pour le département 12
+2025-03-26 09:19:06,517 | __main__ | INFO | Fichier quotdien déjà présent pour le département 13
+2025-03-26 09:19:06,570 | __main__ | INFO | Fichier quotdien déjà présent pour le département 14
+2025-03-26 09:19:06,669 | __main__ | INFO | Fichier quotdien déjà présent pour le département 15
+2025-03-26 09:19:06,720 | __main__ | INFO | Fichier quotdien déjà présent pour le département 16
+2025-03-26 09:19:06,777 | __main__ | INFO | Fichier quotdien déjà présent pour le département 17
+2025-03-26 09:19:06,852 | __main__ | INFO | Fichier quotdien déjà présent pour le département 18
+2025-03-26 09:19:06,903 | __main__ | INFO | Fichier quotdien déjà présent pour le département 19
+2025-03-26 09:19:06,967 | __main__ | INFO | Fichier quotdien déjà présent pour le département 20
+2025-03-26 09:19:07,038 | __main__ | INFO | Fichier quotdien déjà présent pour le département 21
+2025-03-26 09:19:07,088 | __main__ | INFO | Fichier quotdien déjà présent pour le département 22
+2025-03-26 09:19:07,138 | __main__ | INFO | Fichier quotdien déjà présent pour le département 23
+2025-03-26 09:19:07,208 | __main__ | INFO | Fichier quotdien déjà présent pour le département 24
+2025-03-26 09:19:07,258 | __main__ | INFO | Fichier quotdien déjà présent pour le département 25
+2025-03-26 09:19:07,308 | __main__ | INFO | Fichier quotdien déjà présent pour le département 26
+2025-03-26 09:19:10,243 | __main__ | INFO | Téléchargement terminé pour le département 27 à l'échelle horaire
+2025-03-26 09:19:16,343 | __main__ | INFO | Téléchargement terminé pour le département 28 à l'échelle horaire
+2025-03-26 09:19:23,078 | __main__ | INFO | Logger initialisé avec fichier : logs/pipeline/observed\pipeline_obs_to_nc_download_2025-03-26-09-19.log
+2025-03-26 09:19:23,078 | __main__ | INFO | Démarrage du pipeline observations (ZIP) → .nc avec la config : config/observed_settings.yaml
+2025-03-26 09:19:23,078 | __main__ | INFO | --- Début du téléchargement des ZIP
+2025-03-26 09:19:23,078 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 01
+2025-03-26 09:19:23,209 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 02
+2025-03-26 09:19:24,319 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 03
+2025-03-26 09:19:24,370 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 04
+2025-03-26 09:19:24,473 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 05
+2025-03-26 09:19:24,531 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 06
+2025-03-26 09:19:24,615 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 07
+2025-03-26 09:19:24,685 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 08
+2025-03-26 09:19:24,738 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 09
+2025-03-26 09:19:24,789 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 10
+2025-03-26 09:19:24,859 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 11
+2025-03-26 09:19:24,911 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 12
+2025-03-26 09:19:24,962 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 13
+2025-03-26 09:19:25,031 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 14
+2025-03-26 09:19:25,082 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 15
+2025-03-26 09:19:25,136 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 16
+2025-03-26 09:19:25,206 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 17
+2025-03-26 09:19:25,257 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 18
+2025-03-26 09:19:25,308 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 19
+2025-03-26 09:19:25,378 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 20
+2025-03-26 09:19:25,430 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 21
+2025-03-26 09:19:25,481 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 22
+2025-03-26 09:19:25,552 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 23
+2025-03-26 09:19:25,602 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 24
+2025-03-26 09:19:25,652 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 25
+2025-03-26 09:19:25,731 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 26
+2025-03-26 09:19:25,783 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 27
+2025-03-26 09:19:25,833 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 28
+2025-03-26 09:19:25,903 | __main__ | INFO | Fichier échelle quotidienne déjà présent pour le département 29
+2025-03-26 09:19:35,889 | __main__ | INFO | Téléchargement terminé pour le département 30 à l'échelle horaire
+2025-03-26 09:19:40,480 | __main__ | INFO | Téléchargement terminé pour le département 31 à l'échelle horaire
+2025-03-26 09:19:46,486 | __main__ | INFO | Téléchargement terminé pour le département 32 à l'échelle horaire
+2025-03-26 09:19:53,124 | __main__ | INFO | Téléchargement terminé pour le département 33 à l'échelle horaire
+2025-03-26 09:19:59,000 | __main__ | INFO | Téléchargement terminé pour le département 34 à l'échelle horaire
+2025-03-26 09:20:03,235 | __main__ | INFO | Téléchargement terminé pour le département 35 à l'échelle horaire
+2025-03-26 09:20:06,376 | __main__ | INFO | Téléchargement terminé pour le département 36 à l'échelle horaire
+2025-03-26 09:20:12,034 | __main__ | INFO | Téléchargement terminé pour le département 37 à l'échelle horaire
+2025-03-26 09:20:19,574 | __main__ | INFO | Téléchargement terminé pour le département 38 à l'échelle horaire
+2025-03-26 09:20:23,425 | __main__ | INFO | Téléchargement terminé pour le département 39 à l'échelle horaire
+2025-03-26 09:20:29,239 | __main__ | INFO | Téléchargement terminé pour le département 40 à l'échelle horaire
+2025-03-26 09:20:30,096 | __main__ | INFO | Téléchargement terminé pour le département 41 à l'échelle horaire
+2025-03-26 09:20:35,150 | __main__ | INFO | Téléchargement terminé pour le département 42 à l'échelle horaire
+2025-03-26 09:20:38,900 | __main__ | INFO | Téléchargement terminé pour le département 43 à l'échelle horaire
+2025-03-26 09:20:42,639 | __main__ | INFO | Téléchargement terminé pour le département 44 à l'échelle horaire
+2025-03-26 09:20:46,816 | __main__ | INFO | Téléchargement terminé pour le département 45 à l'échelle horaire
+2025-03-26 09:20:50,127 | __main__ | INFO | Téléchargement terminé pour le département 46 à l'échelle horaire
+2025-03-26 09:20:53,879 | __main__ | INFO | Téléchargement terminé pour le département 47 à l'échelle horaire
+2025-03-26 09:20:59,739 | __main__ | INFO | Téléchargement terminé pour le département 48 à l'échelle horaire
+2025-03-26 09:21:02,479 | __main__ | INFO | Téléchargement terminé pour le département 49 à l'échelle horaire
+2025-03-26 09:21:08,201 | __main__ | INFO | Téléchargement terminé pour le département 50 à l'échelle horaire
+2025-03-26 09:21:12,479 | __main__ | INFO | Téléchargement terminé pour le département 51 à l'échelle horaire
+2025-03-26 09:21:18,143 | __main__ | INFO | Téléchargement terminé pour le département 52 à l'échelle horaire
+2025-03-26 09:21:20,167 | __main__ | INFO | Téléchargement terminé pour le département 53 à l'échelle horaire
+2025-03-26 09:21:23,539 | __main__ | INFO | Téléchargement terminé pour le département 54 à l'échelle horaire
+2025-03-26 09:21:27,239 | __main__ | INFO | Téléchargement terminé pour le département 55 à l'échelle horaire
+2025-03-26 09:21:33,704 | __main__ | INFO | Téléchargement terminé pour le département 56 à l'échelle horaire
+2025-03-26 09:21:38,367 | __main__ | INFO | Téléchargement terminé pour le département 57 à l'échelle horaire
+2025-03-26 09:21:42,519 | __main__ | INFO | Téléchargement terminé pour le département 58 à l'échelle horaire
+2025-03-26 09:21:45,485 | __main__ | INFO | Téléchargement terminé pour le département 59 à l'échelle horaire
+2025-03-26 09:21:50,705 | __main__ | INFO | Téléchargement terminé pour le département 60 à l'échelle horaire
+2025-03-26 09:21:55,681 | __main__ | INFO | Téléchargement terminé pour le département 61 à l'échelle horaire
+2025-03-26 09:22:01,516 | __main__ | INFO | Téléchargement terminé pour le département 62 à l'échelle horaire
+2025-03-26 09:22:10,642 | __main__ | INFO | Téléchargement terminé pour le département 63 à l'échelle horaire
+2025-03-26 09:22:18,999 | __main__ | INFO | Téléchargement terminé pour le département 64 à l'échelle horaire
+2025-03-26 09:22:25,130 | __main__ | INFO | Téléchargement terminé pour le département 65 à l'échelle horaire
+2025-03-26 09:22:33,232 | __main__ | INFO | Téléchargement terminé pour le département 66 à l'échelle horaire
+2025-03-26 09:22:38,848 | __main__ | INFO | Téléchargement terminé pour le département 67 à l'échelle horaire
+2025-03-26 09:22:47,254 | __main__ | INFO | Téléchargement terminé pour le département 68 à l'échelle horaire
+2025-03-26 09:22:54,515 | __main__ | INFO | Téléchargement terminé pour le département 69 à l'échelle horaire
+2025-03-26 09:22:59,066 | __main__ | INFO | Téléchargement terminé pour le département 70 à l'échelle horaire
+2025-03-26 09:23:08,489 | __main__ | INFO | Téléchargement terminé pour le département 71 à l'échelle horaire
+2025-03-26 09:23:13,145 | __main__ | INFO | Téléchargement terminé pour le département 72 à l'échelle horaire
+2025-03-26 09:23:25,532 | __main__ | INFO | Téléchargement terminé pour le département 73 à l'échelle horaire
+2025-03-26 09:23:33,966 | __main__ | INFO | Téléchargement terminé pour le département 74 à l'échelle horaire
+2025-03-26 09:23:35,594 | __main__ | INFO | Téléchargement terminé pour le département 75 à l'échelle horaire
+2025-03-26 09:23:40,774 | __main__ | INFO | Téléchargement terminé pour le département 76 à l'échelle horaire
+2025-03-26 09:23:45,842 | __main__ | INFO | Téléchargement terminé pour le département 77 à l'échelle horaire
+2025-03-26 09:23:47,942 | __main__ | INFO | Téléchargement terminé pour le département 78 à l'échelle horaire
+2025-03-26 09:23:52,073 | __main__ | INFO | Téléchargement terminé pour le département 79 à l'échelle horaire
+2025-03-26 09:23:55,236 | __main__ | INFO | Téléchargement terminé pour le département 80 à l'échelle horaire
+2025-03-26 09:23:58,664 | __main__ | INFO | Téléchargement terminé pour le département 81 à l'échelle horaire
+2025-03-26 09:24:01,391 | __main__ | INFO | Téléchargement terminé pour le département 82 à l'échelle horaire
+2025-03-26 09:24:07,132 | __main__ | INFO | Téléchargement terminé pour le département 83 à l'échelle horaire
+2025-03-26 09:24:09,454 | __main__ | INFO | Téléchargement terminé pour le département 84 à l'échelle horaire
+2025-03-26 09:24:12,809 | __main__ | INFO | Téléchargement terminé pour le département 85 à l'échelle horaire
+2025-03-26 09:24:15,297 | __main__ | INFO | Téléchargement terminé pour le département 86 à l'échelle horaire
+2025-03-26 09:24:17,745 | __main__ | INFO | Téléchargement terminé pour le département 87 à l'échelle horaire
+2025-03-26 09:24:19,276 | __main__ | INFO | Téléchargement terminé pour le département 88 à l'échelle horaire
+2025-03-26 09:24:21,004 | __main__ | INFO | Téléchargement terminé pour le département 89 à l'échelle horaire
+2025-03-26 09:24:21,362 | __main__ | INFO | Téléchargement terminé pour le département 90 à l'échelle horaire
+2025-03-26 09:24:21,957 | __main__ | INFO | Téléchargement terminé pour le département 91 à l'échelle horaire
+2025-03-26 09:24:22,275 | __main__ | INFO | Téléchargement terminé pour le département 92 à l'échelle horaire
+2025-03-26 09:24:22,779 | __main__ | INFO | Téléchargement terminé pour le département 93 à l'échelle horaire
+2025-03-26 09:24:23,135 | __main__ | INFO | Téléchargement terminé pour le département 94 à l'échelle horaire
+2025-03-26 09:24:23,775 | __main__ | INFO | Téléchargement terminé pour le département 95 à l'échelle horaire
+2025-03-26 09:24:23,854 | __main__ | INFO | --- Téléchargement terminé.

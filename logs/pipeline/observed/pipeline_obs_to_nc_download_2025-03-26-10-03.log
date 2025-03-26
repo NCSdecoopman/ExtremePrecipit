@@ -1,0 +1,8 @@
+2025-03-26 10:03:44,314 | __main__ | INFO | Logger initialisé avec fichier : logs/pipeline/observed\pipeline_obs_to_nc_download_2025-03-26-10-03.log
+2025-03-26 10:03:44,314 | __main__ | INFO | Démarrage du pipeline observations (ZIP) → .nc avec la config : config/observed_settings.yaml
+2025-03-26 10:03:44,314 | __main__ | INFO | --- Début du téléchargement des ZIP
+2025-03-26 10:03:44,618 | __main__ | WARNING | Erreur lors du téléchargement de https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/HOR/H_01_1950-1959.csv.gz : Unknown format code 'd' for object of type 'str'
+2025-03-26 10:03:44,913 | __main__ | WARNING | Erreur lors du téléchargement de https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/HOR/H_01_1960-1969.csv.gz : Unknown format code 'd' for object of type 'str'
+2025-03-26 10:03:45,201 | __main__ | WARNING | Erreur lors du téléchargement de https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/HOR/H_01_1970-1979.csv.gz : Unknown format code 'd' for object of type 'str'
+2025-03-26 10:03:45,419 | __main__ | WARNING | Erreur lors du téléchargement de https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/HOR/H_01_1980-1989.csv.gz : Unknown format code 'd' for object of type 'str'
+2025-03-26 10:03:48,039 | __main__ | WARNING | Erreur lors du téléchargement de https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/HOR/H_01_1990-1999.csv.gz : Unknown format code 'd' for object of type 'str'
