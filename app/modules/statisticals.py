@@ -43,12 +43,6 @@ def load_parquet_from_huggingface_cached(year: int, month: int, repo_id: str, ba
 
 
 def load_arome_data(min_year_choice: int, max_year_choice: int, months: list[int], config) -> list:
-    """
-    Charge les fichiers Parquet d'une saison donnée entre deux années depuis Hugging Face en parallèle.
-
-    Returns:
-        list[pd.DataFrame]: Liste des DataFrames chargés
-    """
     repo_id = config["repo_id"]
     base_path = config["statisticals"]["modelised"]
 
@@ -60,16 +54,18 @@ def load_arome_data(min_year_choice: int, max_year_choice: int, months: list[int
                 actual_year = year + 1
             else:
                 actual_year = year
-
             if actual_year > max_year_choice:
                 continue
-
             tasks.append((actual_year, month))
 
     dataframes = []
     errors = []
 
-    with ThreadPoolExecutor(max_workers=6) as executor:
+    progress_bar = st.progress(0)
+    total = len(tasks)
+    completed = 0
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
         futures = {
             executor.submit(load_parquet_from_huggingface_cached, y, m, repo_id, base_path): (y, m)
             for y, m in tasks
@@ -81,11 +77,16 @@ def load_arome_data(min_year_choice: int, max_year_choice: int, months: list[int
                 df = future.result()
                 dataframes.append(df)
             except Exception as e:
-                errors.append((y, m, str(e)))
+                errors.append(f"{y}-{m:02d} : {e}")
+            completed += 1
+            progress_bar.progress(completed / total)
 
-    # Affichage Streamlit : seulement ici
-    for y, m, err in errors:
-        st.warning(f"Erreur lors du chargement de {y}-{m:02d} : {err}")
+    if errors:
+        for err in errors:
+            st.warning(f"Erreur : {err}")
+
+    return dataframes
+
 
 
 
