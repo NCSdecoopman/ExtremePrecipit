@@ -69,7 +69,7 @@ def load_arome_data(min_year_choice: int, max_year_choice: int, months: list[int
     dataframes = []
     errors = []
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=6) as executor:
         futures = {
             executor.submit(load_parquet_from_huggingface_cached, y, m, repo_id, base_path): (y, m)
             for y, m in tasks
