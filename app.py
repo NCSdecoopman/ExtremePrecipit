@@ -1,7 +1,7 @@
 import streamlit as st
 st.set_page_config(
     layout="wide", 
-    page_title="Visualisation Précipitations",
+    page_title="Visualisation des précipitations",
     page_icon="🌧️"
 )
 
@@ -9,8 +9,8 @@ st.markdown("""
     <style>
         /* Applique sur le conteneur global pour éviter le débordement */
         .block-container {
-            max-width: 95%;
-            margin: auto;
+            max-width: 98%;
+            margin: center;
         }
 
         /* Fixe les colonnes même sur écrans < 1000px */
@@ -39,16 +39,14 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.write("TEST")
+from app.modules import statisticals
 
-# from app.modules import statisticals
+import pandas as pd
+import plotly.express as px
 
-# import pandas as pd
-# import plotly.express as px
+option = "Statistiques descriptives"
 
-# option = "Statistiques descriptives"
+config_path = "app/config/config.yaml"
 
-# config_path = "app/config/config.yaml"
-
-# if option == "Statistiques descriptives":
-#     statisticals.show(config_path)
+if option == "Statistiques descriptives":
+    statisticals.show(config_path)
