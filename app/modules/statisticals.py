@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 
 from app.utils.config_utils import *
 from app.utils.menus_utils import *
@@ -9,9 +10,12 @@ from app.utils.legends_utils import *
 
 import pydeck as pdk
 
-st.markdown("<h3>Visualisation des précipitations</h3>", unsafe_allow_html=True)
+@st.cache_data
+def load_data_cached(min_year, max_year, season_key, config):
+    return load_arome_data(min_year, max_year, season_key, config)
 
 def show(config_path):
+    st.markdown("<h3>Visualisation des précipitations</h3>", unsafe_allow_html=True)
 
     config = load_config(config_path)
 
@@ -32,11 +36,11 @@ def show(config_path):
     scale_choice_key = SCALE[scale_choice]
 
     try:
-        df_all = load_arome_data(
+        df_all = load_data_cached(
             min_year_choice,
             max_year_choice,
-            tuple(season_choice_key),  # tuple hashable
-            config  # utilisé pour le hash automatique de cache
+            tuple(season_choice_key),  # Doit être hashable
+            config
         )
     except Exception as e:
         st.error(f"Erreur lors du chargement des données : {e}")
@@ -61,11 +65,13 @@ def show(config_path):
     # View de la carte
     view_state = pdk.ViewState(latitude=46.6, longitude=2.2, zoom=4.5)
 
-    col1, col2, col3 = st.columns([2.5, 1, 3.5])  # Carte large, légende étroite
+    col1, col2, col3 = st.columns([2.5, 1, 3])  # Carte large, légende étroite
     height = 600
 
     with col1:
-        plot_map(layer, view_state, tooltip)
+        deck = plot_map(layer, view_state, tooltip)
+        html = deck.to_html(as_string=True, notebook_display=False)
+        components.html(html, height=height, scrolling=False)
 
     with col2:
         unit_label = get_stat_unit(stat_choice_key, scale_choice_key)

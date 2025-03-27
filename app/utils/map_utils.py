@@ -29,8 +29,7 @@ def plot_map(layer, view_state, tooltip):
     deck = pdk.Deck(
         layers=[layer],
         initial_view_state=view_state,
-        tooltip=tooltip,
-        height=600
+        tooltip=tooltip
     )
 
-    st.pydeck_chart(deck, use_container_width=True)
+    return deck

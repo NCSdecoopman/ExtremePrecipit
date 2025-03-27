@@ -64,10 +64,10 @@ def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label
 
     st.markdown(
         f"""
-        <div style="text-align: left; font-size: 13px; margin-top: 8px;">
+        <div style="text-align: left; font-size: 13px;">
             <b>{label}</b>
         </div>
-        <div style="display: flex; flex-direction: row; align-items: center; height: {height}px; margin-top: 8px;;">
+        <div style="display: flex; flex-direction: row; align-items: center; height: {height-30}px;">
             <img src="data:image/png;base64,{base64_img}" style="height: 100%; width: 20px; border: 1px solid #ccc; border-radius: 5px;"/>
             <div style="display: flex; flex-direction: column; justify-content: space-between; margin-left: 8px; height: 100%; font-size: 12px;">
                 {''.join(f'<div>{tick:.1f}</div>' for tick in ticks)}
