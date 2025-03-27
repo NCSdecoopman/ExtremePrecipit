@@ -25,12 +25,6 @@ def create_tooltip(stat):
             }
         }
 
-import pydeck as pdk
-import requests
-import json
-import pandas as pd
-from shapely.geometry import shape
-
 def plot_map(layer, view_state, tooltip):
     # # Charger le GeoJSON des départements (directement depuis l'URL)
     # url_geojson = "https://france-geojson.gregoiredavid.fr/repo/departements.geojson"
