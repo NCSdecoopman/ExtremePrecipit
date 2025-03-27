@@ -10,7 +10,7 @@ from app.utils.menus_utils import menu_statisticals
 st.markdown("<h3>Visualisation des précipitations</h3>", unsafe_allow_html=True)
 
 STATS = {
-    "Moyenne": "mean",
+    #"Moyenne": "mean",
     "Maximum": "max",
     "Moyenne des maxima": "mean-max",
     "Cumul": "sum",
@@ -224,8 +224,8 @@ def plot_grid_map(df: pd.DataFrame, column_to_show: str, resolution_km: float = 
     return fig
 
 
-
 def show(config_path):
+
     config = load_config(config_path)
 
     min_years = config["years"]["min"]
@@ -256,7 +256,86 @@ def show(config_path):
 
     result_df = compute_statistic_per_point(df_all, stat_choice_key)
     column_to_show = get_stat_column_name(stat_choice_key, scale_choice_key)
-    st.write(result_df)
+
+    import pandas as pd
+    import plotly.graph_objects as go
+    from geopy.distance import distance
+    import streamlit as st
+    import matplotlib.cm as cm
+    import matplotlib.colors as mcolors
+    import numpy as np
+
+    # Fonction pour générer un carré autour d’un point
+    def generate_square(lat, lon, size_km=2.5):
+        half_size = size_km / 2
+        north = distance(kilometers=half_size).destination((lat, lon), bearing=0)
+        south = distance(kilometers=half_size).destination((lat, lon), bearing=180)
+        east = distance(kilometers=half_size).destination((lat, lon), bearing=90)
+        west = distance(kilometers=half_size).destination((lat, lon), bearing=270)
+
+        square = [
+            (north.latitude, west.longitude),
+            (north.latitude, east.longitude),
+            (south.latitude, east.longitude),
+            (south.latitude, west.longitude),
+            (north.latitude, west.longitude)
+        ]
+        return square
+
+    # Normalisation des valeurs et mappage des couleurs
+    norm = mcolors.Normalize(vmin=result_df[column_to_show].min(),
+                            vmax=result_df[column_to_show].max())
+    cmap = cm.get_cmap('viridis')  # tu peux essayer 'plasma', 'inferno', etc.
+
+    # Création de la carte
+    fig = go.Figure()
+
+    # Affichage de la progression
+    progress_bar = st.progress(0)
+    n_total = len(result_df)
+
+    for i, row in result_df.iterrows():
+        square_coords = generate_square(row['lat'], row['lon'])
+        lats, lons = zip(*square_coords)
+
+        rgba = cmap(norm(row[column_to_show]))
+        r, g, b, a = [int(c * 255) if j < 3 else c for j, c in enumerate(rgba)]
+        rgba_str = f'rgba({r},{g},{b},{a:.2f})'
+
+        fig.add_trace(go.Scattermapbox(
+            lat=lats,
+            lon=lons,
+            mode='lines',
+            fill='toself',
+            fillcolor=rgba_str,
+            line=dict(color=rgba_str),
+            name=f"{row[column_to_show]:.1f}"
+        ))
+
+        # Mise à jour de la barre de progression
+        if i % 100 == 0 or i == n_total - 1:
+            progress_bar.progress(int(i / n_total * 100))
+
+    progress_bar.empty()  # Supprimer la barre une fois terminé
+
+
+    # Layout
+    fig.update_layout(
+        mapbox=dict(
+            style="carto-positron",
+            zoom=10,
+            center={"lat": result_df['lat'].mean(), "lon": result_df['lon'].mean()}
+        ),
+        height=600,
+        margin=dict(l=0, r=0, t=0, b=0),
+        showlegend=False
+    )
+
+    st.plotly_chart(fig)
+
+
+
+    # st.write(result_df)
     # if column_to_show in result_df.columns:
     #     st.write(f"Carte de la statistique : `{column_to_show}`")
     #     fig = plot_grid_map(result_df, column_to_show)

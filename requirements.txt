@@ -1,3 +1,8 @@
 streamlit==1.32.0
+streamlit_plotly_events==0.0.6
+plotly==5.14.1
 pandas==2.2.3
+scipy==1.15.1
+matplotlib==3.10.0
+bcrypt==4.1.2
 huggingface_hub==0.21.4
