@@ -49,7 +49,7 @@ def show(config_path):
     # Calcul des statistiques
     result_df = compute_statistic_per_point(df_all, stat_choice_key, min_year_choice, max_year_choice, season_choice_key)
     column_to_show = get_stat_column_name(stat_choice_key, scale_choice_key)
-   
+
     # Définir l'échelle personnalisée continue
     colormap = echelle_config("continu" if stat_choice_key != "month" else "discret")
 

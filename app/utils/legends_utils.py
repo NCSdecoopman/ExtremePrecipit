@@ -13,9 +13,16 @@ def get_stat_column_name(stat_key: str, scale_key: str) -> str:
     elif stat_key == "mean-max":
         return f"max_mean_{scale_key}"
     elif stat_key == "date":
-        return f"date_max_{scale_key[-1]}"  # "h" ou "j"
+        # Ici on teste le mot "Horaire" ou "Journalière"
+        if scale_key == "Horaire":
+            return "date_max_h"
+        else:  # Journalière
+            return "date_max_j"
     elif stat_key == "month":
-        return f"mois_pluvieux_{scale_key[-1]}"  # "h" ou "j"
+        if scale_key == "Horaire":
+            return "mois_pluvieux_h"
+        else:  # Journalière
+            return "mois_pluvieux_j"
     elif stat_key == "numday":
         return "jours_pluie_moyen"
     else:
@@ -37,18 +44,31 @@ def get_stat_unit(stat_key: str, scale_key: str) -> str:
         return ""
     
 def formalised_legend(df, column_to_show, colormap, vmin=None, vmax=None):
-    if pd.api.types.is_datetime64_any_dtype(df[column_to_show]) or column_to_show.startswith("date_"):
-        # Convertir en datetime si ce n'est pas déjà le cas
+    if column_to_show.startswith("date"):
+        # Cas date
         df[column_to_show] = pd.to_datetime(df[column_to_show])
         vmin = pd.to_datetime(df[column_to_show].min()) if vmin is None else pd.to_datetime(vmin)
         vmax = pd.to_datetime(df[column_to_show].max()) if vmax is None else pd.to_datetime(vmax)
 
-        # Transformation en nombre de secondes pour normaliser
         value_norm = (df[column_to_show] - vmin).dt.total_seconds() / (vmax - vmin).total_seconds()
         val_fmt_func = lambda x: x.strftime("%Y-%m-%d")
+
+    elif column_to_show.startswith("mois_pluvieux"):
+        # Cas mois pluvieux : valeurs entières de 1 à 12
+        vmin = 1
+        vmax = 12
+
+        value_norm = (df[column_to_show] - 1) / 11  # Normalise mois de 1 à 12 -> 0 à 1
+        val_fmt_func = lambda x: [
+            "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+            "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+        ][int(x) - 1] if 1 <= int(x) <= 12 else "Inconnu"
+
     else:
+        # Cas numérique continu
         vmin = df[column_to_show].min() if vmin is None else vmin
         vmax = df[column_to_show].max() if vmax is None else vmax
+
         value_norm = (df[column_to_show] - vmin) / (vmax - vmin)
         val_fmt_func = lambda x: f"{x:.1f}"
 
@@ -61,24 +81,74 @@ def formalised_legend(df, column_to_show, colormap, vmin=None, vmax=None):
 
     return df, vmin, vmax
 
-
 def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label=""):
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    from io import BytesIO
+    import base64
+    import streamlit as st
+
+    # --- CAS SPÉCIAL : MOIS (VALEURS DISCRÈTES DE 1 À 12) ---
+    if isinstance(vmin, int) and isinstance(vmax, int) and (1 <= vmin <= 12) and (1 <= vmax <= 12):
+        # Labels français des mois
+        mois_labels = [
+            "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+            "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+        ]
+
+        # On va construire un bloc HTML qui contient 1 ligne par mois
+        color_boxes = ""  
+        for mois in range(vmin, vmax + 1):
+            # Normalisation : mois = 1..12 -> entre 0 et 1
+            # (mois-1)/11 : 0 pour Janvier, 1 pour Décembre
+            rgba = colormap((mois - 1) / 11)
+            rgb = [int(255 * c) for c in rgba[:3]]
+            color = f"rgb({rgb[0]}, {rgb[1]}, {rgb[2]})"
+            label_mois = mois_labels[mois - 1]
+
+            # Concaténation d'un bloc HTML
+            color_boxes += (
+                f'<div style="display: flex; align-items: center; margin-bottom: 4px;">'
+                f'  <div style="width: 14px; height: 14px; '
+                f'              background-color: {color}; '
+                f'              border: 1px solid #ccc; '
+                f'              margin-right: 6px;">'
+                f'  </div>'
+                f'  <div style="font-size: 12px;">{label_mois}</div>'
+                f'</div>'
+            )
+
+        # Envoi du HTML complet à Streamlit
+        html_mois = (
+            f'<div style="text-align: left; font-size: 13px; margin-bottom: 4px;">'
+            f'  <b>{label}</b>'
+            f'</div>'
+            f'<div style="display: flex; flex-direction: column;">'
+            f'{color_boxes}'
+            f'</div>'
+        )
+        st.markdown(html_mois, unsafe_allow_html=True)
+        return  # On sort pour ne pas afficher la légende “gradient” ci-dessous
+
+    # --- CAS NORMAL : LÉGENDE CONTINUE AVEC GRADIENT ---
     gradient = np.linspace(1, 0, 256).reshape(256, 1)
     fig, ax = plt.subplots(figsize=(1, 5), dpi=100)
     ax.imshow(gradient, aspect='auto', cmap=colormap)
     ax.axis('off')
+
     buf = BytesIO()
     plt.savefig(buf, format="png", bbox_inches='tight', pad_inches=0, transparent=True)
     plt.close(fig)
     base64_img = base64.b64encode(buf.getvalue()).decode()
 
-    # Corriger la génération des ticks pour datetime
+    # Construction des ticks (pour l’échelle continue)
     if isinstance(vmin, pd.Timestamp) and isinstance(vmax, pd.Timestamp):
         ticks_seconds = np.linspace(vmax.timestamp(), vmin.timestamp(), n_ticks)
         ticks = [pd.to_datetime(t, unit='s').strftime("%Y-%m-%d") for t in ticks_seconds]
     else:
-        ticks = np.linspace(vmax, vmin, n_ticks)
-        ticks = [f"{tick:.1f}" for tick in ticks]
+        ticks_vals = np.linspace(vmax, vmin, n_ticks)
+        ticks = [f"{val:.1f}" for val in ticks_vals]
 
     st.markdown(
         f"""
@@ -86,8 +156,10 @@ def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label
             <b>{label}</b>
         </div>
         <div style="display: flex; flex-direction: row; align-items: center; height: {height-30}px;">
-            <img src="data:image/png;base64,{base64_img}" style="height: 100%; width: 20px; border: 1px solid #ccc; border-radius: 5px;"/>
-            <div style="display: flex; flex-direction: column; justify-content: space-between; margin-left: 8px; height: 100%; font-size: 12px;">
+            <img src="data:image/png;base64,{base64_img}"
+                 style="height: 100%; width: 20px; border: 1px solid #ccc; border-radius: 5px;"/>
+            <div style="display: flex; flex-direction: column; justify-content: space-between; 
+                        margin-left: 8px; height: 100%; font-size: 12px;">
                 {''.join(f'<div>{tick}</div>' for tick in ticks)}
             </div>
         </div>
