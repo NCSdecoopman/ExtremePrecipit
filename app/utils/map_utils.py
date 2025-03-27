@@ -26,12 +26,11 @@ def create_tooltip(stat):
         }
 
 def plot_map(layer, view_state, tooltip):
-    st.pydeck_chart(
-        pdk.Deck(
-            layers=[layer],
-            initial_view_state=view_state,
-            tooltip=tooltip
-        ),
-        height=600,
-        use_container_width=True
+    deck = pdk.Deck(
+        layers=[layer],
+        initial_view_state=view_state,
+        tooltip=tooltip,
+        height=600
     )
+
+    st.pydeck_chart(deck, use_container_width=True)
