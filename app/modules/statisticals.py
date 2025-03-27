@@ -257,81 +257,76 @@ def show(config_path):
     result_df = compute_statistic_per_point(df_all, stat_choice_key)
     column_to_show = get_stat_column_name(stat_choice_key, scale_choice_key)
 
+
+
     import pandas as pd
-    import plotly.graph_objects as go
-    from geopy.distance import distance
+    import numpy as np
     import streamlit as st
+    import plotly.express as px
     import matplotlib.cm as cm
     import matplotlib.colors as mcolors
-    import numpy as np
 
-    # Fonction pour générer un carré autour d’un point
-    def generate_square(lat, lon, size_km=2.5):
-        half_size = size_km / 2
-        north = distance(kilometers=half_size).destination((lat, lon), bearing=0)
-        south = distance(kilometers=half_size).destination((lat, lon), bearing=180)
-        east = distance(kilometers=half_size).destination((lat, lon), bearing=90)
-        west = distance(kilometers=half_size).destination((lat, lon), bearing=270)
+    # 🧭 Construire une grille régulière (raster)
+    lat_unique = np.sort(result_df['lat'].unique())
+    lon_unique = np.sort(result_df['lon'].unique())
 
-        square = [
-            (north.latitude, west.longitude),
-            (north.latitude, east.longitude),
-            (south.latitude, east.longitude),
-            (south.latitude, west.longitude),
-            (north.latitude, west.longitude)
-        ]
-        return square
+    lat_to_idx = {lat: i for i, lat in enumerate(lat_unique)}
+    lon_to_idx = {lon: j for j, lon in enumerate(lon_unique)}
 
-    # Normalisation des valeurs et mappage des couleurs
-    norm = mcolors.Normalize(vmin=result_df[column_to_show].min(),
-                            vmax=result_df[column_to_show].max())
-    cmap = cm.get_cmap('viridis')  # tu peux essayer 'plasma', 'inferno', etc.
+    raster = np.full((len(lat_unique), len(lon_unique)), np.nan)
 
-    # Création de la carte
-    fig = go.Figure()
+    for _, row in result_df.iterrows():
+        i = lat_to_idx[row['lat']]
+        j = lon_to_idx[row['lon']]
+        raster[i, j] = row[column_to_show]
 
-    # Affichage de la progression
-    progress_bar = st.progress(0)
-    n_total = len(result_df)
+    # Palette de couleurs : viridis
+    norm = mcolors.Normalize(vmin=np.nanmin(raster), vmax=np.nanmax(raster))
+    cmap = cm.get_cmap("viridis")
+    rgba_img = np.zeros((*raster.shape, 4), dtype=np.uint8)
 
-    for i, row in result_df.iterrows():
-        square_coords = generate_square(row['lat'], row['lon'])
-        lats, lons = zip(*square_coords)
+    for i in range(raster.shape[0]):
+        for j in range(raster.shape[1]):
+            val = raster[i, j]
+            if not np.isnan(val):
+                r, g, b, a = cmap(norm(val))
+                rgba_img[i, j] = [int(255 * r), int(255 * g), int(255 * b), int(255 * a)]
+            else:
+                rgba_img[i, j] = [0, 0, 0, 0]  # transparent
 
-        rgba = cmap(norm(row[column_to_show]))
-        r, g, b, a = [int(c * 255) if j < 3 else c for j, c in enumerate(rgba)]
-        rgba_str = f'rgba({r},{g},{b},{a:.2f})'
+    # 📍 Coordonnées pour imshow (haut-gauche = max lat, min lon)
+    fig = px.imshow(
+        rgba_img,
+        origin="upper",
+        binary_format="png",
+    )
 
-        fig.add_trace(go.Scattermapbox(
-            lat=lats,
-            lon=lons,
-            mode='lines',
-            fill='toself',
-            fillcolor=rgba_str,
-            line=dict(color=rgba_str),
-            name=f"{row[column_to_show]:.1f}"
-        ))
-
-        # Mise à jour de la barre de progression
-        if i % 100 == 0 or i == n_total - 1:
-            progress_bar.progress(int(i / n_total * 100))
-
-    progress_bar.empty()  # Supprimer la barre une fois terminé
-
-
-    # Layout
+    # Ajout de l'emprise géographique
     fig.update_layout(
         mapbox=dict(
             style="carto-positron",
-            zoom=10,
-            center={"lat": result_df['lat'].mean(), "lon": result_df['lon'].mean()}
+            center={"lat": result_df["lat"].mean(), "lon": result_df["lon"].mean()},
+            zoom=6
         ),
-        height=600,
-        margin=dict(l=0, r=0, t=0, b=0),
-        showlegend=False
+        mapbox_layers=[
+            {
+                "below": "traces",
+                "sourcetype": "image",
+                "source": px.imshow(rgba_img).to_image(format="png"),
+                "coordinates": [
+                    [lon_unique[0], lat_unique[-1]],
+                    [lon_unique[-1], lat_unique[-1]],
+                    [lon_unique[-1], lat_unique[0]],
+                    [lon_unique[0], lat_unique[0]],
+                ]
+            }
+        ],
+        height=700,
+        margin=dict(l=0, r=0, t=0, b=0)
     )
 
     st.plotly_chart(fig)
+
 
 
 
