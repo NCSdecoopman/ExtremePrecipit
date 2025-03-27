@@ -295,37 +295,9 @@ def show(config_path):
                 rgba_img[i, j] = [0, 0, 0, 0]  # transparent
 
     # 📍 Coordonnées pour imshow (haut-gauche = max lat, min lon)
-    fig = px.imshow(
-        rgba_img,
-        origin="upper",
-        binary_format="png",
-    )
-
-    # Ajout de l'emprise géographique
-    fig.update_layout(
-        mapbox=dict(
-            style="carto-positron",
-            center={"lat": result_df["lat"].mean(), "lon": result_df["lon"].mean()},
-            zoom=6
-        ),
-        mapbox_layers=[
-            {
-                "below": "traces",
-                "sourcetype": "image",
-                "source": px.imshow(rgba_img).to_image(format="png"),
-                "coordinates": [
-                    [lon_unique[0], lat_unique[-1]],
-                    [lon_unique[-1], lat_unique[-1]],
-                    [lon_unique[-1], lat_unique[0]],
-                    [lon_unique[0], lat_unique[0]],
-                ]
-            }
-        ],
-        height=700,
-        margin=dict(l=0, r=0, t=0, b=0)
-    )
-
+    fig = px.imshow(rgba_img, origin="upper")
     st.plotly_chart(fig)
+
 
 
 
