@@ -9,7 +9,6 @@ streamlit_plotly_events==0.0.6
 pandas==2.2.3
 numpy==2.2.2
 scipy==1.15.1
-calendar  # déjà intégré en standard dans Python
 
 # File and compression utils
 huggingface_hub==0.29.2
