@@ -39,43 +39,42 @@ def load_config(config_path: str) -> dict:
 
 
 def echelle_config(type_: str, nombre_label: int = 5):
-    couleurs = [
-        "white",
-        "lightblue",
-        "blue",
-        "darkblue",
-        "green",
-        "darkgreen",
-        "yellow",
-        "orange",
-        "red",
-        "darkred",
-        "grey",
-        "black"
+    couleurs_vives = [
+        "#FFFFFF",  # blanc
+        "#00FFFF",  # cyan
+        "#0099FF",  # bleu ciel vif
+        "#0000FF",  # bleu
+        "#00FF00",  # vert fluo
+        "#FFFF00",  # jaune vif
+        "#FFA500",  # orange
+        "#FF4500",  # orange foncé
+        "#FF0000",  # rouge
+        "#8B0000",  # rouge foncé
+        "#800080",  # violet
+        "#000000"   # noir
     ]
 
     if type_ == "continu":
         custom_colorscale = [
-            [0.0, "white"],  
-            [0.01, "lightblue"],
-            [0.10, "blue"],
-            [0.30, "darkblue"],  
-            [0.50, "green"], 
-            [0.60, "yellow"],
-            [0.70, "red"],  
-            [0.80, "darkred"],  
-            [1.0, "#654321"]
+            [0.0, "#FFFFFF"],   # blanc
+            [0.05, "#00FFFF"],  # cyan
+            [0.15, "#0099FF"],  # bleu ciel
+            [0.30, "#0000FF"],  # bleu
+            [0.45, "#00FF00"],  # vert
+            [0.60, "#FFFF00"],  # jaune
+            [0.75, "#FF4500"],  # orange foncé
+            [0.90, "#FF0000"],  # rouge
+            [1.0, "#FF00AA"]    # rose
         ]
 
     elif type_ == "discret":
-        if not (2 <= nombre_label <= len(couleurs)):
-            raise ValueError(f"'nombre_label' doit être entre 2 et {len(couleurs)}")
+        if not (2 <= nombre_label <= len(couleurs_vives)):
+            raise ValueError(f"'nombre_label' doit être entre 2 et {len(couleurs_vives)}")
         
-        step = len(couleurs) / nombre_label
+        step = len(couleurs_vives) / nombre_label
         indices = [round(i * step) for i in range(nombre_label)]
-        indices = list(sorted(set(min(i, len(couleurs)-1) for i in indices)))
-        custom_colorscale = [couleurs[i] for i in indices]
-                
+        indices = list(sorted(set(min(i, len(couleurs_vives)-1) for i in indices)))
+        custom_colorscale = [couleurs_vives[i] for i in indices]
 
     else:
         raise ValueError(f"Type d'échelle inconnu : '{type_}'. Utilisez 'continu' ou 'discret'.")
