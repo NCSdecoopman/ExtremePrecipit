@@ -51,7 +51,7 @@ def show(config_path):
     column_to_show = get_stat_column_name(stat_choice_key, scale_choice_key)
    
     # Définir l'échelle personnalisée continue
-    colormap = echelle_config("continu")
+    colormap = echelle_config("continu" if stat_choice_key != "month" else "discret")
 
     # Normalisation de la légende
     result_df, vmin, vmax = formalised_legend(result_df, column_to_show, colormap)

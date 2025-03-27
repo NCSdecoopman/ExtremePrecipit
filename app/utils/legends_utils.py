@@ -1,3 +1,4 @@
+import pandas as pd
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
@@ -35,20 +36,31 @@ def get_stat_unit(stat_key: str, scale_key: str) -> str:
     else:
         return ""
     
-def formalised_legend(df, column_to_show, colormap):
-    vmin, vmax = df[column_to_show].min(), df[column_to_show].max()
-    value_norm = (df[column_to_show] - vmin) / (vmax - vmin)
+def formalised_legend(df, column_to_show, colormap, vmin=None, vmax=None):
+    if pd.api.types.is_datetime64_any_dtype(df[column_to_show]) or column_to_show.startswith("date_"):
+        # Convertir en datetime si ce n'est pas déjà le cas
+        df[column_to_show] = pd.to_datetime(df[column_to_show])
+        vmin = pd.to_datetime(df[column_to_show].min()) if vmin is None else pd.to_datetime(vmin)
+        vmax = pd.to_datetime(df[column_to_show].max()) if vmax is None else pd.to_datetime(vmax)
+
+        # Transformation en nombre de secondes pour normaliser
+        value_norm = (df[column_to_show] - vmin).dt.total_seconds() / (vmax - vmin).total_seconds()
+        val_fmt_func = lambda x: x.strftime("%Y-%m-%d")
+    else:
+        vmin = df[column_to_show].min() if vmin is None else vmin
+        vmax = df[column_to_show].max() if vmax is None else vmax
+        value_norm = (df[column_to_show] - vmin) / (vmax - vmin)
+        val_fmt_func = lambda x: f"{x:.1f}"
+
     value_norm = value_norm.clip(0, 1).fillna(0)
 
-    # Convertir en couleurs RGBA (avec alpha fixé à 200)
     df["fill_color"] = value_norm.apply(
-        lambda v: [int(255 * c) for c in colormap(v)[:3]] + [200]
+        lambda v: [int(255 * c) for c in colormap(v)[:3]] + [255]  # RGBA
     )
-
-    # Format pour affichage dans le tooltip
-    df["val_fmt"] = df[column_to_show].map(lambda x: f"{x:.1f}")
+    df["val_fmt"] = df[column_to_show].map(val_fmt_func)
 
     return df, vmin, vmax
+
 
 def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label=""):
     gradient = np.linspace(1, 0, 256).reshape(256, 1)
@@ -60,7 +72,13 @@ def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label
     plt.close(fig)
     base64_img = base64.b64encode(buf.getvalue()).decode()
 
-    ticks = np.linspace(vmax, vmin, n_ticks)
+    # Corriger la génération des ticks pour datetime
+    if isinstance(vmin, pd.Timestamp) and isinstance(vmax, pd.Timestamp):
+        ticks_seconds = np.linspace(vmax.timestamp(), vmin.timestamp(), n_ticks)
+        ticks = [pd.to_datetime(t, unit='s').strftime("%Y-%m-%d") for t in ticks_seconds]
+    else:
+        ticks = np.linspace(vmax, vmin, n_ticks)
+        ticks = [f"{tick:.1f}" for tick in ticks]
 
     st.markdown(
         f"""
@@ -70,7 +88,7 @@ def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label
         <div style="display: flex; flex-direction: row; align-items: center; height: {height-30}px;">
             <img src="data:image/png;base64,{base64_img}" style="height: 100%; width: 20px; border: 1px solid #ccc; border-radius: 5px;"/>
             <div style="display: flex; flex-direction: column; justify-content: space-between; margin-left: 8px; height: 100%; font-size: 12px;">
-                {''.join(f'<div>{tick:.1f}</div>' for tick in ticks)}
+                {''.join(f'<div>{tick}</div>' for tick in ticks)}
             </div>
         </div>
         """,

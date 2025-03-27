@@ -6,7 +6,6 @@ def menu_config():
         "Moyenne": "mean",
         "Maximum": "max",
         "Moyenne des maxima": "mean-max",
-        "Cumul": "sum",
         "Date du maximum": "date",
         "Mois comptabilisant le plus de maximas": "month",
         "Jour de pluie": "numday",

@@ -54,18 +54,40 @@ def compute_statistic_per_point(df: pd.DataFrame, stat_key: str, min_year: int =
         return pd.merge(df_h, df_j, on=["lat", "lon"])
 
     elif stat_key == "month":
-        # Mois le plus fréquent d'occurrence des maximas horaires et journaliers
-        df["mois_max_h"] = df["max_date_mm_h"].str[5:7].astype(int)
-        df["mois_max_j"] = df["max_date_mm_j"].str[5:7].astype(int)
+        # On commence par convertir les colonnes de date
+        df = df.copy()
+        df["max_date_mm_h"] = pd.to_datetime(df["max_date_mm_h"], errors="coerce")
+        df["max_date_mm_j"] = pd.to_datetime(df["max_date_mm_j"], errors="coerce")
 
-        mois_h = df.groupby(["lat", "lon"])["mois_max_h"] \
-                .agg(lambda x: x.value_counts().idxmax()) \
-                .reset_index(name="mois_pluvieux_h")
+        # Extraction du mois
+        df["mois_max_h"] = df["max_date_mm_h"].dt.month
+        df["mois_max_j"] = df["max_date_mm_j"].dt.month
 
-        mois_j = df.groupby(["lat", "lon"])["mois_max_j"] \
-                .agg(lambda x: x.value_counts().idxmax()) \
-                .reset_index(name="mois_pluvieux_j")
-        progress_bar.empty()  # Efface la barre de progression
+        # Suppression des valeurs NaN éventuelles
+        df = df.dropna(subset=["mois_max_h", "mois_max_j"])
+
+        # Calcul du mois le plus fréquent par point (en tenant compte des années)
+        mois_h = (
+            df.groupby(["lat", "lon", "mois_max_h"])
+            .size()
+            .reset_index(name="count_h")
+            .sort_values("count_h", ascending=False)
+            .drop_duplicates(subset=["lat", "lon"])
+            .rename(columns={"mois_max_h": "mois_pluvieux_h"})
+            [["lat", "lon", "mois_pluvieux_h"]]
+        )
+
+        mois_j = (
+            df.groupby(["lat", "lon", "mois_max_j"])
+            .size()
+            .reset_index(name="count_j")
+            .sort_values("count_j", ascending=False)
+            .drop_duplicates(subset=["lat", "lon"])
+            .rename(columns={"mois_max_j": "mois_pluvieux_j"})
+            [["lat", "lon", "mois_pluvieux_j"]]
+        )
+
+        progress_bar.empty()
         return pd.merge(mois_h, mois_j, on=["lat", "lon"])
 
 
