@@ -56,15 +56,15 @@ def echelle_config(type_: str, nombre_label: int = 5):
 
     if type_ == "continu":
         custom_colorscale = [
-            [0.0, "#FFFFFF"],   # blanc
-            [0.05, "#00FFFF"],  # cyan
-            [0.15, "#0099FF"],  # bleu ciel
-            [0.30, "#0000FF"],  # bleu
-            [0.45, "#00FF00"],  # vert
-            [0.60, "#FFFF00"],  # jaune
-            [0.75, "#FF4500"],  # orange foncé
-            [0.90, "#FF0000"],  # rouge
-            [1.0, "#FF00AA"]    # rose
+            [0.0, "white"],  
+            [0.01, "lightblue"],
+            [0.10, "blue"],
+            [0.30, "darkblue"],  
+            [0.50, "green"], 
+            [0.60, "yellow"],
+            [0.70, "red"],  
+            [0.80, "darkred"],  
+            [1.0, "#654321"]
         ]
 
     elif type_ == "discret":

@@ -7,16 +7,16 @@ def create_layer(df):
         data=df,
         get_position=["lon", "lat"],
         elevation_scale=0,
-        cell_size=2500,
+        cell_size=2505,
         get_fill_color="fill_color",
         pickable=True
     )
 
-def create_tooltip(stat):
+def create_tooltip(stat, label):
     return {
             "html": f"""
-                ({{lat}}, {{lon}})<br>
-                {{val_fmt}}
+                ({{lat_fmt}}, {{lat_fmt}})<br>
+                {{val_fmt}} {label}
             """,
             "style": {
                 "backgroundColor": "steelblue",
@@ -75,6 +75,6 @@ def plot_map(layer, view_state, tooltip):
         layers=[layer],
         initial_view_state=view_state,
         tooltip=tooltip,
-        map_style="mapbox://styles/mapbox/light-v9"
+        map_style=None
     )
     return deck

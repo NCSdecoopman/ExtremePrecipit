@@ -59,7 +59,8 @@ def show(config_path):
     layer = create_layer(result_df)
 
     # Tooltip
-    tooltip = create_tooltip(stat_choice)
+    unit_label = get_stat_unit(stat_choice_key, scale_choice_key)
+    tooltip = create_tooltip(stat_choice, unit_label)
 
     # View de la carte
     view_state = pdk.ViewState(latitude=46.9, longitude=1.7, zoom=5)
@@ -70,8 +71,14 @@ def show(config_path):
     with col1:
         deck = plot_map(layer, view_state, tooltip)
         html = deck.to_html(as_string=True, notebook_display=False)
+
+        # Ajoute une règle CSS directement dans le <head>
+        html = html.replace(
+            "<head>",
+            "<head><style>body { background-color: rgb(14, 17, 23); !important; }</style>"
+        )
+
         components.html(html, height=height, scrolling=False)
 
     with col2:
-        unit_label = get_stat_unit(stat_choice_key, scale_choice_key)
         display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=8, label=unit_label)       

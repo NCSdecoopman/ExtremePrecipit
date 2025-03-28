@@ -7,7 +7,7 @@ import base64
 
 def get_stat_column_name(stat_key: str, scale_key: str) -> str:
     if stat_key == "mean":
-        return f"mean_{scale_key}"
+        return f"mean_all_{scale_key}"
     elif stat_key == "max":
         return f"max_all_{scale_key}"
     elif stat_key == "mean-max":
@@ -70,7 +70,7 @@ def formalised_legend(df, column_to_show, colormap, vmin=None, vmax=None):
         vmax = df[column_to_show].max() if vmax is None else vmax
 
         value_norm = (df[column_to_show] - vmin) / (vmax - vmin)
-        val_fmt_func = lambda x: f"{x:.1f}"
+        val_fmt_func = lambda x: f"{x:.2f}"
 
     value_norm = value_norm.clip(0, 1).fillna(0)
 
@@ -79,6 +79,9 @@ def formalised_legend(df, column_to_show, colormap, vmin=None, vmax=None):
     )
     df["val_fmt"] = df[column_to_show].map(val_fmt_func)
 
+    df["lat_fmt"] = df["lat"].map(lambda x: f"{x:.3f}")
+    df["lon_fmt"] = df["lon"].map(lambda x: f"{x:.3f}")
+    
     return df, vmin, vmax
 
 def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label=""):

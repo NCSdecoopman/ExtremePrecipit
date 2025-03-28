@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from app.utils.data_utils import menu_config
+from app.utils.config_utils import menu_config
 
 @st.cache_data(show_spinner=False)
 def load_season(year: int, season_key: str, repo_id: str, base_path: str) -> pd.DataFrame:
@@ -11,8 +11,8 @@ def load_season(year: int, season_key: str, repo_id: str, base_path: str) -> pd.
 
 @st.cache_data(show_spinner=False)
 def load_arome_data(min_year: int, max_year: int, season: str, config) -> pd.DataFrame:
-    _, _, SEASON = menu_config()
-    if season not in SEASON:
+    _, SEASON, _ = menu_config()
+    if season not in SEASON.values():
         raise ValueError(f"Saison inconnue : {season}")
 
     repo_id = config["repo_id"]

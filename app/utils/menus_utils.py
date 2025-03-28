@@ -5,12 +5,18 @@ def menu_statisticals(min_years: int, max_years: int, STATS, SEASON):
         st.session_state["selected_point"] = None
 
     # D'abord on définit stat_choice pour l'utiliser plus tard :
-    col1, col2, col3, col4 = st.columns([1, 1, 0.75, 0.65])
+    col1, col2, col3, col4 = st.columns([1, 0.75, 1, 0.65])
 
     with col1:
         stat_choice = st.selectbox("Choix de la statistique étudiée", list(STATS.keys()))
 
     with col2:
+        season_choice = st.selectbox(
+            "Choix de la saison",
+            list(SEASON.keys())
+        )
+
+    with col3:
         st.markdown("""
             <style>
             /* Cacher les ticks-bar min et max sous la barre du slider */
@@ -29,18 +35,22 @@ def menu_statisticals(min_years: int, max_years: int, STATS, SEASON):
             </style>
         """, unsafe_allow_html=True)
 
-        min_year_choice, max_year_choice = st.slider(
-            f"Sélection temporelle entre {min_years} et {max_years}",
-            min_value=min_years,
-            max_value=max_years,
-            value=(min_years, max_years)
-        )
+        # On affiche pas la première année en année hydro ou hiver (année incomplète)
+        if season_choice in ["Année hydrologique", "Hiver"]:
+            min_year_choice, max_year_choice = st.slider(
+                f"Sélection temporelle entre {min_years+1} et {max_years}",
+                min_value=min_years+1,
+                max_value=max_years,
+                value=(min_years+1, max_years)
+            )
 
-    with col3:
-        season_choice = st.selectbox(
-            "Choix de la saison",
-            list(SEASON.keys())
-        )
+        else:
+            min_year_choice, max_year_choice = st.slider(
+                f"Sélection temporelle entre {min_years} et {max_years}",
+                min_value=min_years,
+                max_value=max_years,
+                value=(min_years, max_years)
+            )
 
     with col4:
         if stat_choice in ["Cumul","Jour de pluie"]:
