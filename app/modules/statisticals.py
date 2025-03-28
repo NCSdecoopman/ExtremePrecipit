@@ -16,7 +16,7 @@ def load_data_cached(min_year, max_year, season_key, config):
 
 def show(config_path):
     st.markdown("<h3>Visualisation des précipitations</h3>", unsafe_allow_html=True)
-
+    st.write(pd.read_parquet('data/statisticals/modelised/1959/jja.parquet'))
     config = load_config(config_path)
 
     STATS, SEASON, SCALE = menu_config()
