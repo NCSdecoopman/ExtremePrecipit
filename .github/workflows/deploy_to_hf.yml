@@ -21,9 +21,13 @@ jobs:
         run: |
           # Crée un dossier temporaire pour le push
           mkdir deploy
+          shopt -s extglob
+          cp -r !(deploy|.git|.github) deploy/
+          
+          # Remplace les pointeurs LFS par les vrais fichiers
+          git lfs pull
+          cp -r data deploy/
 
-          # Copie tous les fichiers sauf les dossiers spécifiques
-          rsync -av --exclude=deploy --exclude=.git --exclude=.github ./ deploy/
           cd deploy
 
           # Initialisation du dépôt dans ce dossier
@@ -31,12 +35,12 @@ jobs:
           git config user.email "ncsdecoopman@github.com"
           git config user.name "NCSdecoopman"
           git branch -M main
-          
+
           # Ajoute le remote Hugging Face
           git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
 
-          # Push en force vers HF
+          # Push en force vers HF (fichiers LFS inclus manuellement)
           git add .
-          git commit -m "Deploy app to HF Space"
+          git commit -m "Deploy app to HF Space with real data"
           git push hf main --force
 
