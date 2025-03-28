@@ -34,7 +34,12 @@ jobs:
           # Ajoute le remote Hugging Face
           git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
 
-          # Push en force vers HF
+          # Initialise Git LFS et track les .parquet
+          git lfs install
+          git lfs track "*.parquet"
+          git add .gitattributes
+
+          # Ajout et push des fichiers avec LFS
           git add .
-          git commit -m "Deploy app to HF Space"
+          git commit -m "Deploy app to HF Space with LFS"
           git push hf main --force
