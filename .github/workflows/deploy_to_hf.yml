@@ -19,23 +19,24 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
         run: |
-          # Installe Git LFS
-          sudo apt update && sudo apt install git-lfs -y
-          git lfs install
+          # Crée un dossier temporaire pour le push
+          mkdir deploy
 
-          # Clone du dépôt HF (avec LFS actif)
-          git clone https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit deploy
+          # Copie tous les fichiers sauf les dossiers spécifiques
+          rsync -av --exclude=deploy --exclude=.git --exclude=.github ./ deploy/
           cd deploy
 
-          # Supprime tout sauf le dossier .git
-          find . -mindepth 1 ! -regex '^./\.git\(/.*\)?' -delete
+          # Initialisation du dépôt dans ce dossier
+          git init
+          git config user.email "ncsdecoopman@github.com"
+          git config user.name "NCSdecoopman"
+          git branch -M main
+          
+          # Ajoute le remote Hugging Face
+          git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
 
-          # Copie le contenu du dépôt local (hors .git/.github)
-          rsync -av --exclude=deploy --exclude=.git --exclude=.github ../ ./
-
-          # Ajoute et push
+          # Push en force vers HF
           git add .
-          git commit -m "Deploy app to HF Space with LFS" || echo "Rien à commit"
-          git push
-
+          git commit -m "Deploy app to HF Space"
+          git push hf main --force
 
