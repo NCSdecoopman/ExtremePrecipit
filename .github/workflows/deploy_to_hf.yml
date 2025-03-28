@@ -44,12 +44,16 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
         run: |
+          # Copie le dossier data/ dans deploy/
+          cp -r data deploy/data
+
           cd deploy
 
           # Setup Git LFS
           git lfs install
-          git lfs track "*.parquet"  # adapte si besoin
+          git lfs track "*.parquet"
           git add .gitattributes
           git add data/
           git commit -m "Ajout des fichiers LFS"
           git push hf main
+
