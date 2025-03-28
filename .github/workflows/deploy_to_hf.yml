@@ -22,7 +22,7 @@ jobs:
           # Crée un dossier temporaire pour le push
           mkdir deploy
           shopt -s extglob
-          cp -r !(deploy|.git|.github) deploy/
+          cp -r !(deploy|.git|.github|data) deploy/
           cd deploy
 
           # Initialisation du dépôt dans ce dossier
