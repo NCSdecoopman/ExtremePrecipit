@@ -1,47 +1,48 @@
-name: Deploy viz app to Hugging Face Spaces
+name: Deploy Streamlit App to Hugging Face Spaces
 
 on:
   push:
     branches:
-      - app
+      - main
+    paths:
+      - "app/**"
+      - "data/**"
+      - "requirements.txt"
+      - "deploy.yaml"
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          lfs: true  # Indispensable pour que Git LFS fonctionne dans l'action
 
-      - name: Deploy viz app to Hugging Face Space
-        env:
-          HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
+      - name: Set up Git
         run: |
-          # Crée un dossier temporaire pour le push
+          git config --global user.email "you@example.com"
+          git config --global user.name "Your Name"
+
+      - name: Pull Git LFS files
+        run: |
+          git lfs pull
+
+      - name: Prepare deploy folder
+        run: |
           mkdir deploy
           shopt -s extglob
           cp -r !(deploy|.git|.github) deploy/
-          cd deploy
 
-          # Init git et Git LFS
+      - name: Initialize Git repo for Hugging Face
+        run: |
+          cd deploy
           git init
           git lfs install
-          git lfs track "*.parquet"
-
-          git config user.email "ncsdecoopman@github.com"
-          git config user.name "NCSdecoopman"
-          git add .gitattributes  # important pour Git LFS
+          git remote add origin https://ncsdecoopman:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
+          git pull origin main || echo "Nothing to pull"
+          git checkout -b main
           git add .
-
           git commit -m "Deploy app to HF Space with real data"
-          git branch -M main
-
-          # Ajoute le remote Hugging Face
-          git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
-
-          # Push vers Hugging Face
-          git push hf main --force
-
-
+          git push origin main --force
