@@ -3,7 +3,7 @@ name: Deploy Streamlit App to Hugging Face Spaces
 on:
   push:
     branches:
-      - main
+      - app
     paths:
       - "app/**"
       - "data/**"
