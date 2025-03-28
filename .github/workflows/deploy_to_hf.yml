@@ -36,8 +36,9 @@ jobs:
           git init
           git lfs install
           git remote add origin https://ncsdecoopman:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
-          git pull origin main || echo "Nothing to pull"
+          git fetch origin main || echo "No remote branch yet"
           git checkout -b main
           git add .
           git commit -m "Deploy app to HF Space with real data"
           git push origin main --force
+
