@@ -3,7 +3,7 @@ name: Deploy Streamlit App to Hugging Face Spaces
 on:
   push:
     branches:
-      - app
+      - app  # Déclenche le workflow quand on push sur la branche "app"
 
 jobs:
   deploy:
@@ -13,16 +13,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          lfs: true  # Indispensable pour que Git LFS fonctionne dans l'action
+          lfs: true  # Nécessaire si tu utilises Git LFS
 
       - name: Set up Git
         run: |
           git config --global user.email "you@example.com"
           git config --global user.name "Your Name"
+          git config --global init.defaultBranch main
 
       - name: Pull Git LFS files
-        run: |
-          git lfs pull
+        run: git lfs pull
 
       - name: Prepare deploy folder
         run: |
@@ -35,10 +35,11 @@ jobs:
           cd deploy
           git init
           git lfs install
+          git config --global user.email "you@example.com"
+          git config --global user.name "Your Name"
           git remote add origin https://ncsdecoopman:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
           git fetch origin main || echo "No remote branch yet"
           git checkout -b main
           git add .
           git commit -m "Deploy app to HF Space with real data"
           git push origin main --force
-
