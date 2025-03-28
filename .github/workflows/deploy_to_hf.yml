@@ -1,45 +1,40 @@
-name: Deploy Streamlit App to Hugging Face Spaces
+name: Deploy viz app to Hugging Face Spaces
 
 on:
   push:
     branches:
-      - app  # Déclenche le workflow quand on push sur la branche "app"
+      - app
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
         with:
-          lfs: true  # Nécessaire si tu utilises Git LFS
+          fetch-depth: 0
 
-      - name: Set up Git
+      - name: Deploy viz app to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
         run: |
-          git config --global user.email "you@example.com"
-          git config --global user.name "Your Name"
-          git config --global init.defaultBranch main
-
-      - name: Pull Git LFS files
-        run: git lfs pull
-
-      - name: Prepare deploy folder
-        run: |
+          # Crée un dossier temporaire pour le push
           mkdir deploy
           shopt -s extglob
           cp -r !(deploy|.git|.github) deploy/
-
-      - name: Initialize Git repo for Hugging Face
-        run: |
           cd deploy
+
+          # Initialisation du dépôt dans ce dossier
           git init
-          git lfs install
-          git config --global user.email "you@example.com"
-          git config --global user.name "Your Name"
-          git remote add origin https://ncsdecoopman:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
-          git fetch origin main || echo "No remote branch yet"
-          git checkout -b main
+          git config user.email "ncsdecoopman@github.com"
+          git config user.name "NCSdecoopman"
+          git branch -M main
+          
+          # Ajoute le remote Hugging Face
+          git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
+
+          # Push en force vers HF
           git add .
-          git commit -m "Deploy app to HF Space with real data"
-          git push origin main --force
+          git commit -m "Deploy app to HF Space"
+          git push hf main --force
