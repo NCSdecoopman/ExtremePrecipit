@@ -1,6 +1,5 @@
 import pandas as pd
 import streamlit as st
-from huggingface_hub import hf_hub_download
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 SEASON_TO_FILENAME = {
@@ -12,12 +11,12 @@ SEASON_TO_FILENAME = {
 }
 
 @st.cache_data(show_spinner=False)
-def load_season_parquet_from_huggingface(year: int, season: str, repo_id: str, base_path: str) -> pd.DataFrame:
+def load_season(year: int, season: str, repo_id: str, base_path: str) -> pd.DataFrame:
     filename=f"{base_path}/{year:04d}/{SEASON_TO_FILENAME[season]}"
     return pd.read_parquet(filename)
 
 @st.cache_data(show_spinner=False)
-def load_seasonal_data(min_year: int, max_year: int, season: str, config) -> pd.DataFrame:
+def load_arome_data(min_year: int, max_year: int, season: str, config) -> pd.DataFrame:
     if season not in SEASON_TO_FILENAME:
         raise ValueError(f"Saison inconnue : {season}")
 
@@ -35,7 +34,7 @@ def load_seasonal_data(min_year: int, max_year: int, season: str, config) -> pd.
 
         with ThreadPoolExecutor(max_workers=16) as executor:
             futures = {
-                executor.submit(load_season_parquet_from_huggingface, year, season, repo_id, base_path): year
+                executor.submit(load_season, year, season, repo_id, base_path): year
                 for year in tasks
             }
 
