@@ -38,3 +38,18 @@ jobs:
           git add .
           git commit -m "Deploy app to HF Space"
           git push hf main --force
+
+
+      - name: Add data/ files via Git LFS
+        env:
+          HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
+        run: |
+          cd deploy
+
+          # Setup Git LFS
+          git lfs install
+          git lfs track "*.parquet"  # adapte si besoin
+          git add .gitattributes
+          git add data/
+          git commit -m "Ajout des fichiers LFS"
+          git push hf main
