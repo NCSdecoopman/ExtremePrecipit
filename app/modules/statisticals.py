@@ -65,7 +65,7 @@ def show(config_path):
     # View de la carte
     view_state = pdk.ViewState(latitude=46.9, longitude=1.7, zoom=5)
 
-    col1, col2, col3 = st.columns([2.5, 1, 3])  # Carte large, légende étroite
+    col1, col2, col3 = st.columns([3, 1, 2.5])  # Carte large, légende étroite
     height = 600
 
     with col1:
