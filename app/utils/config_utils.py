@@ -12,11 +12,11 @@ def menu_config():
     }
 
     SEASON = {
-        "Année hydrologique": [9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8],
-        "Hiver": [12, 1, 2],
-        "Printemps": [3, 4, 5],
-        "Été": [6, 7, 8],
-        "Automne": [9, 10, 11],
+        "Année hydrologique": "hydro",
+        "Hiver": "djf",
+        "Printemps": "mam",
+        "Été": "jja",
+        "Automne": "son",
     }
 
     SCALE = {

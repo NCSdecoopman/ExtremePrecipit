@@ -16,7 +16,6 @@ def load_data_cached(min_year, max_year, season_key, config):
 
 def show(config_path):
     st.markdown("<h3>Visualisation des précipitations</h3>", unsafe_allow_html=True)
-    st.write(pd.read_parquet('data/statisticals/modelised/1959/jja.parquet'))
     config = load_config(config_path)
 
     STATS, SEASON, SCALE = menu_config()
@@ -39,7 +38,7 @@ def show(config_path):
         df_all = load_data_cached(
             min_year_choice,
             max_year_choice,
-            tuple(season_choice_key),  # Doit être hashable
+            season_choice_key,
             config
         )
     except Exception as e:
@@ -47,7 +46,7 @@ def show(config_path):
         return
 
     # Calcul des statistiques
-    result_df = compute_statistic_per_point(df_all, stat_choice_key, min_year_choice, max_year_choice, season_choice_key)
+    result_df = compute_statistic_per_point(df_all, stat_choice_key)
     column_to_show = get_stat_column_name(stat_choice_key, scale_choice_key)
 
     # Définir l'échelle personnalisée continue
