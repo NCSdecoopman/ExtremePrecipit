@@ -23,18 +23,19 @@ jobs:
           sudo apt update && sudo apt install git-lfs -y
           git lfs install
 
-          # Clone du dépôt Hugging Face (avec LFS activé)
+          # Clone du dépôt HF (avec LFS actif)
           git clone https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit deploy
           cd deploy
 
-          # Supprime tout sauf le .git
+          # Supprime tout sauf le dossier .git
           find . -mindepth 1 ! -regex '^./\.git\(/.*\)?' -delete
 
-          # Copie tous les fichiers de la racine du repo local
-          cp -r ../!(deploy|.git|.github) .
+          # Copie le contenu du dépôt local (hors .git/.github)
+          rsync -av --exclude=deploy --exclude=.git --exclude=.github ../ ./
 
           # Ajoute et push
           git add .
           git commit -m "Deploy app to HF Space with LFS" || echo "Rien à commit"
           git push
+
 
