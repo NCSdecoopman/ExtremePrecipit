@@ -5,4 +5,4 @@ years:
   max: 2010
 
 statisticals:
-  modelised: data/statisticals/modelised
+  modelised: statisticals/modelised
