@@ -4,11 +4,6 @@ on:
   push:
     branches:
       - app
-    paths:
-      - "app/**"
-      - "data/**"
-      - "requirements.txt"
-      - "deploy.yaml"
 
 jobs:
   deploy:
