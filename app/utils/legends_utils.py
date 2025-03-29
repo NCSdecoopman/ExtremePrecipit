@@ -5,6 +5,12 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
 
+from matplotlib.colors import LinearSegmentedColormap
+
+def convert_custom_colorscale(custom_colorscale):
+    positions, colors = zip(*custom_colorscale)
+    return LinearSegmentedColormap.from_list("custom_colormap", list(zip(positions, colors)))
+
 def get_stat_column_name(stat_key: str, scale_key: str) -> str:
     if stat_key == "mean":
         return f"mean_all_{scale_key}"
@@ -13,7 +19,6 @@ def get_stat_column_name(stat_key: str, scale_key: str) -> str:
     elif stat_key == "mean-max":
         return f"max_mean_{scale_key}"
     elif stat_key == "date":
-        # Ici on teste le mot "Horaire" ou "Journalière"
         if scale_key == "Horaire":
             return "date_max_h"
         else:  # Journalière
@@ -94,23 +99,20 @@ def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label
 
     # --- CAS SPÉCIAL : MOIS (VALEURS DISCRÈTES DE 1 À 12) ---
     if isinstance(vmin, int) and isinstance(vmax, int) and (1 <= vmin <= 12) and (1 <= vmax <= 12):
-        # Labels français des mois
         mois_labels = [
             "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
             "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
         ]
 
-        # On va construire un bloc HTML qui contient 1 ligne par mois
+        cmap = colormap  # colormap est déjà passé à la fonction depuis echelle_config
+
         color_boxes = ""  
         for mois in range(vmin, vmax + 1):
-            # Normalisation : mois = 1..12 -> entre 0 et 1
-            # (mois-1)/11 : 0 pour Janvier, 1 pour Décembre
-            rgba = colormap((mois - 1) / 11)
+            rgba = cmap((mois - 1) / 11)  # Normalisé entre 0 et 1
             rgb = [int(255 * c) for c in rgba[:3]]
             color = f"rgb({rgb[0]}, {rgb[1]}, {rgb[2]})"
             label_mois = mois_labels[mois - 1]
 
-            # Concaténation d'un bloc HTML
             color_boxes += (
                 f'<div style="display: flex; align-items: center; margin-bottom: 4px;">'
                 f'  <div style="width: 14px; height: 14px; '
@@ -122,7 +124,6 @@ def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label
                 f'</div>'
             )
 
-        # Envoi du HTML complet à Streamlit
         html_mois = (
             f'<div style="text-align: left; font-size: 13px; margin-bottom: 4px;">'
             f'  <b>{label}</b>'
@@ -132,7 +133,7 @@ def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label
             f'</div>'
         )
         st.markdown(html_mois, unsafe_allow_html=True)
-        return  # On sort pour ne pas afficher la légende “gradient” ci-dessous
+        return
 
     # --- CAS NORMAL : LÉGENDE CONTINUE AVEC GRADIENT ---
     gradient = np.linspace(1, 0, 256).reshape(256, 1)

@@ -65,7 +65,7 @@ def compute_statistic_per_point(df: pd.DataFrame, stat_key: str) -> pd.DataFrame
             .rename(columns={"mois_max_j": "mois_pluvieux_j"})
             [["lat", "lon", "mois_pluvieux_j"]]
         )
-
+        
         return pd.merge(mois_h, mois_j, on=["lat", "lon"])
 
 
