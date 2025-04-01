@@ -24,7 +24,7 @@ jobs:
           shopt -s extglob dotglob
           cp -r !(deploy|.git|.github) deploy/  # ✅ Ne pas exclure data/
 
-          # Génère automatiquement un Dockerfile avec data incluse
+          # Génère un Dockerfile incluant les données
           cat <<EOF > deploy/Dockerfile
           FROM python:3.11-slim
 
@@ -47,7 +47,7 @@ jobs:
           # Fichier de configuration Hugging Face
           echo "sdk: docker" > deploy/.huggingface.yaml
 
-          # README
+          # README Hugging Face
           cat <<EOF > deploy/README.md
           ---
           title: "Application de visualisation"
@@ -63,12 +63,12 @@ jobs:
           > Générée automatiquement depuis le dépôt [GitHub](https://github.com/NCSdecoopman/ExtremePrecipit/tree/app)
           EOF
 
-          # Copie aussi la config Streamlit si présente
+          # Copie la config Streamlit si elle existe
           if [ -d .streamlit ]; then
             cp -r .streamlit deploy/
           fi
 
-          # Initialisation du dépôt Hugging Face
+          # Initialisation du dépôt HF
           cd deploy
           git init
           git config user.email "ncsdecoopman@github.com"
@@ -76,7 +76,7 @@ jobs:
           git branch -M main
           git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
 
-          # Supprime tout le contenu distant pour repartir au propre
+          # Réinitialisation complète du remote Hugging Face
           git fetch hf
           git reset --hard
           git rm -rf . > /dev/null 2>&1 || true
@@ -84,6 +84,7 @@ jobs:
           git commit --allow-empty -m "Reset remote Space"
           git push hf main --force
 
+          # Ajoute tous les fichiers et push
           git add .
-          git commit -m "Deploy full Dockerized app with data"
+          git diff --cached --quiet || git commit -m "Deploy full Dockerized app with data"
           git push hf main --force
