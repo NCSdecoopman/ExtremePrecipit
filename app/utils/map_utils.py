@@ -12,7 +12,7 @@ def create_layer(df):
         elevation_scale=0,
         lighting=None,
         pickable=True,
-        opacity=1.0,
+        opacity=0.1,
         extruded=False
     )
 

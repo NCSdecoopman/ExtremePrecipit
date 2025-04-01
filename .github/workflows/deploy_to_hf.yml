@@ -1,4 +1,4 @@
-name: Deploy viz app to Hugging Face Spaces
+name: Deploy Dockerized app to Hugging Face Spaces
 
 on:
   push:
@@ -15,47 +15,66 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Deploy viz app to Hugging Face Space
+      - name: Prepare and push Dockerized app
         env:
           HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
         run: |
-          # Crée un dossier temporaire pour le push
+          # Crée un dossier temporaire
           mkdir deploy
-          shopt -s extglob
-          # Inclure tous les fichiers normaux + .streamlit/
           shopt -s extglob dotglob
           cp -r !(deploy|.git|.github|data) deploy/
-          cd deploy
 
-          # Initialisation du dépôt dans ce dossier
+          # Génère automatiquement un Dockerfile
+          cat <<EOF > deploy/Dockerfile
+          FROM python:3.11-slim
+
+          RUN apt-get update && apt-get install -y \\
+              build-essential \\
+              git \\
+              && rm -rf /var/lib/apt/lists/*
+
+          WORKDIR /app
+
+          COPY . .
+
+          RUN pip install --no-cache-dir -r requirements.txt
+
+          EXPOSE 7860
+
+          CMD ["streamlit", "run", "streamlit_app.py", "--server.port=7860", "--server.address=0.0.0.0"]
+          EOF
+
+          # Génère un README minimal
+          echo "# ExtremePrecipit" > deploy/README.md
+
+          # Copie ou crée un requirements.txt si non présent
+          if [ ! -f deploy/requirements.txt ]; then
+            echo "streamlit" > deploy/requirements.txt
+          fi
+
+          # Initialisation du dépôt
+          cd deploy
           git init
           git config user.email "ncsdecoopman@github.com"
           git config user.name "NCSdecoopman"
           git branch -M main
-          
-          # Ajoute le remote Hugging Face
           git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
 
-          # Push en force vers HF
           git add .
-          git commit -m "Deploy app to HF Space"
+          git commit -m "Deploy Dockerized app to HF Space"
           git push hf main --force
-
 
       - name: Add data/ files via Git LFS
         env:
           HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
         run: |
-          # Copie le dossier data/ dans deploy/
+          # Copie les fichiers data/ dans deploy/
           cp -r data deploy/data
 
           cd deploy
-
-          # Setup Git LFS
           git lfs install
           git lfs track "*.parquet"
           git add .gitattributes
           git add data/
           git commit -m "Ajout des fichiers LFS"
           git push hf main
-
