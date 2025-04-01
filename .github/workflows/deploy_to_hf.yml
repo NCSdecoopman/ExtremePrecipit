@@ -79,27 +79,23 @@ jobs:
           # ------------------------------------------------------
           # b) Créer le Dockerfile
           # ------------------------------------------------------
-          python <<EOF
+          python <<'EOF'
           import warnings
           warnings.filterwarnings("ignore", message="It seems that you are about to commit a data file*")
 
           from huggingface_hub import HfApi, upload_file
           import os
 
-          # CONFIG
-          SPACE_ID = "ncsdecoopman/ExtremePrecipit"  # identifiant complet de votre Space
-          LOCAL_DIR = "data"                         # dossier local dans le repo GitHub
-          REMOTE_DIR = "data"                        # sous-dossier de la Space (côté HF)
+          SPACE_ID = "ncsdecoopman/ExtremePrecipit"
+          LOCAL_DIR = "data"
+          REMOTE_DIR = "data"
 
           api = HfApi()
 
-          # Parcourt récursivement le dossier local "data"
           for root, _, files in os.walk(LOCAL_DIR):
               for file in files:
                   local_path = os.path.join(root, file)
-                  # Chemin relatif par rapport à "data"
                   relative_path = os.path.relpath(local_path, LOCAL_DIR)
-                  # Sur la Space, on veut le même chemin dans "data/..."
                   repo_path = f"{REMOTE_DIR}/{relative_path}".replace("\\", "/")
 
                   print(f"Uploading {local_path} to {repo_path}...")
@@ -112,6 +108,7 @@ jobs:
                       token=os.environ['HF_TOKEN'],
                   )
           EOF
+
 
 
           # c) .huggingface.yaml + README
