@@ -28,9 +28,9 @@ jobs:
           cat <<EOF > deploy/Dockerfile
           FROM python:3.11-slim
 
-          RUN apt-get update && apt-get install -y \\
-              build-essential \\
-              git \\
+          RUN apt-get update && apt-get install -y \
+              build-essential \
+              git \
               && rm -rf /var/lib/apt/lists/*
 
           WORKDIR /app
@@ -41,8 +41,11 @@ jobs:
 
           EXPOSE 7860
 
-          CMD ["streamlit", "run", "streamlit_app.py", "--server.port=7860", "--server.address=0.0.0.0"]
+          CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
           EOF
+
+          # Génère un fichier .huggingface.yaml pour activer le mode Docker
+          echo "sdk: docker" > deploy/.huggingface.yaml
 
           # Génère un README minimal
           cat <<EOF > deploy/README.md
@@ -61,7 +64,6 @@ jobs:
 
           > Générée automatiquement depuis le dépôt [GitHub](https://github.com/NCSdecoopman/ExtremePrecipit/tree/app)
           EOF
-
 
           # Copie ou crée un requirements.txt si non présent
           if [ ! -f deploy/requirements.txt ]; then
@@ -84,7 +86,6 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
         run: |
-          # Copie les fichiers data/ dans deploy/
           cp -r data deploy/data
 
           cd deploy
