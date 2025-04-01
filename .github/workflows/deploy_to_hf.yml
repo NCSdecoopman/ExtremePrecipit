@@ -10,15 +10,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       # 1. Récupérer tout le code du repo GitHub (branche "app")
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      # 2. (Optionnel) Installer Git LFS si nécessaire (pas indispensable ici,
-      #    car on va utiliser l'API huggyface_hub pour uploader les données)
+      # 2. (Optionnel) Installer Git LFS si nécessaire pour d'autres fichiers volumineux
       - name: Installer Git LFS
         run: |
           sudo apt-get update
@@ -28,33 +26,33 @@ jobs:
       # 3. Uploader les fichiers du dossier "data/" vers la Space
       - name: Uploader les données dans la Space
         env:
-          HF_TOKEN: ${{ secrets.HF_VIZ_APP }}  # Votre token HF
+          HF_TOKEN: ${{ secrets.HF_VIZ_APP }}  # Votre token HF (avec droits write sur la Space)
         run: |
           python <<EOF
           import warnings
           warnings.filterwarnings("ignore", message="It seems that you are about to commit a data file*")
-
+          
           from huggingface_hub import HfApi, upload_file
           import os
-
+          
           # CONFIG
-          SPACE_ID = "ncsdecoopman/ExtremePrecipit"  # identifiant complet de votre Space
-          LOCAL_DIR = "data"                         # dossier local dans le repo GitHub
-          REMOTE_DIR = "data"                        # sous-dossier de la Space (côté HF)
-
+          SPACE_ID = "ncsdecoopman/ExtremePrecipit"  # Nom complet de la Space
+          LOCAL_DIR = "data"                         # Dossier local du repo
+          REMOTE_DIR = "data"                        # Sous-dossier sur la Space
+          
           api = HfApi()
-
+          
           # Parcourt récursivement le dossier local "data"
           for root, _, files in os.walk(LOCAL_DIR):
               for file in files:
                   local_path = os.path.join(root, file)
                   # Chemin relatif par rapport à "data"
                   relative_path = os.path.relpath(local_path, LOCAL_DIR)
-                  # Sur la Space, on veut le même chemin dans "data/..."
+                  # Sur la Space -> "data/..."
                   repo_path = f"{REMOTE_DIR}/{relative_path}".replace("\\", "/")
-
+          
                   print(f"Uploading {local_path} to {repo_path}...")
-
+          
                   upload_file(
                       path_or_fileobj=local_path,
                       path_in_repo=repo_path,
@@ -64,7 +62,7 @@ jobs:
                   )
           EOF
 
-      # 4. Préparer le dossier "deploy" et pousser la configuration Docker vers la Space
+      # 4. Préparer le dossier "deploy" et pousser la config Docker vers la Space
       - name: Préparer et pousser l'app Dockerisée
         env:
           HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
@@ -73,14 +71,13 @@ jobs:
         run: |
           # ------------------------------------------------------
           # a) Créer le dossier "deploy" et y copier le code
-          #    (sans le .git, ni .github, etc.)
+          #    (sans .git ni .github)
           # ------------------------------------------------------
           mkdir deploy
           rsync -av --exclude=deploy --exclude=.git --exclude=.github . deploy/
 
           # ------------------------------------------------------
           # b) Créer le Dockerfile
-          #    - Au build, on va télécharger les données depuis la Space
           # ------------------------------------------------------
           cat <<EOF > deploy/Dockerfile
           FROM python:3.11-slim
@@ -92,25 +89,25 @@ jobs:
 
           WORKDIR /app
 
-          # 1) Installer nos dépendances
+          # Installer les dépendances
           COPY requirements.txt .
           RUN pip install --no-cache-dir -r requirements.txt
 
-          # 2) Installer huggingface_hub pour snapshot_download
+          # Installer huggingface_hub pour snapshot_download
           RUN pip install huggingface_hub
 
-          # 3) Passer le token comme argument
+          # On passe le token en argument
           ARG HF_TOKEN_ARG
           ENV HF_TOKEN=\$HF_TOKEN_ARG
 
-          # 4) Récupérer les fichiers (dont data/) depuis la Space
+          # Télécharger tout le contenu de la Space (y compris data/) pour l'inclure dans l'image
           RUN python -c "from huggingface_hub import snapshot_download; \\
                          snapshot_download(repo_id='\${HF_USER}/\${HF_SPACE}', \\
                                            repo_type='space', \\
                                            local_dir='/app/data', \\
                                            token='\${HF_TOKEN}')"
 
-          # 5) Copier le reste de l'app (app.py, etc.)
+          # Copier le reste de l'app (ex: app.py, .streamlit/, etc.)
           COPY . .
 
           EXPOSE 7860
@@ -119,7 +116,7 @@ jobs:
           CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
           EOF
 
-          # c) Fichier config Hugging Face + README
+          # c) .huggingface.yaml + README
           echo "sdk: docker" > deploy/.huggingface.yaml
           echo "# Déploiement Docker + snapshot_download pour data" > deploy/README.md
 
