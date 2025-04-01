@@ -1,3 +1,6 @@
+echelles:
+  - horaire
+
 nc:
   path:
     inputdir: "data/raw/modelised" # précipitation en kg/m²/s
@@ -27,7 +30,7 @@ zarr:
 statistics:
   path:
     outputdir: "data/statisticals/modelised"
-  overwrite: true  # ou false pour ne pas écraser les .parquet existants par défaut
+  overwrite: false  # ou false pour ne pas écraser les .parquet existants par défaut
 
 log:
   directory: "logs/pipeline/modelised"  # dossier où sera écrit les fichiers .log

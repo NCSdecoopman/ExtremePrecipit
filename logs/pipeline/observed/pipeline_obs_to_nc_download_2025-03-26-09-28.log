@@ -1,4 +1,0 @@
-2025-03-26 09:28:30,573 | __main__ | INFO | Logger initialisé avec fichier : logs/pipeline/observed\pipeline_obs_to_nc_download_2025-03-26-09-28.log
-2025-03-26 09:28:30,573 | __main__ | INFO | Démarrage du pipeline observations (ZIP) → .nc avec la config : config/observed_settings.yaml
-2025-03-26 09:28:30,573 | __main__ | INFO | --- Début du téléchargement des ZIP
-2025-03-26 09:28:37,096 | __main__ | INFO | --- Téléchargement terminé.

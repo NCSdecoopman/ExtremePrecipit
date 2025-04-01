@@ -1,0 +1,457 @@
+import os
+import gzip
+import argparse
+from pathlib import Path
+import requests
+from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor
+
+
+import numpy as np
+import pandas as pd
+from netCDF4 import Dataset, num2date
+from datetime import datetime
+
+from src.utils.config_tools import load_config
+from src.utils.logger import get_logger
+
+# ================================================================
+# Fonctions de téléchargement
+# ================================================================
+
+def download_utils(dep: int, echelle: str, output_file: Path, full_url: str, logger) -> None:
+    if output_file.exists():
+        logger.info(f"Fichier échelle {echelle} déjà présent pour le département {dep:02d}")
+
+        # Vérifie si le fichier est un gzip valide
+        try:
+            with gzip.open(output_file, 'rb') as f:
+                f.read()
+        except Exception:
+            logger.warning(f"Fichier corrompu détecté : {output_file.name}, suppression et re-téléchargement.")
+            output_file.unlink()  # suppression
+        else:
+            return  # fichier OK → on quitte
+
+    # Téléchargement
+    try:
+        r = requests.get(full_url, stream=True)
+        if r.status_code == 200:
+            with open(output_file, "wb") as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            logger.info(f"Téléchargement terminé pour le département {dep:02d} à l'échelle {echelle}")
+        else:
+            logger.warning(f"Impossible de DL {full_url} (status={r.status_code})")
+            return
+    except Exception as e:
+        logger.warning(f"Erreur lors du téléchargement de {full_url} : {e}")
+        return
+
+    # Vérifie que le fichier téléchargé est bien valide (pas tronqué)
+    try:
+        with gzip.open(output_file, 'rb') as f:
+            f.read()
+    except Exception:
+        logger.error(f"Fichier téléchargé corrompu : {output_file.name} — suppression.")
+        output_file.unlink()
+    else:
+        logger.info(f"Fichier validé : {output_file.name}")
+
+
+
+def download_quotidien_zip(dep: int, output_dir: Path, logger) -> None:
+    """
+    Télécharge les fichiers quotidiens pour un département donné selon :
+    - https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_XX_previous-1950-2023_RR-T-Vent.csv.gz
+    """
+    base_url = "https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT"
+    file_name = f"Q_{dep:02d}_previous-1950-2023_RR-T-Vent.csv.gz"
+    full_url = f"{base_url}/{file_name}"
+    output_file = output_dir / file_name
+
+    download_utils(dep, 'quotidienne', output_file, full_url, logger)
+
+
+def download_horaire_zip(dep: int, output_dir: Path, logger) -> None:
+    """
+    Télécharge les fichiers horaires pour un département donné selon :
+    1950-1959, ..., 2010-2019 ainsi que 2020-2023
+    """
+    base_url = "https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/HOR"
+    dep_str = f"{dep:02d}"
+    # Périodes décennales de 1950 à 2010
+    for year in range(1950, 2011, 10):
+        end_year = year + 9
+        file_name = f"H_{dep_str}_{year}-{end_year}.csv.gz"
+        full_url = f"{base_url}/{file_name}"
+        output_file = output_dir / file_name
+        download_utils(dep, f'horaire_{year}-{end_year}', output_file, full_url, logger)
+
+    # Période spéciale 2020-2023
+    file_name = f"H_{dep_str}_previous-2020-2023.csv.gz"
+    full_url = f"{base_url}/{file_name}"
+    output_file = output_dir / file_name
+    download_utils(dep, 'horaire_2020-2023', output_file, full_url, logger)
+
+
+def download_all_zips(echelles: list, logger, max_workers: int = 8) -> None:
+    """
+    Téléchargement parallèle des fichiers horaires/quotidiens pour tous les départements.
+    """
+    horaire_dir = Path("data/temp/horaire_zip")
+    quotidien_dir = Path("data/temp/quotidien_zip")
+    horaire_dir.mkdir(parents=True, exist_ok=True)
+    quotidien_dir.mkdir(parents=True, exist_ok=True)
+
+    tasks = []
+
+    # Préparation des tâches
+    for dep in range(1, 96):
+        if "quotidienne" in echelles:
+            tasks.append(("quotidienne", dep, quotidien_dir))
+        if "horaire" in echelles:
+            tasks.append(("horaire", dep, horaire_dir))
+
+    # Téléchargement en parallèle
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = []
+        for echelle, dep, output_dir in tasks:
+            if echelle == "horaire":
+                futures.append(executor.submit(download_horaire_zip, dep, output_dir, logger))
+            elif echelle == "quotidienne":
+                futures.append(executor.submit(download_quotidien_zip, dep, output_dir, logger))
+
+        for future in tqdm(as_completed(futures), total=len(futures), desc="Téléchargements"):
+            try:
+                future.result()
+            except Exception as e:
+                logger.warning(f"Erreur pendant un téléchargement : {e}")
+
+# ================================================================
+# Fonctions utilitaires
+# ================================================================
+
+def process_file(file, echelle):
+    try:
+        relevant_cols = (
+            ["NOM_USUEL", "LAT", "LON", "AAAAMMJJHH", "RR1"] if echelle == "horaire"
+            else ["NOM_USUEL", "LAT", "LON", "AAAAMMJJ", "RR"]
+        )
+        df = pd.read_csv(file, sep=";", usecols=relevant_cols, compression="gzip")
+        stations = df[["NOM_USUEL", "LAT", "LON"]].drop_duplicates()
+        return {(row["NOM_USUEL"], row["LAT"], row["LON"]) for _, row in stations.iterrows()}
+    except Exception as e:
+        logger.error(f"Erreur inattendue avec le fichier {file} : {e}")
+        return set()
+
+def get_time_axis(annee: int, echelle: str) -> pd.DatetimeIndex:
+    """
+    Génère un axe de temps en fonction de l'échelle :
+      - horaire : freq="H"
+      - quotidienne : freq="D"
+
+    De {annee}-01-01 00:00:00 à {annee}-12-31 23:59:59
+    """
+    if echelle == "horaire":
+        freq = "h"
+        start = f"{annee}-01-01 00:00:00"
+        end = f"{annee}-12-31 23:59:59"
+    elif echelle == "quotidienne":
+        freq = "D"
+        start = f"{annee}-01-01"
+        end = f"{annee}-12-31"
+    else:
+        raise ValueError(f"Échelle inconnue: {echelle}")
+
+    time_axis = pd.date_range(start=start, end=end, freq=freq, tz="UTC")
+    return time_axis
+
+def parse_datetime(row, echelle):
+    if echelle == "horaire":
+        return pd.to_datetime(str(row["AAAAMMJJHH"]), format="%Y%m%d%H", errors="coerce")
+    else:
+        return pd.to_datetime(str(row["AAAAMMJJ"]), format="%Y%m%d", errors="coerce")
+    
+
+# ================================================================
+# Fonctions principales
+# ================================================================
+
+def process_csv_file(file, echelle, nc_dir, station_map):
+    try:
+        cols = (
+            ["NOM_USUEL", "LAT", "LON", "AAAAMMJJHH", "RR1"] if echelle == "horaire"
+            else ["NOM_USUEL", "LAT", "LON", "AAAAMMJJ", "RR"]
+        )
+        df = pd.read_csv(file, sep=";", usecols=cols, compression="gzip")
+
+        df["datetime"] = df.apply(lambda row: parse_datetime(row, echelle), axis=1)
+        df.dropna(subset=["datetime"], inplace=True)
+        df["year"] = df["datetime"].dt.year
+
+        val_col = "RR1" if echelle == "horaire" else "RR"
+
+        for year, df_year in df.groupby("year"):
+            if year < 1959 or year > 2022:
+                continue
+
+            nc_file = nc_dir / f"observed_{year}01010000-{year}12312359.nc"
+            if not nc_file.exists():
+                logger.warning(f"Fichier NetCDF manquant pour {year}: {nc_file}")
+                continue
+
+            with Dataset(nc_file, "a") as ds:
+                time_units = ds.variables["time"].units
+                calendar = ds.variables["time"].calendar
+                times_num = ds.variables["time"][:]
+                time_axis = [
+                    pd.Timestamp(datetime(t.year, t.month, t.day, t.hour, t.minute))
+                    for t in num2date(times_num, units=time_units, calendar=calendar)
+                ]
+                time_map = {t: i for i, t in enumerate(time_axis)}
+
+                pr = ds.variables["pr"]
+
+                for _, row in df_year.iterrows():
+                    st_key = (row["NOM_USUEL"], round(row["LAT"], 4), round(row["LON"], 4))
+                    if st_key not in station_map:
+                        continue
+
+                    st_idx = station_map[st_key]
+                    dt = row["datetime"].replace(tzinfo=None)
+
+                    if dt not in time_map:
+                        continue
+
+                    t_idx = time_map[dt]
+                    val = row[val_col]
+                    if not pd.isna(val):
+                        pr[t_idx, st_idx] = float(val)
+
+    except Exception as e:
+        logger.warning(f"Erreur fichier {file} : {e}")
+
+
+def pipeline_obs_from_zip_to_nc(config):
+    """
+    Pipeline complet :
+      1) Téléchargement (si nécessaire) des ZIP (horaire, quotidien)
+      2) Parcours des ZIP (pass 1) pour indexer toutes les stations
+      3) Création des NetCDF annuels (1959->2022) (sous-arborescence par échelle)
+      4) Relit tous les ZIP (pass 2), parse les CSV, répartit par année, remplit les NetCDF.
+      5) Supprime les ZIP.
+    """
+    logger = get_logger(__name__)
+
+    # Paramètres 
+    echelles_cfg = config.get("echelles", [])
+    # Désormais, on s'attend toujours à une liste (ex: ["horaire", "quotidienne"])
+    if not isinstance(echelles_cfg, list):
+        raise ValueError("'echelles' doit être une liste dans la config, ex: ['horaire','quotidienne']")
+    echelles = echelles_cfg
+ 
+    # 1) Téléchargement
+    if config["data"]["download"]:
+        logger.info("--- Début du téléchargement des ZIP")
+        download_all_zips(echelles, logger, max_workers=16)  # max_workers à adapter
+        logger.info("--- Téléchargement terminé.")
+    else:
+        logger.info("--- Téléchargement desactivé.")
+
+    # Chemins de sortie
+    nc_dirs = {
+        "horaire": Path(config["nc"].get("horaire", {}).get("path", {}).get("outputdir", "data/raw/observed/horaire")),
+        "quotidienne": Path(config["nc"].get("quotidienne", {}).get("path", {}).get("outputdir", "data/raw/observed/quotidien"))
+    }
+    for echelle in echelles:
+        nc_dirs[echelle].mkdir(parents=True, exist_ok=True)
+
+    # Dossiers ZIP
+    zip_dirs = {
+        "horaire": Path("data/temp/horaire_zip"),
+        "quotidienne": Path("data/temp/quotidien_zip")
+    }
+
+    # ---------------------------------------------------------
+    # PASS 1 : Récupération des stations (on ne lit que noms/lat/lon)
+    # ---------------------------------------------------------
+
+    # Sauvegarde des métadonnées stations (nom, lat, lon, station_idx) par échelle
+    output_meta_dir = Path(config["metadata"].get("path", {}).get("outputdir", "data/metadonnees"))
+    output_meta_dir.mkdir(parents=True, exist_ok=True)
+
+    if config["data"]["meta"]:
+        logger.info("--- Début de construction métadonnées")
+        stations_dict = {e: set() for e in echelles}
+
+        for echelle in echelles:
+            all_files = list(zip_dirs[echelle].glob("*.csv.gz"))
+            total_files = len(all_files)
+            logger.info(f"{total_files} fichiers trouvés pour l’échelle {echelle} : ouverture...")
+
+            with ThreadPoolExecutor() as executor:
+                futures = {executor.submit(process_file, file, echelle): file for file in all_files}
+                for i, future in enumerate(as_completed(futures), 1):
+                    remaining = total_files - i
+                    logger.info(f"{remaining} fichiers restants pour l'échelle {echelle}")
+                    stations = future.result()
+                    stations_dict[echelle].update(stations)      
+
+        # Construction de la map station → index
+        station_index_map = {
+            echelle: {st: i for i, st in enumerate(sorted(stations_dict[echelle]))}
+            for echelle in echelles
+        }
+
+        for echelle in echelles:
+            sorted_stations = sorted(stations_dict[echelle])
+            records = [
+                {
+                    "station_name": st[0],
+                    "lat": st[1],
+                    "lon": st[2],
+                    "station_idx": station_index_map[echelle][st]
+                }
+                for st in sorted_stations
+            ]
+            df_meta = pd.DataFrame.from_records(records)
+            df_meta.to_parquet(output_meta_dir / f"stations_metadata_{echelle}.parquet", index=False)
+            logger.info(f"{len(sorted_stations)} stations détectées pour l'échelle {echelle}")
+            logger.info(f"Métadonnées enregistrées dans {output_meta_dir}")
+
+    else:
+        logger.info("--- Génération des métadonnées désactivée.")
+        station_index_map = {}
+        for echelle in echelles:
+            meta_file = output_meta_dir / f"stations_metadata_{echelle}.parquet"
+            logger.info(f"Lecture des métadonnées depuis {meta_file}")
+            df_meta = pd.read_parquet(meta_file)
+
+            # Arrondi pour cohérence
+            station_index_map[echelle] = {
+                (row["station_name"], round(row["lat"], 4), round(row["lon"], 4)): row["station_idx"]
+                for _, row in df_meta.iterrows()
+            }
+
+
+    # ---------------------------------------------------------
+    # Création des NetCDF : 1959->2022 pour chaque échelle
+    # ---------------------------------------------------------
+
+    for echelle in echelles:
+        stations_for_ech = station_index_map[echelle]
+        nb_stations = len(stations_for_ech)
+        for annee in range(1959, 2023):
+            nc_path = nc_dirs[echelle] / f"observed_{annee}01010000-{annee}12312359.nc"
+            if nc_path.exists():
+                logger.info(f"[INIT] Fichier déjà existant: {nc_path}, on saute")
+                continue
+
+            logger.info(f"[INIT] Création du NC pour {nc_path}")
+            time_axis = get_time_axis(annee, echelle)
+            ntime = len(time_axis)
+
+            with Dataset(nc_path, "w", format="NETCDF4") as ds:
+                ds.createDimension("time", ntime)
+                ds.createDimension("station", nb_stations)
+
+                time_var = ds.createVariable("time", "f8", ("time",))
+                time_var.units = "days since 1949-12-01"
+                time_var.calendar = "standard"
+                base_time = np.datetime64("1949-12-01T00:00:00")
+                time_naive = time_axis.tz_localize(None)
+                offset_days = (time_naive.values - base_time) / np.timedelta64(1, "D")
+                time_var[:] = offset_days
+
+                pr_var = ds.createVariable("pr", "f4", ("time", "station"), fill_value=np.nan)
+                pr_var.units = "mm/h" if echelle == "horaire" else "mm/j"
+                pr_var.long_name = "Précipitation"
+
+                lat_var = ds.createVariable("lat", "f4", ("station",))
+                lon_var = ds.createVariable("lon", "f4", ("station",))
+
+                st_sorted = sorted(stations_for_ech.keys(), key=lambda s: stations_for_ech[s])
+                lat_vals = [s[1] for s in st_sorted]
+                lon_vals = [s[2] for s in st_sorted]
+
+                lat_var[:] = lat_vals
+                lon_var[:] = lon_vals
+
+    # ---------------------------------------------------------
+    # PASS 2 : Lecture / distribution des données dans chaque NetCDF
+    # ---------------------------------------------------------
+
+    logger.info(f"--- Remplissage des .nc")
+
+    from functools import partial
+
+    for echelle in echelles:
+        logger.info(f"Traitement de l'échelle : {echelle} ---")
+        zip_dir = zip_dirs[echelle]
+        nc_dir = nc_dirs[echelle]
+        meta_file = output_meta_dir / f"stations_metadata_{echelle}.parquet"
+        df_meta = pd.read_parquet(meta_file)
+
+        station_map = {
+            (row["station_name"], round(row["lat"], 4), round(row["lon"], 4)): row["station_idx"]
+            for _, row in df_meta.iterrows()
+        }
+
+        all_files = sorted(zip_dir.glob("*.csv.gz"))
+
+        # Crée une fonction partielle avec les arguments fixes
+        process_func = partial(process_csv_file, echelle=echelle, nc_dir=nc_dir, station_map=station_map)
+
+        # Utilise-la dans executor.map
+        with ThreadPoolExecutor(max_workers=16) as executor:
+            list(tqdm(
+                executor.map(process_func, all_files),
+                total=len(all_files),
+                desc=f"Fichiers {echelle}"
+            ))
+
+    # ---------------------------------------------------------
+    # Nettoyage : suppression des fichiers CSV.gz téléchargés
+    # ---------------------------------------------------------
+    if config["data"]["delete"]:
+        for echelle in echelles:
+            # Nettoyage après traitement
+            logger.info(f"Suppression des fichiers .csv.gz pour l’échelle {echelle}")
+            for gz_file in all_files:
+                try:
+                    gz_file.unlink()
+                    logger.info(f"Supprimé : {gz_file}")
+                except Exception as e:
+                    logger.warning(f"Impossible de supprimer {gz_file} : {e}")
+
+            # Suppression du dossier s'il est vide
+            try:
+                zip_dirs[echelle].rmdir()
+                logger.info(f"Dossier supprimé : {zip_dirs[echelle]}")
+            except OSError:
+                logger.info(f"Dossier non vide ou non supprimé : {zip_dirs[echelle]}")
+    else:
+        logger.info("Fichiers .csv.gz conservés après traitement")
+
+    logger.info("Pipeline terminé")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Pipeline observations (ZIP) vers .nc.")
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="config/observed_settings.yaml",
+        help="Chemin vers le fichier de configuration YAML (par défaut : config/observed_settings.yaml)"
+    )
+    args = parser.parse_args()
+    config_path = args.config
+    config = load_config(config_path)
+
+    log_dir = config.get("log", {}).get("directory", "logs")
+    logger = get_logger(__name__, log_to_file=True, log_dir=log_dir)
+
+    logger.info(f"Démarrage du pipeline observations (ZIP) → .nc avec la config : {config_path}")
+    pipeline_obs_from_zip_to_nc(config)

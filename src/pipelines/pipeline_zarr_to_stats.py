@@ -3,86 +3,147 @@ import os
 import pandas as pd
 import numpy as np
 import xarray as xr
+import dask
 import dask.array as da
 from dask.diagnostics import ProgressBar
 from dask import compute
-from concurrent.futures import ProcessPoolExecutor
+from tqdm import tqdm
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from src.utils.config_tools import load_config
 from src.utils.logger import get_logger
 
-# ---------------------------------------------------------------------------
+dask.config.set(scheduler="threads")  # ou "processes", selon la charge mémoire
+
+SEASON_MONTHS = {
+    "djf": [12, 1, 2],
+    "mam": [3, 4, 5],
+    "jja": [6, 7, 8],
+    "son": [9, 10, 11],
+    "hydro": [9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8],
+}
+
 def compute_daily_precip(ds_pr_mm: xr.DataArray) -> xr.DataArray:
     pr_shifted = ds_pr_mm.copy()
     pr_shifted["time"] = pr_shifted["time"] - pd.Timedelta(hours=6)
     return pr_shifted.resample(time="1D").sum()
 
-# ---------------------------------------------------------------------------
-def compute_monthly_statistics(ds: xr.Dataset, var_name: str, year: int, month: int) -> pd.DataFrame:
-    pr = ds[var_name]
+def get_season_bounds(year: int, season: str):
+    months = SEASON_MONTHS[season]
+    if season == "djf":
+        start = np.datetime64(f"{year - 1}-12-01")
+        end = np.datetime64(f"{year}-03-01")
+    elif season == "hydro":
+        start = np.datetime64(f"{year - 1}-09-01")
+        end = np.datetime64(f"{year}-09-01")
+    else:
+        start = np.datetime64(f"{year}-{months[0]:02d}-01")
+        end_month = months[-1] + 1
+        if end_month > 12:
+            end = np.datetime64(f"{year + 1}-01-01")
+        else:
+            end = np.datetime64(f"{year}-{end_month:02d}-01")
+    return start, end
 
-    start = np.datetime64(f"{year}-{month:02d}-01")
-    end = np.datetime64(f"{year + 1}-01-01") if month == 12 else np.datetime64(f"{year}-{month + 1:02d}-01")
-    pr_month = pr.sel(time=slice(start, end))
+def compute_statistics_for_period(pr: xr.DataArray, echelle: str) -> pd.DataFrame:
+    n_time = pr.time.size
+    n_hours = n_time if echelle == "horaire" else n_time * 24
 
-    if pr_month.time.size == 0:
-        print(f"Aucune donnée pour {month:02d}/{year}")
-        return pd.DataFrame()
+    n_nan = da.isnan(pr).sum(dim="time")
+    nan_ratio = (n_nan / n_time).compute()
 
-    pr_mm = pr_month
+    valid_mask = nan_ratio < 1.0
+    valid_idx = np.where(valid_mask)[0]
+    shape = pr.lat.size
 
-    # Agrégation horaire
-    max_mm_h = pr_mm.max(dim="time")
-    pr_sum = pr_mm.sum(dim="time")
+    mean_mm_h = np.full(shape, np.nan)
+    max_mm_h = np.full(shape, np.nan)
+    max_date_mm_h = np.full(shape, np.nan, dtype=object)
+    max_mm_j = np.full(shape, np.nan)
+    max_date_mm_j = np.full(shape, np.nan, dtype=object)
+    n_days_gt1mm = np.full(shape, np.nan)
 
-    # Optimisation argmax (en numpy)
-    argmax_h = da.argmax(pr_mm.data, axis=pr_mm.get_axis_num("time"))
-    max_time_h = pr_mm["time"].values[argmax_h.compute()]
-    max_date_mm_h = np.datetime_as_string(max_time_h, unit="D")
+    if len(valid_idx) > 0:
+        pr_valid = pr.isel(points=valid_idx)
 
-    # Cumul journalier (6h à 6h)
-    pr_daily = compute_daily_precip(pr_mm)
+        if echelle == "horaire":
+            pr_sum = pr_valid.sum(dim="time").compute().values
+            mean_mm_h[valid_idx] = pr_sum / n_time
 
-    max_mm_j = pr_daily.max(dim="time")
-    argmax_j = da.argmax(pr_daily.data, axis=pr_daily.get_axis_num("time"))
-    max_time_j = pr_daily["time"].values[argmax_j.compute()]
-    max_date_mm_j = np.datetime_as_string(max_time_j, unit="D")
+            max_mm_h_valid = pr_valid.max(dim="time")
+            argmax_h = da.argmax(pr_valid.data, axis=pr_valid.get_axis_num("time"))
+            max_time_h = pr_valid["time"].values[argmax_h.compute()]
+            max_mm_h[valid_idx] = compute(max_mm_h_valid)[0].values
+            max_date_mm_h[valid_idx] = np.datetime_as_string(max_time_h, unit="D")
 
-    # Jours > 1 mm
-    n_days_gt1mm = (pr_daily > 1).sum(dim="time")
+            # Conversion en journalier
+            pr_daily = compute_daily_precip(pr_valid)
 
-    # Calcul final via Dask compute groupé
-    max_mm_h, pr_sum, max_mm_j, n_days_gt1mm = compute(
-        max_mm_h, pr_sum, max_mm_j, n_days_gt1mm
-    )
+        else:  # echelle == "quotidien"
+            mean_mm_h_valid = (pr_valid.mean(dim="time") / 24).compute().values
+            mean_mm_h[valid_idx] = mean_mm_h_valid
+
+            # max_mm_h et max_date_mm_h doivent rester NaN
+            # rien d'autre à faire ici
+            pr_daily = pr_valid  # déjà journalier
+
+        # Statistiques communes journalières
+        max_mm_j_valid = pr_daily.max(dim="time")
+        argmax_j = da.argmax(pr_daily.data, axis=pr_daily.get_axis_num("time"))
+        max_time_j = pr_daily["time"].values[argmax_j.compute()]
+        max_mm_j[valid_idx] = compute(max_mm_j_valid)[0].values
+        max_date_mm_j[valid_idx] = np.datetime_as_string(max_time_j, unit="D")
+
+        n_gt1mm = (pr_daily > 1).sum(dim="time").compute().values
+        n_days_gt1mm[valid_idx] = n_gt1mm
 
     df = pd.DataFrame({
-        "lat": ds["lat"].values,
-        "lon": ds["lon"].values,
-        "sum_mm": pr_sum,
+        "lat": pr["lat"].values,
+        "lon": pr["lon"].values,
+        "mean_mm_h": mean_mm_h,
         "max_mm_h": max_mm_h,
         "max_date_mm_h": max_date_mm_h,
         "max_mm_j": max_mm_j,
         "max_date_mm_j": max_date_mm_j,
-        "n_days_gt1mm": n_days_gt1mm
+        "n_days_gt1mm": n_days_gt1mm,
+        "nan_ratio": nan_ratio.values
     })
-
-    n_total = len(df)
-    n_unique_coords = df[["lat", "lon"]].drop_duplicates().shape[0]
-    if n_total != n_unique_coords:
-        print(f"Pour {month:02d}/{year} : {n_total} points générés pour {n_unique_coords} coordonnées uniques")
 
     return df
 
-# ---------------------------------------------------------------------------
-def process_zarr_file(zarr_path: str, config: dict, output_root: str, overwrite: bool = False, log_status: dict = None):
-    year = os.path.basename(zarr_path).split(".")[0]
 
-    ds = xr.open_zarr(zarr_path)
-    ds = ds.chunk({"time": 24 * 32}) # 1 mois
 
-    var_name = list(config["variables"].keys())[0]
-    var_conf = config["variables"][var_name]
+def process_zarr_file_seasonal(
+    zarr_path: str,
+    config_zarr: dict,
+    echelle: str,
+    output_root: str,
+    overwrite: bool,
+    log_status: dict,
+    logger
+):
+    year = int(os.path.basename(zarr_path).split(".")[0])
+    var_name = list(config_zarr["variables"].keys())[0]
+    var_conf = config_zarr["variables"][var_name]
+
+    all_ds = []
+    zarr_dir = os.path.dirname(zarr_path)
+    for offset in [-1, 0]:
+        y = year + offset
+        p = os.path.join(zarr_dir, f"{y}.zarr")
+        if os.path.exists(p):
+            all_ds.append(xr.open_zarr(p).chunk({"time": 24 * 92}))
+
+    if not all_ds:
+        logger.warning(f"Aucun fichier Zarr trouvé pour {year}")
+        return
+
+    ds = xr.concat(all_ds, dim="time", combine_attrs="override")
+    ds["time"] = pd.to_datetime(ds["time"].values)  # <- conversion explicite
+    ds = ds.sortby("time")
+
+    if not np.issubdtype(ds["time"].dtype, np.datetime64):
+        ds["time"] = pd.to_datetime(ds["time"].values)
 
     fill_value = var_conf.get("fill_value", None)
     if fill_value is not None:
@@ -95,68 +156,188 @@ def process_zarr_file(zarr_path: str, config: dict, output_root: str, overwrite:
     if log_status is not None:
         log_status[year] = {}
 
-    for month in range(1, 13):
-        out_dir = os.path.join(output_root, year)
+    for season in ["djf", "mam", "jja", "son"]:
+        out_dir = os.path.join(output_root, str(year))
         os.makedirs(out_dir, exist_ok=True)
-        out_path = os.path.join(out_dir, f"{month:02d}.parquet")
+        out_path = os.path.join(out_dir, f"{season}.parquet")
 
         if os.path.exists(out_path) and not overwrite:
-            print(f"[SKIP] {out_path} existe déjà")
-            if log_status is not None:
-                log_status[year][f"{month:02d}"] = "Généré"
+            logger.info(f"[SKIP] {out_path} existe déjà")
+            log_status[year][season] = "Généré"
             continue
 
-        df = compute_monthly_statistics(ds, var_name, int(year), month)
+        start, end = get_season_bounds(year, season)
+        ds_start = ds["time"].values[0]
+        ds_end = ds["time"].values[-1]
+
+        if start < ds_start or end > ds_end:
+            logger.info(f"[SKIP] {season.upper()} {year} hors des bornes de {zarr_path}")
+            log_status[year][season] = "Hors bornes"
+            continue
+
+        pr_season = ds[var_name].sel(time=slice(start, end))
+        if pr_season.time.size == 0:
+            logger.warning(f"Aucune donnée pour {season.upper()} {year}")
+            log_status[year][season] = "Absent"
+            continue
+
+        df = compute_statistics_for_period(pr_season, echelle)
         if df.empty:
-            print(f"Aucune donnée pour {year}-{month:02d}")
-            if log_status is not None:
-                log_status[year][f"{month:02d}"] = "Absent"
+            logger.warning(f"Aucune statistique pour {season.upper()} {year}")
+            log_status[year][season] = "Vide"
             continue
 
         df.to_parquet(out_path, index=False, engine="pyarrow", compression="zstd")
-        print(f"Statistiques {month:02d}/{year} sauvegardées dans {out_path}")
-        if log_status is not None:
-            log_status[year][f"{month:02d}"] = "Généré"
+        logger.info(f"Statistiques {season.upper()} {year} sauvegardées dans {out_path}")
+        log_status[year][season] = "Généré"
 
-# ---------------------------------------------------------------------------
-def pipeline_statistics_from_zarr(config_path: str):
+
+def compute_hydro_from_seasons(year: int, stats_dir: str, log_status: dict):
+    try:
+        dfs = []
+        for season, y in {"son": year - 1, "djf": year, "mam": year, "jja": year}.items():
+            path = os.path.join(stats_dir, str(y), f"{season}.parquet")
+            if not os.path.exists(path):
+                log_status.setdefault(year, {})["hydro"] = "Manque données"
+                return
+            df = pd.read_parquet(path)
+            df["season"] = season
+            dfs.append(df)
+
+        full_df = pd.concat(dfs)
+        df_grouped = full_df.groupby(["lat", "lon"], sort=False)
+
+        df_hydro = df_grouped.agg({
+            "mean_mm_h": "mean",
+            "max_mm_h": "max",
+            "max_mm_j": "max",
+            "n_days_gt1mm": "sum"
+        }).reset_index()
+
+        # Initialisation avec NaN
+        df_hydro["max_date_mm_h"] = np.nan
+        df_hydro["max_date_mm_j"] = np.nan
+
+        # Indices des dates maximales
+        idx_h = df_grouped["max_mm_h"].transform("idxmax")
+        idx_j = df_grouped["max_mm_j"].transform("idxmax")
+
+        # Filtrer les idx valides uniquement (non-NaN)
+        if idx_h.notna().any():
+            idx_h_valid = idx_h.dropna().astype(int)
+            max_date_mm_h = full_df.loc[idx_h_valid, ["lat", "lon", "max_date_mm_h"]].drop_duplicates(["lat", "lon"])
+            df_hydro = df_hydro.merge(max_date_mm_h, on=["lat", "lon"], how="left", suffixes=("", "_h"))
+            df_hydro["max_date_mm_h"] = df_hydro["max_date_mm_h_h"].combine_first(df_hydro["max_date_mm_h"])
+            df_hydro.drop(columns=["max_date_mm_h_h"], inplace=True)
+
+        if idx_j.notna().any():
+            idx_j_valid = idx_j.dropna().astype(int)
+            max_date_mm_j = full_df.loc[idx_j_valid, ["lat", "lon", "max_date_mm_j"]].drop_duplicates(["lat", "lon"])
+            df_hydro = df_hydro.merge(max_date_mm_j, on=["lat", "lon"], how="left", suffixes=("", "_j"))
+            df_hydro["max_date_mm_j"] = df_hydro["max_date_mm_j_j"].combine_first(df_hydro["max_date_mm_j"])
+            df_hydro.drop(columns=["max_date_mm_j_j"], inplace=True)
+
+        out_dir = os.path.join(stats_dir, str(year))
+        os.makedirs(out_dir, exist_ok=True)
+        df_hydro.to_parquet(os.path.join(out_dir, "hydro.parquet"), index=False, engine="pyarrow", compression="zstd")
+
+        logger.info(f"[HYDRO] Statistiques HYDRO {year} sauvegardées dans {out_dir}")
+        log_status.setdefault(year, {})["hydro"] = "Généré"
+
+    except Exception as e:
+        logger.error(f"[FAIL] Erreur durant l’agrégation HYDRO {year}: {e}")
+        log_status.setdefault(year, {})["hydro"] = "Erreur"
+
+
+
+def process_one_file(args):
+    zarr_file, echelle, config_zarr, stats_dir, overwrite = args
+    logger = get_logger(f"worker_{os.path.basename(zarr_file).split('.')[0]}", log_to_file=False)
+
+    try:
+        log_status = {}
+        process_zarr_file_seasonal(
+            zarr_file,
+            config_zarr,
+            echelle,
+            stats_dir,
+            overwrite,
+            log_status,
+            logger
+        )
+        logger.info(f"[OK] Traitement terminé pour {zarr_file}")
+        return (zarr_file, log_status, None)
+    except Exception as e:
+        logger.error(f"[FAIL] Erreur pendant le traitement de {zarr_file}: {e}")
+        return (zarr_file, None, str(e))
+
+
+def pipeline_statistics_from_zarr_seasonal(config_path: str):
     config = load_config(config_path)
-    zarr_dir = config["zarr"]["path"]["outputdir"]
     stats_conf = config["statistics"]
-    stats_dir = stats_conf["path"]["outputdir"]
-    log_dir = config["log"]["directory"]
     overwrite = stats_conf.get("overwrite", False)
 
-    os.makedirs(stats_dir, exist_ok=True)
+    echelles = config.get("echelles")
 
-    zarr_files = [
-        os.path.join(zarr_dir, f) for f in os.listdir(zarr_dir)
-        if f.endswith(".zarr")
-    ]
+    for echelle in echelles:
+        logger.info(f"--- Traitement pour l’échelle : {echelle.upper()} ---")
 
-    status_log = {}
+        zarr_dir = os.path.join(config["zarr"]["path"]["outputdir"], echelle)
+        stats_dir = os.path.join(stats_conf["path"]["outputdir"], echelle)
+        log_dir = os.path.join(config["log"]["directory"], echelle)
 
-    with ProcessPoolExecutor(max_workers=16) as executor:
-        futures = [executor.submit(process_zarr_file, z, config["zarr"], stats_dir, overwrite, status_log)
-                for z in zarr_files]
-        for f in futures:
-            f.result()  # raise exception if any
+        os.makedirs(stats_dir, exist_ok=True)
+        os.makedirs(log_dir, exist_ok=True)
+
+        zarr_files = [
+            os.path.join(zarr_dir, f)
+            for f in os.listdir(zarr_dir)
+            if f.endswith(".zarr")
+        ]
+
+        if not zarr_files:
+            logger.warning(f"Aucun fichier Zarr trouvé pour l’échelle '{echelle}' dans {zarr_dir}")
+            continue
+
+        args_list = [
+            (zf, echelle, config["zarr"], stats_dir, overwrite)
+            for zf in zarr_files
+        ]
+
+        status_log = {}
+
+        with ProcessPoolExecutor(max_workers=2) as executor:
+            futures = [executor.submit(process_one_file, args) for args in args_list]
+            for future in tqdm(as_completed(futures), total=len(futures), desc=f"Traitement Zarr ({echelle})"):
+                zarr_file, log_status, error = future.result()
+                if error:
+                    print(f"[ERROR] Error processing {zarr_file}: {error}")
+                else:
+                    year = int(os.path.basename(zarr_file).split(".")[0])
+                    status_log[year] = log_status.get(year, {})
+
+        # Post-traitement HYDRO pour toutes les échelles
+        for year in sorted(status_log):
+            compute_hydro_from_seasons(year, stats_dir, status_log)
+
+        log_df = pd.DataFrame.from_dict(status_log, orient="index").sort_index()
+        cols = [s for s in SEASON_MONTHS if s in log_df.columns]
+        if "hydro" in log_df.columns:
+            cols.append("hydro")
+        if cols:
+            log_df = log_df[cols]
+        else:
+            logger.warning("Aucune colonne saisonnière ou hydro disponible dans le log.")
+
+        logger.info(f"[{echelle.upper()}] Résumé final :\n" + log_df.to_string())
 
 
-    log_df = pd.DataFrame.from_dict(status_log, orient="index")
-    log_df = log_df.sort_index()
-    log_df = log_df[[f"{m:02d}" for m in range(1, 13)]]
-
-    logger.info("Résumé final :\n" + log_df.to_string())
-    log_df.to_csv(os.path.join(stats_dir, "pipeline_zarr_to_stats_resume.log"))
-
-# ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Pipeline statistiques mensuelles à partir de fichiers Zarr.")
+    parser = argparse.ArgumentParser(description="Pipeline statistiques saisonnières à partir de fichiers Zarr.")
     parser.add_argument(
         "--config",
         type=str,
-        default="config/modelised_settings.yaml",
+        default="config/observed_settings.yaml",
         help="Chemin vers le fichier de configuration YAML"
     )
     args = parser.parse_args()
@@ -166,7 +347,7 @@ if __name__ == "__main__":
     log_dir = config.get("log", {}).get("directory", "logs")
     logger = get_logger(__name__, log_to_file=True, log_dir=log_dir)
 
-    logger.info(f"Démarrage du pipeline Zarr → statistiques avec la config : {config_path}")
+    logger.info(f"Démarrage du pipeline Zarr → statistiques saisonnières avec la config : {config_path}")
 
     with ProgressBar():
-        pipeline_statistics_from_zarr(config_path)
+        pipeline_statistics_from_zarr_seasonal(config_path)
