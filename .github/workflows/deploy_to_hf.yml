@@ -1,4 +1,4 @@
-name: Deploy Dockerized app to Hugging Face Spaces
+name: Déployer une application Dockerisée sur Hugging Face Spaces
 
 on:
   push:
@@ -10,65 +10,104 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Prepare and push Dockerized app
+      - name: Préparer et pousser l'application Dockerisée
         env:
-          HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
+          HF_TOKEN: ${{ secrets.HF_VIZ_APP }}    # Votre token Hugging Face
+          HF_USER: "VOTRE_USERNAME"              # Nom d'utilisateur HF
+          HF_SPACE: "NomDeVotreSpace"            # Nom du Space, ex. "ExtremePrecipit"
         run: |
-          # Crée le dossier deploy et copie tous les fichiers (y compris les .parquet)
+          # ---------------------------------------------------------------------- #
+          # 1. Créer un dossier "deploy" et y copier les fichiers nécessaires
+          # ---------------------------------------------------------------------- #
           mkdir deploy
           rsync -av --exclude=deploy --exclude=.git --exclude=.github . deploy/
 
-          # Dockerfile avec dépendances et Streamlit
+          # ---------------------------------------------------------------------- #
+          # 2. Compresser localement les .parquet pour éviter tout blocage HF
+          #    -> On crée une archive "data_parquets.tar.gz" qui contient les .parquet
+          # ---------------------------------------------------------------------- #
+          # Supposons que vos .parquet sont dans un dossier "data/"
+          # Ajustez selon votre arborescence
+          if [ -d data ]; then
+            cd data
+            # Crée une archive .tar.gz
+            tar -czvf ../deploy/data_parquets.tar.gz *.parquet
+            cd ..
+          fi
+
+          # ---------------------------------------------------------------------- #
+          # 3. Créer un Dockerfile
+          # ---------------------------------------------------------------------- #
           cat <<EOF > deploy/Dockerfile
           FROM python:3.11-slim
 
+          # Installations de base
           RUN apt-get update && apt-get install -y \\
               build-essential \\
               git \\
+              # Pour décompresser .tar.gz
+              tar \\
               && rm -rf /var/lib/apt/lists/*
 
           WORKDIR /app
 
+          # Copier tous les fichiers du dossier "deploy" (y compris l'archive .tar.gz)
           COPY . .
 
+          # Décompresser l'archive .tar.gz pour récupérer les .parquet
+          # On suppose qu'on veut les extraire dans /app/data/
+          RUN mkdir -p data
+          RUN tar -xzf data_parquets.tar.gz -C data/
+          RUN rm data_parquets.tar.gz
+
+          # Installer les dépendances Python
           RUN pip install --no-cache-dir -r requirements.txt
 
+          # Exposer le port pour Streamlit
           EXPOSE 7860
 
+          # Éviter soucis Matplotlib dans container
           ENV MPLCONFIGDIR=/tmp/matplotlib
 
+          # Lancer l'app
           CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
           EOF
 
-          # Fichier de config Hugging Face
+          # ---------------------------------------------------------------------- #
+          # 4. Fichier config Hugging Face + README basique
+          # ---------------------------------------------------------------------- #
           echo "sdk: docker" > deploy/.huggingface.yaml
 
-          # README simple
           cat <<EOF > deploy/README.md
-          App Streamlit visualisant les précipitations extrêmes horaires simulées et observées.
+          # Application Streamlit - Précipitations extrêmes
 
-          > Générée automatiquement depuis le dépôt GitHub.
+          Cette application est déployée automatiquement depuis un dépôt GitHub.
+          Les fichiers .parquet sont inclus dans l'image Docker via une archive .tar.gz.
           EOF
 
-          # Copie la config Streamlit si elle existe
+          # Copier config Streamlit éventuelle
           if [ -d .streamlit ]; then
             cp -r .streamlit deploy/
           fi
 
-          # Initialisation git uniquement pour le push HF
+          # ---------------------------------------------------------------------- #
+          # 5. Init Git local + push vers le Space
+          # ---------------------------------------------------------------------- #
           cd deploy
           git init
-          git config user.email "ncsdecoopman@github.com"
-          git config user.name "NCSdecoopman"
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
           git branch -M main
-          git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
 
-          # ✅ Commit tout sauf les .parquet (ils sont dans le build Docker, mais pas pushés)
-          git add . ':!data/**/*.parquet'
-          git commit -m "Deploy Docker with app and embedded data"
+          HF_REMOTE="https://${HF_USER}:${HF_TOKEN}@huggingface.co/spaces/${HF_USER}/${HF_SPACE}"
+          git remote add hf "$HF_REMOTE"
+
+          # On ajoute tout, y compris l'archive .tar.gz
+          git add .
+          git commit -m "Déploiement Docker (avec archive .tar.gz pour les .parquet)"
           git push hf main --force
