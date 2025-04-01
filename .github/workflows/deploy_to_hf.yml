@@ -19,12 +19,10 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
         run: |
-          # Crée un dossier temporaire avec tout sauf les fichiers CI
+          # Crée un dossier temporaire avec juste le Dockerfile et fichiers nécessaires
           mkdir deploy
-          shopt -s extglob dotglob
-          cp -r !(deploy|.git|.github) deploy/
 
-          # Dockerfile avec dépendances et Streamlit
+          # Crée Dockerfile dans deploy/
           cat <<EOF > deploy/Dockerfile
           FROM python:3.11-slim
 
@@ -54,11 +52,6 @@ jobs:
           > Générée automatiquement depuis le dépôt [GitHub](https://github.com/NCSdecoopman/ExtremePrecipit/tree/app)
           EOF
 
-          # Copie la config Streamlit si elle existe
-          if [ -d .streamlit ]; then
-            cp -r .streamlit deploy/
-          fi
-
           # Initialisation du dépôt Hugging Face
           cd deploy
           git init
@@ -67,7 +60,6 @@ jobs:
           git branch -M main
           git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
 
-          # Commit & push forcé du contenu Dockerisé
           git add .
-          git commit -m "Deploy full Dockerized app with data"
+          git commit -m "Deploy only Dockerfile and config to HF"
           git push hf main --force
