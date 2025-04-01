@@ -15,11 +15,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Installer Git LFS (pour gérer les gros fichiers)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git-lfs
+          git lfs install
+
       - name: Préparer et pousser l'application Dockerisée
         env:
-          HF_TOKEN: ${{ secrets.HF_VIZ_APP }}    # Votre token Hugging Face
-          HF_USER: "ncsdecoopman"              # Nom d'utilisateur HF
-          HF_SPACE: "ExtremePrecipit"            # Nom du Space, ex. "ExtremePrecipit"
+          HF_TOKEN: ${{ secrets.HF_VIZ_APP }}      # Votre token Hugging Face
+          HF_USER: "ncsdecoopman"                  # Nom d'utilisateur HF
+          HF_SPACE: "ExtremePrecipit"              # Nom du Space, ex. "ExtremePrecipit"
         run: |
           # ---------------------------------------------------------------------- #
           # 1. Créer un dossier "deploy" et y copier les fichiers nécessaires
@@ -28,11 +34,11 @@ jobs:
           rsync -av --exclude=deploy --exclude=.git --exclude=.github . deploy/
 
           # ---------------------------------------------------------------------- #
-          # 2. Compresser localement TOUT le contenu de "data" en une archive .tar.gz
+          # 2. Compresser TOUT le contenu de "data/" dans une archive .tar.gz
           # ---------------------------------------------------------------------- #
           if [ -d data ]; then
             cd data
-            # On archive tout le contenu du dossier "data/" (sous-dossiers compris)
+            # On archive tout (fichiers + sous-dossiers)
             tar -czvf ../deploy/data_parquets.tar.gz .
             cd ..
           fi
@@ -43,7 +49,6 @@ jobs:
           cat <<EOF > deploy/Dockerfile
           FROM python:3.11-slim
 
-          # Installations de base
           RUN apt-get update && apt-get install -y \\
               build-essential \\
               git \\
@@ -52,21 +57,15 @@ jobs:
 
           WORKDIR /app
 
-          # Copier tous les fichiers du dossier "deploy" (y compris l'archive .tar.gz)
           COPY . .
 
-          # Décompresser l'archive .tar.gz pour retrouver le contenu "data/"
           RUN mkdir -p data
           RUN tar -xzf data_parquets.tar.gz -C data/
           RUN rm data_parquets.tar.gz
 
-          # Installer les dépendances Python
           RUN pip install --no-cache-dir -r requirements.txt
 
-          # Exposer le port pour Streamlit
           EXPOSE 7860
-
-          # Éviter d'éventuels soucis avec Matplotlib dans un container
           ENV MPLCONFIGDIR=/tmp/matplotlib
 
           CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
@@ -85,23 +84,32 @@ jobs:
           sous forme d'archive .tar.gz, puis extraits au build.
           EOF
 
-          # Copier la config Streamlit si elle existe
           if [ -d .streamlit ]; then
             cp -r .streamlit deploy/
           fi
 
           # ---------------------------------------------------------------------- #
-          # 5. Initialiser un dépôt Git local + pousser vers la Space
+          # 5. Initialiser un dépôt Git local dans "deploy" + configurer Git LFS
           # ---------------------------------------------------------------------- #
           cd deploy
           git init
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git branch -M main
+          git lfs install
 
+          # -- IMPORTANT : Dire à Git LFS de suivre l'archive data_parquets.tar.gz
+          git lfs track "data_parquets.tar.gz"
+          # On ajoute le fichier .gitattributes généré par git lfs track
+          git add .gitattributes
+
+          # ---------------------------------------------------------------------- #
+          # 6. Pousser le code sur la Space
+          # ---------------------------------------------------------------------- #
+          git branch -M main
           HF_REMOTE="https://${HF_USER}:${HF_TOKEN}@huggingface.co/spaces/${HF_USER}/${HF_SPACE}"
           git remote add hf "$HF_REMOTE"
 
+          # Ajouter tous les fichiers, y compris l'archive gérée par LFS
           git add .
-          git commit -m "Déploiement Docker (avec archive .tar.gz pour data/)"
+          git commit -m "Déploiement Docker (avec archive .tar.gz suivie par Git LFS)"
           git push hf main --force
