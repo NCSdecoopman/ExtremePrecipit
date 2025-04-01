@@ -18,8 +18,8 @@ jobs:
       - name: Préparer et pousser l'application Dockerisée
         env:
           HF_TOKEN: ${{ secrets.HF_VIZ_APP }}    # Votre token Hugging Face
-          HF_USER: "VOTRE_USERNAME"              # Nom d'utilisateur HF
-          HF_SPACE: "NomDeVotreSpace"            # Nom du Space, ex. "ExtremePrecipit"
+          HF_USER: "ncsdecoopman"              # Nom d'utilisateur HF
+          HF_SPACE: "ExtremePrecipit"            # Nom du Space, ex. "ExtremePrecipit"
         run: |
           # ---------------------------------------------------------------------- #
           # 1. Créer un dossier "deploy" et y copier les fichiers nécessaires
@@ -28,15 +28,12 @@ jobs:
           rsync -av --exclude=deploy --exclude=.git --exclude=.github . deploy/
 
           # ---------------------------------------------------------------------- #
-          # 2. Compresser localement les .parquet pour éviter tout blocage HF
-          #    -> On crée une archive "data_parquets.tar.gz" qui contient les .parquet
+          # 2. Compresser localement TOUT le contenu de "data" en une archive .tar.gz
           # ---------------------------------------------------------------------- #
-          # Supposons que vos .parquet sont dans un dossier "data/"
-          # Ajustez selon votre arborescence
           if [ -d data ]; then
             cd data
-            # Crée une archive .tar.gz
-            tar -czvf ../deploy/data_parquets.tar.gz *.parquet
+            # On archive tout le contenu du dossier "data/" (sous-dossiers compris)
+            tar -czvf ../deploy/data_parquets.tar.gz .
             cd ..
           fi
 
@@ -50,7 +47,6 @@ jobs:
           RUN apt-get update && apt-get install -y \\
               build-essential \\
               git \\
-              # Pour décompresser .tar.gz
               tar \\
               && rm -rf /var/lib/apt/lists/*
 
@@ -59,8 +55,7 @@ jobs:
           # Copier tous les fichiers du dossier "deploy" (y compris l'archive .tar.gz)
           COPY . .
 
-          # Décompresser l'archive .tar.gz pour récupérer les .parquet
-          # On suppose qu'on veut les extraire dans /app/data/
+          # Décompresser l'archive .tar.gz pour retrouver le contenu "data/"
           RUN mkdir -p data
           RUN tar -xzf data_parquets.tar.gz -C data/
           RUN rm data_parquets.tar.gz
@@ -71,10 +66,9 @@ jobs:
           # Exposer le port pour Streamlit
           EXPOSE 7860
 
-          # Éviter soucis Matplotlib dans container
+          # Éviter d'éventuels soucis avec Matplotlib dans un container
           ENV MPLCONFIGDIR=/tmp/matplotlib
 
-          # Lancer l'app
           CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
           EOF
 
@@ -87,16 +81,17 @@ jobs:
           # Application Streamlit - Précipitations extrêmes
 
           Cette application est déployée automatiquement depuis un dépôt GitHub.
-          Les fichiers .parquet sont inclus dans l'image Docker via une archive .tar.gz.
+          Les fichiers .parquet (et tout le dossier "data/") sont inclus dans l'image Docker
+          sous forme d'archive .tar.gz, puis extraits au build.
           EOF
 
-          # Copier config Streamlit éventuelle
+          # Copier la config Streamlit si elle existe
           if [ -d .streamlit ]; then
             cp -r .streamlit deploy/
           fi
 
           # ---------------------------------------------------------------------- #
-          # 5. Init Git local + push vers le Space
+          # 5. Initialiser un dépôt Git local + pousser vers la Space
           # ---------------------------------------------------------------------- #
           cd deploy
           git init
@@ -107,7 +102,6 @@ jobs:
           HF_REMOTE="https://${HF_USER}:${HF_TOKEN}@huggingface.co/spaces/${HF_USER}/${HF_SPACE}"
           git remote add hf "$HF_REMOTE"
 
-          # On ajoute tout, y compris l'archive .tar.gz
           git add .
-          git commit -m "Déploiement Docker (avec archive .tar.gz pour les .parquet)"
+          git commit -m "Déploiement Docker (avec archive .tar.gz pour data/)"
           git push hf main --force
