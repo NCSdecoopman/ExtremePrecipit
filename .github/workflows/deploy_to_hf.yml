@@ -22,9 +22,9 @@ jobs:
           # Crée un dossier temporaire
           mkdir deploy
           shopt -s extglob dotglob
-          cp -r !(deploy|.git|.github) deploy/  # ✅ Ne pas exclure data/
+          cp -r !(deploy|.git|.github) deploy/
 
-          # Génère un Dockerfile incluant les données
+          # Dockerfile avec toutes les dépendances et les données
           cat <<EOF > deploy/Dockerfile
           FROM python:3.11-slim
 
@@ -44,31 +44,22 @@ jobs:
           CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
           EOF
 
-          # Fichier de configuration Hugging Face
+          # Fichier .huggingface.yaml pour activer le mode Docker
           echo "sdk: docker" > deploy/.huggingface.yaml
 
-          # README Hugging Face
+          # README sans front-matter interprété (affichage brut pour docker)
           cat <<EOF > deploy/README.md
-          ---
-          title: "Application de visualisation"
-          emoji: "🌧️"
-          colorFrom: "blue"
-          colorTo: "blue"
-          sdk: "docker"
-          pinned: false
-          ---
-
           App Streamlit visualisant les précipitations extrêmes horaires simulées et observées.
 
           > Générée automatiquement depuis le dépôt [GitHub](https://github.com/NCSdecoopman/ExtremePrecipit/tree/app)
           EOF
 
-          # Copie la config Streamlit si elle existe
+          # Copie aussi la config Streamlit si présente
           if [ -d .streamlit ]; then
             cp -r .streamlit deploy/
           fi
 
-          # Initialisation du dépôt HF
+          # Initialisation du dépôt Hugging Face
           cd deploy
           git init
           git config user.email "ncsdecoopman@github.com"
@@ -76,7 +67,7 @@ jobs:
           git branch -M main
           git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
 
-          # Réinitialisation complète du remote Hugging Face
+          # Nettoyage complet du remote Hugging Face
           git fetch hf
           git reset --hard
           git rm -rf . > /dev/null 2>&1 || true
@@ -84,7 +75,7 @@ jobs:
           git commit --allow-empty -m "Reset remote Space"
           git push hf main --force
 
-          # Ajoute tous les fichiers et push
+          # Ajoute et push tous les fichiers Dockerisés (code + data)
           git add .
           git diff --cached --quiet || git commit -m "Deploy full Dockerized app with data"
           git push hf main --force
