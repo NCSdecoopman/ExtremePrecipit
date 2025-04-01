@@ -3,15 +3,17 @@ import streamlit as st
 
 def create_layer(df):
     return pdk.Layer(
-        "ScatterplotLayer",
+        "GridCellLayer",
         data=df.to_dict(orient="records"),
         get_position=["lon", "lat"],
-        get_fill_color="fill_color",  # utilise les données RGBA fournies
-        get_radius=6000,
-        radius_min_pixels=1,
-        radius_max_pixels=100,
+        get_fill_color="fill_color",
+        cell_size=2500,
+        elevation=0,
+        elevation_scale=0,
+        lighting=None,
         pickable=True,
-        opacity=1.0
+        opacity=1.0,
+        extruded=False
     )
 
 
