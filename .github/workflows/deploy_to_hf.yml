@@ -23,9 +23,7 @@ jobs:
           shopt -s extglob dotglob
           cp -r !(deploy|.git|.github) deploy/
 
-          # 🟢 Ne pas supprimer les .parquet ici (ils seront dans le build)
-
-          # Dockerfile dans deploy/
+          # Dockerfile avec gestion de Matplotlib et données embarquées
           cat <<EOF > deploy/Dockerfile
           FROM python:3.11-slim
 
@@ -41,6 +39,8 @@ jobs:
           RUN pip install --no-cache-dir -r requirements.txt
 
           EXPOSE 7860
+
+          ENV MPLCONFIGDIR=/tmp/matplotlib
 
           CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
           EOF
@@ -62,7 +62,7 @@ jobs:
           git branch -M main
           git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
 
-          # 🚫 N'ajoute pas les .parquet au commit
+          # ✅ Exclut les .parquet du commit, mais ils sont bien dans le build
           git add . ':!data/**/*.parquet'
-          git commit -m "Deploy Docker with app code and embedded data"
+          git commit -m "Deploy Docker with app and embedded data"
           git push hf main --force
