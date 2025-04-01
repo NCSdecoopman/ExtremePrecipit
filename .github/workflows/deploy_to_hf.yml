@@ -19,12 +19,12 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
         run: |
-          # Crée un dossier temporaire
+          # Crée un dossier temporaire avec tout sauf les fichiers CI
           mkdir deploy
           shopt -s extglob dotglob
           cp -r !(deploy|.git|.github) deploy/
 
-          # Dockerfile avec toutes les dépendances et les données
+          # Dockerfile avec dépendances et Streamlit
           cat <<EOF > deploy/Dockerfile
           FROM python:3.11-slim
 
@@ -44,17 +44,17 @@ jobs:
           CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
           EOF
 
-          # Fichier .huggingface.yaml pour activer le mode Docker
+          # Fichier Hugging Face de config
           echo "sdk: docker" > deploy/.huggingface.yaml
 
-          # README sans front-matter interprété (affichage brut pour docker)
+          # README Hugging Face
           cat <<EOF > deploy/README.md
           App Streamlit visualisant les précipitations extrêmes horaires simulées et observées.
 
           > Générée automatiquement depuis le dépôt [GitHub](https://github.com/NCSdecoopman/ExtremePrecipit/tree/app)
           EOF
 
-          # Copie aussi la config Streamlit si présente
+          # Copie la config Streamlit si elle existe
           if [ -d .streamlit ]; then
             cp -r .streamlit deploy/
           fi
@@ -67,15 +67,7 @@ jobs:
           git branch -M main
           git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
 
-          # Nettoyage complet du remote Hugging Face
-          git fetch hf
-          git reset --hard
-          git rm -rf . > /dev/null 2>&1 || true
-          git clean -fxd
-          git commit --allow-empty -m "Reset remote Space"
-          git push hf main --force
-
-          # Ajoute et push tous les fichiers Dockerisés (code + data)
+          # Commit & push forcé du contenu Dockerisé
           git add .
-          git diff --cached --quiet || git commit -m "Deploy full Dockerized app with data"
+          git commit -m "Deploy full Dockerized app with data"
           git push hf main --force
