@@ -49,8 +49,8 @@ jobs:
           ---
           title: "Application de visualisation"
           emoji: "🌧️"
-          colorFrom: "indigo"
-          colorTo: "cyan"
+          colorFrom: "blue"
+          colorTo: "blue"
           sdk: "streamlit"
           sdk_version: "1.32.0"
           app_file: "app.py"
