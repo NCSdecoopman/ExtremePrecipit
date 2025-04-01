@@ -22,6 +22,8 @@ jobs:
           # Crée un dossier temporaire pour le push
           mkdir deploy
           shopt -s extglob
+          # Inclure tous les fichiers normaux + .streamlit/
+          shopt -s extglob dotglob
           cp -r !(deploy|.git|.github|data) deploy/
           cd deploy
 

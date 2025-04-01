@@ -1,3 +1,6 @@
 # Ignorer les fichiers de cache Python
 __pycache__/
 *.py[cod]
+
+# Ajouter les config streamlit au git
+!/.streamlit/*
