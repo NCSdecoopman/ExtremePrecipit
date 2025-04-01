@@ -1,4 +1,4 @@
-name: Déployer une application Dockerisée sur Hugging Face Spaces
+name: Déployer l'application Dockerisée sur Hugging Face
 
 on:
   push:
@@ -10,60 +10,108 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+      # 1. Récupérer tout le code du repo GitHub (branche "app")
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Installer Git LFS (pour gérer les gros fichiers)
+      # 2. (Optionnel) Installer Git LFS si nécessaire (pas indispensable ici,
+      #    car on va utiliser l'API huggyface_hub pour uploader les données)
+      - name: Installer Git LFS
         run: |
           sudo apt-get update
           sudo apt-get install -y git-lfs
           git lfs install
 
-      - name: Préparer et pousser l'application Dockerisée
+      # 3. Uploader les fichiers du dossier "data/" vers la Space
+      - name: Uploader les données dans la Space
         env:
-          HF_TOKEN: ${{ secrets.HF_VIZ_APP }}      # Votre token Hugging Face
-          HF_USER: "ncsdecoopman"                  # Nom d'utilisateur HF
-          HF_SPACE: "ExtremePrecipit"              # Nom du Space, ex. "ExtremePrecipit"
+          HF_TOKEN: ${{ secrets.HF_VIZ_APP }}  # Votre token HF
         run: |
-          # ---------------------------------------------------------------------- #
-          # 1. Créer un dossier "deploy" et y copier les fichiers nécessaires
-          # ---------------------------------------------------------------------- #
+          python <<EOF
+          import warnings
+          warnings.filterwarnings("ignore", message="It seems that you are about to commit a data file*")
+
+          from huggingface_hub import HfApi, upload_file
+          import os
+
+          # CONFIG
+          SPACE_ID = "ncsdecoopman/ExtremePrecipit"  # identifiant complet de votre Space
+          LOCAL_DIR = "data"                         # dossier local dans le repo GitHub
+          REMOTE_DIR = "data"                        # sous-dossier de la Space (côté HF)
+
+          api = HfApi()
+
+          # Parcourt récursivement le dossier local "data"
+          for root, _, files in os.walk(LOCAL_DIR):
+              for file in files:
+                  local_path = os.path.join(root, file)
+                  # Chemin relatif par rapport à "data"
+                  relative_path = os.path.relpath(local_path, LOCAL_DIR)
+                  # Sur la Space, on veut le même chemin dans "data/..."
+                  repo_path = f"{REMOTE_DIR}/{relative_path}".replace("\\", "/")
+
+                  print(f"Uploading {local_path} to {repo_path}...")
+
+                  upload_file(
+                      path_or_fileobj=local_path,
+                      path_in_repo=repo_path,
+                      repo_id=SPACE_ID,
+                      repo_type="space",
+                      token=os.environ['HF_TOKEN'],
+                  )
+          EOF
+
+      # 4. Préparer le dossier "deploy" et pousser la configuration Docker vers la Space
+      - name: Préparer et pousser l'app Dockerisée
+        env:
+          HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
+          HF_USER: "ncsdecoopman"
+          HF_SPACE: "ExtremePrecipit"
+        run: |
+          # ------------------------------------------------------
+          # a) Créer le dossier "deploy" et y copier le code
+          #    (sans le .git, ni .github, etc.)
+          # ------------------------------------------------------
           mkdir deploy
           rsync -av --exclude=deploy --exclude=.git --exclude=.github . deploy/
 
-          # ---------------------------------------------------------------------- #
-          # 2. Compresser TOUT le contenu de "data/" dans une archive .tar.gz
-          # ---------------------------------------------------------------------- #
-          if [ -d data ]; then
-            cd data
-            # On archive tout (fichiers + sous-dossiers)
-            tar -czvf ../deploy/data_parquets.tar.gz .
-            cd ..
-          fi
-
-          # ---------------------------------------------------------------------- #
-          # 3. Créer un Dockerfile
-          # ---------------------------------------------------------------------- #
+          # ------------------------------------------------------
+          # b) Créer le Dockerfile
+          #    - Au build, on va télécharger les données depuis la Space
+          # ------------------------------------------------------
           cat <<EOF > deploy/Dockerfile
           FROM python:3.11-slim
 
           RUN apt-get update && apt-get install -y \\
               build-essential \\
               git \\
-              tar \\
               && rm -rf /var/lib/apt/lists/*
 
           WORKDIR /app
 
-          COPY . .
-
-          RUN mkdir -p data
-          RUN tar -xzf data_parquets.tar.gz -C data/
-          RUN rm data_parquets.tar.gz
-
+          # 1) Installer nos dépendances
+          COPY requirements.txt .
           RUN pip install --no-cache-dir -r requirements.txt
+
+          # 2) Installer huggingface_hub pour snapshot_download
+          RUN pip install huggingface_hub
+
+          # 3) Passer le token comme argument
+          ARG HF_TOKEN_ARG
+          ENV HF_TOKEN=\$HF_TOKEN_ARG
+
+          # 4) Récupérer les fichiers (dont data/) depuis la Space
+          RUN python -c "from huggingface_hub import snapshot_download; \\
+                         snapshot_download(repo_id='\${HF_USER}/\${HF_SPACE}', \\
+                                           repo_type='space', \\
+                                           local_dir='/app/data', \\
+                                           token='\${HF_TOKEN}')"
+
+          # 5) Copier le reste de l'app (app.py, etc.)
+          COPY . .
 
           EXPOSE 7860
           ENV MPLCONFIGDIR=/tmp/matplotlib
@@ -71,45 +119,20 @@ jobs:
           CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
           EOF
 
-          # ---------------------------------------------------------------------- #
-          # 4. Fichier config Hugging Face + README basique
-          # ---------------------------------------------------------------------- #
+          # c) Fichier config Hugging Face + README
           echo "sdk: docker" > deploy/.huggingface.yaml
+          echo "# Déploiement Docker + snapshot_download pour data" > deploy/README.md
 
-          cat <<EOF > deploy/README.md
-          # Application Streamlit - Précipitations extrêmes
-
-          Cette application est déployée automatiquement depuis un dépôt GitHub.
-          Les fichiers .parquet (et tout le dossier "data/") sont inclus dans l'image Docker
-          sous forme d'archive .tar.gz, puis extraits au build.
-          EOF
-
-          if [ -d .streamlit ]; then
-            cp -r .streamlit deploy/
-          fi
-
-          # ---------------------------------------------------------------------- #
-          # 5. Initialiser un dépôt Git local dans "deploy" + configurer Git LFS
-          # ---------------------------------------------------------------------- #
+          # d) Initialiser un dépôt Git local dans "deploy" pour pousser vers la Space
           cd deploy
           git init
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git lfs install
-
-          # -- IMPORTANT : Dire à Git LFS de suivre l'archive data_parquets.tar.gz
-          git lfs track "data_parquets.tar.gz"
-          # On ajoute le fichier .gitattributes généré par git lfs track
-          git add .gitattributes
-
-          # ---------------------------------------------------------------------- #
-          # 6. Pousser le code sur la Space
-          # ---------------------------------------------------------------------- #
           git branch -M main
+
           HF_REMOTE="https://${HF_USER}:${HF_TOKEN}@huggingface.co/spaces/${HF_USER}/${HF_SPACE}"
           git remote add hf "$HF_REMOTE"
 
-          # Ajouter tous les fichiers, y compris l'archive gérée par LFS
           git add .
-          git commit -m "Déploiement Docker (avec archive .tar.gz suivie par Git LFS)"
+          git commit -m "Déploiement Docker + snapshot_download pour data"
           git push hf main --force
