@@ -19,10 +19,14 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
         run: |
-          # Crée un dossier temporaire avec juste le Dockerfile et fichiers nécessaires
           mkdir deploy
+          shopt -s extglob dotglob
+          cp -r !(deploy|.git|.github) deploy/
 
-          # Crée Dockerfile dans deploy/
+          # Supprime les fichiers Parquet du dossier deploy (ils seront dans le docker, mais pas sur Hugging Face)
+          find deploy/ -name "*.parquet" -delete
+
+          # Écrit le Dockerfile dans deploy/
           cat <<EOF > deploy/Dockerfile
           FROM python:3.11-slim
 
@@ -42,17 +46,18 @@ jobs:
           CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
           EOF
 
-          # Fichier Hugging Face de config
           echo "sdk: docker" > deploy/.huggingface.yaml
 
-          # README Hugging Face
           cat <<EOF > deploy/README.md
           App Streamlit visualisant les précipitations extrêmes horaires simulées et observées.
 
           > Générée automatiquement depuis le dépôt [GitHub](https://github.com/NCSdecoopman/ExtremePrecipit/tree/app)
           EOF
 
-          # Initialisation du dépôt Hugging Face
+          if [ -d .streamlit ]; then
+            cp -r .streamlit deploy/
+          fi
+
           cd deploy
           git init
           git config user.email "ncsdecoopman@github.com"
@@ -61,5 +66,6 @@ jobs:
           git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
 
           git add .
-          git commit -m "Deploy only Dockerfile and config to HF"
+          git commit -m "Deploy only Dockerfile and app code (no parquet)"
           git push hf main --force
+
