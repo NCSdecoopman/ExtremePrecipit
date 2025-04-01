@@ -76,6 +76,14 @@ jobs:
           git branch -M main
           git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
 
+          # Supprime tout le contenu distant pour repartir au propre
+          git fetch hf
+          git reset --hard
+          git rm -rf . > /dev/null 2>&1 || true
+          git clean -fxd
+          git commit --allow-empty -m "Reset remote Space"
+          git push hf main --force
+
           git add .
           git commit -m "Deploy full Dockerized app with data"
           git push hf main --force
