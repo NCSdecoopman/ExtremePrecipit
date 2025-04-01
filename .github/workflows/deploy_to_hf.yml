@@ -19,11 +19,11 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
         run: |
+          # Crée le dossier deploy et copie tous les fichiers (y compris les .parquet)
           mkdir deploy
-          shopt -s extglob dotglob
-          cp -r !(deploy|.git|.github) deploy/
+          rsync -av --exclude=deploy --exclude=.git --exclude=.github . deploy/
 
-          # Dockerfile avec gestion de Matplotlib et données embarquées
+          # Dockerfile avec dépendances et Streamlit
           cat <<EOF > deploy/Dockerfile
           FROM python:3.11-slim
 
@@ -45,16 +45,22 @@ jobs:
           CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
           EOF
 
+          # Fichier de config Hugging Face
           echo "sdk: docker" > deploy/.huggingface.yaml
 
+          # README simple
           cat <<EOF > deploy/README.md
           App Streamlit visualisant les précipitations extrêmes horaires simulées et observées.
+
+          > Générée automatiquement depuis le dépôt GitHub.
           EOF
 
+          # Copie la config Streamlit si elle existe
           if [ -d .streamlit ]; then
             cp -r .streamlit deploy/
           fi
 
+          # Initialisation git uniquement pour le push HF
           cd deploy
           git init
           git config user.email "ncsdecoopman@github.com"
@@ -62,7 +68,7 @@ jobs:
           git branch -M main
           git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
 
-          # ✅ Exclut les .parquet du commit, mais ils sont bien dans le build
+          # ✅ Commit tout sauf les .parquet (ils sont dans le build Docker, mais pas pushés)
           git add . ':!data/**/*.parquet'
           git commit -m "Deploy Docker with app and embedded data"
           git push hf main --force
