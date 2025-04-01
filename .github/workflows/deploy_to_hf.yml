@@ -22,15 +22,15 @@ jobs:
           # Crée un dossier temporaire
           mkdir deploy
           shopt -s extglob dotglob
-          cp -r !(deploy|.git|.github|data) deploy/
+          cp -r !(deploy|.git|.github) deploy/  # ✅ Ne pas exclure data/
 
-          # Génère automatiquement un Dockerfile
+          # Génère automatiquement un Dockerfile avec data incluse
           cat <<EOF > deploy/Dockerfile
           FROM python:3.11-slim
 
-          RUN apt-get update && apt-get install -y \
-              build-essential \
-              git \
+          RUN apt-get update && apt-get install -y \\
+              build-essential \\
+              git \\
               && rm -rf /var/lib/apt/lists/*
 
           WORKDIR /app
@@ -44,19 +44,17 @@ jobs:
           CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
           EOF
 
-          # Génère un fichier .huggingface.yaml pour activer le mode Docker
+          # Fichier de configuration Hugging Face
           echo "sdk: docker" > deploy/.huggingface.yaml
 
-          # Génère un README minimal
+          # README
           cat <<EOF > deploy/README.md
           ---
           title: "Application de visualisation"
           emoji: "🌧️"
           colorFrom: "blue"
           colorTo: "blue"
-          sdk: "streamlit"
-          sdk_version: "1.32.0"
-          app_file: "app.py"
+          sdk: "docker"
           pinned: false
           ---
 
@@ -65,12 +63,12 @@ jobs:
           > Générée automatiquement depuis le dépôt [GitHub](https://github.com/NCSdecoopman/ExtremePrecipit/tree/app)
           EOF
 
-          # Copie ou crée un requirements.txt si non présent
-          if [ ! -f deploy/requirements.txt ]; then
-            echo "streamlit" > deploy/requirements.txt
+          # Copie aussi la config Streamlit si présente
+          if [ -d .streamlit ]; then
+            cp -r .streamlit deploy/
           fi
 
-          # Initialisation du dépôt
+          # Initialisation du dépôt Hugging Face
           cd deploy
           git init
           git config user.email "ncsdecoopman@github.com"
@@ -79,19 +77,5 @@ jobs:
           git remote add hf https://ncsdecoopman:${HF_TOKEN}@huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
 
           git add .
-          git commit -m "Deploy Dockerized app to HF Space"
+          git commit -m "Deploy full Dockerized app with data"
           git push hf main --force
-
-      - name: Add data/ files via Git LFS
-        env:
-          HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
-        run: |
-          cp -r data deploy/data
-
-          cd deploy
-          git lfs install
-          git lfs track "*.parquet"
-          git add .gitattributes
-          git add data/
-          git commit -m "Ajout des fichiers LFS"
-          git push hf main
