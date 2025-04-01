@@ -75,10 +75,10 @@ def show(config_path):
         # Ajoute une règle CSS directement dans le <head>
         html = html.replace(
             "<head>",
-            "<head><style>body { background-color: rgb(14, 17, 23); !important; }</style>"
+            "<head><style>body { background-color: white; !important; }</style>"
         )
 
         components.html(html, height=height, scrolling=False)
 
     with col2:
-        display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=8, label=unit_label)       
+        display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=8, label=unit_label)

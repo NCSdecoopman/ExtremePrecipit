@@ -1,8 +1,6 @@
-repo_id: ncsdecoopman/ExtremePrecipit
-
 years:
   min: 1959
   max: 2010
 
 statisticals:
-  modelised: data/statisticals/modelised
+  modelised: data/statisticals/modelised/horaire

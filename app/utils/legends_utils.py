@@ -49,6 +49,8 @@ def get_stat_unit(stat_key: str, scale_key: str) -> str:
         return ""
     
 def formalised_legend(df, column_to_show, colormap, vmin=None, vmax=None):
+    import pandas as pd
+
     if column_to_show.startswith("date"):
         # Cas date
         df[column_to_show] = pd.to_datetime(df[column_to_show])
@@ -62,8 +64,7 @@ def formalised_legend(df, column_to_show, colormap, vmin=None, vmax=None):
         # Cas mois pluvieux : valeurs entières de 1 à 12
         vmin = 1
         vmax = 12
-
-        value_norm = (df[column_to_show] - 1) / 11  # Normalise mois de 1 à 12 -> 0 à 1
+        value_norm = (df[column_to_show] - 1) / 11
         val_fmt_func = lambda x: [
             "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
             "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
@@ -71,23 +72,25 @@ def formalised_legend(df, column_to_show, colormap, vmin=None, vmax=None):
 
     else:
         # Cas numérique continu
-        vmin = df[column_to_show].min() if vmin is None else vmin
+        vmin = 0 if vmin is None else vmin
         vmax = df[column_to_show].max() if vmax is None else vmax
-
         value_norm = (df[column_to_show] - vmin) / (vmax - vmin)
         val_fmt_func = lambda x: f"{x:.2f}"
 
+    # Nettoyage
     value_norm = value_norm.clip(0, 1).fillna(0)
 
+    # Application du colormap matplotlib → RGB + alpha 255
     df["fill_color"] = value_norm.apply(
-        lambda v: [int(255 * c) for c in colormap(v)[:3]] + [255]  # RGBA
+        lambda v: [int(255 * c) for c in colormap(v)[:3]] + [255]
     )
-    df["val_fmt"] = df[column_to_show].map(val_fmt_func)
 
+    df["val_fmt"] = df[column_to_show].map(val_fmt_func)
     df["lat_fmt"] = df["lat"].map(lambda x: f"{x:.3f}")
     df["lon_fmt"] = df["lon"].map(lambda x: f"{x:.3f}")
-    
+
     return df, vmin, vmax
+
 
 def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label=""):
     import numpy as np

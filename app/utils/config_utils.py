@@ -41,16 +41,16 @@ def load_config(config_path: str) -> dict:
 def echelle_config(type_: str, nombre_label: int = 5):
     if type_ == "continu":
         custom_colorscale = [
-            [0.0, "white"],  
-            [0.01, "lightblue"],
-            [0.10, "blue"],
-            [0.30, "darkblue"],  
-            [0.50, "green"], 
-            [0.60, "yellow"],
-            [0.70, "red"],  
-            [0.80, "darkred"],  
-            [1.0, "#654321"]
+            (0.0, "#ffffff"),  # blanc
+            (0.1, "lightblue"),
+            (0.3, "blue"),
+            (0.45, "green"),
+            (0.6, "yellow"),
+            (0.7, "orange"),
+            (0.8, "red"),  # rouge
+            (1.0, "black"),  # noir
         ]
+
         return mcolors.LinearSegmentedColormap.from_list("custom", custom_colorscale)
 
     elif type_ == "discret":
