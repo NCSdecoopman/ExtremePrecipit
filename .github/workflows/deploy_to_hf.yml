@@ -45,7 +45,23 @@ jobs:
           EOF
 
           # Génère un README minimal
-          echo "# ExtremePrecipit" > deploy/README.md
+          cat <<EOF > deploy/README.md
+          ---
+          title: "Application de visualisation"
+          emoji: "🌧️"
+          colorFrom: "indigo"
+          colorTo: "cyan"
+          sdk: "streamlit"
+          sdk_version: "1.32.0"
+          app_file: "app.py"
+          pinned: false
+          ---
+
+          App Streamlit visualisant les précipitations extrêmes horaires simulées et observées.
+
+          > Générée automatiquement depuis le dépôt [GitHub](https://github.com/NCSdecoopman/ExtremePrecipit/tree/app)
+          EOF
+
 
           # Copie ou crée un requirements.txt si non présent
           if [ ! -f deploy/requirements.txt ]; then
