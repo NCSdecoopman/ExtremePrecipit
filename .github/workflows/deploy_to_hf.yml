@@ -56,10 +56,10 @@ jobs:
 
           # Télécharger les données depuis le dataset Hugging Face
           RUN python -c "from huggingface_hub import snapshot_download; \
-                        snapshot_download(repo_id='ncsdecoopman/ExtremePrecipit', \
-                                          repo_type='dataset', \
-                                          local_dir='/app/data', \
-                                          token='${HF_TOKEN}')"
+                         snapshot_download(repo_id='ncsdecoopman/ExtremePrecipit', \
+                                           repo_type='dataset', \
+                                           local_dir='/app/data', \
+                                           token='${HF_TOKEN}')"
 
           # Copier le reste de l'app
           COPY . .
@@ -72,9 +72,11 @@ jobs:
 
           # c) Fichier Hugging Face + README
           echo "sdk: docker" > deploy/.huggingface.yaml
-          echo "build:\n  args:\n    HF_TOKEN_ARG: \$HF_TOKEN" >> deploy/.huggingface.yaml
-          echo "# Déploiement avec téléchargement auto des données via snapshot_download depuis dataset" > deploy/README.md
+          echo "build:" >> deploy/.huggingface.yaml
+          echo "  args:" >> deploy/.huggingface.yaml
+          echo "    HF_TOKEN_ARG: \$HF_TOKEN" >> deploy/.huggingface.yaml
 
+          echo "# Déploiement avec snapshot_download depuis le dataset Hugging Face" > deploy/README.md
 
           # d) Initialiser et pousser sur Hugging Face
           cd deploy
