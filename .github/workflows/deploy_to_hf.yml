@@ -83,4 +83,3 @@ jobs:
           git add .
           git commit -m "Déploiement Docker depuis workflow (structure corrigée)"
           git push hf main --force
-EOF
