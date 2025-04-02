@@ -61,7 +61,7 @@ jobs:
           ENV MPLCONFIGDIR=/tmp/matplotlib
           ENV PYTHONPATH=/code
 
-          CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
+          CMD ["streamlit", "run", "code/app.py", "--server.port=7860", "--server.address=0.0.0.0"]
           EOF
 
           # c) Créer le fichier .huggingface.yaml pour activer le mode docker
