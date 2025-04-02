@@ -43,7 +43,7 @@ jobs:
               git \
               && rm -rf /var/lib/apt/lists/*
 
-          WORKDIR
+          WORKDIR /app
 
           COPY requirements.txt .
           RUN pip install --no-cache-dir -r requirements.txt
