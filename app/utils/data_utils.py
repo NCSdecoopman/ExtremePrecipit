@@ -13,7 +13,7 @@ def load_data(type_data: str, echelle: str, min_year: int, max_year: int, season
     if season not in SEASON.values():
         raise ValueError(f"Saison inconnue : {season}")
 
-    base_path = f"{config["statisticals"][type_data]}/{echelle}"
+    base_path = f'{config["statisticals"][type_data]}/{echelle}'
 
     tasks = list(range(min_year, max_year + 1))
     dataframes = []
