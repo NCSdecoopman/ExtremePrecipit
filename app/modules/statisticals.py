@@ -106,7 +106,7 @@ def show(config_path):
 
     st.write(f"Nombre de stations chargées : {result_df_observed.shape[0]}")
     
-    col1, col2, col3 = st.columns([2.8, 0.3, 2.5])
+    col1, col2, col3 = st.columns([2.8, 0.5, 2.2])
     height = 600
 
     with col1:
