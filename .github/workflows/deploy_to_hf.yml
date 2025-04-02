@@ -35,12 +35,12 @@ jobs:
           rsync -av --exclude=deploy --exclude=.git --exclude=.github --exclude=data . deploy/
 
           # b) Créer le Dockerfile
-          cat <<EOF > deploy/Dockerfile
+          cat <<'EOF' > deploy/Dockerfile
           FROM python:3.11-slim
 
-          RUN apt-get update && apt-get install -y \\
-              build-essential \\
-              git \\
+          RUN apt-get update && apt-get install -y \
+              build-essential \
+              git \
               && rm -rf /var/lib/apt/lists/*
 
           WORKDIR /app
@@ -50,16 +50,16 @@ jobs:
           RUN pip install --no-cache-dir -r requirements.txt
           RUN pip install huggingface_hub
 
-          # Passer le token pour snapshot_download
+          # Argument pour le token, transmis uniquement au build
           ARG HF_TOKEN_ARG
-          ENV HF_TOKEN=\$HF_TOKEN_ARG
+          ENV HF_TOKEN=${HF_TOKEN_ARG}
 
           # Télécharger les données depuis le dataset Hugging Face
-          RUN python -c "from huggingface_hub import snapshot_download; \\
-                         snapshot_download(repo_id='ncsdecoopman/ExtremePrecipit', \\
-                                           repo_type='dataset', \\
-                                           local_dir='/app/data', \\
-                                           token='\${HF_TOKEN}')"
+          RUN python -c "from huggingface_hub import snapshot_download; \
+                        snapshot_download(repo_id='ncsdecoopman/ExtremePrecipit', \
+                                          repo_type='dataset', \
+                                          local_dir='/app/data', \
+                                          token='${HF_TOKEN}')"
 
           # Copier le reste de l'app
           COPY . .
@@ -70,9 +70,11 @@ jobs:
           CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
           EOF
 
-          # c) Ajouter fichiers Hugging Face
+          # c) Fichier Hugging Face + README
           echo "sdk: docker" > deploy/.huggingface.yaml
+          echo "build:\n  args:\n    HF_TOKEN_ARG: \$HF_TOKEN" >> deploy/.huggingface.yaml
           echo "# Déploiement avec téléchargement auto des données via snapshot_download depuis dataset" > deploy/README.md
+
 
           # d) Initialiser et pousser sur Hugging Face
           cd deploy
