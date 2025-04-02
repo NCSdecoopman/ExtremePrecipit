@@ -30,11 +30,11 @@ jobs:
           HF_USER: "ncsdecoopman"
           HF_SPACE: "ExtremePrecipit"
         run: |
-          # a) Créer le dossier "deploy" et y copier tout sauf .git/.github/data
+          # a) Créer le dossier "deploy" et y copier tout sauf .git/.github/data/deploy
           mkdir deploy
           rsync -av --exclude=deploy --exclude=.git --exclude=.github --exclude=data . deploy/
 
-          # b) Créer le Dockerfile
+          # b) Créer le Dockerfile dans deploy/
           cat <<'EOF' > deploy/Dockerfile
           FROM python:3.11-slim
 
@@ -43,32 +43,34 @@ jobs:
               git \
               && rm -rf /var/lib/apt/lists/*
 
-          WORKDIR /app
+          WORKDIR /code
 
           COPY requirements.txt .
           RUN pip install --no-cache-dir -r requirements.txt
           RUN pip install huggingface_hub
 
-          # Télécharger les données sans authentification (car dataset public)
+          # Télécharger les données du dataset Hugging Face (public)
           RUN python -c "from huggingface_hub import snapshot_download; \
-                        snapshot_download(repo_id='ncsdecoopman/ExtremePrecipit', \
-                                          repo_type='dataset', \
-                                          local_dir='/data')"
+                         snapshot_download(repo_id='ncsdecoopman/ExtremePrecipit', \
+                                           repo_type='dataset', \
+                                           local_dir='app/data')"
 
           COPY . .
 
           EXPOSE 7860
           ENV MPLCONFIGDIR=/tmp/matplotlib
-          ENV PYTHONPATH=/app
+          ENV PYTHONPATH=/code
 
           CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
           EOF
 
-          # c) Fichier Hugging Face + README
+          # c) Créer le fichier .huggingface.yaml pour activer le mode docker
           echo "sdk: docker" > deploy/.huggingface.yaml
+
+          # d) (optionnel) Ajouter un README
           echo "# Déploiement avec snapshot_download depuis le dataset Hugging Face" > deploy/README.md
 
-          # d) Initialiser et pousser sur Hugging Face
+          # e) Initialiser et pousser sur Hugging Face
           cd deploy
           git init
           git config user.email "actions@github.com"
@@ -79,5 +81,5 @@ jobs:
           git remote add hf "$HF_REMOTE"
 
           git add .
-          git commit -m "Déploiement Docker avec snapshot depuis dataset"
+          git commit -m "Déploiement Docker depuis workflow (structure corrigée)"
           git push hf main --force
