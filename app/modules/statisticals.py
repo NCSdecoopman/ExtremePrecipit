@@ -106,7 +106,7 @@ def show(config_path):
 
     st.write(f"Nombre de stations chargées : {result_df_observed.shape[0]}")
     
-    col1, col2, col3 = st.columns([2.08, 0.3, 3.2])
+    col1, col2, col3 = st.columns([2.8, 0.3, 2.5])
     height = 600
 
     with col1:
@@ -137,6 +137,6 @@ def show(config_path):
         display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=8, label=unit_label)
 
     with col3:
-        plot_histogramme(result_df_modelised, column_to_show, stat_choice, stat_choice_key, unit_label, height/2)
+        plot_histogramme(result_df_modelised, column_to_show, stat_choice, stat_choice_key, unit_label, height)
 
     #show_scatter_plot(result_df_observed, result_df_modelised)
