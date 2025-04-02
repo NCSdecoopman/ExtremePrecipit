@@ -43,7 +43,7 @@ jobs:
               git \
               && rm -rf /var/lib/apt/lists/*
 
-          WORKDIR /code
+          WORKDIR /app
 
           COPY requirements.txt .
           RUN pip install --no-cache-dir -r requirements.txt
@@ -53,15 +53,14 @@ jobs:
           RUN python -c "from huggingface_hub import snapshot_download; \
                          snapshot_download(repo_id='ncsdecoopman/ExtremePrecipit', \
                                            repo_type='dataset', \
-                                           local_dir='app/data')"
+                                           local_dir='app/app/data')"
 
           COPY . .
 
           EXPOSE 7860
-          ENV MPLCONFIGDIR=/tmp/matplotlib
-          ENV PYTHONPATH=/code
+          ENV PYTHONPATH=/app
 
-          CMD ["streamlit", "run", "code/app.py", "--server.port=7860", "--server.address=0.0.0.0"]
+          CMD ["streamlit", "run", "main.py", "--server.port=7860", "--server.address=0.0.0.0"]
           EOF
 
           # c) Créer le fichier .huggingface.yaml pour activer le mode docker
