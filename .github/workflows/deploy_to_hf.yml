@@ -45,23 +45,16 @@ jobs:
 
           WORKDIR /app
 
-          # Installer les dépendances
           COPY requirements.txt .
           RUN pip install --no-cache-dir -r requirements.txt
           RUN pip install huggingface_hub
 
-          # Argument pour le token, transmis uniquement au build
-          ARG HF_TOKEN_ARG
-          ENV HF_TOKEN=${HF_TOKEN_ARG}
-
-          # Télécharger les données depuis le dataset Hugging Face
+          # Télécharger les données sans authentification (car dataset public)
           RUN python -c "from huggingface_hub import snapshot_download; \
-                         snapshot_download(repo_id='ncsdecoopman/ExtremePrecipit', \
-                                           repo_type='dataset', \
-                                           local_dir='/app/data', \
-                                           token='${HF_TOKEN}')"
+                        snapshot_download(repo_id='ncsdecoopman/ExtremePrecipit', \
+                                          repo_type='dataset', \
+                                          local_dir='/app/data')"
 
-          # Copier le reste de l'app
           COPY . .
 
           EXPOSE 7860
@@ -72,10 +65,6 @@ jobs:
 
           # c) Fichier Hugging Face + README
           echo "sdk: docker" > deploy/.huggingface.yaml
-          echo "build:" >> deploy/.huggingface.yaml
-          echo "  args:" >> deploy/.huggingface.yaml
-          echo "    HF_TOKEN_ARG: \$HF_TOKEN" >> deploy/.huggingface.yaml
-
           echo "# Déploiement avec snapshot_download depuis le dataset Hugging Face" > deploy/README.md
 
           # d) Initialiser et pousser sur Hugging Face

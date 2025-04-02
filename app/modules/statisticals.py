@@ -139,4 +139,4 @@ def show(config_path):
     with col3:
         plot_histogramme(result_df_modelised, column_to_show, stat_choice, stat_choice_key, unit_label, height/2)
 
-    show_scatter_plot(result_df_observed, result_df_modelised)
+    #show_scatter_plot(result_df_observed, result_df_modelised)
