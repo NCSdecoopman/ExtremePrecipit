@@ -1,14 +1,14 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-from utils.config_utils import *
-from utils.menus_utils import *
-from utils.data_utils import *
-from utils.stats_utils import *
-from utils.map_utils import *
-from utils.legends_utils import *
-from utils.hist_utils import *
-from utils.scatter_plot_utils import *
+from app.utils.config_utils import *
+from app.utils.menus_utils import *
+from app.utils.data_utils import *
+from app.utils.stats_utils import *
+from app.utils.map_utils import *
+from app.utils.legends_utils import *
+from app.utils.hist_utils import *
+from app.utils.scatter_plot_utils import *
 
 import pydeck as pdk
 
