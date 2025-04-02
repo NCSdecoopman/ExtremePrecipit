@@ -5,7 +5,7 @@ def menu_statisticals(min_years: int, max_years: int, STATS, SEASON):
         st.session_state["selected_point"] = None
 
     # D'abord on définit stat_choice pour l'utiliser plus tard :
-    col1, col2, col3, col4 = st.columns([1, 0.75, 1, 0.65])
+    col1, col2, col3, col4, col5 = st.columns([0.6, 0.4, 0.6, 0.3, 0.8])
 
     with col1:
         stat_choice = st.selectbox("Choix de la statistique étudiée", list(STATS.keys()))
@@ -58,4 +58,32 @@ def menu_statisticals(min_years: int, max_years: int, STATS, SEASON):
         else:
             scale_choice = st.selectbox("Choix de l'échelle temporelle", ["Horaire","Journalière"])
 
-    return stat_choice, min_year_choice, max_year_choice, season_choice, scale_choice
+    with col5:
+        st.markdown("""
+            <style>
+            /* Cacher les ticks-bar min et max sous la barre du slider */
+            div[data-testid="stSliderTickBarMin"],
+            div[data-testid="stSliderTickBarMax"] {
+                display: none !important;
+            }
+            /* Réduire l'espace vertical du slider */
+            .stSlider > div[data-baseweb="slider"] {
+                margin-bottom: -10px;
+            }
+            /* Remonter la barre + les poignées */
+            .stSlider {
+                transform: translateY(-17px);
+            }
+            </style>
+        """, unsafe_allow_html=True)
+
+        # On affiche pas la première année en année hydro ou hiver (année incomplète)
+        missing_rate = st.slider(
+            "Taux maximal de valeurs manquantes pour les données observées",
+            min_value=0.0,
+            max_value=1.0,
+            value=0.1,
+            step=0.01
+        )
+
+    return stat_choice, min_year_choice, max_year_choice, season_choice, scale_choice, missing_rate

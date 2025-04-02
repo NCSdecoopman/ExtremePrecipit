@@ -19,12 +19,12 @@ def get_stat_column_name(stat_key: str, scale_key: str) -> str:
     elif stat_key == "mean-max":
         return f"max_mean_{scale_key}"
     elif stat_key == "date":
-        if scale_key == "Horaire":
+        if scale_key == "mm_h":
             return "date_max_h"
         else:  # Journalière
             return "date_max_j"
     elif stat_key == "month":
-        if scale_key == "Horaire":
+        if scale_key == "mm_h":
             return "mois_pluvieux_h"
         else:  # Journalière
             return "mois_pluvieux_j"
@@ -129,7 +129,7 @@ def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label
 
         html_mois = (
             f'<div style="text-align: left; font-size: 13px; margin-bottom: 4px;">'
-            f'  <b>{label}</b>'
+            f'  {label}'
             f'</div>'
             f'<div style="display: flex; flex-direction: column;">'
             f'{color_boxes}'
@@ -160,7 +160,7 @@ def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label
     st.markdown(
         f"""
         <div style="text-align: left; font-size: 13px;">
-            <b>{label}</b>
+            {label}
         </div>
         <div style="display: flex; flex-direction: row; align-items: center; height: {height-30}px;">
             <img src="data:image/png;base64,{base64_img}"

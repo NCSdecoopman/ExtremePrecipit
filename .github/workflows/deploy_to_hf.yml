@@ -10,65 +10,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
-      # 1. Récupérer tout le code du repo GitHub (branche "app")
+      # 1. Récupérer le code du repo GitHub
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      # 2. (Optionnel) Installer Git LFS si vous en avez besoin
+      # 2. (Optionnel) Installer Git LFS
       - name: Installer Git LFS
         run: |
           sudo apt-get update
           sudo apt-get install -y git-lfs
           git lfs install
 
-      # 3. Uploader les fichiers du dossier "data/" vers la Space
-      - name: Uploader les données dans la Space
-        env:
-          HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
-        run: |
-          python <<'EOF'
-          import warnings
-          warnings.filterwarnings("ignore", message="It seems that you are about to commit a data file*")
-
-          from huggingface_hub import HfApi, upload_file
-          import os
-
-          SPACE_ID = "ncsdecoopman/ExtremePrecipit"
-          LOCAL_DIR = "data"
-          REMOTE_DIR = "data"
-
-          api = HfApi()
-
-          for root, _, files in os.walk(LOCAL_DIR):
-              for file in files:
-                  local_path = os.path.join(root, file)
-                  relative_path = os.path.relpath(local_path, LOCAL_DIR)
-                  repo_path = f"{REMOTE_DIR}/{relative_path}".replace("\\", "/")
-
-                  print(f"Uploading {local_path} to {repo_path}...")
-
-                  upload_file(
-                      path_or_fileobj=local_path,
-                      path_in_repo=repo_path,
-                      repo_id=SPACE_ID,
-                      repo_type="space",
-                      token=os.environ['HF_TOKEN'],
-                  )
-          EOF
-
-      # 4. Préparer le dossier "deploy" et pousser le Dockerfile vers la Space
+      # 3. Préparer le dossier "deploy" et pousser l'app Dockerisée
       - name: Préparer et pousser l'app Dockerisée
         env:
           HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
           HF_USER: "ncsdecoopman"
           HF_SPACE: "ExtremePrecipit"
         run: |
-          # a) Créer le dossier "deploy" et y copier tout le code
+          # a) Créer le dossier "deploy" et y copier tout sauf .git/.github/data
           mkdir deploy
-          rsync -av --exclude=deploy --exclude=.git --exclude=.github . deploy/
+          rsync -av --exclude=deploy --exclude=.git --exclude=.github --exclude=data . deploy/
 
           # b) Créer le Dockerfile
           cat <<EOF > deploy/Dockerfile
@@ -81,7 +45,7 @@ jobs:
 
           WORKDIR /app
 
-          # Installer les dépendances Python
+          # Installer les dépendances
           COPY requirements.txt .
           RUN pip install --no-cache-dir -r requirements.txt
           RUN pip install huggingface_hub
@@ -90,10 +54,10 @@ jobs:
           ARG HF_TOKEN_ARG
           ENV HF_TOKEN=\$HF_TOKEN_ARG
 
-          # Télécharger les fichiers depuis la Space
+          # Télécharger les données depuis le dataset Hugging Face
           RUN python -c "from huggingface_hub import snapshot_download; \\
-                         snapshot_download(repo_id='\${HF_USER}/\${HF_SPACE}', \\
-                                           repo_type='space', \\
+                         snapshot_download(repo_id='ncsdecoopman/ExtremePrecipit', \\
+                                           repo_type='dataset', \\
                                            local_dir='/app/data', \\
                                            token='\${HF_TOKEN}')"
 
@@ -106,11 +70,11 @@ jobs:
           CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
           EOF
 
-          # c) Fichier Hugging Face + README
+          # c) Ajouter fichiers Hugging Face
           echo "sdk: docker" > deploy/.huggingface.yaml
-          echo "# Déploiement Docker + données via snapshot_download" > deploy/README.md
+          echo "# Déploiement avec téléchargement auto des données via snapshot_download depuis dataset" > deploy/README.md
 
-          # d) Initialiser et pousser sur la Space
+          # d) Initialiser et pousser sur Hugging Face
           cd deploy
           git init
           git config user.email "actions@github.com"
@@ -121,5 +85,5 @@ jobs:
           git remote add hf "$HF_REMOTE"
 
           git add .
-          git commit -m "Déploiement Docker avec snapshot_download"
+          git commit -m "Déploiement Docker avec snapshot depuis dataset"
           git push hf main --force

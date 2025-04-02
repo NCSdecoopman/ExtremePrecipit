@@ -3,4 +3,5 @@ years:
   max: 2010
 
 statisticals:
-  modelised: data/statisticals/modelised/horaire
+  modelised: data/statisticals/modelised
+  observed: data/statisticals/observed

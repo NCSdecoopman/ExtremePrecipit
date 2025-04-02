@@ -4,18 +4,16 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from app.utils.config_utils import menu_config
 
-@st.cache_data(show_spinner=False)
 def load_season(year: int, season_key: str, base_path: str) -> pd.DataFrame:
     filename=f"{base_path}/{year:04d}/{season_key}.parquet"
     return pd.read_parquet(filename)
 
-@st.cache_data(show_spinner=False)
-def load_arome_data(min_year: int, max_year: int, season: str, config) -> pd.DataFrame:
+def load_data(type_data: str, echelle: str, min_year: int, max_year: int, season: str, config) -> pd.DataFrame:
     _, SEASON, _ = menu_config()
     if season not in SEASON.values():
         raise ValueError(f"Saison inconnue : {season}")
 
-    base_path = config["statisticals"]["modelised"]
+    base_path = f"{config["statisticals"][type_data]}/{echelle}"
 
     tasks = list(range(min_year, max_year + 1))
     dataframes = []

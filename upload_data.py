@@ -1,33 +1,40 @@
-from huggingface_hub import HfApi, upload_file
 import os
+import shutil
+from huggingface_hub import create_repo, HfApi, HfFolder, whoami
+from subprocess import run
+from pathlib import Path
 
-import warnings
-warnings.filterwarnings("ignore", message="It seems that you are about to commit a data file*")
+# === Configuration ===
+local_data_path = Path(r"C:\Users\nicod\Documents\GitHub\app\data")
+repo_id = "ncsdecoopman/ExtremePrecipit"
+local_clone_path = Path.cwd() / "ExtremePrecipit"
+repo_url = f"https://huggingface.co/datasets/{repo_id}"
 
-# Config
-SPACE_ID = "ncsdecoopman/ExtremePrecipit"  # nom du Space
-LOCAL_DIR = "C:/Users/nicod/Documents/GitHub/app/data"  # dossier local
-REMOTE_DIR = "data"  # dossier de destination sur le repo Hugging Face
-
-# Authentification (ouvre une fenêtre navigateur si token non dispo)
+# === Étape 1 : Créer le repo s'il n'existe pas ===
 api = HfApi()
+user = whoami()
+if not any(repo.id == repo_id for repo in api.list_datasets(author=user['name'])):
+    create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
 
-# Boucle sur tous les fichiers dans le dossier local
-for root, _, files in os.walk(LOCAL_DIR):
-    for file in files:
-        local_path = os.path.join(root, file)
-        
-        # Calculer le chemin relatif
-        relative_path = os.path.relpath(local_path, LOCAL_DIR)
-        repo_path = f"{REMOTE_DIR}/{relative_path}".replace("\\", "/")
+# === Étape 2 : Cloner le repo avec Git LFS ===
+run(["git", "lfs", "install"])
+if local_clone_path.exists():
+    shutil.rmtree(local_clone_path)
+run(["git", "clone", repo_url, str(local_clone_path)])
 
-        print(f"Uploading {local_path} to {repo_path}...")
+# === Étape 3 : Copier les données en gardant l'arborescence ===
+target_data_path = local_clone_path / "data"
+shutil.copytree(local_data_path, target_data_path, dirs_exist_ok=True)
 
-        upload_file(
-            path_or_fileobj=local_path,
-            path_in_repo=repo_path,
-            repo_id=SPACE_ID,
-            repo_type="space",
-        )
+# === Étape 4 : Suivre les fichiers lourds avec Git LFS ===
+os.chdir(local_clone_path)
+# Exemples d'extensions à suivre avec git-lfs
+extensions = ["*.zarr", "*.parquet", "*.nc", "*.csv", "*.xz"]
+for ext in extensions:
+    run(["git", "lfs", "track", ext])
 
-print("✅ Upload terminé.")
+# === Étape 5 : Commit et push ===
+run(["git", "add", ".gitattributes"])
+run(["git", "add", "."])
+run(["git", "commit", "-m", "Ajout des données avec arborescence complète"])
+run(["git", "push"])

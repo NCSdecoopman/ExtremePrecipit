@@ -1,6 +1,8 @@
 # Ignorer les fichiers de cache Python
 __pycache__/
 *.py[cod]
+*.parquet
+*.zarr
 
 # Ajouter les config streamlit au git
 !/.streamlit/*

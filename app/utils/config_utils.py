@@ -55,11 +55,11 @@ def echelle_config(type_: str, nombre_label: int = 5):
 
     elif type_ == "discret":
         couleurs_vives = [
-            "#e41a1c",  # rouge vif
-            "#377eb8",  # bleu soutenu
+            "white",  # rouge vif
+            "lightblue",  # bleu soutenu
             "#4daf4a",  # vert
-            "#984ea3",  # violet
-            "#ff7f00",  # orange
+            "darkgreen",  # violet
+            "yellow",  # orange
             "#ffff33",  # jaune
             "#a65628",  # brun
             "#f781bf",  # rose
