@@ -27,6 +27,8 @@ jobs:
       - name: Préparer et pousser l'app Dockerisée
         env:
           HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
+          HF_USER: "ncsdecoopman"
+          HF_SPACE: "ExtremePrecipit"
         run: |
           # a) Créer le dossier "deploy" et y copier tout sauf .git/.github/data
           mkdir deploy
@@ -72,7 +74,7 @@ jobs:
           git config user.name "GitHub Actions"
           git branch -M main
 
-          HF_REMOTE="https://huggingface.co/spaces/${HF_USER}/${HF_SPACE}"
+          HF_REMOTE="https://${HF_USER}:${HF_TOKEN}@huggingface.co/spaces/${HF_USER}/${HF_SPACE}"
           git remote add hf "$HF_REMOTE"
 
           git add .
