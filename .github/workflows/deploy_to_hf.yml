@@ -53,7 +53,7 @@ jobs:
           RUN python -c "from huggingface_hub import snapshot_download; \
                          snapshot_download(repo_id='ncsdecoopman/ExtremePrecipit', \
                                            repo_type='dataset', \
-                                           local_dir='app/data')"
+                                           local_dir='data')"
 
           COPY . .
 
@@ -83,3 +83,4 @@ jobs:
           git add .
           git commit -m "Déploiement Docker depuis workflow (structure corrigée)"
           git push hf main --force
+EOF
