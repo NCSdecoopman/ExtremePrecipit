@@ -2,12 +2,16 @@ import streamlit as st
 st.set_page_config(layout="wide", page_title="Visualisation des précipitations", page_icon="🌧️")
 
 st.markdown("""
-    <style>
+    <style>            
+        /* Masquer le header de l'app */
+        div[class*="stAppHeader"] {
+            display: none !important;
+        }
+            
         div[class*="block-container"] {
             padding-left: 1rem;
             padding-right: 1rem;
             max-width: 98% !important;
-            background-color: red !important;
         }
 
         /* Responsive layout des colonnes */
