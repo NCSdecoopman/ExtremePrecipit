@@ -3,14 +3,11 @@ st.set_page_config(layout="wide", page_title="Visualisation des précipitations"
 
 st.markdown("""
     <style>
-        .main .block-container {
-            background-color: red !important;
-        }
-        /* Forcer une largeur quasi-pleine sur l'ensemble de l'app */
-        .main .block-container {
+        div[class*="block-container"] {
             padding-left: 1rem;
             padding-right: 1rem;
             max-width: 98% !important;
+            background-color: red !important;
         }
 
         /* Responsive layout des colonnes */
@@ -34,6 +31,7 @@ st.markdown("""
         }
     </style>
 """, unsafe_allow_html=True)
+
 
 from app.modules import statisticals
 
