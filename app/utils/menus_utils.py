@@ -5,10 +5,37 @@ def menu_statisticals(min_years: int, max_years: int, STATS, SEASON):
         st.session_state["selected_point"] = None
 
     # D'abord on définit stat_choice pour l'utiliser plus tard :
-    col1, col2, col3, col4, col5 = st.columns([0.6, 0.4, 0.6, 0.3, 0.8])
+    col0, col1, col2, col3, col4, col5 = st.columns([0.6, 0.3, 0.4, 0.4, 0.3, 0.7])
+
+    with col0:
+        stat_choice = st.selectbox("Choix de la statistique étudiée", list(STATS.keys()))
 
     with col1:
-        stat_choice = st.selectbox("Choix de la statistique étudiée", list(STATS.keys()))
+        st.markdown("""
+            <style>
+            /* Cacher les ticks-bar min et max sous la barre du slider */
+            div[data-testid="stSliderTickBarMin"],
+            div[data-testid="stSliderTickBarMax"] {
+                display: none !important;
+            }
+            /* Réduire l'espace vertical du slider */
+            .stSlider > div[data-baseweb="slider"] {
+                margin-bottom: -10px;
+            }
+            /* Remonter la barre + les poignées */
+            .stSlider {
+                transform: translateY(-17px);
+            }
+            </style>
+        """, unsafe_allow_html=True)
+        quantile_choice = st.slider(
+            "Retrait des percentiles",
+            min_value=0.950,
+            max_value=1.00,
+            value=0.990,
+            step=0.001,
+            format="%.3f"  # Affichage à 3 décimales
+        )
 
     with col2:
         season_choice = st.selectbox(
@@ -86,4 +113,4 @@ def menu_statisticals(min_years: int, max_years: int, STATS, SEASON):
             step=0.01
         )
 
-    return stat_choice, min_year_choice, max_year_choice, season_choice, scale_choice, missing_rate
+    return stat_choice, quantile_choice, min_year_choice, max_year_choice, season_choice, scale_choice, missing_rate

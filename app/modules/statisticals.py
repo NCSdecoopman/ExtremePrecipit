@@ -12,26 +12,12 @@ from app.utils.scatter_plot_utils import *
 
 import pydeck as pdk
 
+import io
+
 
 @st.cache_data
 def load_data_cached(type_data, echelle, min_year, max_year, season_key, config):
     return load_data(type_data, echelle, min_year, max_year, season_key, config)
-
-def cleaning_data_observed(df, nan_limit: int = 0.1):
-    df_observed = df.copy()
-
-    # Étape 1 : suppression directe des lignes avec un nan_ratio > 0.1
-    df_cleaned = df_observed[df_observed["nan_ratio"] <= nan_limit].copy()
-
-    # Étape 2 : identifier les lat/lon problématiques dans le df original
-    bad_coords = df_observed[df_observed["nan_ratio"] > nan_limit][["lat", "lon"]].drop_duplicates()
-
-    # Supprimer toutes les lignes ayant ces lat/lon
-    df_cleaned = df_cleaned.merge(bad_coords, on=["lat", "lon"], how="left", indicator=True)
-    df_cleaned = df_cleaned[df_cleaned["_merge"] == "left_only"].drop(columns=["_merge"])
-
-    return df_cleaned
-
 
 def show(config_path):
     st.markdown("<h3>Visualisation des précipitations</h3>", unsafe_allow_html=True)
@@ -42,7 +28,7 @@ def show(config_path):
     min_years = config["years"]["min"]
     max_years = config["years"]["max"]
 
-    stat_choice, min_year_choice, max_year_choice, season_choice, scale_choice, missing_rate = menu_statisticals(
+    stat_choice, quantile_choice, min_year_choice, max_year_choice, season_choice, scale_choice, missing_rate = menu_statisticals(
         min_years,
         max_years,
         STATS,
@@ -54,7 +40,7 @@ def show(config_path):
     scale_choice_key = SCALE[scale_choice]
 
     try:    
-        df_modelised = load_data_cached(
+        df_modelised_load = load_data_cached(
             'modelised', 'horaire',
             min_year_choice,
             max_year_choice,
@@ -62,27 +48,34 @@ def show(config_path):
             config
         )
     except Exception as e:
-        st.error(f"Erreur lors du chargement des données : {e}")
+        st.error(f"Erreur lors du chargement des données modélisées : {e}")
         return
     
     try:
-        df_observed = load_data_cached(
+        df_observed_load = load_data_cached(
             'observed', 'horaire' if scale_choice_key == 'mm_h' else 'quotidien',
             min_year_choice,
             max_year_choice,
             season_choice_key,
             config
         )
-        df_observed = cleaning_data_observed(df_observed, missing_rate)
     except Exception as e:
-        st.error(f"Erreur lors du chargement des données : {e}")
+        st.error(f"Erreur lors du chargement des données observées : {e}")
         return
     
+    # Selection des données observées
+    df_observed = cleaning_data_observed(df_observed_load, missing_rate)
+    
     # Calcul des statistiques
-    result_df_modelised = compute_statistic_per_point(df_modelised, stat_choice_key)
+    result_df_modelised = compute_statistic_per_point(df_modelised_load, stat_choice_key)
     result_df_observed = compute_statistic_per_point(df_observed, stat_choice_key)
 
+    # Obtention de la colonne étudiée
     column_to_show = get_stat_column_name(stat_choice_key, scale_choice_key)
+    
+    # Retrait des extrêmes
+    percentile_95 = result_df_modelised[column_to_show].quantile(quantile_choice)
+    result_df_modelised = result_df_modelised[result_df_modelised[column_to_show] <= percentile_95]
 
     # Définir l'échelle personnalisée continue
     colormap = echelle_config("continu" if stat_choice_key != "month" else "discret")
@@ -104,7 +97,8 @@ def show(config_path):
     # View de la carte
     view_state = pdk.ViewState(latitude=46.9, longitude=1.7, zoom=5)
 
-    st.write(f"Nombre de stations chargées : {result_df_observed.shape[0]}")
+    st.write(f"Nombre de points chargés : {result_df_modelised.shape[0]}/{df_modelised_load[['lat', 'lon']].drop_duplicates().shape[0]}")
+    st.write(f"Nombre de stations chargées : {result_df_observed.shape[0]}/{df_observed_load[['lat', 'lon']].drop_duplicates().shape[0]}")
     
     col1, col2, col3 = st.columns([2.8, 0.5, 2.2])
     height = 600

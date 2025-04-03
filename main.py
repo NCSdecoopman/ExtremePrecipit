@@ -3,6 +3,9 @@ st.set_page_config(layout="wide", page_title="Visualisation des précipitations"
 
 st.markdown("""
     <style>
+        .main .block-container {
+            background-color: red !important;
+        }
         /* Forcer une largeur quasi-pleine sur l'ensemble de l'app */
         .main .block-container {
             padding-left: 1rem;

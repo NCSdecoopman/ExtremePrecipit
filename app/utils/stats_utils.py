@@ -1,6 +1,4 @@
 import pandas as pd
-import streamlit as st
-
 def compute_statistic_per_point(df: pd.DataFrame, stat_key: str) -> pd.DataFrame:   
     if stat_key == "mean":
         df = df.copy()
