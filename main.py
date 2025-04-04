@@ -36,6 +36,22 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+from huggingface_hub import snapshot_download
+import os
+
+
+DATA_DIR = "data"
+
+# Ne télécharge que si les données ne sont pas encore là
+if not os.path.exists(DATA_DIR) or not os.listdir(DATA_DIR):
+    print("📥 Téléchargement des données depuis Hugging Face Hub...")
+    snapshot_download(
+        repo_id="ncsdecoopman/ExtremePrecipit",
+        repo_type="dataset",
+        local_dir=DATA_DIR,
+        revision="main"
+    )
+
 
 from app.modules import statisticals
 

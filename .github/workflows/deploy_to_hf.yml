@@ -10,20 +10,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Récupérer le code du repo GitHub
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      # 2. (Optionnel) Installer Git LFS
-      - name: Installer Git LFS
+      - name: Installer Git LFS (optionnel)
         run: |
           sudo apt-get update
           sudo apt-get install -y git-lfs
           git lfs install
 
-      # 3. Préparer le dossier "deploy" et pousser l'app Dockerisée
       - name: Préparer et pousser l'app Dockerisée
         env:
           HF_TOKEN: ${{ secrets.HF_VIZ_APP }}
@@ -45,20 +42,9 @@ jobs:
 
           WORKDIR /app
 
-          COPY requirements.txt .
+          COPY requirements.txt ./
           RUN pip install --no-cache-dir -r requirements.txt
           RUN pip install huggingface_hub
-
-          # Télécharger les données du dataset Hugging Face (public)
-          RUN python -c "from huggingface_hub import snapshot_download; \
-                        snapshot_download(repo_id='ncsdecoopman/ExtremePrecipit', \
-                                          repo_type='dataset', \
-                                          local_dir='data', \
-                                          local_dir_use_symlinks=False, \
-                                          revision='main')"
-
-          # Nettoyer le cache
-          RUN rm -rf ~/.cache/huggingface/hub
 
           COPY . .
 
@@ -72,10 +58,10 @@ jobs:
           # c) Créer le fichier .huggingface.yaml pour activer le mode docker
           echo "sdk: docker" > deploy/.huggingface.yaml
 
-          # d) (optionnel) Ajouter un README
-          echo "# Déploiement avec snapshot_download depuis le dataset Hugging Face" > deploy/README.md
+          # d) Ajouter un README
+          echo "# Déploiement de l'application Streamlit via Docker" > deploy/README.md
 
-          # e) Initialiser et pousser sur Hugging Face
+          # e) Pousser sur le Space Hugging Face
           cd deploy
           git init
           git config user.email "actions@github.com"
@@ -86,5 +72,5 @@ jobs:
           git remote add hf "$HF_REMOTE"
 
           git add .
-          git commit -m "Déploiement Docker depuis workflow (structure corrigée)"
+          git commit -m "Déploiement Docker sans snapshot_download (runtime only)"
           git push hf main --force
