@@ -28,12 +28,18 @@ def show(config_path):
     min_years = config["years"]["min"]
     max_years = config["years"]["max"]
 
-    stat_choice, quantile_choice, min_year_choice, max_year_choice, season_choice, scale_choice, missing_rate = menu_statisticals(
+    params = menu_statisticals(
         min_years,
         max_years,
         STATS,
         SEASON
     )
+
+    if params is not None:
+        stat_choice, quantile_choice, min_year_choice, max_year_choice, season_choice, scale_choice, missing_rate = params
+    else:
+        st.warning("Merci de configurer vos paramètres puis de cliquer sur **Lancer l’analyse** pour afficher les résultats.")
+        st.stop()  # Stoppe l'exécution ici si pas validé
 
     stat_choice_key = STATS[stat_choice]
     season_choice_key = SEASON[season_choice]
@@ -97,8 +103,7 @@ def show(config_path):
     # View de la carte
     view_state = pdk.ViewState(latitude=46.9, longitude=1.7, zoom=5)
 
-    st.write(f"Nombre de points chargés : {result_df_modelised.shape[0]}/{df_modelised_load[['lat', 'lon']].drop_duplicates().shape[0]}")
-    st.write(f"Nombre de stations chargées : {result_df_observed.shape[0]}/{df_observed_load[['lat', 'lon']].drop_duplicates().shape[0]}")
+    st.info(f"CP-AROM : {result_df_modelised.shape[0]}/{df_modelised_load[['lat', 'lon']].drop_duplicates().shape[0]} | Stations Météo-France : {result_df_observed.shape[0]}/{df_observed_load[['lat', 'lon']].drop_duplicates().shape[0]}")
     
     col1, col2, col3 = st.columns([2.8, 0.5, 2.2])
     height = 600

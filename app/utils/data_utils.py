@@ -78,21 +78,16 @@ def load_data(type_data: str, echelle: str, min_year: int, max_year: int, season
 
 
 def cleaning_data_observed(df, nan_limit: float = 0.1):
-    df_observed = df.copy()
+    # Agrégation plus rapide sans copy initial
+    station_counts = df.groupby(["lat", "lon"], sort=False).agg(
+        nan_ratio=("nan_ratio", "mean")
+    ).reset_index()
 
-    # Agrégation des n_nan et n_total par station
-    station_counts = df_observed.groupby(["lat", "lon"], as_index=False).agg(
-        n_nan_total=("n_nan", "sum"),
-        n_total_total=("n_total", "sum")
-    )
+    # Stations valides
+    valid = station_counts.loc[station_counts["nan_ratio"] <= nan_limit, ["lat", "lon"]]
 
-    # Calcul du ratio global de NaN
-    station_counts["global_nan_ratio"] = station_counts["n_nan_total"] / station_counts["n_total_total"]
+    # Utiliser merge avec indicateur pour filtrer plus vite
+    df_filtered = df.merge(valid, on=["lat", "lon"], how="inner")
 
-    # Filtrage des stations ayant un taux de NaN inférieur au seuil
-    good_stations = station_counts[station_counts["global_nan_ratio"] < nan_limit][["lat", "lon"]]
+    return df_filtered
 
-    # Merge pour ne conserver que les bonnes stations
-    df_cleaned = df_observed.merge(good_stations, on=["lat", "lon"], how="inner")
-
-    return df_cleaned
