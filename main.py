@@ -41,7 +41,7 @@ import os
 
 
 DATA_DIR = "data"
-
+os.makedirs("/app/.cache", exist_ok=True)
 # Ne télécharge que si les données ne sont pas encore là
 if not os.path.exists(DATA_DIR) or not os.listdir(DATA_DIR):
     print("📥 Téléchargement des données depuis Hugging Face Hub...")
