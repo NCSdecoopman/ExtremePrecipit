@@ -114,6 +114,9 @@ def show(config_path):
             pl.col(column_to_show) <= percentile_95
         )
 
+    # Ajout de l'altitude
+    result_df_modelised = add_alti(result_df_modelised)    
+
     # Définir l'échelle personnalisée continue
     colormap = echelle_config("continu" if stat_choice_key != "month" else "discret")
 
@@ -129,7 +132,7 @@ def show(config_path):
 
     # Tooltip
     unit_label = get_stat_unit(stat_choice_key, scale_choice_key)
-    tooltip = create_tooltip(stat_choice, unit_label)
+    tooltip = create_tooltip(unit_label)
 
     # View de la carte
     view_state = pdk.ViewState(latitude=46.9, longitude=1.7, zoom=5)

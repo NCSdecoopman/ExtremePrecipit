@@ -32,16 +32,18 @@ def create_scatter_layer(df: pl.DataFrame, radius=1000) -> pdk.Layer:
         stroked=True
     )
 
-def create_tooltip(stat: str, label: str) -> dict:
+def create_tooltip(label: str) -> dict:
     return {
         "html": f"""
             ({{lat_fmt}}, {{lon_fmt}})<br>
+            {{altitude}} m<br>
             {{val_fmt}} {label}
         """,
         "style": {
             "backgroundColor": "steelblue",
             "color": "white"
-        }
+        },
+        "condition": "altitude !== 'undefined'"
     }
 
 def plot_map(layers, view_state, tooltip):

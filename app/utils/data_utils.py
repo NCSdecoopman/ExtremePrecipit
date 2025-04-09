@@ -64,6 +64,17 @@ def cleaning_data_observed(df: pl.DataFrame, nan_limit: float = 0.1) -> pl.DataF
 
     return df_filtered
 
+def add_alti(df: pl.DataFrame):
+    # Charger les altitudes avec Polars
+    df_alt = pl.read_csv("data/metadonnees/altitude_model.csv")
+    # Harmoniser le type de colonnes AVANT le join
+    df_alt = df_alt.with_columns([
+        pl.col("lat").cast(pl.Float32),
+        pl.col("lon").cast(pl.Float32)
+    ])
+    # Join avec les données modélisées (lat/lon identiques)
+    return df.join(df_alt, on=["lat", "lon"], how="left")
+
 
 def find_matching_point(df_model: pl.DataFrame, lat_obs: float, lon_obs: float):
     df_model = df_model.with_columns([
