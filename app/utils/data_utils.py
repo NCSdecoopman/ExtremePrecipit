@@ -1,53 +1,15 @@
+import polars as pl
 import pandas as pd
 import streamlit as st
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from app.utils.config_utils import menu_config
 
-def load_season(year: int, season_key: str, base_path: str) -> pd.DataFrame:
-    filename=f"{base_path}/{year:04d}/{season_key}.parquet"
-    return pd.read_parquet(filename)
+def load_season(year: int, season_key: str, base_path: str) -> pl.DataFrame:
+    filename = f"{base_path}/{year:04d}/{season_key}.parquet"
+    return pl.read_parquet(filename)
 
-# def load_data(type_data: str, echelle: str, min_year: int, max_year: int, season: str, config) -> pd.DataFrame:
-#     _, SEASON, _ = menu_config()
-#     if season not in SEASON.values():
-#         raise ValueError(f"Saison inconnue : {season}")
-
-#     base_path = f'{config["statisticals"][type_data]}/{echelle}'
-
-#     tasks = list(range(min_year, max_year + 1))
-#     dataframes = []
-#     errors = []
-
-
-#     with ThreadPoolExecutor(max_workers=16) as executor:
-#         futures = {
-#             executor.submit(load_season, year, season, base_path): year
-#             for year in tasks
-#         }
-
-#         for future in as_completed(futures):
-#             year = futures[future]
-#             try:
-#                 df = future.result()
-#                 if not isinstance(df, pd.DataFrame):
-#                     st.warning(f"{year} : Objet inattendu de type {type(df)}")
-#                 else:
-#                     dataframes.append(df)
-#             except Exception as e:
-#                 errors.append(f"{year} ({season}) : {e}")
-
-
-#     if errors:
-#         for err in errors:
-#             st.warning(f"Erreur : {err}")
-
-#     if not dataframes:
-#         raise ValueError("Aucune donnée chargée.")
-
-#     return pd.concat(dataframes, ignore_index=True)
-
-def load_data(type_data: str, echelle: str, min_year: int, max_year: int, season: str, config) -> pd.DataFrame:
+def load_data(type_data: str, echelle: str, min_year: int, max_year: int, season: str, config) -> pl.DataFrame:
     _, SEASON, _ = menu_config()
     if season not in SEASON.values():
         raise ValueError(f"Saison inconnue : {season}")
@@ -60,10 +22,16 @@ def load_data(type_data: str, echelle: str, min_year: int, max_year: int, season
     for year in range(min_year, max_year + 1):
         try:
             df = load_season(year, season, base_path)
-            if not isinstance(df, pd.DataFrame):
-                st.warning(f"{year} : Objet inattendu de type {type(df)}")
-            else:
-                dataframes.append(df)
+
+            # Conversion explicite des colonnes dates uniquement si elles existent
+            for col in ["max_date_mm_h", "max_date_mm_j"]:
+                if col in df.columns:
+                    df = df.with_columns(
+                        pl.col(col).str.strptime(pl.Datetime, fmt="%Y-%m-%d", strict=False).cast(pl.Utf8)
+                    )
+
+            dataframes.append(df)
+
         except Exception as e:
             errors.append(f"{year} ({season}) : {e}")
 
@@ -74,20 +42,21 @@ def load_data(type_data: str, echelle: str, min_year: int, max_year: int, season
     if not dataframes:
         raise ValueError("Aucune donnée chargée.")
 
-    return pd.concat(dataframes, ignore_index=True)
+    return pl.concat(dataframes, how="vertical")
 
 
-def cleaning_data_observed(df, nan_limit: float = 0.1):
-    # Agrégation plus rapide sans copy initial
-    station_counts = df.groupby(["lat", "lon"], sort=False).agg(
-        nan_ratio=("nan_ratio", "mean")
-    ).reset_index()
 
-    # Stations valides
-    valid = station_counts.loc[station_counts["nan_ratio"] <= nan_limit, ["lat", "lon"]]
+def cleaning_data_observed(df: pl.DataFrame, nan_limit: float = 0.1) -> pl.DataFrame:
+    # Moyenne du ratio de NaN par station (lat, lon)
+    station_counts = (
+        df.group_by(["lat", "lon"])
+        .agg(pl.col("nan_ratio").mean().alias("nan_ratio"))
+    )
 
-    # Utiliser merge avec indicateur pour filtrer plus vite
-    df_filtered = df.merge(valid, on=["lat", "lon"], how="inner")
+    # Stations valides selon le seuil
+    valid = station_counts.filter(pl.col("nan_ratio") <= nan_limit)
+
+    # Jointure pour ne garder que les stations valides
+    df_filtered = df.join(valid.select(["lat", "lon"]), on=["lat", "lon"], how="inner")
 
     return df_filtered
-

@@ -8,6 +8,7 @@ streamlit_folium==0.24.0
 
 # Data manipulation
 pandas==2.2.3
+polars==1.26.0
 numpy==2.2.2
 scipy==1.15.1
 

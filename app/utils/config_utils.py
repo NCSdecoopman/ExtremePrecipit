@@ -54,27 +54,28 @@ def echelle_config(type_: str, nombre_label: int = 5):
         return mcolors.LinearSegmentedColormap.from_list("custom", custom_colorscale)
 
     elif type_ == "discret":
-        couleurs_vives = [
-            "white",  # rouge vif
-            "lightblue",  # bleu soutenu
-            "#4daf4a",  # vert
-            "darkgreen",  # violet
-            "yellow",  # orange
-            "#ffff33",  # jaune
-            "#a65628",  # brun
-            "#f781bf",  # rose
-            "#999999",  # gris
-            "#66c2a5",  # turquoise
-            "#fc8d62",  # corail
-            "#8da0cb",  # bleu pastel
+        couleurs_par_mois = [
+            "#ffffff",  # Janvier 
+            "blue",     # Février 
+            "green",    # Mars 
+            "red",      # Avril 
+            "orange",   # Mai 
+            "brown",    # Juin 
+            "yellow",   # Juillet 
+            "#f781bf",  # Août - rose
+            "purple",     # Septembre 
+            "lightgrey",  # Octobre 
+            "darkblue",         # Novembre
+            "black",  # Décembre 
         ]
-        if not (2 <= nombre_label <= len(couleurs_vives)):
-            raise ValueError(f"'nombre_label' doit être entre 2 et {len(couleurs_vives)}")
 
-        # Construire un colorscale interpolé
-        step = 1 / (nombre_label - 1)
-        custom_colorscale = [[i * step, couleurs_vives[i]] for i in range(nombre_label)]
-        return mcolors.LinearSegmentedColormap.from_list("custom_discret", custom_colorscale)
+        # if not (2 <= nombre_label <= len(couleurs_par_mois)):
+        #     raise ValueError(f"'nombre_label' doit être entre 2 et {len(couleurs_par_mois)}")
+
+        # # Construire un colorscale interpolé
+        # step = 1 / (nombre_label - 1)
+        # custom_colorscale = [[i * step, couleurs_par_mois[i]] for i in range(nombre_label)]
+        return mcolors.LinearSegmentedColormap.from_list("custom_discret", couleurs_par_mois)
 
     else:
         raise ValueError(f"Type d'échelle inconnu : '{type_}'. Utilisez 'continu' ou 'discret'.")

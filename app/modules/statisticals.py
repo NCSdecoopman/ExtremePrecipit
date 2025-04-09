@@ -12,12 +12,115 @@ from app.utils.scatter_plot_utils import *
 
 import pydeck as pdk
 
-import io
+import polars as pl
+import numpy as np
+import pandas as pd
+
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 
 @st.cache_data
-def load_data_cached(type_data, echelle, min_year, max_year, season_key, config):
-    return load_data(type_data, echelle, min_year, max_year, season_key, config)
+def load_data_cached(type_data: str, echelle: str, min_year: int, max_year: int, season_key: str, config) -> pl.DataFrame:
+    """
+    Version cachée qui retourne un DataFrame Pandas pour la sérialisation.
+    """
+    df_polars = load_data(type_data, echelle, min_year, max_year, season_key, config)
+    return df_polars.to_pandas()
+
+
+def find_matching_point(df_model: pl.DataFrame, lat_obs: float, lon_obs: float):
+    df_model = df_model.with_columns([
+        ((pl.col("lat") - lat_obs) ** 2 + (pl.col("lon") - lon_obs) ** 2).sqrt().alias("dist")
+    ])
+    closest_row = df_model.sort("dist").select(["lat", "lon"]).row(0)
+    return closest_row  # (lat, lon)
+
+
+def match_and_compare(result_df_observed: pl.DataFrame, result_df_modelised: pl.DataFrame, column_to_show: str) -> pl.DataFrame:
+    matched_data = []
+
+    for row in result_df_observed.iter_rows(named=True):
+        lat_obs = row["lat"]
+        lon_obs = row["lon"]
+        pr_obs = row[column_to_show]
+
+        lat_mod, lon_mod = find_matching_point(result_df_modelised, lat_obs, lon_obs)
+
+        # Filtrage du point modélisé correspondant
+        pr_mod_row = result_df_modelised.filter(
+            (pl.col("lat") == lat_mod) & (pl.col("lon") == lon_mod)
+        )[column_to_show].to_numpy()
+
+        pr_mod = pr_mod_row[0] if len(pr_mod_row) > 0 else np.nan
+
+        matched_data.append({
+            "lat": lat_obs,
+            "lon": lon_obs,
+            "pr_obs": pr_obs,
+            "pr_mod": pr_mod
+        })
+
+    return pl.DataFrame(matched_data)
+
+def generate_metrics(df: pl.DataFrame, x_label: str = "pr_mod", y_label: str = "pr_obs"):
+    x = df[x_label].to_numpy()
+    y = df[y_label].to_numpy()
+
+    rmse = np.sqrt(mean_squared_error(y, x))
+    mae = mean_absolute_error(y, x)
+    bias = np.mean(x - y)
+    r2 = r2_score(y, x)
+
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.markdown(f"<b>Biais</b> : {bias:.3f}", unsafe_allow_html=True)
+    with col2:
+        st.markdown(f"<b>MAE</b> : {mae:.3f}", unsafe_allow_html=True)
+    with col3:
+        st.markdown(f"<b>RMSE</b> : {rmse:.3f}", unsafe_allow_html=True)
+    with col4:
+        st.markdown(f"<b>R²</b> : {r2:.3f}", unsafe_allow_html=True)
+
+def generate_scatter_plot_interactive(df: pl.DataFrame, stat_choice: str, unit_label: str, height: int,
+                                      x_label: str = "pr_mod", y_label: str = "pr_obs"):
+    df_pd = df.select([x_label, y_label]).to_pandas()
+
+    fig = px.scatter(
+        df_pd,
+        x=x_label,
+        y=y_label,
+        title="",
+        opacity=0.5,
+        width=height,
+        height=height,
+        labels={
+            x_label: f"{stat_choice} du modèle AROME ({unit_label})",
+            y_label: f"{stat_choice} des stations ({unit_label})"
+        },
+        hover_data=None
+    )
+
+    fig.update_traces(
+        hovertemplate=f"{x_label} : %{{x:.1f}}<br>{y_label} : %{{y:.1f}}<extra></extra>"
+    )
+
+    min_val = min(df_pd[x_label].min(), df_pd[y_label].min())
+    max_val = max(df_pd[x_label].max(), df_pd[y_label].max())
+
+    fig.add_trace(
+        go.Scatter(
+            x=[min_val, max_val],
+            y=[min_val, max_val],
+            mode='lines',
+            line=dict(color='red', dash='dash'),
+            name='y = x',
+            hoverinfo='skip'
+        )
+    )
+
+    return fig
+
+
 
 def show(config_path):
     st.markdown("<h3>Visualisation des précipitations</h3>", unsafe_allow_html=True)
@@ -56,7 +159,8 @@ def show(config_path):
     except Exception as e:
         st.error(f"Erreur lors du chargement des données modélisées : {e}")
         return
-    
+
+
     try:
         df_observed_load = load_data_cached(
             'observed', 'horaire' if scale_choice_key == 'mm_h' else 'quotidien',
@@ -69,6 +173,11 @@ def show(config_path):
         st.error(f"Erreur lors du chargement des données observées : {e}")
         return
     
+
+    df_observed_load = pl.from_pandas(df_observed_load) if isinstance(df_observed_load, pd.DataFrame) else df_observed_load
+    df_modelised_load = pl.from_pandas(df_modelised_load) if isinstance(df_modelised_load, pd.DataFrame) else df_modelised_load
+
+
     # Selection des données observées
     df_observed = cleaning_data_observed(df_observed_load, missing_rate)
     
@@ -80,8 +189,14 @@ def show(config_path):
     column_to_show = get_stat_column_name(stat_choice_key, scale_choice_key)
     
     # Retrait des extrêmes
-    percentile_95 = result_df_modelised[column_to_show].quantile(quantile_choice)
-    result_df_modelised = result_df_modelised[result_df_modelised[column_to_show] <= percentile_95]
+    if stat_choice_key not in ["month", "date"]:
+        percentile_95 = result_df_modelised.select(
+            pl.col(column_to_show).quantile(quantile_choice, "nearest")
+        ).item()
+
+        result_df_modelised = result_df_modelised.filter(
+            pl.col(column_to_show) <= percentile_95
+        )
 
     # Définir l'échelle personnalisée continue
     colormap = echelle_config("continu" if stat_choice_key != "month" else "discret")
@@ -102,10 +217,8 @@ def show(config_path):
 
     # View de la carte
     view_state = pdk.ViewState(latitude=46.9, longitude=1.7, zoom=5)
-
-    st.info(f"CP-AROM : {result_df_modelised.shape[0]}/{df_modelised_load[['lat', 'lon']].drop_duplicates().shape[0]} | Stations Météo-France : {result_df_observed.shape[0]}/{df_observed_load[['lat', 'lon']].drop_duplicates().shape[0]}")
     
-    col1, col2, col3 = st.columns([2.8, 0.5, 2.2])
+    col1, col2, col3 = st.columns([1.9, 0.5, 2.2])
     height = 600
 
     with col1:
@@ -136,6 +249,18 @@ def show(config_path):
         display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=8, label=unit_label)
 
     with col3:
-        plot_histogramme(result_df_modelised, column_to_show, stat_choice, stat_choice_key, unit_label, height)
-
-    #show_scatter_plot(result_df_observed, result_df_modelised)
+        st.info(f"CP-AROM : {result_df_modelised.shape[0]}/{df_modelised_load.select(['lat', 'lon']).unique().shape[0]} | Stations Météo-France : {result_df_observed.shape[0]}/{df_observed_load.select(['lat', 'lon']).unique().shape[0]}")
+        
+        if stat_choice_key not in ["date", "month"]:
+            obs_vs_mod = match_and_compare(result_df_observed, result_df_modelised, column_to_show)
+            
+            if obs_vs_mod is not None and obs_vs_mod.height > 0:            
+                fig = generate_scatter_plot_interactive(obs_vs_mod, stat_choice, unit_label, height-100)
+                st.plotly_chart(fig, use_container_width=True)
+                generate_metrics(obs_vs_mod)
+            
+            else:
+                plot_histogramme(result_df_modelised, column_to_show, stat_choice, stat_choice_key, unit_label, height)
+        
+        else:
+            plot_histogramme_comparatif(result_df_observed, result_df_modelised, column_to_show, stat_choice, stat_choice_key, unit_label, height)

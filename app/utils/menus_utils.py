@@ -8,7 +8,7 @@ def menu_statisticals(min_years: int, max_years: int, STATS, SEASON):
         st.session_state["run_analysis"] = False
 
     # Crée les colonnes
-    col0, col1, col2, col3, col4, col5, col6 = st.columns([0.5, 0.3, 0.4, 0.4, 0.3, 0.6, 0.2])
+    col0, col1, col2, col3, col4, col5, col6 = st.columns([0.5, 0.4, 0.4, 0.5, 0.4, 0.4, 0.2])
 
     with col0:
         st.selectbox("Choix de la statistique étudiée", list(STATS.keys()), key="stat_choice")
@@ -18,7 +18,7 @@ def menu_statisticals(min_years: int, max_years: int, STATS, SEASON):
             "Percentile de retrait AROME",
             min_value=0.950,
             max_value=1.00,
-            value=0.990,
+            value=0.995,
             step=0.001,
             format="%.3f",
             key="quantile_choice"

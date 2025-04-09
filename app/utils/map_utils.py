@@ -1,10 +1,11 @@
 import pydeck as pdk
 import streamlit as st
+import polars as pl
 
-def create_layer(df):
+def create_layer(df: pl.DataFrame) -> pdk.Layer:
     return pdk.Layer(
         "GridCellLayer",
-        data=df.to_dict(orient="records"),
+        data=df.to_dicts(),  # Polars equivalent of pandas to_dict(orient="records")
         get_position=["lon", "lat"],
         get_fill_color="fill_color",
         cell_size=2500,
@@ -16,10 +17,10 @@ def create_layer(df):
         extruded=False
     )
 
-def create_scatter_layer(df, radius=1000):
+def create_scatter_layer(df: pl.DataFrame, radius=1000) -> pdk.Layer:
     return pdk.Layer(
         "ScatterplotLayer",
-        data=df.to_dict(orient="records"),
+        data=df.to_dicts(),
         get_position=["lon", "lat"],
         get_fill_color="fill_color",
         get_line_color=[0, 0, 0],
@@ -31,18 +32,17 @@ def create_scatter_layer(df, radius=1000):
         stroked=True
     )
 
-
-def create_tooltip(stat, label):
+def create_tooltip(stat: str, label: str) -> dict:
     return {
-            "html": f"""
-                ({{lat_fmt}}, {{lon_fmt}})<br>
-                {{val_fmt}} {label}
-            """,
-            "style": {
-                "backgroundColor": "steelblue",
-                "color": "white"
-            }
+        "html": f"""
+            ({{lat_fmt}}, {{lon_fmt}})<br>
+            {{val_fmt}} {label}
+        """,
+        "style": {
+            "backgroundColor": "steelblue",
+            "color": "white"
         }
+    }
 
 def plot_map(layers, view_state, tooltip):
     if not isinstance(layers, list):
@@ -58,4 +58,3 @@ def plot_map(layers, view_state, tooltip):
     except Exception as e:
         st.error(f"Erreur lors de la création de la carte : {e}")
         return None
-
