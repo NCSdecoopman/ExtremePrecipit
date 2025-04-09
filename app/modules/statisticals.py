@@ -138,7 +138,7 @@ def show(config_path):
     view_state = pdk.ViewState(latitude=46.9, longitude=1.7, zoom=5)
     
     col1, col2, col3 = st.columns([0.7, 0.1, 1])
-    height = 600
+    height = 6000
 
     with col1:
         deck = plot_map([layer, scatter_layer], view_state, tooltip)
