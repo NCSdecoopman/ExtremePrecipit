@@ -4,6 +4,7 @@ pydeck==0.9.1
 matplotlib==3.10.0
 plotly==5.24.1
 streamlit_plotly_events==0.0.6
+streamlit_folium=0.24.0
 
 # Data manipulation
 pandas==2.2.3
