@@ -1,6 +1,7 @@
 import pydeck as pdk
 import streamlit as st
 import polars as pl
+import numpy as np
 
 def prepare_layer(df: pl.DataFrame) -> pl.DataFrame:
     if "altitude" not in df.columns:
@@ -10,12 +11,33 @@ def prepare_layer(df: pl.DataFrame) -> pl.DataFrame:
         "lat", "lon", "lat_fmt", "lon_fmt", "altitude", "val_fmt", "fill_color"
     ])
 
+def fast_to_dicts(df: pl.DataFrame) -> list[dict]:
+    cols = df.columns
+    result = []
+
+    # Conversion explicite des colonnes en listes Python natives
+    arrays = {
+        col: (
+            df[col].to_list()  # pour List ou String ou autre
+            if df[col].dtype == pl.List
+            else df[col].to_numpy().tolist()
+        )
+        for col in cols
+    }
+
+    n = len(df)
+    for i in range(n):
+        row = {col: arrays[col][i] for col in cols}
+        result.append(row)
+
+    return result
+
 def create_layer(df: pl.DataFrame) -> pdk.Layer:
     df = prepare_layer(df)
 
     return pdk.Layer(
         "GridCellLayer",
-        data=df.to_dicts(), 
+        data=fast_to_dicts(df), 
         get_position=["lon", "lat"],
         get_fill_color="fill_color",
         cell_size=2500,
@@ -32,7 +54,7 @@ def create_scatter_layer(df: pl.DataFrame, radius=1000) -> pdk.Layer:
 
     return pdk.Layer(
         "ScatterplotLayer",
-        data=df.to_dicts(),
+        data=fast_to_dicts(df), 
         get_position=["lon", "lat"],
         get_fill_color="fill_color",
         get_line_color=[0, 0, 0],

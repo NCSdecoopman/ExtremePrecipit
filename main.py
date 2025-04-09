@@ -5,7 +5,21 @@ st.set_page_config(layout="wide", page_title="Visualisation des précipitations"
 
 st.markdown("""
     <style>
-        html, body, p, div, span {
+        body {
+            font-family: 'Times New Roman', sans-serif !important;
+            font-size: 11px !important;
+            font-weight: 400 !important;
+        }
+            
+        html, body {
+            font-size: 11px !important;
+        }
+
+        * {
+            font-size: 11px !important;
+        }
+            
+        h1, h2, h3, h4, h5, h6, label, button {
             font-size: 11px !important;
         }
             
