@@ -15,6 +15,7 @@ import pydeck as pdk
 import polars as pl
 import numpy as np
 import pandas as pd
+from scipy.spatial import cKDTree
 
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
@@ -36,29 +37,22 @@ def find_matching_point(df_model: pl.DataFrame, lat_obs: float, lon_obs: float):
     return closest_row  # (lat, lon)
 
 
-def match_and_compare(result_df_observed: pl.DataFrame, result_df_modelised: pl.DataFrame, column_to_show: str) -> pl.DataFrame:
-    matched_data = []
+def match_and_compare(obs_df: pl.DataFrame, mod_df: pl.DataFrame, column_to_show: str) -> pl.DataFrame:
+    # Convert to numpy arrays
+    obs_coords = np.vstack((obs_df["lat"], obs_df["lon"])).T
+    mod_coords = np.vstack((mod_df["lat"], mod_df["lon"])).T
+    mod_values = mod_df[column_to_show].to_numpy()
 
-    for row in result_df_observed.iter_rows(named=True):
-        lat_obs = row["lat"]
-        lon_obs = row["lon"]
-        pr_obs = row[column_to_show]
+    # Build KDTree
+    tree = cKDTree(mod_coords)
+    dist, idx = tree.query(obs_coords, k=1)
 
-        lat_mod, lon_mod = find_matching_point(result_df_modelised, lat_obs, lon_obs)
-
-        # Filtrage du point modélisé correspondant
-        pr_mod_row = result_df_modelised.filter(
-            (pl.col("lat") == lat_mod) & (pl.col("lon") == lon_mod)
-        )[column_to_show].to_numpy()
-
-        pr_mod = pr_mod_row[0] if len(pr_mod_row) > 0 else np.nan
-
-        matched_data.append({
-            "lat": lat_obs,
-            "lon": lon_obs,
-            "pr_obs": pr_obs,
-            "pr_mod": pr_mod
-        })
+    matched_data = {
+        "lat": obs_df["lat"],
+        "lon": obs_df["lon"],
+        "pr_obs": obs_df[column_to_show],
+        "pr_mod": mod_values[idx]
+    }
 
     return pl.DataFrame(matched_data)
 

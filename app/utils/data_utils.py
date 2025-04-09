@@ -27,7 +27,10 @@ def load_data(type_data: str, echelle: str, min_year: int, max_year: int, season
             for col in ["max_date_mm_h", "max_date_mm_j"]:
                 if col in df.columns:
                     df = df.with_columns(
-                        pl.col(col).str.strptime(pl.Datetime, fmt="%Y-%m-%d", strict=False).cast(pl.Utf8)
+                        pl.col(col)
+                        .cast(pl.Utf8)  # s'assure qu'on peut parser avec str.strptime
+                        .str.strptime(pl.Datetime, format="%Y-%m-%d", strict=False)
+                        .cast(pl.Utf8)  # retour sous forme de string (comme dans l'ancien code Pandas)
                     )
 
             dataframes.append(df)
