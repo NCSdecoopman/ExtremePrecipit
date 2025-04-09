@@ -1,36 +1,42 @@
-import polars as pl
-import pandas as pd
 import plotly.express as px
 import streamlit as st
+import polars as pl
+import pandas as pd
 
-def plot_histogramme(df: pl.DataFrame, var: str, stat: str, stat_key: str, unit: str, height: int):
+def plot_histogramme(df: pl.DataFrame, var, stat, stat_key, unit, height):
+    df = df.to_pandas()
+    # Définir l’ordre complet des mois
     month_order = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
                    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
-
+    
     if stat_key == 'month':
-        df = df.with_columns([
-            pl.col(var).cast(pl.Int32).map_dict({i + 1: month_order[i] for i in range(12)}).alias(var)
-        ])
+        # Copie de sécurité
+        df = df.copy()
+        
+        # Convertir le numéro du mois (1-12) en label texte
+        df[var] = df[var].astype(int)
+        df[var] = df[var].map({i+1: month_order[i] for i in range(12)})
 
-        counts = df.select(var).to_series().value_counts().sort("")
+        # Calculer la répartition (pourcentage) par mois
+        counts = df[var].value_counts()                  # nb de lignes par mois présent
+        counts = counts.reindex(month_order, fill_value=0)  # forcer l’existence de tous les mois, avec 0 pour les absents
 
-        # Création d'une série avec tous les mois, remplis à 0 si absents
-        freq_percent = {
-            month: (counts.filter(pl.col(var) == month)["count"].sum() / counts["count"].sum() * 100).item()
-            if month in counts[var].to_list() else 0.0
-            for month in month_order
-        }
+        # Convertir en pourcentage
+        total = counts.sum()
+        freq_percent = (counts / total * 100) if total > 0 else counts
+        
+        # Construire un nouveau DF pour Plotly
+        hist_df = pd.DataFrame({var: freq_percent.index, 'Pourcentage': freq_percent.values})
 
-        hist_df = pd.DataFrame({var: list(freq_percent.keys()), 'Pourcentage': list(freq_percent.values())})
-
+        # Plot en barres
         fig = px.bar(
             hist_df,
             x=var,
             y='Pourcentage'
         )
         fig.update_layout(
-            bargap=0.1,
-            xaxis_title="",
+            bargap=0.1,           # Espacement entre barres
+            xaxis_title="",       # Pas de titre horizontal
             yaxis_title="Pourcentage de stations",
             height=height,
             xaxis=dict(
@@ -39,10 +45,9 @@ def plot_histogramme(df: pl.DataFrame, var: str, stat: str, stat_key: str, unit:
             )
         )
     else:
-        # Conversion nécessaire car px.histogram ne gère que pandas
-        df_pd = df.to_pandas()
+        # Cas normal : on garde px.histogram
         fig = px.histogram(
-            df_pd,
+            df,
             x=var,
             nbins=50,
             histnorm='percent'
@@ -56,38 +61,27 @@ def plot_histogramme(df: pl.DataFrame, var: str, stat: str, stat_key: str, unit:
     st.plotly_chart(fig, use_container_width=True)
 
 
-
-def plot_histogramme_comparatif(
-    df_observed: pl.DataFrame,
-    df_modelised: pl.DataFrame,
-    var: str,
-    stat: str,
-    stat_key: str,
-    unit: str,
-    height: int
-):
+def plot_histogramme_comparatif(df_observed: pl.DataFrame, df_modelised: pl.DataFrame, var, stat, stat_key, unit, height):
+    df_observed = df_observed.to_pandas()
+    df_modelised = df_modelised.to_pandas()
     month_order = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
                    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
 
-    def prepare_df(df: pl.DataFrame, label: str) -> pd.DataFrame:
-        df = df.with_columns([
-            pl.col(var).cast(pl.Int32).map_dict({i + 1: month_order[i] for i in range(12)}).alias(var)
-        ])
-        counts = df.select(var).to_series().value_counts().sort("")
-
-        freq_percent = {
-            month: (counts.filter(pl.col(var) == month)["count"].sum() / counts["count"].sum() * 100).item()
-            if month in counts[var].to_list() else 0.0
-            for month in month_order
-        }
-
-        return pd.DataFrame({
-            var: list(freq_percent.keys()),
-            'Pourcentage': list(freq_percent.values()),
-            'Source': label
-        })
-
     if stat_key == 'month':
+        def prepare_df(df, label):
+            df = df.copy()
+            df[var] = df[var].astype(int)
+            df[var] = df[var].map({i + 1: month_order[i] for i in range(12)})
+            counts = df[var].value_counts()
+            counts = counts.reindex(month_order, fill_value=0)
+            total = counts.sum()
+            freq_percent = (counts / total * 100) if total > 0 else counts
+            return pd.DataFrame({
+                var: freq_percent.index,
+                'Pourcentage': freq_percent.values,
+                'Source': label
+            })
+
         df_obs = prepare_df(df_observed, "Observé")
         df_mod = prepare_df(df_modelised, "Modélisé")
         hist_df = pd.concat([df_obs, df_mod], ignore_index=True)
@@ -97,7 +91,7 @@ def plot_histogramme_comparatif(
             x=var,
             y='Pourcentage',
             color='Source',
-            barmode='group'
+            barmode='group'  # Affichage côte à côte
         )
         fig.update_layout(
             bargap=0.15,
@@ -110,18 +104,18 @@ def plot_histogramme_comparatif(
             )
         )
     else:
-        df_observed = df_observed.with_columns(pl.lit("Observé").alias("Source"))
-        df_modelised = df_modelised.with_columns(pl.lit("Modélisé").alias("Source"))
-        df_all = pl.concat([df_observed, df_modelised])
-        df_all_pd = df_all.to_pandas()
+        # Affichage standard pour les autres stats
+        df_observed['Source'] = "Observé"
+        df_modelised['Source'] = "Modélisé"
+        df_all = pd.concat([df_observed, df_modelised], ignore_index=True)
 
         fig = px.histogram(
-            df_all_pd,
+            df_all,
             x=var,
             color='Source',
             nbins=50,
             histnorm='percent',
-            barmode='overlay'
+            barmode='overlay'  # ou 'group' si tu veux les voir côte à côte
         )
         fig.update_layout(
             bargap=0.1,

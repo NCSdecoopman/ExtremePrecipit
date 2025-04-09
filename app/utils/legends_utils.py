@@ -42,17 +42,40 @@ def formalised_legend(df: pl.DataFrame, column_to_show: str, colormap, vmin=None
     column = df[column_to_show]
 
     if column_to_show.startswith("date"):
-        df = df.with_columns(pl.col(column_to_show).str.strptime(pl.Datetime, fmt="%Y-%m-%d"))
-        vmin = df[column_to_show].min() if vmin is None else pl.datetime(vmin)
-        vmax = df[column_to_show].max() if vmax is None else pl.datetime(vmax)
+        # Conversion correcte en datetime (Polars)
+        df = df.with_columns(
+            pl.col(column_to_show).str.strptime(pl.Datetime, format="%Y-%m-%d %H:%M:%S%.6f", strict=False)
+        )
 
-        vmin_ts = vmin.timestamp()
-        vmax_ts = vmax.timestamp()
-        value_norm = df[column_to_show].cast(pl.Datetime).dt.timestamp().alias("value_norm")
-        value_norm = ((value_norm - vmin_ts) / (vmax_ts - vmin_ts)).clip(0.0, 1.0)
-        df = df.with_columns(value_norm)
+        # Récupération min/max en datetime Python natif
+        min_dt = df[column_to_show].min()
+        max_dt = df[column_to_show].max()
+
+        if isinstance(min_dt, dt.date):
+            min_dt = dt.datetime.combine(min_dt, dt.time.min)
+        if isinstance(max_dt, dt.date):
+            max_dt = dt.datetime.combine(max_dt, dt.time.min)
+
+        vmin = min_dt if vmin is None else vmin
+        vmax = max_dt if vmax is None else vmax
+
+        # Gestion safe des timestamps sur Windows (pré-1970)
+        def safe_timestamp(d):
+            epoch = dt.datetime(1970, 1, 1)
+            return (d - epoch).total_seconds()
+
+        vmin_ts = safe_timestamp(vmin)
+        vmax_ts = safe_timestamp(vmax)
+
+        # Ajout de la colonne normalisée dans Polars
+        df = df.with_columns([
+            ((pl.col(column_to_show).cast(pl.Datetime).dt.timestamp() - vmin_ts) / (vmax_ts - vmin_ts))
+            .clip(0.0, 1.0)
+            .alias("value_norm")
+        ])
 
         val_fmt_func = lambda x: x.strftime("%Y-%m-%d")
+
 
     elif column_to_show.startswith("mois_pluvieux"):
         df = df.with_columns(pl.col(column_to_show).cast(pl.Int32))

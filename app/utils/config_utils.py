@@ -6,7 +6,6 @@ def menu_config():
         "Moyenne": "mean",
         "Maximum": "max",
         "Moyenne des maxima": "mean-max",
-        "Date du maximum": "date",
         "Mois comptabilisant le plus de maximas": "month",
         "Jour de pluie": "numday",
     }
@@ -60,11 +59,11 @@ def echelle_config(type_: str, nombre_label: int = 5):
             "green",    # Mars 
             "red",      # Avril 
             "orange",   # Mai 
-            "brown",    # Juin 
+            "#00CED1",    # Juin 
             "yellow",   # Juillet 
             "#f781bf",  # Août - rose
             "purple",     # Septembre 
-            "lightgrey",  # Octobre 
+            "#654321",  # Octobre 
             "darkblue",         # Novembre
             "black",  # Décembre 
         ]

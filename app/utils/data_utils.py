@@ -1,7 +1,7 @@
 import polars as pl
-import pandas as pd
+import numpy as np
 import streamlit as st
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from scipy.spatial import cKDTree
 
 from app.utils.config_utils import menu_config
 
@@ -63,3 +63,30 @@ def cleaning_data_observed(df: pl.DataFrame, nan_limit: float = 0.1) -> pl.DataF
     df_filtered = df.join(valid.select(["lat", "lon"]), on=["lat", "lon"], how="inner")
 
     return df_filtered
+
+
+def find_matching_point(df_model: pl.DataFrame, lat_obs: float, lon_obs: float):
+    df_model = df_model.with_columns([
+        ((pl.col("lat") - lat_obs) ** 2 + (pl.col("lon") - lon_obs) ** 2).sqrt().alias("dist")
+    ])
+    closest_row = df_model.sort("dist").select(["lat", "lon"]).row(0)
+    return closest_row  # (lat, lon)
+
+def match_and_compare(obs_df: pl.DataFrame, mod_df: pl.DataFrame, column_to_show: str) -> pl.DataFrame:
+    # Convert to numpy arrays
+    obs_coords = np.vstack((obs_df["lat"], obs_df["lon"])).T
+    mod_coords = np.vstack((mod_df["lat"], mod_df["lon"])).T
+    mod_values = mod_df[column_to_show].to_numpy()
+
+    # Build KDTree
+    tree = cKDTree(mod_coords)
+    dist, idx = tree.query(obs_coords, k=1)
+
+    matched_data = {
+        "lat": obs_df["lat"],
+        "lon": obs_df["lon"],
+        "pr_obs": obs_df[column_to_show],
+        "pr_mod": mod_values[idx]
+    }
+
+    return pl.DataFrame(matched_data)
