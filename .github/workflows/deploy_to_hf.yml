@@ -70,7 +70,7 @@ jobs:
           # c) Créer le fichier .huggingface.yaml pour activer le mode docker
           echo "sdk: docker" > deploy/.huggingface.yaml
 
-          # d) (optionnel) Ajouter un README
+          # d) (optionnel) Ajouter le README
           echo "# Déploiement avec snapshot_download depuis le dataset Hugging Face" > deploy/README.md
 
           # e) Initialiser et pousser sur Hugging Face
