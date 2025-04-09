@@ -137,30 +137,12 @@ def show(config_path):
     # View de la carte
     view_state = pdk.ViewState(latitude=46.9, longitude=1.7, zoom=5)
     
-    col1, col2, col3 = st.columns([1.7, 0.5, 2.2])
+    col1, col2, col3 = st.columns([0.7, 0.07, 1])
     height = 600
 
     with col1:
         deck = plot_map([layer, scatter_layer], view_state, tooltip)
         html = deck.to_html(as_string=True, notebook_display=False)
-
-        # Injecte un style CSS pour contrôler la largeur de la carte
-        html = html.replace(
-            "<head>",
-            """
-            <head>
-            <style>
-                body { background-color: white !important; }
-                .deckgl-wrapper {
-                    width: 600px !important;
-                    margin: auto;
-                }
-                canvas {
-                    width: 600px !important;
-                }
-            </style>
-            """
-        )
 
         components.html(html, height=height, scrolling=False)
 
