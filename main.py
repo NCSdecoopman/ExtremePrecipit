@@ -4,7 +4,16 @@ from app.modules import statisticals, scatter_plot
 st.set_page_config(layout="wide", page_title="Visualisation des précipitations", page_icon="🌧️")
 
 st.markdown("""
-    <style>            
+    <style>
+        html, body, p, div, span {
+            font-size: 11px !important;
+        }
+            
+        section[data-testid="stSidebar"] {
+            width: 150px !important;
+            min-width: 150px !important;
+        }  
+                 
         /* Masquer le header de l'app */
         div[class*="stAppHeader"] {
             display: none !important;
@@ -40,7 +49,7 @@ st.markdown("""
 
 st.sidebar.title("Navigation")
 option = st.sidebar.selectbox(
-    "Choisissez une vue",
+    "",
     ("Statistiques descriptives", "Scatter plot")
 )
 
