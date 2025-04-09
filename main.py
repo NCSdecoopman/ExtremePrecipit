@@ -1,4 +1,6 @@
 import streamlit as st
+from app.modules import statisticals, scatter_plot
+
 st.set_page_config(layout="wide", page_title="Visualisation des précipitations", page_icon="🌧️")
 
 st.markdown("""
@@ -36,12 +38,16 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-
-from app.modules import statisticals
-
-option = "Statistiques descriptives"
+st.sidebar.title("Navigation")
+option = st.sidebar.selectbox(
+    "Choisissez une vue",
+    ("Statistiques descriptives", "Scatter plot")
+)
 
 config_path = "app/config/config.yaml"
 
 if option == "Statistiques descriptives":
     statisticals.show(config_path)
+
+elif option == "Scatter plot":
+    scatter_plot.show(config_path)
