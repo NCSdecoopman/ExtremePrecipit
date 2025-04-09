@@ -60,6 +60,7 @@ jobs:
                                           local_dir='data', \
                                           local_dir_use_symlinks=False, \
                                           ignore_patterns=[])"
+                                          
 
           COPY . .
 
