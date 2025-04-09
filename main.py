@@ -9,8 +9,7 @@ st.markdown("""
             font-family: 'Times New Roman', sans-serif !important;
             font-size: 11px !important;
             font-weight: 400 !important;
-        }
-            
+        }            
         html, body {
             font-size: 11px !important;
         }
