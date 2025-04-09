@@ -137,7 +137,7 @@ def show(config_path):
     # View de la carte
     view_state = pdk.ViewState(latitude=46.9, longitude=1.7, zoom=5)
     
-    col1, col2, col3 = st.columns([0.7, 0.07, 1])
+    col1, col2, col3 = st.columns([0.7, 0.1, 1])
     height = 600
 
     with col1:
