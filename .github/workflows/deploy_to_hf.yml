@@ -49,14 +49,14 @@ jobs:
           RUN pip install --no-cache-dir -r requirements.txt
           RUN pip install huggingface_hub
 
+          # Nettoyer le cache
+          RUN rm -rf ~/.cache/huggingface/hub
+
           # Télécharger les données du dataset Hugging Face (public)
           RUN python -c "from huggingface_hub import snapshot_download; \
                         snapshot_download(repo_id='ncsdecoopman/ExtremePrecipit', \
                                           repo_type='dataset', \
                                           local_dir='data')"
-
-          # Nettoyer le cache
-          RUN rm -rf ~/.cache/huggingface/hub
 
           COPY . .
 
