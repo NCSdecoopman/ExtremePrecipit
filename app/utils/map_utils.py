@@ -2,10 +2,20 @@ import pydeck as pdk
 import streamlit as st
 import polars as pl
 
+def prepare_layer(df: pl.DataFrame) -> pl.DataFrame:
+    if "altitude" not in df.columns:
+        df = df.with_columns(pl.lit(None).cast(pl.Float32).alias("altitude"))
+
+    return df.select([
+        "lat", "lon", "lat_fmt", "lon_fmt", "altitude", "val_fmt", "fill_color"
+    ])
+
 def create_layer(df: pl.DataFrame) -> pdk.Layer:
+    df = prepare_layer(df)
+
     return pdk.Layer(
         "GridCellLayer",
-        data=df.to_dicts(),  # Polars equivalent of pandas to_dict(orient="records")
+        data=df.to_dicts(), 
         get_position=["lon", "lat"],
         get_fill_color="fill_color",
         cell_size=2500,
@@ -18,6 +28,8 @@ def create_layer(df: pl.DataFrame) -> pdk.Layer:
     )
 
 def create_scatter_layer(df: pl.DataFrame, radius=1000) -> pdk.Layer:
+    df = prepare_layer(df)
+
     return pdk.Layer(
         "ScatterplotLayer",
         data=df.to_dicts(),

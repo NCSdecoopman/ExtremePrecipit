@@ -144,7 +144,23 @@ def show(config_path):
         deck = plot_map([layer, scatter_layer], view_state, tooltip)
         html = deck.to_html(as_string=True, notebook_display=False)
 
+        st.markdown(
+            f"""
+            <div style='text-align: left; margin-bottom: 10px;'>
+                <b>{stat_choice} des précipitations de {min_year_choice} à {max_year_choice} ({season_choice.lower()})</b>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
         components.html(html, height=height, scrolling=False)
+        st.markdown(
+            """
+            <div style='text-align: left; font-size: 0.8em; color: grey; margin-top: -15px;'>
+                Données CP-RCM, 2.5 km, forçage ERA5, réanalyse ECMWF
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     with col2:
         display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=8, label=unit_label)

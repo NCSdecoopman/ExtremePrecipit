@@ -107,9 +107,9 @@ def formalised_legend(df: pl.DataFrame, column_to_show: str, colormap, vmin=None
 
     df = df.with_columns([
         pl.Series("fill_color", fill_color),
-        df[column_to_show].map_elements(val_fmt_func, return_dtype=pl.String).alias("val_fmt"),
-        df["lat"].map_elements(lambda x: f"{x:.3f}", return_dtype=pl.String).alias("lat_fmt"),
-        df["lon"].map_elements(lambda x: f"{x:.3f}", return_dtype=pl.String).alias("lon_fmt")
+        df[column_to_show].map_elements(val_fmt_func, return_dtype=pl.String).alias("val_fmt"), # val_fmt optimisé si float
+        pl.col("lat").round(3).cast(pl.Utf8).alias("lat_fmt"),
+        pl.col("lon").round(3).cast(pl.Utf8).alias("lon_fmt")
     ])
 
     return df, vmin, vmax
