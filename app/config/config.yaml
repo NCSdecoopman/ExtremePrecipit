@@ -1,7 +1,0 @@
-years:
-  min: 1959
-  max: 2010
-
-statisticals:
-  modelised: data/statisticals/modelised
-  observed: data/statisticals/observed
