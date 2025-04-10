@@ -19,10 +19,9 @@ import pandas as pd
 @st.cache_data
 def load_data_cached(type_data: str, echelle: str, min_year: int, max_year: int, season_key: str, config) -> pl.DataFrame:
     """
-    Version cachée qui retourne un DataFrame Pandas pour la sérialisation.
+    Version cachée qui retourne un DataFrame pour la sérialisation.
     """
-    df_polars = load_data(type_data, echelle, min_year, max_year, season_key, config)
-    return df_polars.to_pandas()
+    return load_data(type_data, echelle, min_year, max_year, season_key, config)
 
 
 def show_info_data(col, label, n_points_valides, n_points_total):
@@ -88,9 +87,6 @@ def show(config_path):
     except Exception as e:
         st.error(f"Erreur lors du chargement des données observées : {e}")
         return
-
-    df_observed_load = pl.from_pandas(df_observed_load) if isinstance(df_observed_load, pd.DataFrame) else df_observed_load
-    df_modelised_load = pl.from_pandas(df_modelised_load) if isinstance(df_modelised_load, pd.DataFrame) else df_modelised_load
 
     # Selection des données observées
     df_observed = cleaning_data_observed(df_observed_load, missing_rate)
@@ -166,7 +162,8 @@ def show(config_path):
 
     with col3:
         col0bis, col1bis, col2bis, col3bis, col4bis, col5bis, col6bis = st.columns(7)
-        show_info_data(col0bis, "CP-AROME map", result_df_modelised_show.shape[0], df_modelised_load.select(['lat', 'lon']).unique().shape[0])
+        n_tot_mod = df_modelised_load.select(['lat', 'lon']).unique().shape[0]
+        show_info_data(col0bis, "CP-AROME map", result_df_modelised_show.shape[0], n_tot_mod)
         show_info_data(col1bis, "Stations Météo-France", result_df_observed.shape[0], df_observed_load.select(['lat', 'lon']).unique().shape[0])
        
         if stat_choice_key not in ["date", "month"]:
@@ -176,7 +173,7 @@ def show(config_path):
                 fig = generate_scatter_plot_interactive(obs_vs_mod, stat_choice, unit_label, height-100)
                 st.plotly_chart(fig, use_container_width=True)
                 me, mae, rmse, r2 = generate_metrics(obs_vs_mod)
-                show_info_data(col2bis, "CP-AROME plot", result_df_modelised.shape[0], df_modelised_load.select(['lat', 'lon']).unique().shape[0])
+                show_info_data(col2bis, "CP-AROME plot", result_df_modelised.shape[0], n_tot_mod)
                 show_info_metric(col3bis, "ME", me)
                 show_info_metric(col4bis, "MAE", mae)
                 show_info_metric(col5bis, "RMSE", rmse)

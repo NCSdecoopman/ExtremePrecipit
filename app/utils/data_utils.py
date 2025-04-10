@@ -48,7 +48,6 @@ def load_data(type_data: str, echelle: str, min_year: int, max_year: int, season
     return pl.concat(dataframes, how="vertical")
 
 
-
 def cleaning_data_observed(df: pl.DataFrame, nan_limit: float = 0.1) -> pl.DataFrame:
     # Moyenne du ratio de NaN par station (lat, lon)
     station_counts = (
@@ -68,15 +67,16 @@ def add_alti(df: pl.DataFrame, type: str) -> pl.DataFrame:
     # Charger les altitudes avec Polars
     df_alt = pl.read_csv(f"data/metadonnees/altitude_{type}.csv").select(["lat", "lon", "altitude"])
 
-    # # Harmoniser les types des colonnes lat/lon des deux côtés
-    df = df.with_columns([
-        pl.col("lat").cast(pl.Float32),
-        pl.col("lon").cast(pl.Float32)
-    ])
+    # Harmoniser les types des colonnes lat/lon des deux côtés
     df_alt = df_alt.with_columns([
         pl.col("lat").cast(pl.Float32),
         pl.col("lon").cast(pl.Float32),
         pl.col("altitude").cast(pl.Int32)  # <- altitude en entier
+    ])
+
+    df = df.with_columns([  # <--- forcer ici aussi
+        pl.col("lat").cast(pl.Float32),
+        pl.col("lon").cast(pl.Float32)
     ])
 
     # Join sur lat/lon
@@ -87,13 +87,13 @@ def find_matching_point(df_model: pl.DataFrame, lat_obs: float, lon_obs: float):
     df_model = df_model.with_columns([
         ((pl.col("lat") - lat_obs) ** 2 + (pl.col("lon") - lon_obs) ** 2).sqrt().alias("dist")
     ])
-    closest_row = df_model.sort("dist").select(["lat", "lon"]).row(0)
+    closest_row = df_model.filter(pl.col("dist") == pl.col("dist").min()).select(["lat", "lon"]).row(0)
     return closest_row  # (lat, lon)
 
 def match_and_compare(obs_df: pl.DataFrame, mod_df: pl.DataFrame, column_to_show: str) -> pl.DataFrame:
     # Convert to numpy arrays
-    obs_coords = np.vstack((obs_df["lat"], obs_df["lon"])).T
-    mod_coords = np.vstack((mod_df["lat"], mod_df["lon"])).T
+    obs_coords = obs_df.select(["lat", "lon"]).to_numpy()
+    mod_coords = mod_df.select(["lat", "lon"]).to_numpy()
     mod_values = mod_df[column_to_show].to_numpy()
 
     # Build KDTree
