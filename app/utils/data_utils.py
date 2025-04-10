@@ -2,8 +2,14 @@ import polars as pl
 import numpy as np
 import streamlit as st
 from scipy.spatial import cKDTree
+from functools import lru_cache
 
 from app.utils.config_utils import menu_config
+
+@lru_cache(maxsize=1)
+def build_kdtree(coords_tuple):
+    coords_array = np.array(coords_tuple)
+    return cKDTree(coords_array)
 
 def load_season(year: int, season_key: str, base_path: str) -> pl.DataFrame:
     filename = f"{base_path}/{year:04d}/{season_key}.parquet"
@@ -96,8 +102,11 @@ def match_and_compare(obs_df: pl.DataFrame, mod_df: pl.DataFrame, column_to_show
     mod_coords = mod_df.select(["lat", "lon"]).to_numpy()
     mod_values = mod_df[column_to_show].to_numpy()
 
-    # Build KDTree
-    tree = cKDTree(mod_coords)
+    # Convert to hashable tuple of tuples for caching
+    coords_tuple = tuple(map(tuple, mod_coords))
+
+    # Use cached KDTree
+    tree = build_kdtree(coords_tuple)
     dist, idx = tree.query(obs_coords, k=1)
 
     matched_data = {

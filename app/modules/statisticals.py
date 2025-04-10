@@ -11,10 +11,7 @@ from app.utils.hist_utils import *
 from app.utils.scatter_plot_utils import *
 
 import pydeck as pdk
-
 import polars as pl
-import pandas as pd
-
 
 @st.cache_data
 def load_data_cached(type_data: str, echelle: str, min_year: int, max_year: int, season_key: str, config) -> pl.DataFrame:
@@ -22,7 +19,6 @@ def load_data_cached(type_data: str, echelle: str, min_year: int, max_year: int,
     Version cachée qui retourne un DataFrame pour la sérialisation.
     """
     return load_data(type_data, echelle, min_year, max_year, season_key, config)
-
 
 def show_info_data(col, label, n_points_valides, n_points_total):
     return col.markdown(f"""
