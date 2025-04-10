@@ -155,7 +155,7 @@ def show(config_path):
         )
 
     with col2:
-        display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=8, label=unit_label)
+        display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=15, label=unit_label)
 
     with col3:
         col0bis, col1bis, col2bis, col3bis, col4bis, col5bis, col6bis = st.columns(7)
