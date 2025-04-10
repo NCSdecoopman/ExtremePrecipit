@@ -1,14 +1,20 @@
-import sys
 import os
 import argparse
 import re
 import numcodecs
 import xarray as xr
+xr.set_options(file_cache_maxsize=1)  # évite l'accumulation de cache de fichier
+import dask
+from dask import delayed
 import numpy as np
+import pandas as pd
 import geopandas as gpd
 from tqdm.dask import TqdmCallback
 from typing import Dict, Union, Optional
-from datetime import datetime
+from shapely.geometry import Polygon, MultiPolygon
+from shapely import vectorized
+
+from tqdm import tqdm
 
 from src.utils.config_tools import load_config
 from src.utils.logger import get_logger
@@ -23,6 +29,7 @@ def list_nc_files(directory: str) -> list:
         for file in files if file.endswith('.nc')
     ]
     logger.info(f"{len(nc_files)} fichiers .nc trouvés dans {directory}")
+    nc_files = sorted(nc_files)
     return nc_files
 
 # ---------------------------------------------------------------------------
@@ -38,6 +45,78 @@ def extract_year_from_nc(filename: str) -> Optional[str]:
     else:
         logger.warning(f"Aucune année trouvée dans le fichier : {basename}")
         return None
+    
+# ---------------------------------------------------------------------------
+def generate_metadata(nc_files: list, output_path: str, geom_france) -> None:
+    logger.info("Début de la génération du fichier de métadonnées...")
+
+    all_coords = []
+
+    for nc_file in tqdm(nc_files, desc="Lecture des fichiers .nc"):
+        ds = xr.open_dataset(nc_file)
+
+        # --- Récupération des coordonnées
+        lat = ds["lat"]
+        lon = ds["lon"]
+
+        # Cas 2D
+        if lat.ndim == 2 and lon.ndim == 2:
+            lat2d, lon2d = lat.values, lon.values
+        elif lat.ndim == 1 and lon.ndim == 1:
+            lat2d, lon2d = np.meshgrid(lat.values, lon.values, indexing="ij")
+        else:
+            raise ValueError("lat/lon ne sont pas dans un format reconnu")
+
+        ny, nx = lat2d.shape
+        lat_flat = lat2d.ravel()
+        lon_flat = lon2d.ravel()
+
+        inside_mask_flat = vectorized.contains(geom_france, lon_flat, lat_flat)
+        inside_indices = np.where(inside_mask_flat)[0]
+
+        lat_inside = lat_flat[inside_indices].astype(np.float32)
+        lon_inside = lon_flat[inside_indices].astype(np.float32)
+
+        # --- Bornes (si présentes)
+        lat_bnds = ds["lat_bnds"].values if "lat_bnds" in ds else np.full((lat.size, 2), np.nan)
+        lon_bnds = ds["lon_bnds"].values if "lon_bnds" in ds else np.full((lon.size, 2), np.nan)
+
+        if lat.ndim == 2:
+            lat_bnds = lat_bnds.reshape(-1, 2)
+            lon_bnds = lon_bnds.reshape(-1, 2)
+
+        lat_bnds_inside = lat_bnds[inside_indices].astype(np.float32)
+        lon_bnds_inside = lon_bnds[inside_indices].astype(np.float32)
+
+        for i in range(lat_inside.shape[0]):
+            all_coords.append({
+                "lat": lat_inside[i],
+                "lon": lon_inside[i],
+                "lat_bnd_min": lat_bnds_inside[i][0],
+                "lat_bnd_max": lat_bnds_inside[i][1],
+                "lon_bnd_min": lon_bnds_inside[i][0],
+                "lon_bnd_max": lon_bnds_inside[i][1]
+            })
+
+        ds.close()
+
+    # --- DataFrame final
+    df = pd.DataFrame(all_coords).drop_duplicates(subset=["lat", "lon"]).reset_index(drop=True)
+    df = df.astype({
+        "lat": np.float32,
+        "lon": np.float32,
+        "lat_bnd_min": np.float32,
+        "lat_bnd_max": np.float32,
+        "lon_bnd_min": np.float32,
+        "lon_bnd_max": np.float32
+    })
+
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    df.to_csv(output_path, index=False)
+
+    logger.info(f"Métadonnées filtrées et enregistrées sous {output_path}")
+
+
 
 # ---------------------------------------------------------------------------
 # 3) Construction des chunks adaptés (gère "points")
@@ -62,18 +141,21 @@ def build_xarray_chunks(ds: xr.Dataset, chunk_config: Dict[str, Union[int, float
 # ---------------------------------------------------------------------------
 # 4) Filtrage spatial France 
 
-def filter_ds_to_france(ds: xr.Dataset, ne_directory: str) -> xr.Dataset:
-    """
-    Filtre un dataset pour ne conserver que les points strictement à l'intérieur de la France
-    et remplace (y, x) par une dimension unique 'points'.
-    """
-    from shapely.geometry import Point
-
+def load_geom_france(ne_directory: str):
     shapefile_path = os.path.join(ne_directory, "ne_10m_admin_0_countries.shp")
     gdf = gpd.read_file(shapefile_path, engine="pyogrio")
     gdf_france = gdf[gdf["ADMIN"] == "France"].to_crs(epsg=4326)
     geom_france = gdf_france.geometry.iloc[0]
+    return geom_france
 
+def filter_ds_to_france(ds: xr.Dataset, geom_france) -> xr.Dataset:
+    """
+    Filtre un dataset pour ne conserver que les points strictement à l'intérieur de la France
+    et remplace (y, x) par une dimension unique 'points'.
+    """
+    if not isinstance(geom_france, (Polygon, MultiPolygon)):
+        raise TypeError("La géométrie France n’est pas un objet Polygon/MultiPolygon Shapely.")
+    
     # 🔍 Gestion de la grille lat/lon
     lat = ds["lat"]
     lon = ds["lon"]
@@ -91,8 +173,9 @@ def filter_ds_to_france(ds: xr.Dataset, ne_directory: str) -> xr.Dataset:
     lat_flat = lat2d.ravel()
     lon_flat = lon2d.ravel()
 
-    points = [Point(lon, lat) for lon, lat in zip(lon_flat, lat_flat)]
-    inside_mask_flat = np.array([geom_france.contains(pt) for pt in points])
+    inside_mask_flat = vectorized.contains(geom_france, lon_flat, lat_flat)
+    logger.info(f"{inside_mask_flat.sum()} points conservés à l’intérieur de la France sur {len(lat_flat)}.")
+
     inside_indices = np.where(inside_mask_flat)[0]
 
     lat_inside = lat_flat[inside_indices].astype(np.float32)
@@ -120,46 +203,36 @@ def load_nc_file(
     nc_path: str,
     variables_config: Dict[str, Dict[str, Union[str, int]]],
     chunk_config: Dict[str, Union[int, float]],
-    ne_directory: str
+    geom_france
 ) -> xr.Dataset:
     logger.info(f"--- Traitement du fichier NetCDF : {nc_path} ---")
     vars_to_keep = list(variables_config.keys())
-    logger.info(f"Variables demandées : {vars_to_keep}")
-
-    ds = xr.open_dataset(nc_path, chunks="auto")[vars_to_keep]
-    logger.info(f"Dataset ouvert avec chunks natifs. Dimensions : {dict(ds.sizes)}")
-
-    logger.info("Application du filtre spatial pur France (points)")
-    ds = filter_ds_to_france(ds, ne_directory=ne_directory)
-    logger.info(f"Dataset réduit aux points France. Dimensions : {dict(ds.sizes)}")
-
-    computed_chunks = build_xarray_chunks(ds, chunk_config)
-    ds = ds.chunk(computed_chunks)
-    logger.info(f"Dataset rechunké : { {k: v.chunks for k, v in ds.data_vars.items()} }")
-
-def load_nc_file(
-    nc_path: str,
-    variables_config: Dict[str, Dict[str, Union[str, int]]],
-    chunk_config: Dict[str, Union[int, float]],
-    ne_directory: str
-) -> xr.Dataset:
-    logger.info(f"--- Traitement du fichier NetCDF : {nc_path} ---")
-    vars_to_keep = list(variables_config.keys())
-    logger.info(f"Variables demandées : {vars_to_keep}")
 
     # Ouverture du dataset avec uniquement les variables demandées
     ds = xr.open_dataset(nc_path, chunks="auto")[vars_to_keep]
+
+    # Arrondir les timestamps au :30:00 le plus proche
+    if "time" in ds.coords:
+        original_time = ds["time"].values
+
+        # Convertir en pandas datetime index pour pouvoir arrondir facilement
+        rounded_time = xr.DataArray(
+            pd.to_datetime(original_time).round("30min"),
+            dims="time"
+        )
+
+        ds = ds.assign_coords(time=rounded_time)
+        logger.info("Les timestamps ont été arrondis à la demi-heure la plus proche (:00 ou :30).")
+
     logger.info(f"Dataset ouvert avec chunks natifs. Dimensions : {dict(ds.sizes)}")
 
     # Filtrage spatial
-    logger.info("Application du filtre spatial pur France (points)")
-    ds = filter_ds_to_france(ds, ne_directory=ne_directory)
-    logger.info(f"Dataset réduit aux points France. Dimensions : {dict(ds.sizes)}")
+    ds = filter_ds_to_france(ds, geom_france)
 
     # Chunking
     computed_chunks = build_xarray_chunks(ds, chunk_config)
     ds = ds.chunk(computed_chunks)
-    logger.info(f"Dataset rechunké : { {k: v.chunks for k, v in ds.data_vars.items()} }")
+    logger.info(f"Dataset rechunké")
 
     # On traite uniquement les data_vars (évite de toucher aux coordonnées !)
     for var in ds.data_vars:
@@ -200,7 +273,7 @@ def save_to_zarr(
     chunk_config: Dict[str, Union[int, float]],
     compressor_config: Dict
 ) -> None:
-
+    
     codec = numcodecs.Blosc(
         cname=compressor_config["blosc"]["cname"],
         clevel=compressor_config["blosc"]["clevel"],
@@ -236,12 +309,11 @@ def save_to_zarr(
                 "compressor": codec
             }
 
-    logger.info(f"Encodage appliqué pour {output_path} : {encoding}")
+    logger.info(f"Encodage appliqué")
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-    with TqdmCallback(desc="Écriture Zarr", unit="chunk"):
-        ds.to_zarr(output_path, mode='w', encoding=encoding)
+    
+    ds.to_zarr(output_path, mode='w', encoding=encoding)
 
     logger.info(f"Fichier Zarr sauvegardé sous {output_path}")
 
@@ -250,7 +322,11 @@ def save_to_zarr(
 # 7) Pipeline principal
 
 def pipeline_nc_to_zarr(config):
+    global logger
+    logger = get_logger(__name__)
+    
     nc_dir = config["nc"]["path"]["inputdir"]
+    metadata_output_path = os.path.join(config["metadata"]["path"]["outputdir"], "arome_horaire.csv")
     zarr_dir = config["zarr"]["path"]["outputdir"]
     chunk_config = config["zarr"]["chunks"]
     compressor_config = config["zarr"]["compressor"]
@@ -259,6 +335,10 @@ def pipeline_nc_to_zarr(config):
     log_dir = config.get("log", {}).get("directory", "logs")
 
     nc_files = list_nc_files(nc_dir)
+    
+    geom_france = load_geom_france(ne_directory)
+
+    generate_metadata(nc_files, metadata_output_path, geom_france)
 
     summary = []
 
@@ -280,7 +360,7 @@ def pipeline_nc_to_zarr(config):
             summary.append(entry)
             continue
 
-        output_path = os.path.join(zarr_dir, f"{year}.zarr")
+        output_path = os.path.join(zarr_dir, "horaire", f"{year}.zarr")
         overwrite = config["zarr"].get("overwrite", False)
 
         if os.path.exists(output_path) and not overwrite:
@@ -289,37 +369,64 @@ def pipeline_nc_to_zarr(config):
             summary.append(entry)
             continue
 
-        ds = load_nc_file(nc_file, variables_config, chunk_config, ne_directory)
+        ds = load_nc_file(nc_file, variables_config, chunk_config, geom_france)
+        ds = ds.persist()
 
         nan_total = 0
 
-        # Analyse des data_vars (pr, autres)
+        # Étape 1 : créer les tâches Dask
+        compute_tasks = []
+        var_names = []
+        fill_infos = []
+
         for var in ds.data_vars:
             var_conf = variables_config.get(var, {})
             fill_value = var_conf.get("fill_value", None)
+
             if fill_value is not None:
-                count = ds[var].isin([fill_value]).sum().compute().item()
-                if count > 0:
-                    logger.warning(f"{count} valeurs sentinelles détectées pour '{var}'")
-                else:
-                    logger.info(f"Aucune sentinelle détectée pour '{var}'")
+                task = ds[var].isin([fill_value]).sum()
+                fill_infos.append(f"fill ({fill_value})")
             else:
-                count = ds[var].isnull().sum().compute().item()
-                if count > 0:
-                    logger.warning(f"{count} NaN détectés pour '{var}'")
-                else:
-                    logger.info(f"Aucun NaN détecté pour '{var}'")
+                task = ds[var].isnull().sum()
+                fill_infos.append("NaN")
+
+            compute_tasks.append(task)
+            var_names.append(var)
+
+        # Étape 2 : compute direct
+        results = dask.compute(*compute_tasks)
+
+        # Étape 3 : journalisation + total
+        for var, kind, count in zip(var_names, fill_infos, results):
+            count = int(count)  # Assure qu’on a bien un int natif
+            if count > 0:
+                logger.warning(f"{count} {kind} détectés pour '{var}'")
+            else:
+                logger.info(f"Aucun {kind} détecté pour '{var}'")
             nan_total += count
 
-        # Analyse des coords (lat, lon)
+
+        coord_tasks = []
+        coord_names = []
+
         for coord in ["lat", "lon"]:
             if coord in ds.coords:
-                count = ds[coord].isnull().sum().compute().item()
-                if count > 0:
-                    logger.warning(f"{count} NaN détectés pour la coordonnée '{coord}'")
-                else:
-                    logger.info(f"Aucun NaN détecté pour la coordonnée '{coord}'")
-                nan_total += count
+                task = ds[coord].isnull().sum()
+                coord_tasks.append(task)
+                coord_names.append(coord)
+
+        # Exécution unique et parallèle
+        coord_results = dask.compute(*coord_tasks)
+
+        # Analyse et log
+        for coord, count in zip(coord_names, coord_results):
+            count = int(count)
+            if count > 0:
+                logger.warning(f"{count} NaN détectés pour la coordonnée '{coord}'")
+            else:
+                logger.info(f"Aucun NaN détecté pour la coordonnée '{coord}'")
+            nan_total += count
+
 
         entry["Nombre de NaN"] = nan_total
 
@@ -369,20 +476,24 @@ def pipeline_nc_to_zarr(config):
 # 8) Entrypoint
 
 if __name__ == "__main__":
-    # Parser la config
-    parser = argparse.ArgumentParser(description="Pipeline NetCDF vers Zarr avec filtrage spatial et encodage.")
-    parser.add_argument(
-        "--config",
-        type=str,
-        default="config/modelised_settings.yaml",
-        help="Chemin vers le fichier de configuration YAML (par défaut : config/modelised_settings.yaml)"
-    )
-    args = parser.parse_args()
-    config_path = args.config
-    config = load_config(config_path)
-    
-    log_dir = config.get("log", {}).get("directory", "logs")
-    logger = get_logger(__name__, log_to_file=True, log_dir=log_dir)
 
-    logger.info(f"Démarrage du pipeline NetCDF → Zarr avec la config : {config_path}")
+    # from dask.distributed import Client, LocalCluster
+
+    # cluster = LocalCluster(
+    #     n_workers=2,           # un par cœur physique
+    #     threads_per_worker=1,   # ajustable, à tester
+    #     memory_limit='16GB'     # ~50% de la RAM totale divisée par 20 workers
+    # )
+    # client = Client(cluster)
+
+    dask.config.set(scheduler="threads")
+
+    parser = argparse.ArgumentParser(description="Pipeline .nc vers .zarr")
+    parser.add_argument("--config", type=str, default="config/modelised_settings.yaml")
+    parser.add_argument("--echelle", type=str, choices=["horaire"])
+    args = parser.parse_args()
+
+    config = load_config(args.config)
+    config["echelles"] = [args.echelle]  # Ne traiter qu'une seule échelle
+    
     pipeline_nc_to_zarr(config)

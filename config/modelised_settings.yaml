@@ -5,6 +5,10 @@ nc:
   path:
     inputdir: "data/raw/modelised" # précipitation en kg/m²/s
 
+metadata:
+  path:
+    outputdir: "data/metadonnees/modelised"
+
 spatial_filter:
   ne_directory: "data/external/naturalearth"
 
@@ -30,7 +34,7 @@ zarr:
 statistics:
   path:
     outputdir: "data/statisticals/modelised"
-  overwrite: false  # ou false pour ne pas écraser les .parquet existants par défaut
+  overwrite: true  # ou false pour ne pas écraser les .parquet existants par défaut
 
 log:
   directory: "logs/pipeline/modelised"  # dossier où sera écrit les fichiers .log
