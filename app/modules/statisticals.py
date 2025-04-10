@@ -130,15 +130,13 @@ def show(config_path):
     tooltip = create_tooltip(unit_label)
 
     # View de la carte
-    view_state = pdk.ViewState(latitude=46.9, longitude=1.7, zoom=5)
+    view_state = pdk.ViewState(latitude=46.5, longitude=1.7, zoom=5)
     
     col1, col2, col3 = st.columns([1, 0.15, 1])
-    height = 600
+    height = 700
 
     with col1:
         deck = plot_map([layer, scatter_layer], view_state, tooltip)
-        html = deck.to_html(as_string=True, notebook_display=False)
-
         st.markdown(
             f"""
             <div style='text-align: left; margin-bottom: 10px;'>
@@ -147,7 +145,8 @@ def show(config_path):
             """,
             unsafe_allow_html=True
         )
-        components.html(html, height=height, scrolling=False)
+        if deck:
+            st.pydeck_chart(deck, use_container_width=True, height=height)
         st.markdown(
             """
             <div style='text-align: left; font-size: 0.8em; color: grey; margin-top: -15px;'>
