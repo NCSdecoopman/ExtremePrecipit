@@ -103,6 +103,8 @@ def show(config_path):
         result_df_modelised_show = result_df_modelised.filter(
             pl.col(column_to_show) <= percentile_95
         )
+    else:
+        result_df_modelised_show = result_df_modelised
 
     # Ajout de l'altitude
     result_df_modelised_show = add_alti(result_df_modelised_show, type='model')    
