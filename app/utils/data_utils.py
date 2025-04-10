@@ -64,15 +64,22 @@ def cleaning_data_observed(df: pl.DataFrame, nan_limit: float = 0.1) -> pl.DataF
 
     return df_filtered
 
-def add_alti(df: pl.DataFrame):
+def add_alti(df: pl.DataFrame, type: str) -> pl.DataFrame:
     # Charger les altitudes avec Polars
-    df_alt = pl.read_csv("data/metadonnees/altitude_model.csv")
-    # Harmoniser le type de colonnes AVANT le join
-    df_alt = df_alt.with_columns([
+    df_alt = pl.read_csv(f"data/metadonnees/altitude_{type}.csv").select(["lat", "lon", "altitude"])
+
+    # # Harmoniser les types des colonnes lat/lon des deux côtés
+    df = df.with_columns([
         pl.col("lat").cast(pl.Float32),
         pl.col("lon").cast(pl.Float32)
     ])
-    # Join avec les données modélisées (lat/lon identiques)
+    df_alt = df_alt.with_columns([
+        pl.col("lat").cast(pl.Float32),
+        pl.col("lon").cast(pl.Float32),
+        pl.col("altitude").cast(pl.Int32)  # <- altitude en entier
+    ])
+
+    # Join sur lat/lon
     return df.join(df_alt, on=["lat", "lon"], how="left")
 
 

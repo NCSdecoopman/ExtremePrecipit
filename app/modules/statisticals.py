@@ -88,11 +88,9 @@ def show(config_path):
     except Exception as e:
         st.error(f"Erreur lors du chargement des données observées : {e}")
         return
-    
 
     df_observed_load = pl.from_pandas(df_observed_load) if isinstance(df_observed_load, pd.DataFrame) else df_observed_load
     df_modelised_load = pl.from_pandas(df_modelised_load) if isinstance(df_modelised_load, pd.DataFrame) else df_modelised_load
-
 
     # Selection des données observées
     df_observed = cleaning_data_observed(df_observed_load, missing_rate)
@@ -104,27 +102,28 @@ def show(config_path):
     # Obtention de la colonne étudiée
     column_to_show = get_stat_column_name(stat_choice_key, scale_choice_key)
     
-    # Retrait des extrêmes
+    # Retrait des extrêmes pour l'affichage uniquement
     if stat_choice_key not in ["month", "date"]:
         percentile_95 = result_df_modelised.select(
             pl.col(column_to_show).quantile(quantile_choice, "nearest")
         ).item()
 
-        result_df_modelised = result_df_modelised.filter(
+        result_df_modelised_show = result_df_modelised.filter(
             pl.col(column_to_show) <= percentile_95
         )
 
     # Ajout de l'altitude
-    result_df_modelised = add_alti(result_df_modelised)    
+    result_df_modelised_show = add_alti(result_df_modelised_show, type='model')    
+    result_df_observed = add_alti(result_df_observed, type='horaire' if scale_choice_key == 'mm_h' else 'quotidien')    
 
     # Définir l'échelle personnalisée continue
     colormap = echelle_config("continu" if stat_choice_key != "month" else "discret")
 
     # Normalisation de la légende
-    result_df_modelised, vmin, vmax = formalised_legend(result_df_modelised, column_to_show, colormap)
+    result_df_modelised_show, vmin, vmax = formalised_legend(result_df_modelised_show, column_to_show, colormap)
 
     # Créer le layer Pydeck
-    layer = create_layer(result_df_modelised)
+    layer = create_layer(result_df_modelised_show)
     
     # Ajouter les points observés avec la même échelle
     result_df_observed, _, _ = formalised_legend(result_df_observed, column_to_show, colormap, vmin, vmax)
@@ -166,9 +165,9 @@ def show(config_path):
         display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=8, label=unit_label)
 
     with col3:
-        col1bis, col2bis, col3bis, col4bis, col5bis, col6bis = st.columns(6)
-        show_info_data(col1bis, "CP-AROME", result_df_modelised.shape[0], df_modelised_load.select(['lat', 'lon']).unique().shape[0])
-        show_info_data(col2bis, "Stations Météo-France", result_df_observed.shape[0], df_observed_load.select(['lat', 'lon']).unique().shape[0])
+        col0bis, col1bis, col2bis, col3bis, col4bis, col5bis, col6bis = st.columns(7)
+        show_info_data(col0bis, "CP-AROME map", result_df_modelised_show.shape[0], df_modelised_load.select(['lat', 'lon']).unique().shape[0])
+        show_info_data(col1bis, "Stations Météo-France", result_df_observed.shape[0], df_observed_load.select(['lat', 'lon']).unique().shape[0])
        
         if stat_choice_key not in ["date", "month"]:
             obs_vs_mod = match_and_compare(result_df_observed, result_df_modelised, column_to_show)
@@ -177,6 +176,7 @@ def show(config_path):
                 fig = generate_scatter_plot_interactive(obs_vs_mod, stat_choice, unit_label, height-100)
                 st.plotly_chart(fig, use_container_width=True)
                 me, mae, rmse, r2 = generate_metrics(obs_vs_mod)
+                show_info_data(col2bis, "CP-AROME plot", result_df_modelised.shape[0], df_modelised_load.select(['lat', 'lon']).unique().shape[0])
                 show_info_metric(col3bis, "ME", me)
                 show_info_metric(col4bis, "MAE", mae)
                 show_info_metric(col5bis, "RMSE", rmse)

@@ -101,6 +101,9 @@ def generate_metrics(df: pl.DataFrame, x_label: str = "pr_mod", y_label: str = "
     x = df[x_label].to_numpy()
     y = df[y_label].to_numpy()
 
+    if len(x) != len(y):
+        st.error("Longueur x et y différente")
+
     rmse = np.sqrt(mean_squared_error(y, x))
     mae = mean_absolute_error(y, x)
     me = np.mean(x - y)
