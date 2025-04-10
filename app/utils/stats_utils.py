@@ -85,7 +85,27 @@ def compute_statistic_per_point(df: pl.DataFrame, stat_key: str) -> pl.DataFrame
             .rename({"mois_max_j": "mois_pluvieux_j"})
         )
 
-        return mois_h.join(mois_j, on=["lat", "lon"], how="outer")
+        mois_h = mois_h.with_columns([
+            pl.col("lat").cast(pl.Float32),
+            pl.col("lon").cast(pl.Float32)
+        ])
+        mois_j = mois_j.with_columns([
+            pl.col("lat").cast(pl.Float32),
+            pl.col("lon").cast(pl.Float32)
+        ])
+
+        if mois_h.is_empty() and mois_j.is_empty():
+            return pl.DataFrame(schema={"lat": pl.Float32, "lon": pl.Float32, "mois_pluvieux_h": pl.Int32, "mois_pluvieux_j": pl.Int32})
+        elif mois_h.is_empty():
+            return mois_j.with_columns([
+                pl.lit(None, dtype=pl.Int32).alias("mois_pluvieux_h")
+            ])
+        elif mois_j.is_empty():
+            return mois_h.with_columns([
+                pl.lit(None, dtype=pl.Int32).alias("mois_pluvieux_j")
+            ])
+        else:
+            return mois_h.join(mois_j, on=["lat", "lon"], how="outer")
 
     elif stat_key == "numday":
         return (
