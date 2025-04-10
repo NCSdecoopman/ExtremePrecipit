@@ -4,9 +4,6 @@ import polars as pl
 import numpy as np
 
 def prepare_layer(df: pl.DataFrame) -> pl.DataFrame:
-    if "altitude" not in df.columns:
-        df = df.with_columns(pl.lit(None).cast(pl.Float32).alias("altitude"))
-
     return df.select([
         "lat", "lon", "lat_fmt", "lon_fmt", "altitude", "val_fmt", "fill_color"
     ])

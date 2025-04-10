@@ -1,15 +1,10 @@
 import streamlit as st
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
 from io import BytesIO
 import base64
 import polars as pl
+import numpy as np
 import datetime as dt
-
-def convert_custom_colorscale(custom_colorscale):
-    positions, colors = zip(*custom_colorscale)
-    return LinearSegmentedColormap.from_list("custom_colormap", list(zip(positions, colors)))
+import matplotlib.pyplot as plt
 
 def get_stat_column_name(stat_key: str, scale_key: str) -> str:
     if stat_key == "mean":
@@ -99,11 +94,18 @@ def formalised_legend(df: pl.DataFrame, column_to_show: str, colormap, vmin=None
         val_fmt_func = lambda x: f"{x:.2f}"
 
     # Application de la colormap
-    fill_color = df["value_norm"].map_elements(
-        lambda v: [int(255 * c) for c in colormap(v)[:3]] + [255],
-        return_dtype=pl.List(pl.UInt8),
-        skip_nulls=True  # ou False selon ton besoin
-    )
+    # Étape 1 : extraire les valeurs (en NumPy)
+    vals = df["value_norm"].to_numpy()
+
+    # Étape 2 : appliquer le colormap sur tout le tableau (résultat : Nx4 array RGBA)
+    colors = (255 * np.array(colormap(vals))[:, :3]).astype(np.uint8)
+
+    # Étape 3 : ajouter l'alpha (255)
+    alpha = np.full((colors.shape[0], 1), 255, dtype=np.uint8)
+    rgba = np.hstack([colors, alpha])
+
+    # Étape 4 : réinjecter dans Polars
+    fill_color = pl.Series("fill_color", rgba.tolist(), dtype=pl.List(pl.UInt8))
 
     df = df.with_columns([
         pl.Series("fill_color", fill_color),
@@ -115,9 +117,6 @@ def formalised_legend(df: pl.DataFrame, column_to_show: str, colormap, vmin=None
     return df, vmin, vmax
 
 def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label=""):
-    import matplotlib.pyplot as plt
-    import numpy as np
-
     if isinstance(vmin, int) and isinstance(vmax, int) and (1 <= vmin <= 12) and (1 <= vmax <= 12):
         mois_labels = [
             "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
@@ -143,8 +142,8 @@ def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label
         st.markdown(html_mois, unsafe_allow_html=True)
         return
 
-    gradient = np.linspace(1, 0, 256).reshape(256, 1)
-    fig, ax = plt.subplots(figsize=(1, 5), dpi=100)
+    gradient = np.linspace(1, 0, 64).reshape(64, 1)
+    fig, ax = plt.subplots(figsize=(1, 3), dpi=30)
     ax.imshow(gradient, aspect='auto', cmap=colormap)
     ax.axis('off')
 

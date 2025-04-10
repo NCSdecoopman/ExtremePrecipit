@@ -1,5 +1,6 @@
 import yaml
 from matplotlib import colors as mcolors
+from matplotlib.colors import ListedColormap
 
 def menu_config():
     STATS = {
@@ -37,7 +38,7 @@ def load_config(config_path: str) -> dict:
         return yaml.safe_load(f)
 
 
-def echelle_config(type_: str, nombre_label: int = 5):
+def echelle_config(type_: str, n_colors: int = 256):
     if type_ == "continu":
         custom_colorscale = [
             (0.0, "#ffffff"),  # blanc
@@ -46,11 +47,17 @@ def echelle_config(type_: str, nombre_label: int = 5):
             (0.45, "green"),
             (0.6, "yellow"),
             (0.7, "orange"),
-            (0.8, "red"),  # rouge
-            (1.0, "black"),  # noir
+            (0.8, "red"),      # rouge
+            (1.0, "black"),    # noir
         ]
 
-        return mcolors.LinearSegmentedColormap.from_list("custom", custom_colorscale)
+        cmap = mcolors.LinearSegmentedColormap.from_list("custom", custom_colorscale)
+
+        if n_colors is not None:
+            # Retourne une version discrète avec n couleurs
+            return ListedColormap([cmap(i / (n_colors - 1)) for i in range(n_colors)])
+        else:
+            return cmap
 
     elif type_ == "discret":
         couleurs_par_mois = [
@@ -59,22 +66,17 @@ def echelle_config(type_: str, nombre_label: int = 5):
             "green",    # Mars 
             "red",      # Avril 
             "orange",   # Mai 
-            "#00CED1",    # Juin 
+            "#00CED1",  # Juin 
             "yellow",   # Juillet 
-            "#f781bf",  # Août - rose
-            "purple",     # Septembre 
+            "#f781bf",  # Août 
+            "purple",   # Septembre 
             "#654321",  # Octobre 
-            "darkblue",         # Novembre
-            "black",  # Décembre 
+            "darkblue", # Novembre
+            "black",    # Décembre 
         ]
 
-        # if not (2 <= nombre_label <= len(couleurs_par_mois)):
-        #     raise ValueError(f"'nombre_label' doit être entre 2 et {len(couleurs_par_mois)}")
-
-        # # Construire un colorscale interpolé
-        # step = 1 / (nombre_label - 1)
-        # custom_colorscale = [[i * step, couleurs_par_mois[i]] for i in range(nombre_label)]
-        return mcolors.LinearSegmentedColormap.from_list("custom_discret", couleurs_par_mois)
+        return ListedColormap(couleurs_par_mois)
 
     else:
         raise ValueError(f"Type d'échelle inconnu : '{type_}'. Utilisez 'continu' ou 'discret'.")
+

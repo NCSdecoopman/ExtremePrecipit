@@ -50,7 +50,7 @@ def menu_statisticals(min_years: int, max_years: int, STATS, SEASON):
         if st.session_state["stat_choice"] in ["Cumul", "Jour de pluie"]:
             st.selectbox("Choix de l'échelle temporelle", ["Journalière"], key="scale_choice")
         else:
-            st.selectbox("Choix de l'échelle temporelle", ["Horaire", "Journalière"], key="scale_choice")
+            st.selectbox("Choix de l'échelle temporelle", ["Journalière", "Horaire"], key="scale_choice")
 
     with col5:
         st.slider(

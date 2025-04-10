@@ -117,7 +117,7 @@ def show(config_path):
     result_df_observed = add_alti(result_df_observed, type='horaire' if scale_choice_key == 'mm_h' else 'quotidien')    
 
     # Définir l'échelle personnalisée continue
-    colormap = echelle_config("continu" if stat_choice_key != "month" else "discret")
+    colormap = echelle_config("continu" if stat_choice_key != "month" else "discret", n_colors=15)
 
     # Normalisation de la légende
     result_df_modelised_show, vmin, vmax = formalised_legend(result_df_modelised_show, column_to_show, colormap)
