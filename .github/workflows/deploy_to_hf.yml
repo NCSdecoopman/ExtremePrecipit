@@ -49,31 +49,11 @@ jobs:
           RUN pip install --no-cache-dir -r requirements.txt
           RUN pip install huggingface_hub
 
-          # Supprimer le cache pour forcer un nouveau téléchargement
+          COPY download_data.py .  # ajoute ce fichier au conteneur
+
           RUN rm -rf ~/.cache/huggingface/hub && \
-              python -c "from huggingface_hub import snapshot_download; \
-                        snapshot_download(repo_id='ncsdecoopman/ExtremePrecipit', \
-                                          repo_type='dataset', \
-                                          revision='main', \
-                                          local_dir='data', \
-                                          cache_dir='/tmp/hf_cache', \ 
-                                          allow_patterns=["gev/*"])"
-
-                        snapshot_download(repo_id='ncsdecoopman/ExtremePrecipit', \
-                                          repo_type='dataset', \
-                                          revision='main', \
-                                          local_dir='data', \
-                                          cache_dir='/tmp/hf_cache', \ 
-                                          allow_patterns=["metadonnees/*"])"
-
-                        snapshot_download(repo_id='ncsdecoopman/ExtremePrecipit', \
-                                          repo_type='dataset', \
-                                          revision='main', \
-                                          local_dir='data', \
-                                          cache_dir='/tmp/hf_cache', \ 
-                                          allow_patterns=["statisticals/*"])"
-
-                                          
+              python download_data.py
+             
           COPY . .
 
           EXPOSE 7860
