@@ -46,15 +46,14 @@ jobs:
           WORKDIR /app
 
           COPY requirements.txt .
-          COPY deploy/download_data.py .
+          COPY deploy/download_data.py ./download_data.py
+
           RUN pip install --no-cache-dir -r requirements.txt
           RUN pip install huggingface_hub
 
-          COPY download_data.py .  # ajoute ce fichier au conteneur
-
           RUN rm -rf ~/.cache/huggingface/hub && \
               python download_data.py
-             
+
           COPY . .
 
           EXPOSE 7860
