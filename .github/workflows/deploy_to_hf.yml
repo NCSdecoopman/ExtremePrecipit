@@ -56,8 +56,22 @@ jobs:
                                           repo_type='dataset', \
                                           revision='main', \
                                           local_dir='data', \
-                                          cache_dir='/tmp/hf_cache', \
-                                          local_dir_use_symlinks=False)"
+                                          cache_dir='/tmp/hf_cache', \ 
+                                          allow_patterns=["gev/*"])"
+
+                        snapshot_download(repo_id='ncsdecoopman/ExtremePrecipit', \
+                                          repo_type='dataset', \
+                                          revision='main', \
+                                          local_dir='data', \
+                                          cache_dir='/tmp/hf_cache', \ 
+                                          allow_patterns=["metadonnees/*"])"
+
+                        snapshot_download(repo_id='ncsdecoopman/ExtremePrecipit', \
+                                          repo_type='dataset', \
+                                          revision='main', \
+                                          local_dir='data', \
+                                          cache_dir='/tmp/hf_cache', \ 
+                                          allow_patterns=["statisticals/*"])"
 
                                           
           COPY . .
