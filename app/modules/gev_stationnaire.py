@@ -34,11 +34,11 @@ def filter_percentile_all(df: pl.DataFrame, quantile_choice: float, columns: lis
     return df.filter(filter_expr)
 
 def show(config_path):
-    st.markdown("<h3>Visualisation des paramètres GEV</h3>", unsafe_allow_html=True)
+    st.markdown("<h3>Paramètres GEV</h3>", unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
     with col1:
-        Echelle = st.selectbox("Choix de l'échelle temporelle", ["Horaire", "Journalière"], key="scale_choice")
+        Echelle = st.selectbox("Choix de l'échelle temporelle", ["Journalière", "Horaire"], key="scale_choice")
     with col2:
         quantile_choice = st.slider(
             "Percentile de retrait",
@@ -105,117 +105,5 @@ def show(config_path):
             with colb:
                 display_vertical_color_legend(500, colormap, vmin, vmax, n_ticks=15, label=label)
     
-
-    # Partie intéractive
-    df_files = list_files_and_metadata_hf(echelle)
-
-    # Carte Folium
-    m = folium.Map(location=[46.9, 1.7], zoom_start=6, tiles="OpenStreetMap")
-
-    # Palette bleu → blanc → rouge centrée sur 0
-    vmin = df_files["me"].min()
-    vmax = df_files["me"].max()
-    vcenter = 0  # centre sur 0
-
-    # Colormap personnalisée avec blanc au centre
-    colorscale = LinearSegmentedColormap.from_list(
-        "blue_white_red", ["blue", "white", "red"], N=256
-    )
-    norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
-
-    # Création carte Folium
-    m = folium.Map(location=[46.9, 1.7], zoom_start=6, tiles="OpenStreetMap")
-
-    # Ajout des points
-    for _, row in df_files.iterrows():
-        me = row["me"]
-        rgba = colorscale(norm(me))
-        hex_color = colors.rgb2hex(rgba)
-        folium.CircleMarker(
-            location=[row["lat"], row["lon"]],
-            radius=4,
-            color=hex_color,
-            fill=True,
-            fill_color=hex_color,
-            fill_opacity=0.9,
-            tooltip=f"lat: {row['lat']:.2f}, lon: {row['lon']:.2f}, me: {row['me']:.2f}"
-        ).add_to(m)
-
-
-    # Ajout d’une échelle personnalisée (branca)
-    colormap = LinearColormap(
-        colors=["blue", "white", "red"],
-        vmin=vmin,
-        vmax=vmax
-    )
-    colormap.caption = "Erreur moyenne (ME)"
-    colormap.add_to(m)
-
-    col1, col2 = st.columns([2, 3.5])
-
-    with col1:
-        # Capture du clic utilisateur
-        m.add_child(folium.LatLngPopup())
-        map_output = st_folium(m, width=600, height=600)
-        # Traitement du clic
-        if map_output and map_output.get("last_clicked"):
-            lat_clicked = map_output["last_clicked"]["lat"]
-            lon_clicked = map_output["last_clicked"]["lng"]
-
-            st.success(f"Point sélectionné : lat = {lat_clicked:.4f}, lon = {lon_clicked:.4f}")
-            # Trouver le fichier le plus proche (tolérance arrondi 3 décimales)
-            row = df_files[
-                (df_files["lat"] == lat_clicked) & (df_files["lon"] == lon_clicked)
-            ]
-        else:
-            row = None
-
-    with col2:
-        retrait_0_0 = st.checkbox("Retirer les points où AROME = 0 et OBS = 0 pour une même date (pas de pluie)", value=True)            
-        if row is not None and not row.empty:
-            file = row.iloc[0]["file"]
-            df = import_data_hf(file)
-
-            if retrait_0_0:
-                df = df[~((df["pr_mod"] == 0) & (df["pr_obs"] == 0))]
-            
-            df = pd.DataFrame({
-                "arome": df["pr_mod"],
-                "obs": df["pr_obs"],
-                "Date": df["time"]
-            })
-
-            # Calcul des métriques
-            rmse = np.sqrt(mean_squared_error(df["obs"], df["arome"]))
-            mae = mean_absolute_error(df["obs"], df["arome"])
-            bias = np.mean(df["arome"] - df["obs"])
-            r2 = r2_score(df["obs"], df["arome"])
-
-            # Affichage
-            col_metrics1, col_metrics2, col_metrics3, col_metrics4 = st.columns(4)
-            with col_metrics1:
-                st.metric("RMSE", f"{rmse:.2f}")
-            with col_metrics2:
-                st.metric("MAE", f"{mae:.2f}")
-            with col_metrics3:
-                st.metric("Biais", f"{bias:.2f}")
-            with col_metrics4:
-                st.metric("R²", f"{r2:.3f}")
-
-            col3, col4, col5 = st.columns([2.5, 2.5, 2.5])
-
-            with col3:
-                # Exemple d'appel Streamlit
-                fig = generate_scatter_plot_interactive(df, "arome", "obs")
-                st.plotly_chart(fig, use_container_width=True)
-
-            with col4:
-                # Ou :
-                fig = generate_hexbin_plot_interactive(df, "arome", "obs")
-                st.plotly_chart(fig, use_container_width=True)
-
-            with col5:
-                fig = generate_error_histogram(df, "arome", "obs")
-                st.plotly_chart(fig, use_container_width=True)
 
             
