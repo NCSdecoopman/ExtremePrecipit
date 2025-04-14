@@ -46,6 +46,7 @@ jobs:
           WORKDIR /app
 
           COPY requirements.txt .
+          COPY deploy/download_data.py .
           RUN pip install --no-cache-dir -r requirements.txt
           RUN pip install huggingface_hub
 
