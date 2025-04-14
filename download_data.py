@@ -7,7 +7,7 @@ snapshot_download(
     repo_id="ncsdecoopman/ExtremePrecipit",
     repo_type="dataset",
     revision="main",
-    local_dir="data/gev",
+    local_dir="data",
     cache_dir="/tmp/hf_cache",
     allow_patterns=["gev/*"]
 )
@@ -17,7 +17,7 @@ snapshot_download(
     repo_id="ncsdecoopman/ExtremePrecipit",
     repo_type="dataset",
     revision="main",
-    local_dir="data/metadonnees",
+    local_dir="data",
     cache_dir="/tmp/hf_cache",
     allow_patterns=["metadonnees/*"]
 )
@@ -27,7 +27,7 @@ snapshot_download(
     repo_id="ncsdecoopman/ExtremePrecipit",
     repo_type="dataset",
     revision="main",
-    local_dir="data/statisticals",
+    local_dir="data",
     cache_dir="/tmp/hf_cache",
     allow_patterns=["statisticals/*"]
 )
