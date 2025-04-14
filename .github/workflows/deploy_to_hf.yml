@@ -30,9 +30,9 @@ jobs:
           HF_USER: "ncsdecoopman"
           HF_SPACE: "ExtremePrecipit"
         run: |
-          # a) Créer le dossier "deploy" et y copier tout sauf .git/.github/data
+          # a) Créer le dossier "deploy" et y copier tout sauf .git/.github/data/deploy
           mkdir deploy
-          rsync -av --exclude=.git --exclude=.github --exclude=data
+          rsync -av --exclude=deploy --exclude=.git --exclude=.github --exclude=data . deploy/
 
           # b) Créer le Dockerfile dans deploy/
           cat <<'EOF' > deploy/Dockerfile
@@ -46,7 +46,7 @@ jobs:
           WORKDIR /app
 
           COPY requirements.txt .
-          COPY deploy/download_data.py ./download_data.py
+          COPY download_data.py .
 
           RUN pip install --no-cache-dir -r requirements.txt
           RUN pip install huggingface_hub
