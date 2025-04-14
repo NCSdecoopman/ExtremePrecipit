@@ -31,7 +31,7 @@ jobs:
           HF_SPACE: "ExtremePrecipit"
         run: |
           # a) Créer le dossier "deploy" et y copier tout sauf .git/.github/data/deploy
-          mkdir deploy
+          mkdir -p deploy
           rsync -av --exclude=.git --exclude=.github --exclude=data --exclude=deploy . deploy/
           cp deploy/download_data.py deploy/
 
