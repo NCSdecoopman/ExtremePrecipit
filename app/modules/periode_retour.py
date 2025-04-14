@@ -225,32 +225,29 @@ def show(config_path):
             df_obs_ret = df_observed.filter((pl.col("lat") == lat_clicked) & (pl.col("lon") == lon_clicked))
             df_mod_ret = df_modelised.filter((pl.col("lat") == lat) & (pl.col("lon") == lon))
 
-            if df_obs_ret.is_empty() or df_mod_ret.is_empty():
-                st.warning("Pas de données GEV pour ce point.")
-            else:
-                # Affichage des coordonnées AROME correspondantes
-                st.info(f"Point AROME le plus proche : lat = {lat:.4f}, lon = {lon:.4f}")
+            # Affichage des coordonnées AROME correspondantes
+            st.info(f"Point AROME le plus proche : lat = {lat:.4f}, lon = {lon:.4f}")
 
-                # Extraire les périodes de retour et niveaux associés
-                df_obs_ret_pd = df_obs_ret.select(["return_period", "return_level"]).to_pandas()
-                df_mod_ret_pd = df_mod_ret.select(["return_period", "return_level"]).to_pandas()
+            # Extraire les périodes de retour et niveaux associés
+            df_obs_ret_pd = df_obs_ret.select(["return_period", "return_level"]).to_pandas()
+            df_mod_ret_pd = df_mod_ret.select(["return_period", "return_level"]).to_pandas()
 
-                # Charger les maximas annuels bruts
-                try:
-                    # Observé
-                    df_stats_obs = load_data("data/statisticals/observed/quotidien", "hydro", "quotidien", ["lat", "lon", "max_mm_j"], 1960, 2010)
-                    df_stats_point_obs = df_stats_obs.filter((pl.col("lat") == lat_clicked) & (pl.col("lon") == lon_clicked))
-                    maximas_annuels_obs = df_stats_point_obs["max_mm_j" if echelle == "quotidien" else "max_mm_h"].to_pandas()
+            # Charger les maximas annuels bruts
+            try:
+                # Observé
+                df_stats_obs = load_data("data/statisticals/observed/quotidien", "hydro", "quotidien", ["lat", "lon", "max_mm_j"], 1960, 2010)
+                df_stats_point_obs = df_stats_obs.filter((pl.col("lat") == lat_clicked) & (pl.col("lon") == lon_clicked))
+                maximas_annuels_obs = df_stats_point_obs["max_mm_j" if echelle == "quotidien" else "max_mm_h"].to_pandas()
 
-                    # Modélisé
-                    df_stats_mod = load_data("data/statisticals/modelised/horaire", "hydro", "quotidien", ["lat", "lon", "max_mm_j"], 1960, 2010)
-                    df_stats_point_mod = df_stats_mod.filter((pl.col("lat") == lat) & (pl.col("lon") == lon))
-                    maximas_annuels_mod = df_stats_point_mod["max_mm_j" if echelle == "quotidien" else "max_mm_h"].to_pandas()
+                # Modélisé
+                df_stats_mod = load_data("data/statisticals/modelised/horaire", "hydro", "quotidien", ["lat", "lon", "max_mm_j"], 1960, 2010)
+                df_stats_point_mod = df_stats_mod.filter((pl.col("lat") == lat) & (pl.col("lon") == lon))
+                maximas_annuels_mod = df_stats_point_mod["max_mm_j" if echelle == "quotidien" else "max_mm_h"].to_pandas()
 
-                except Exception as e:
-                    maximas_annuels_obs = None
-                    maximas_annuels_mod = None
-                    st.warning(f"Impossible de charger les maximas annuels : {e}")
+            except Exception as e:
+                maximas_annuels_obs = None
+                maximas_annuels_mod = None
+                st.warning(f"Impossible de charger les maximas annuels : {e}")
 
-                # Affichage de la courbe interactive
-                plot_gev_return_curve(df_mod_ret_pd, df_obs_ret_pd, maximas_annuels_obs, maximas_annuels_mod)
+            # Affichage de la courbe interactive
+            plot_gev_return_curve(df_mod_ret_pd, df_obs_ret_pd, maximas_annuels_obs, maximas_annuels_mod)
