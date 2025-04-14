@@ -1,5 +1,4 @@
 import polars as pl
-import numpy as np
 import streamlit as st
 from scipy.spatial import cKDTree
 

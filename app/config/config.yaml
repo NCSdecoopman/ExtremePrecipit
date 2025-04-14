@@ -5,3 +5,7 @@ years:
 statisticals:
   modelised: data/statisticals/modelised
   observed: data/statisticals/observed
+
+gev:
+  modelised: data/gev/modelised
+  observed: data/gev/observed

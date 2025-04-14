@@ -1,5 +1,5 @@
 import streamlit as st
-from app.modules import statisticals, scatter_plot
+from app.modules import statisticals, scatter_plot, gev_stationnaire
 
 st.set_page_config(layout="wide", page_title="Visualisation des précipitations", page_icon="🌧️")
 
@@ -63,7 +63,7 @@ st.markdown("""
 st.sidebar.title("Navigation")
 option = st.sidebar.selectbox(
     "Navigation",
-    ("Statistiques descriptives", "Scatter plot"),
+    ("Statistiques descriptives", "Scatter plot", "GEV"),
     label_visibility="hidden"
 )
 
@@ -74,3 +74,6 @@ if option == "Statistiques descriptives":
 
 elif option == "Scatter plot":
     scatter_plot.show(config_path)
+
+elif option == "GEV":
+    gev_stationnaire.show(config_path)
