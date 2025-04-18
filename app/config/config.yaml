@@ -1,6 +1,6 @@
 years:
   min: 1959
-  max: 2010
+  max: 2015
 
 statisticals:
   modelised: data/statisticals/modelised

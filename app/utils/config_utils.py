@@ -24,12 +24,6 @@ def menu_config():
         "Journalière": "mm_j"
     }
 
-    LEGENDE = {
-        "Horaire": "mm/h",
-        "Journalière": "mm/j"
-    }
-
-
     return STATS, SEASON, SCALE
 
 
