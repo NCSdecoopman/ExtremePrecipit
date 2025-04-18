@@ -1,6 +1,6 @@
 years:
   min: 1959
-  max: 2015
+  max: 2015 # choix dans le menu
 
 statisticals:
   modelised: data/statisticals/modelised
