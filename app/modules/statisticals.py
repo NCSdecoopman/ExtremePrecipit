@@ -14,11 +14,11 @@ import pydeck as pdk
 import polars as pl
 
 @st.cache_data
-def load_data_cached(type_data: str, echelle: str, min_year: int, max_year: int, season_key: str, config) -> pl.DataFrame:
+def load_data_cached(type_data: str, echelle: str, min_year: int, max_year: int, season_key: str, col_to_load: list, config) -> pl.DataFrame:
     """
     Version cachée qui retourne un DataFrame pour la sérialisation.
     """
-    return load_data(type_data, echelle, min_year, max_year, season_key, config)
+    return load_data(type_data, echelle, min_year, max_year, season_key, col_to_load, config)
 
 def show_info_data(col, label, n_points_valides, n_points_total):
     return col.markdown(f"""
@@ -59,12 +59,16 @@ def show(config_path):
     season_choice_key = SEASON[season_choice]
     scale_choice_key = SCALE[scale_choice]
 
-    try:    
+    # Colonne de statistique nécessaire au chargement
+    col_to_load, col_important = get_column_load(stat_choice_key, scale_choice_key)
+
+    try:
         df_modelised_load = load_data_cached(
             'modelised', 'horaire',
             min_year_choice,
             max_year_choice,
             season_choice_key,
+            col_to_load,
             config
         )
     except Exception as e:
@@ -78,22 +82,30 @@ def show(config_path):
             min_year_choice,
             max_year_choice,
             season_choice_key,
+            col_to_load + ["nan_ratio"],
             config
         )
     except Exception as e:
         st.error(f"Erreur lors du chargement des données observées : {e}")
         return
-
+    
     # Selection des données observées
-    df_observed = cleaning_data_observed(df_observed_load, missing_rate)
+    df_observed_cleaning = cleaning_data_observed(df_observed_load, missing_rate)
     
     # Calcul des statistiques
     result_df_modelised = compute_statistic_per_point(df_modelised_load, stat_choice_key)
-    result_df_observed = compute_statistic_per_point(df_observed, stat_choice_key)
+    result_df_observed = compute_statistic_per_point(df_observed_cleaning, stat_choice_key)
+   
+    # Ajout de l'altitude et des lat lon
+    result_df_modelised = add_metadata(result_df_modelised, scale_choice_key, type='modelised')    
+    result_df_observed = add_metadata(result_df_observed, scale_choice_key, type='observed')    
+
+    # Définir l'échelle personnalisée continue
+    colormap = echelle_config("continu" if stat_choice_key != "month" else "discret", n_colors=15)
 
     # Obtention de la colonne étudiée
     column_to_show = get_stat_column_name(stat_choice_key, scale_choice_key)
-    
+
     # Retrait des extrêmes pour l'affichage uniquement
     if stat_choice_key not in ["month", "date"]:
         percentile_95 = result_df_modelised.select(
@@ -105,13 +117,6 @@ def show(config_path):
         )
     else:
         result_df_modelised_show = result_df_modelised
-
-    # Ajout de l'altitude
-    result_df_modelised_show = add_alti(result_df_modelised_show, type='model')    
-    result_df_observed = add_alti(result_df_observed, type='horaire' if scale_choice_key == 'mm_h' else 'quotidien')    
-
-    # Définir l'échelle personnalisée continue
-    colormap = echelle_config("continu" if stat_choice_key != "month" else "discret", n_colors=15)
 
     # Normalisation de la légende
     result_df_modelised_show, vmin, vmax = formalised_legend(result_df_modelised_show, column_to_show, colormap)
@@ -131,7 +136,7 @@ def show(config_path):
     view_state = pdk.ViewState(latitude=46.5, longitude=1.7, zoom=5)
     
     col1, col2, col3 = st.columns([1, 0.15, 1])
-    height = 700
+    height = 650
 
     with col1:
         deck = plot_map([layer, scatter_layer], view_state, tooltip)
@@ -159,15 +164,18 @@ def show(config_path):
 
     with col3:
         col0bis, col1bis, col2bis, col3bis, col4bis, col5bis, col6bis = st.columns(7)
-        n_tot_mod = df_modelised_load.select(['lat', 'lon']).unique().shape[0]
+        n_tot_mod = df_modelised_load.select(pl.col("NUM_POSTE").n_unique()).item()
+        n_tot_obs = df_observed_load.select(pl.col("NUM_POSTE").n_unique()).item()
         show_info_data(col0bis, "CP-AROME map", result_df_modelised_show.shape[0], n_tot_mod)
-        show_info_data(col1bis, "Stations Météo-France", result_df_observed.shape[0], df_observed_load.select(['lat', 'lon']).unique().shape[0])
+        show_info_data(col1bis, "Stations", result_df_observed.shape[0], n_tot_obs)
        
         if stat_choice_key not in ["date", "month"]:
-            obs_vs_mod = match_and_compare(result_df_observed, result_df_modelised, column_to_show)
-            
+            echelle = "horaire" if scale_choice_key == "mm_h" else "quotidien"
+            df_obs_vs_mod = pl.read_csv(f"data/metadonnees/obs_vs_mod/obs_vs_mod_{echelle}.csv")
+
+            obs_vs_mod = match_and_compare(result_df_observed, result_df_modelised, column_to_show, df_obs_vs_mod)
             if obs_vs_mod is not None and obs_vs_mod.height > 0:            
-                fig = generate_scatter_plot_interactive(obs_vs_mod, stat_choice, unit_label, height-100)
+                fig = generate_scatter_plot_interactive(obs_vs_mod, stat_choice, unit_label, height)
                 st.plotly_chart(fig, use_container_width=True)
                 me, mae, rmse, r2 = generate_metrics(obs_vs_mod)
                 show_info_data(col2bis, "CP-AROME plot", result_df_modelised.shape[0], n_tot_mod)
@@ -175,8 +183,19 @@ def show(config_path):
                 show_info_metric(col4bis, "MAE", mae)
                 show_info_metric(col5bis, "RMSE", rmse)
                 show_info_metric(col6bis, "R²", r2)
-
             
+
+            # col0bisbis, col1bisbis, col2bisbis, col3bisbis, col4bisbis, col5bisbis, col6bisbis = st.columns(7)
+            # obs_vs_mod_all = match_and_compare(df_observed_cleaning, df_modelised_load, col_important, df_obs_vs_mod)
+            # if obs_vs_mod_all is not None and obs_vs_mod_all.height > 0:            
+            #     fig = generate_scatter_plot_interactive(obs_vs_mod_all, stat_choice, unit_label, height)
+            #     st.plotly_chart(fig, use_container_width=True)
+            #     me, mae, rmse, r2 = generate_metrics(obs_vs_mod_all)
+            #     show_info_metric(col3bisbis, "ME", me)
+            #     show_info_metric(col4bisbis, "MAE", mae)
+            #     show_info_metric(col5bisbis, "RMSE", rmse)
+            #     show_info_metric(col6bisbis, "R²", r2)
+
             else:
                 st.write("Changer les paramètres afin de générer des stations pour visualiser les scatter plot")
                 plot_histogramme(result_df_modelised, column_to_show, stat_choice, stat_choice_key, unit_label, height)

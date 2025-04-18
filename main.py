@@ -60,12 +60,13 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.sidebar.title("Navigation")
-option = st.sidebar.selectbox(
-    "Navigation",
-    ("Statistiques descriptives", "Scatter plot", "GEV", "Période de retour"),
-    label_visibility="hidden"
-)
+option = "Statistiques descriptives"
+# st.sidebar.title("Navigation")
+# option = st.sidebar.selectbox(
+#     "Navigation",
+#     ("Statistiques descriptives", "Scatter plot", "GEV", "Période de retour"),
+#     label_visibility="hidden"
+# )
 
 config_path = "app/config/config.yaml"
 

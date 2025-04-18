@@ -4,6 +4,7 @@ __pycache__/
 *.parquet
 *.zarr
 *.nc
+*.csv
 
 # On garde les .keep
 !data/**/.keep

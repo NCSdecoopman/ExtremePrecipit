@@ -72,8 +72,9 @@ def show(config_path):
     # Suppression des NaN
     df_observed = filter_nan(df_observed)
 
-    df_modelised = add_alti(df_modelised, type='model')
-    df_observed = add_alti(df_observed, type=echelle)
+    # Ajout de l'altitude et des lat lon
+    df_modelised = add_metadata(df_modelised, "mm_h" if echelle=="horaire" else "mm_j", type='modelised')    
+    df_observed = add_metadata(df_observed, "mm_h" if echelle=="horaire" else "mm_j", type='observed') 
 
     params_gev = {
         "xi": "ξ",
