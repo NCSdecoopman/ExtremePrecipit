@@ -11,7 +11,7 @@ try:
         cache_dir="/tmp/hf_cache",
         allow_patterns=["metadonnees/*"]
     )
-    print("Téléchargement des statistiques AROMES...")
+    print("Téléchargement des statistiques AROMES (mod)...")
     snapshot_download(
         repo_id="ncsdecoopman/ExtremePrecipit",
         repo_type="dataset",
@@ -20,7 +20,7 @@ try:
         cache_dir="/tmp/hf_cache",
         allow_patterns=["statisticals/modelised*"]
     )
-    print("Téléchargement des statistiques STATIONS...")
+    print("Téléchargement des statistiques STATIONS (obs)...")
     snapshot_download(
         repo_id="ncsdecoopman/ExtremePrecipit",
         repo_type="dataset",
