@@ -97,17 +97,17 @@ def download_horaire_zip(dep: int, output_dir: Path, logger) -> None:
     return failed
 
 
-def download_all_zips(activate: bool, echelles: list, logger, max_workers: int = 48) -> dict:
+def download_all_zips(activate: bool, echelle: str, logger, max_workers: int = 48) -> dict:
     """
     Téléchargement parallèle des fichiers horaires/quotidiens pour tous les départements.
     Retourne un dictionnaire avec les chemins des répertoires par échelle.
     """
     dirs = {}
-    if "horaire" in echelles:
+    if echelle == "horaire":
         horaire_dir = Path("data/temp/horaire_zip")
         horaire_dir.mkdir(parents=True, exist_ok=True)
         dirs["horaire"] = horaire_dir
-    if "quotidien" in echelles:
+    elif echelle == "quotidien":
         quotidien_dir = Path("data/temp/quotidien_zip")
         quotidien_dir.mkdir(parents=True, exist_ok=True)
         dirs["quotidien"] = quotidien_dir
@@ -117,10 +117,10 @@ def download_all_zips(activate: bool, echelles: list, logger, max_workers: int =
         tasks = []
 
         for dep in range(1, 96):
-            if "quotidien" in echelles:
-                tasks.append(("quotidien", dep, dirs["quotidien"]))
-            if "horaire" in echelles:
+            if echelle == "horaire":
                 tasks.append(("horaire", dep, dirs["horaire"]))
+            elif echelle == "quotidien":
+                tasks.append(("quotidien", dep, dirs["quotidien"]))
 
         failed_all = []
 
@@ -146,7 +146,7 @@ def download_all_zips(activate: bool, echelles: list, logger, max_workers: int =
         logger.info("Téléchargement des fichiers terminé")
 
         if failed_all:
-            failed_file = Path("logs/observed/failed_downloads.txt")
+            failed_file = Path(f"logs/observed/failed_downloads.txt")
             failed_file.parent.mkdir(parents=True, exist_ok=True)  # <- crée le dossier si nécessaire
 
             with open(failed_file, "w") as f:
@@ -333,16 +333,13 @@ def get_time_axis(annee: int, echelle: str) -> pd.DatetimeIndex:
 
 
 
-def generate_zarr_structure(zarr_dir, echelle, stations_df, config):
+def generate_zarr_structure(zarr_dir, echelle, coords_df, config):
     """
     Crée une structure Zarr vide pour chaque année de 1959 à 2022
     et y stocke un Dataset (time, points):
     - pr : précipitation
     """
     zarr_dir.mkdir(parents=True, exist_ok=True)
-
-    # Extraire les couples uniques LAT/LON
-    coords_df = stations_df.select(["lat", "lon", "altitude"]).unique()
 
     lat = coords_df["lat"]
     lon = coords_df["lon"]
@@ -367,17 +364,16 @@ def generate_zarr_structure(zarr_dir, echelle, stations_df, config):
                 "points": np.arange(len(lat))  # index station
             }
         )
-        ds = ds.assign_coords(
-            lat=("points", lat),
-            lon=("points", lon)
-        )
+        num_poste = coords_df["NUM_POSTE"]
+        ds = ds.assign_coords(NUM_POSTE=("points", num_poste))
+        ds = ds.swap_dims({"points": "NUM_POSTE"})
+        ds = ds.drop_vars("points")
 
         # Configuration du compresseur
         codec = numcodecs.Blosc(**config["zarr"]["compressor"]["blosc"])
         encoding = {
             "pr": {"chunks": (len(time), 100), "compressor": codec, "dtype": dtype},
-            "lat": {"chunks": (len(lat),), "compressor": codec},
-            "lon": {"chunks": (len(lon),), "compressor": codec},
+            "NUM_POSTE": {"chunks": (len(num_poste),), "compressor": codec}
         }
 
         output_path = zarr_dir / echelle / f"{year}.zarr"
@@ -391,23 +387,23 @@ def generate_zarr_structure(zarr_dir, echelle, stations_df, config):
         logger.debug(f"  Coordonnées : {list(ds.coords)}")
         logger.debug(f"  Variables : {list(ds.data_vars)}")
         logger.debug(f"  time[0]: {ds.time.values[0]}, time[-1]: {ds.time.values[-1]}")
-        logger.debug(f"  lat[0:3]: {ds.lat.values[:3]}")
-        logger.debug(f"  lon[0:3]: {ds.lon.values[:3]}")
-
-    return coords_df
+        logger.debug(f"  NUM_POSTE[0:3]: {ds.NUM_POSTE.values[:3]}")
 
 
-def generate_metada(meta_dir, echelle, coords_df):    
+def generate_metadata(meta_dir: str, echelle: str, df: pl.DataFrame):    
     meta_dir.mkdir(parents=True, exist_ok=True)
     postes_path = meta_dir / f"postes_{echelle}.csv"
 
-    postes_df = coords_df.with_row_index(name="index").with_columns([
-        (pl.col("index") + 1).cast(pl.Utf8).str.zfill(8).alias("NUM_POSTE")
-    ]).select(["NUM_POSTE", "lat", "lon", "altitude"])
+    unique_coords_df = (
+        df
+        .select(["NUM_POSTE", "lat", "lon", "altitude"])
+        .unique()
+        .sort("NUM_POSTE")
+    )
 
-    postes_df.write_csv(postes_path)
-    logger.info(f"{postes_df['NUM_POSTE'].n_unique()} stations générées")
-    return postes_df
+    unique_coords_df.write_csv(postes_path)
+    logger.info(f"{unique_coords_df['NUM_POSTE'].n_unique()} stations générées")
+    return unique_coords_df
 
 
 
@@ -417,7 +413,8 @@ def generate_metada(meta_dir, echelle, coords_df):
 
 # Correspondance NUM_POSTE - points
 def get_poste_to_point_map(postes_df: pl.DataFrame, logger) -> dict:
-    return dict(zip(postes_df["NUM_POSTE"], range(postes_df.height)))
+    # Mapping NUM_POSTE -> index dans la dimension NUM_POSTE du Zarr (ds.NUM_POSTE.values)
+    return {v: i for i, v in enumerate(postes_df["NUM_POSTE"])}
 
 # Mapping time - index
 def get_time_to_index_map(zarr_path: Path) -> dict:
@@ -441,7 +438,7 @@ def fill_zarr_for_year(year: int,
 
     # Ouverture du Zarr en désactivant Dask
     store = zarr.DirectoryStore(str(zarr_path))
-    ds = xr.open_zarr(store, chunks=None)  # Attention : pas de dask ici
+    ds = xr.open_zarr(store, chunks=None)
 
     # Extraction des colonnes nécessaires
     values = df_year[fill_col].to_numpy()
@@ -502,16 +499,16 @@ def fill_zarr_task(year_df_tuple, zarr_base_path, postes_df, val_col, config):
 def pipeline_csv_to_zarr(config, max_workers: int = 48):    
     global logger
     logger = get_logger(__name__)
-    echelles = config.get("echelles", ["horaire"])
+    echelles = config.get("echelles", ["horaire", "quotidien"])
     zarr_dir = Path(config["zarr"]["path"]["outputdir"])
     meta_dir = Path(config["metadata"]["path"]["outputdir"])
 
     # Étape 1 : Téléchargement
     activate_download_data = config["data"]["download"]
-    dirs = download_all_zips(activate_download_data, echelles, logger)
 
     # Étape 2 : Formation des datasets
     for echelle in echelles:
+        dirs = download_all_zips(activate_download_data, echelle, logger)
         input_dir = dirs[echelle] # répertoire des temp_data
         val_col = "RR1" if echelle == "horaire" else "RR"
         date_col = "AAAAMMJJHH" if echelle == "horaire" else "AAAAMMJJ"
@@ -537,21 +534,15 @@ def pipeline_csv_to_zarr(config, max_workers: int = 48):
             logger.warning(f"Nombre de stations avec plusieurs LAT/LON : {n_stations_diff_latlon}")
 
         # Étape 2 : Génération des zarr vides
-        logger.info(f"[GENERATION] Génération des zarr vides")
-        coords_df = generate_zarr_structure(zarr_dir, echelle, df_all, config)
-
         logger.info("[GENERATION] Générations des métadonnées associées")
-        postes_df = generate_metada(meta_dir, echelle, coords_df)
+        postes_df = generate_metadata(meta_dir, echelle, df_all)
+
+        logger.info(f"[GENERATION] Génération des zarr vides")
+        generate_zarr_structure(zarr_dir, echelle, postes_df, config)
 
         n_missing_alt = postes_df.filter(pl.col("altitude").is_null()).height
         if n_missing_alt > 0:
                 logger.warning(f"{n_missing_alt} stations sans altitude renseignée.")
-
-        # Rejoint sur LAT/LON pour attribuer les bons NUM_POSTE
-        df_all = (
-            df_all.drop("NUM_POSTE")
-            .join(postes_df, on=["lat", "lon"], how="left")
-        )
 
         # Étape 3 : Remplissage des fichiers Zarr
         logger.info("[REMPLISSAGE] Début du remplissage des Zarr")
@@ -574,10 +565,10 @@ def pipeline_csv_to_zarr(config, max_workers: int = 48):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pipeline CSV.gz vers .zarr")
     parser.add_argument("--config", type=str, default="config/observed_settings.yaml")
-    parser.add_argument("--echelle", type=str, choices=["horaire", "quotidien"])
+    parser.add_argument("--echelle", type=str, choices=["horaire", "quotidien"], nargs="+", default=["horaire", "quotidien"])
     args = parser.parse_args()
 
     config = load_config(args.config)
-    config["echelles"] = [args.echelle]  # Ne traiter qu'une seule échelle
-
+    config["echelles"] = args.echelle
+    
     pipeline_csv_to_zarr(config, max_workers=96)

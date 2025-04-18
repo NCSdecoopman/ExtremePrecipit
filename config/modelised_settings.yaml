@@ -1,9 +1,12 @@
 echelles:
   - horaire
-
+  
 nc:
   path:
     inputdir: "data/raw/modelised" # précipitation en kg/m²/s
+
+altitude:
+  path: "data/raw/altitude/orog_ALPX-3_ERA5_evaluation_r1i1p1f1_CNRM-MF_CNRM-AROME46t1_v1-r1_fx.nc"
 
 metadata:
   path:
@@ -18,7 +21,7 @@ zarr:
   overwrite: true  # Ecraser ou non les .zarr existants
   chunks:
     time: .inf  # on garde full time
-    points: 100  # par 100 points
+    NUM_POSTE: 100  # par 100 points
   compressor:
     blosc:
       cname: zstd
@@ -35,6 +38,10 @@ statistics:
   path:
     outputdir: "data/statisticals/modelised"
   overwrite: true  # ou false pour ne pas écraser les .parquet existants par défaut
+    
+gev:
+  path:
+    outputdir: "data/gev/modelised"
 
 log:
   directory: "logs/pipeline/modelised"  # dossier où sera écrit les fichiers .log

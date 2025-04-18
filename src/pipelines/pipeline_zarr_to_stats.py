@@ -50,14 +50,12 @@ def safe_combine_first(df, col_main, col_secondary):
 
 def compute_statistics_for_period(
     pr: xr.DataArray,
-    echelle: str,
-    lat_ref: np.ndarray,
-    lon_ref: np.ndarray
+    echelle: str
 ) -> pd.DataFrame:
-    n_points = lat_ref.shape[0]
+    n_points = pr.sizes["NUM_POSTE"]
     n_time = pr.time.size
 
-    # Initialisation des tableaux complets
+    # Initialisation des tableaux
     mean_mm_h = np.full(n_points, np.nan)
     max_mm_h = np.full(n_points, np.nan)
     max_date_mm_h = np.full(n_points, np.nan, dtype=object)
@@ -66,72 +64,70 @@ def compute_statistics_for_period(
     n_days_gt1mm = np.full(n_points, np.nan)
     nan_ratio_arr = np.full(n_points, np.nan)
 
-    if "points" in pr.dims:
-        pr_points = pr.coords["points"].values
-        pr = pr.chunk({"points": -1})
+    pr = pr.chunk({"NUM_POSTE": -1})
+    pr_postes = pr["NUM_POSTE"].values
 
-        # Ratio de NaNs
-        n_nan = da.isnan(pr).sum(dim="time")
-        nan_ratio = (n_nan / n_time).compute()
-        nan_ratio_arr[pr_points] = nan_ratio
+    # Ratio de NaNs
+    n_nan = da.isnan(pr).sum(dim="time")
+    nan_ratio = (n_nan / n_time).compute()
+    nan_ratio_arr[:] = nan_ratio
 
-        valid_mask = nan_ratio < 1.0  # Points avec au moins une valeur valide
-        if valid_mask.sum().item() == 0:
-            return pd.DataFrame({
-                "lat": lat_ref,
-                "lon": lon_ref,
-                "mean_mm_h": mean_mm_h,
-                "max_mm_h": max_mm_h,
-                "max_date_mm_h": max_date_mm_h,
-                "max_mm_j": max_mm_j,
-                "max_date_mm_j": max_date_mm_j,
-                "n_days_gt1mm": n_days_gt1mm,
-                "nan_ratio": nan_ratio_arr,
-            })
+    valid_mask = nan_ratio < 1.0
+    if valid_mask.sum().item() == 0:
+        return pd.DataFrame({
+            "NUM_POSTE": pr_postes,
+            "mean_mm_h": mean_mm_h,
+            "max_mm_h": max_mm_h,
+            "max_date_mm_h": max_date_mm_h,
+            "max_mm_j": max_mm_j,
+            "max_date_mm_j": max_date_mm_j,
+            "n_days_gt1mm": n_days_gt1mm,
+            "nan_ratio": nan_ratio_arr,
+        })
 
-        valid_idx = pr_points[valid_mask.values]
-        pr_valid = pr.isel(points=valid_mask)
+    valid_idx = np.where(valid_mask)[0]
+    pr_valid = pr.isel(NUM_POSTE=valid_idx)
+    pr_valid_postes = pr_valid["NUM_POSTE"].values
 
-        if echelle == "horaire":
-            mean_valid = pr_valid.mean(dim="time", skipna=True).compute().values
-            mean_mm_h[valid_idx] = mean_valid
+    if echelle == "horaire":
+        mean_valid = pr_valid.mean(dim="time", skipna=True).compute().values
+        mean_mm_h[valid_idx] = mean_valid
 
-            max_mm_h_valid = pr_valid.max(dim="time", skipna=True).compute().values
-            max_mm_h[valid_idx] = max_mm_h_valid
+        max_mm_h_valid = pr_valid.max(dim="time", skipna=True).compute().values
+        max_mm_h[valid_idx] = max_mm_h_valid
 
-            argmax_h = da.argmax(pr_valid.data, axis=pr_valid.get_axis_num("time"))
-            argmax_h_val = argmax_h.compute()
-            pr_time = pr_valid["time"].values
+        argmax_h = da.argmax(pr_valid.data, axis=pr_valid.get_axis_num("time"))
+        argmax_h_val = argmax_h.compute()
+        pr_time = pr_valid["time"].values
 
-            valid_h_mask = ~np.isnan(max_mm_h_valid)
-            max_date_mm_h[valid_idx[valid_h_mask]] = np.datetime_as_string(
-                pr_time[argmax_h_val[valid_h_mask]], unit="D"
-            )
-
-            pr_daily = compute_daily_precip(pr_valid)
-        else:
-            mean_valid = (pr_valid.mean(dim="time", skipna=True) / 24).compute().values
-            mean_mm_h[valid_idx] = mean_valid
-            pr_daily = pr_valid  # déjà au pas quotidien
-
-        max_mm_j_valid = pr_daily.max(dim="time", skipna=True).compute().values
-        max_mm_j[valid_idx] = max_mm_j_valid
-
-        argmax_j = da.argmax(pr_daily.data, axis=pr_daily.get_axis_num("time"))
-        argmax_j_val = argmax_j.compute()
-        pr_time_j = pr_daily["time"].values
-
-        valid_j_mask = ~np.isnan(max_mm_j_valid)
-        max_date_mm_j[valid_idx[valid_j_mask]] = np.datetime_as_string(
-            pr_time_j[argmax_j_val[valid_j_mask]], unit="D"
+        valid_h_mask = ~np.isnan(max_mm_h_valid)
+        max_date_mm_h[valid_idx[valid_h_mask]] = np.datetime_as_string(
+            pr_time[argmax_h_val[valid_h_mask]], unit="D"
         )
 
-        n_gt1mm = (pr_daily > 1).sum(dim="time", skipna=True).compute().values
-        n_days_gt1mm[valid_idx] = n_gt1mm
+        pr_daily = compute_daily_precip(pr_valid)
+    else:
+        mean_valid = (pr_valid.mean(dim="time", skipna=True) / 24).compute().values
+        mean_mm_h[valid_idx] = mean_valid
+        pr_daily = pr_valid
+
+    max_mm_j_valid = pr_daily.max(dim="time", skipna=True).compute().values
+    max_mm_j[valid_idx] = max_mm_j_valid
+
+    argmax_j = da.argmax(pr_daily.data, axis=pr_daily.get_axis_num("time"))
+    argmax_j_val = argmax_j.compute()
+    pr_time_j = pr_daily["time"].values
+
+    valid_j_mask = ~np.isnan(max_mm_j_valid)
+    max_date_mm_j[valid_idx[valid_j_mask]] = np.datetime_as_string(
+        pr_time_j[argmax_j_val[valid_j_mask]], unit="D"
+    )
+
+    n_gt1mm = (pr_daily > 1).sum(dim="time", skipna=True).compute().values
+    n_days_gt1mm[valid_idx] = n_gt1mm
 
     df = pd.DataFrame({
-        "lat": lat_ref,
-        "lon": lon_ref,
+        "NUM_POSTE": pr_postes,
         "mean_mm_h": mean_mm_h,
         "max_mm_h": max_mm_h,
         "max_date_mm_h": max_date_mm_h,
@@ -140,6 +136,7 @@ def compute_statistics_for_period(
         "n_days_gt1mm": n_days_gt1mm,
         "nan_ratio": nan_ratio_arr,
     })
+
     return df
 
 
@@ -150,9 +147,7 @@ def process_zarr_file_seasonal(
     output_root: str,
     overwrite: bool,
     log_status: dict,
-    logger,
-    lat_ref: np.ndarray, 
-    lon_ref: np.ndarray
+    logger
 ):
     year = int(os.path.basename(zarr_path).split(".")[0])
     var_name = list(config_zarr["variables"].keys())[0]
@@ -171,13 +166,9 @@ def process_zarr_file_seasonal(
         return
 
     ds = xr.concat(all_ds, dim="time", combine_attrs="override")
-    ds["time"] = pd.to_datetime(ds["time"].values)  # <- conversion explicite
+    ds["time"] = pd.to_datetime(ds["time"].values)
     ds = ds.sortby("time")
 
-    if not np.issubdtype(ds["time"].dtype, np.datetime64):
-        ds["time"] = pd.to_datetime(ds["time"].values)
-
-    # Convertir explicitement en float avant division
     ds[var_name] = ds[var_name].astype("float32")
 
     fill_value = var_conf.get("fill_value", None)
@@ -192,7 +183,6 @@ def process_zarr_file_seasonal(
         log_status[year] = {}
 
     for season in ["djf", "mam", "jja", "son"]:
-        # logger.info(f"[{season.upper()}] {year} : début du calcul")
         out_dir = os.path.join(output_root, str(year))
         os.makedirs(out_dir, exist_ok=True)
         out_path = os.path.join(out_dir, f"{season}.parquet")
@@ -217,10 +207,7 @@ def process_zarr_file_seasonal(
             log_status[year][season] = "Absent"
             continue
 
-        df = compute_statistics_for_period(pr_season, echelle, lat_ref, lon_ref)
-
-        if df.shape[0] != lat_ref.shape[0]:
-            logger.warning("Le tableau généré n'a pas la même taille que la grille")
+        df = compute_statistics_for_period(pr_season, echelle)
 
         if df.empty:
             logger.warning(f"Aucune statistique pour {season.upper()} {year}")
@@ -228,10 +215,13 @@ def process_zarr_file_seasonal(
             continue
 
         df.to_parquet(out_path, index=False, engine="pyarrow", compression="zstd")
-        #logger.info(f"Statistiques {season.upper()} {year} sauvegardées dans {out_path}")
         log_status[year][season] = "Généré"
 
 
+def safe_idxmax(x):
+    if x.dropna().empty:
+        return np.nan
+    return x.idxmax(skipna=True)
 
 def compute_hydro_from_seasons(year: int, stats_dir: str, log_status: dict):
     try:
@@ -250,9 +240,8 @@ def compute_hydro_from_seasons(year: int, stats_dir: str, log_status: dict):
             dfs.append(df)
 
         full_df = pd.concat(dfs, ignore_index=True)
-        df_grouped = full_df.groupby(["lat", "lon"], sort=False)
+        df_grouped = full_df.groupby("NUM_POSTE", sort=False)
 
-        # Agrégations numériques robustes
         df_hydro = df_grouped.agg({
             "mean_mm_h": lambda x: x.mean(skipna=True),
             "max_mm_h": lambda x: x.max(skipna=True),
@@ -267,18 +256,18 @@ def compute_hydro_from_seasons(year: int, stats_dir: str, log_status: dict):
 
         # Dates de maxima horaire
         if full_df["max_mm_h"].notna().any():
-            idx_h = df_grouped["max_mm_h"].transform(lambda x: x.idxmax(skipna=True) if x.notna().any() else pd.NA)
+            idx_h = df_grouped["max_mm_h"].transform(safe_idxmax)
             idx_h_valid = idx_h.dropna().astype(int)
-            max_date_mm_h = full_df.loc[idx_h_valid, ["lat", "lon", "max_date_mm_h"]].drop_duplicates(["lat", "lon"])
-            df_hydro = df_hydro.merge(max_date_mm_h, on=["lat", "lon"], how="left", suffixes=("", "_h"))
+            max_date_mm_h = full_df.loc[idx_h_valid, ["NUM_POSTE", "max_date_mm_h"]].drop_duplicates("NUM_POSTE")
+            df_hydro = df_hydro.merge(max_date_mm_h, on="NUM_POSTE", how="left", suffixes=("", "_h"))
             safe_combine_first(df_hydro, "max_date_mm_h", "max_date_mm_h_h")
 
         # Dates de maxima journalier
         if full_df["max_mm_j"].notna().any():
-            idx_j = df_grouped["max_mm_j"].transform(lambda x: x.idxmax(skipna=True) if x.notna().any() else pd.NA)
+            idx_j = df_grouped["max_mm_j"].transform(safe_idxmax)
             idx_j_valid = idx_j.dropna().astype(int)
-            max_date_mm_j = full_df.loc[idx_j_valid, ["lat", "lon", "max_date_mm_j"]].drop_duplicates(["lat", "lon"])
-            df_hydro = df_hydro.merge(max_date_mm_j, on=["lat", "lon"], how="left", suffixes=("", "_j"))
+            max_date_mm_j = full_df.loc[idx_j_valid, ["NUM_POSTE", "max_date_mm_j"]].drop_duplicates("NUM_POSTE")
+            df_hydro = df_hydro.merge(max_date_mm_j, on="NUM_POSTE", how="left", suffixes=("", "_j"))
             safe_combine_first(df_hydro, "max_date_mm_j", "max_date_mm_j_j")
 
         # Sauvegarde
@@ -300,15 +289,8 @@ def compute_hydro_from_seasons(year: int, stats_dir: str, log_status: dict):
 def process_one_file(args):
     dask.config.set(scheduler="single-threaded")
     
-    # ProgressBar().register()
-    zarr_file, echelle, config_zarr, stats_dir, overwrite, lat_ref, lon_ref = args
+    zarr_file, echelle, config_zarr, stats_dir, overwrite = args
     logger = get_logger(f"worker_{os.path.basename(zarr_file).split('.')[0]}", log_to_file=False)
-
-    # Vérification de la grille
-    ds_check = xr.open_zarr(zarr_file)
-    if not np.allclose(ds_check["lat"].values, lat_ref) or not np.allclose(ds_check["lon"].values, lon_ref):
-        logger.error(f"[GRILLE] Incohérence de la grille détectée dans {zarr_file}")
-        return (zarr_file, None, "Grille différente")
 
     try:
         log_status = {}
@@ -319,9 +301,7 @@ def process_one_file(args):
             stats_dir,
             overwrite,
             log_status,
-            logger,
-            lat_ref,
-            lon_ref
+            logger
         )
         logger.info(f"[OK] Traitement terminé pour {zarr_file}")
         return (zarr_file, log_status, None)
@@ -361,8 +341,8 @@ def pipeline_statistics_from_zarr_seasonal(config, max_workers: int = 48):
         for zarr_file in sorted(zarr_files):
             try:
                 ds = xr.open_zarr(zarr_file)
-                if "points" in ds.dims:
-                    n_points = ds.sizes["points"]
+                if "NUM_POSTE" in ds.dims:
+                    n_points = ds.sizes["NUM_POSTE"]
                     n_points_list.append(n_points)
                     valid_files += 1
                 else:
@@ -383,19 +363,12 @@ def pipeline_statistics_from_zarr_seasonal(config, max_workers: int = 48):
             logger.warning("Aucun fichier valide n'a été traité.")
 
 
-        reference_file = zarr_files[0]
-        ds_ref = xr.open_zarr(reference_file)
-        lat_ref = ds_ref["lat"].values
-        lon_ref = ds_ref["lon"].values
-
-        logger.info(f"[{echelle.upper()}] Grille de référence : {lat_ref.shape[0]} latitudes et {lon_ref.shape[0]} longitudes")
-
         if not zarr_files:
             logger.warning(f"Aucun fichier Zarr trouvé pour l’échelle '{echelle}' dans {zarr_dir}")
             continue
 
         args_list = [
-            (zf, echelle, config["zarr"], stats_dir, overwrite, lat_ref, lon_ref)
+            (zf, echelle, config["zarr"], stats_dir, overwrite)
             for zf in zarr_files
         ]
 
@@ -412,7 +385,7 @@ def pipeline_statistics_from_zarr_seasonal(config, max_workers: int = 48):
                     status_log[year] = log_status.get(year, {})
 
         # Post-traitement HYDRO pour toutes les échelles
-        with ProcessPoolExecutor() as executor:
+        with ProcessPoolExecutor(max_workers=max_workers) as executor:
             futures = {
                 executor.submit(compute_hydro_from_seasons, year, stats_dir, status_log): year
                 for year in sorted(status_log)
@@ -432,10 +405,10 @@ def pipeline_statistics_from_zarr_seasonal(config, max_workers: int = 48):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pipeline statistiques saisonnières à partir de fichiers Zarr.")
     parser.add_argument("--config", type=str, default="config/observed_settings.yaml")
-    parser.add_argument("--echelle", type=str, choices=["horaire", "quotidien"])
+    parser.add_argument("--echelle", type=str, choices=["horaire", "quotidien"], nargs="+", default=["horaire", "quotidien"])
     args = parser.parse_args()
 
     config = load_config(args.config)
-    config["echelles"] = [args.echelle]  # Ne traiter qu'une seule échelle
+    config["echelles"] = args.echelle
 
     pipeline_statistics_from_zarr_seasonal(config, max_workers=96)
