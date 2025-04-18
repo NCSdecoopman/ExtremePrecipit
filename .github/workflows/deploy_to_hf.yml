@@ -51,6 +51,7 @@ jobs:
           RUN pip install --no-cache-dir -r requirements.txt
           RUN pip install huggingface_hub
 
+          RUN rm -rf /tmp/hf_cache
           RUN rm -rf ~/.cache/huggingface/hub && \
               python download_data.py
 
