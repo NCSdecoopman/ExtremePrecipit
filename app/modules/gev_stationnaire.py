@@ -1,6 +1,4 @@
 import streamlit as st
-from streamlit_folium import st_folium
-import folium
 
 from pathlib import Path
 from functools import reduce
@@ -13,6 +11,7 @@ from app.utils.map_utils import *
 from app.utils.legends_utils import *
 from app.utils.hist_utils import *
 from app.utils.scatter_plot_utils import *
+from app.utils.show_info import show_info_data, show_info_metric
 
 import pydeck as pdk
 import polars as pl
@@ -21,7 +20,6 @@ def filter_nan(df: pl.DataFrame):
     return df.drop_nulls(subset=["xi", "mu", "sigma"])
 
 def filter_percentile_all(df: pl.DataFrame, quantile_choice: float, columns: list[str]):
-    from functools import reduce
     quantiles = {
         col: df.select(pl.col(col).quantile(quantile_choice, "nearest")).item()
         for col in columns
@@ -36,9 +34,11 @@ def filter_percentile_all(df: pl.DataFrame, quantile_choice: float, columns: lis
 def show(config_path):
     st.markdown("<h3>Paramètres GEV</h3>", unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
         Echelle = st.selectbox("Choix de l'échelle temporelle", ["Journalière", "Horaire"], key="scale_choice")
+        echelle = Echelle.lower()
+        echelle = "quotidien" if echelle == "journalière" else echelle
     with col2:
         quantile_choice = st.slider(
             "Percentile de retrait",
@@ -49,9 +49,17 @@ def show(config_path):
             format="%.3f",
             key="quantile_choice"
         )
-
-    echelle = Echelle.lower()
-    echelle = "quotidien" if echelle == "journalière" else echelle
+    with col3:
+        min_calcul_year = 10 if echelle == "horaire" else 30 # nombre minimale d'année nécessaire pour la GEV
+        max_calcul_year = 32 if echelle == "horaire" else 2015 - 1960 + 1 # nombre maximal possible
+        len_serie = st.slider(
+            "Nombre d'années minimales",
+            min_value=min_calcul_year,
+            max_value=max_calcul_year,
+            value=max_calcul_year,
+            step=1,
+            key="len_serie"
+        )
 
     config = load_config(config_path)
     mod_dir = Path(config["gev"]["modelised"]) / echelle
@@ -64,7 +72,7 @@ def show(config_path):
         return
 
     try:
-        df_observed = pl.read_parquet(obs_dir / "gev_param.parquet")
+        df_observed = pl.read_parquet(obs_dir / f"gev_param_years_{len_serie}.parquet")
     except Exception as e:
         st.error(f"Erreur lors du chargement des paramètres observés : {e}")
         return
@@ -101,10 +109,29 @@ def show(config_path):
         with eval(f"col{list(params_gev).index(param)+1}"):
             cola, colb = st.columns([0.9, 0.1])
             with cola:
-                st.markdown(f"<b>Visualisation de {label}</b>", unsafe_allow_html=True)
+                st.markdown(f"<b>Visualisation de {label}</b> (AROME : {df_modelised_leg.height} et station : {df_observed_leg.height})", unsafe_allow_html=True)
                 st.pydeck_chart(deck, use_container_width=True, height=450)
             with colb:
-                display_vertical_color_legend(500, colormap, vmin, vmax, n_ticks=15, label=label)
+                html_legend = display_vertical_color_legend(500, colormap, vmin, vmax, n_ticks=15, label=label)
+                st.markdown(html_legend, unsafe_allow_html=True)
+            
+            # Filtrage pour le scatter plot : uniquement les stations communes et valides
+            df_obs_vs_mod = pl.read_csv(f"data/metadonnees/obs_vs_mod/obs_vs_mod_{echelle}.csv")
+            obs_vs_mod = match_and_compare(df_observed, df_modelised, param, df_obs_vs_mod)
+            if obs_vs_mod is not None and obs_vs_mod.height > 0:
+                # Affichage du scatter plot interactif
+                fig = generate_scatter_plot_interactive(obs_vs_mod, f"{label}", "", 300)
+                st.plotly_chart(fig, use_container_width=True)
+
+                # Calcul et affichage des métriques
+                me, mae, rmse, r2 = generate_metrics(obs_vs_mod)
+                colm1, colm2, colm3, colm4, colm5 = st.columns([0.2, 0.2, 0.2, 0.2, 0.2])
+                show_info_metric(colm2, "ME", me)
+                show_info_metric(colm3, "MAE", mae)
+                show_info_metric(colm4, "RMSE", rmse)
+                show_info_metric(colm5, "R²", r2)
+            else:
+                st.warning(f"Aucune donnée disponible pour le scatter plot de {label}.")
     
 
             

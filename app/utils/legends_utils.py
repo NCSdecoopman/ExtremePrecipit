@@ -140,7 +140,7 @@ def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label
             f'<div style="display: flex; flex-direction: column;">{color_boxes}</div>'
         )
         st.markdown(html_mois, unsafe_allow_html=True)
-        return
+        return html_mois
 
     gradient = np.linspace(1, 0, 64).reshape(64, 1)
     fig, ax = plt.subplots(figsize=(1, 3), dpi=30)
@@ -159,8 +159,7 @@ def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label
         ticks_vals = np.linspace(vmax, vmin, n_ticks)
         ticks = [f"{val:.1f}" for val in ticks_vals]
 
-    st.markdown(
-        f"""
+    html_gradient = f"""
         <div style="text-align: left; font-size: 13px;">{label}</div>
         <div style="display: flex; flex-direction: row; align-items: center; height: {height-30}px;">
             <img src="data:image/png;base64,{base64_img}"
@@ -170,6 +169,5 @@ def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label
                 {''.join(f'<div>{tick}</div>' for tick in ticks)}
             </div>
         </div>
-        """,
-        unsafe_allow_html=True
-    )
+    """
+    return html_gradient

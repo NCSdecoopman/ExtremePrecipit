@@ -77,6 +77,20 @@ def cleaning_data_observed(df: pl.DataFrame, nan_limit: float = 0.1) -> pl.DataF
 
     return df_filtered
 
+def dont_show_extreme(modelised, column, quantile_choice, stat_choice_key):
+    if stat_choice_key not in ["month", "date"]:
+        percentile_95 = modelised.select(
+            pl.col(column).quantile(quantile_choice, "nearest")
+        ).item()
+
+        modelised_show = modelised.filter(
+            pl.col(column) <= percentile_95
+        )
+    else:
+        modelised_show = modelised
+    
+    return modelised_show
+
 def add_metadata(df: pl.DataFrame, scale: str, type: str) -> pl.DataFrame:
     echelle = 'horaire' if scale == 'mm_h' else 'quotidien'
     
