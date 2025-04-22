@@ -138,14 +138,13 @@ def match_and_compare(
         pl.col("NUM_POSTE_mod").cast(pl.Int32)
     )
 
-
     # Ajoute les valeurs observées et simulées en fonction des correspondances
     matched = (
         obs_vs_mod
-        .join(obs.select(["NUM_POSTE_obs", column_to_show]), on="NUM_POSTE_obs", how="left")
+        .join(obs.select(["NUM_POSTE_obs", "lat", "lon", column_to_show]), on="NUM_POSTE_obs", how="left")
         .join(mod.select(["NUM_POSTE_mod", column_to_show]), on="NUM_POSTE_mod", how="left", suffix="_mod")
         .rename({column_to_show: "pr_obs", f"{column_to_show}_mod": "pr_mod"})
     )
-    matched = matched.select(["pr_obs", "pr_mod"]).drop_nulls()
-    st.write(f"Points comparés : {matched.shape[0]}")
+    matched = matched.select(["lat", "lon", "pr_obs", "pr_mod"]).drop_nulls()
+    
     return matched

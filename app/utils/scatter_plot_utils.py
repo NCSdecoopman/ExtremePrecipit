@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 
 def generate_scatter_plot_interactive(df: pl.DataFrame, stat_choice: str, unit_label: str, height: int,
                                       x_label: str = "pr_mod", y_label: str = "pr_obs"):
-    df_pd = df.select([x_label, y_label]).to_pandas()
+    df_pd = df.select(["lat", "lon", x_label, y_label]).to_pandas()
 
     fig = px.scatter(
         df_pd,
@@ -18,11 +18,15 @@ def generate_scatter_plot_interactive(df: pl.DataFrame, stat_choice: str, unit_l
             x_label: f"{stat_choice} du modèle AROME ({unit_label})",
             y_label: f"{stat_choice} des stations ({unit_label})"
         },
-        hover_data=None
+        hover_data={"lat": True, "lon": True}
     )
 
+    precision = ".1f" if unit_label == "mm/j" else ".2f"
     fig.update_traces(
-        hovertemplate=f"{x_label} : %{{x:.1f}}<br>{y_label} : %{{y:.1f}}<extra></extra>"
+        hovertemplate=
+        "Lat: %{customdata[0]:.4f}<br>Lon: %{customdata[1]:.4f}<br>"
+        f"{x_label} : %{{x:{precision}}}<br>{y_label} : %{{y:{precision}}}<extra></extra>",
+        customdata=df_pd[["lat", "lon"]].values
     )
 
     min_val = min(df_pd[x_label].min(), df_pd[y_label].min())

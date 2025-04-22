@@ -152,7 +152,7 @@ def show(config_path):
             st.pydeck_chart(deck, use_container_width=True, height=height)
         st.markdown(
             """
-            <div style='text-align: left; font-size: 0.8em; color: grey; margin-top: -15px;'>
+            <div style='text-align: left; font-size: 0.8em; color: grey; margin-top: 0px;'>
                 Données CP-RCM, 2.5 km, forçage ERA5, réanalyse ECMWF
             </div>
             """,
@@ -183,18 +183,6 @@ def show(config_path):
                 show_info_metric(col4bis, "MAE", mae)
                 show_info_metric(col5bis, "RMSE", rmse)
                 show_info_metric(col6bis, "R²", r2)
-            
-
-            # col0bisbis, col1bisbis, col2bisbis, col3bisbis, col4bisbis, col5bisbis, col6bisbis = st.columns(7)
-            # obs_vs_mod_all = match_and_compare(df_observed_cleaning, df_modelised_load, col_important, df_obs_vs_mod)
-            # if obs_vs_mod_all is not None and obs_vs_mod_all.height > 0:            
-            #     fig = generate_scatter_plot_interactive(obs_vs_mod_all, stat_choice, unit_label, height)
-            #     st.plotly_chart(fig, use_container_width=True)
-            #     me, mae, rmse, r2 = generate_metrics(obs_vs_mod_all)
-            #     show_info_metric(col3bisbis, "ME", me)
-            #     show_info_metric(col4bisbis, "MAE", mae)
-            #     show_info_metric(col5bisbis, "RMSE", rmse)
-            #     show_info_metric(col6bisbis, "R²", r2)
 
             else:
                 st.write("Changer les paramètres afin de générer des stations pour visualiser les scatter plot")
