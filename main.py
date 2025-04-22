@@ -1,5 +1,5 @@
 import streamlit as st
-from app.modules import statisticals, scatter_plot, gev_stationnaire, periode_retour
+from app.modules import statisticals, gev, scatter_plot, periode_retour
 
 st.set_page_config(layout="wide", page_title="Visualisation des précipitations", page_icon="🌧️")
 
@@ -77,7 +77,7 @@ elif option == "Scatter plot":
     scatter_plot.show(config_path)
 
 elif option == "GEV":
-    gev_stationnaire.show(config_path)
+    gev.show(config_path)
 
 elif option == "Période de retour":
     periode_retour.show(config_path)

@@ -72,8 +72,8 @@ jobs:
           # e) Initialiser et pousser sur Hugging Face
           cd deploy
           git init
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
+          git config user.email "ncsdecoopman@gmail.com"
+          git config user.name "NCSdecoopman"
           git branch -M main
 
           HF_REMOTE="https://${HF_USER}:${HF_TOKEN}@huggingface.co/spaces/${HF_USER}/${HF_SPACE}"
