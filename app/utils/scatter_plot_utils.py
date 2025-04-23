@@ -29,13 +29,15 @@ def generate_scatter_plot_interactive(df: pl.DataFrame, stat_choice: str, unit_l
         customdata=df_pd[["lat", "lon"]].values
     )
 
-    min_val = min(df_pd[x_label].min(), df_pd[y_label].min())
-    max_val = max(df_pd[x_label].max(), df_pd[y_label].max())
+    x_range = [df_pd[x_label].min(), df_pd[x_label].max()]
+    y_range = [df_pd[y_label].min(), df_pd[y_label].max()]
+    min_diag = min(x_range[0], y_range[0])
+    max_diag = min(x_range[1], y_range[1])
 
     fig.add_trace(
         go.Scatter(
-            x=[min_val, max_val],
-            y=[min_val, max_val],
+            x=[min_diag, max_diag],
+            y=[min_diag, max_diag],
             mode='lines',
             line=dict(color='red', dash='dash'),
             name='y = x',

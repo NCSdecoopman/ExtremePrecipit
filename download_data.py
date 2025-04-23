@@ -41,16 +41,6 @@ try:
         cache_dir=cache_path,
         allow_patterns=["gev/modelised*"]
     )
-    print("Téléchargement des GEV STATIONS (obs)...")
-    snapshot_download(
-        repo_id="ncsdecoopman/ExtremePrecipit",
-        repo_type="dataset",
-        revision="main",
-        local_dir="data",
-        cache_dir=cache_path,
-        allow_patterns=["gev/observed*"]
-    )
-    print("Téléchargement des GEV AROMS (mod)...")
     snapshot_download(
         repo_id="ncsdecoopman/ExtremePrecipit",
         repo_type="dataset",
@@ -66,8 +56,18 @@ try:
         revision="main",
         local_dir="data",
         cache_dir=cache_path,
+        allow_patterns=["gev/observed*"]
+    )
+    snapshot_download(
+        repo_id="ncsdecoopman/ExtremePrecipit",
+        repo_type="dataset",
+        revision="main",
+        local_dir="data",
+        cache_dir=cache_path,
         allow_patterns=["gev_non_sta/observed*"]
     )
+
+
 except Exception as e:
     print("Erreur pendant le téléchargement :")
     traceback.print_exc()
