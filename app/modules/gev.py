@@ -160,7 +160,7 @@ def show(config_path):
     valid_ratio_model = compute_valid_ratio(df_modelised, columns_to_filter)
     valid_ratio_obs = compute_valid_ratio(df_observed, columns_to_filter)
 
-    # Affichage dans Streamlit (sous les sélecteurs, par exemple)
+    # Affichage dans Streamlit des scores de modèle
     col_conv, col_log, col_aic, colnan, colnanbis, colnanbisbis = st.columns(6)
     with col_conv:
         st.markdown("Convergence des données")
