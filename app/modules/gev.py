@@ -29,6 +29,12 @@ def compute_valid_ratio(df: pl.DataFrame, param_list: list[str]) -> float:
     n_valid = df.drop_nulls(subset=param_list).height
     return round(n_valid / n_total, 3) if n_total > 0 else 0.0
 
+# Calcul de la moyenne et de l'écart-type d'une colonne
+def loglike_score(df: pl.DataFrame, column: str = "log_likelihood") -> str:
+    mean = df[column].mean()
+    std = df[column].std()
+    return f"{mean:.2f} (± {std:.2f})"
+
 def filter_nan(df: pl.DataFrame, columns: list[str]):
     return df.drop_nulls(subset=columns)
 
@@ -138,7 +144,7 @@ def show(config_path):
     except Exception as e:
         st.error(f"Erreur lors du chargement des paramètres observés : {e}")
         return
-    
+
     params_gev = ns_param_map[model_name]
     columns_to_filter = list(params_gev.keys())
 
@@ -148,6 +154,8 @@ def show(config_path):
 
     # Affichage dans Streamlit (par exemple juste sous les sélecteurs)
     st.write("Convergence du modèle | ", f"AROME : {valid_ratio_model*100:.1f}% - Station : {valid_ratio_obs*100:.1f}%")
+    if "log_likelihood" in (df_observed.columns and df_modelised.columns):
+        st.write("Vraisemblance moyenne | ", f"AROME : {loglike_score(df_modelised)} - Station : {loglike_score(df_observed)}")
 
     # Conversion du choix en clés du DataFrame selon le type de modèle
     if param_choice == "μ":

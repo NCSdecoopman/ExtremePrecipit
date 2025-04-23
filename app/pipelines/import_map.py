@@ -4,6 +4,7 @@ from app.utils.legends_utils import formalised_legend, display_vertical_color_le
 
 import pydeck as pdk
 
+
 def pipeline_map(params_load):
     # Déballage des paramètres
     stat_choice_key, column_to_show, result_df_modelised_show, result_df_observed, unit_label, height = params_load
