@@ -35,6 +35,14 @@ def loglike_score(df: pl.DataFrame, column: str = "log_likelihood") -> str:
     std = df[column].std()
     return f"{mean:.2f} (± {std:.2f})"
 
+# Calcul AIC
+def mean_aic_score(df: pl.DataFrame, param_list: list[str], col_llh: str = "log_likelihood") -> str:
+    k = len(param_list)
+    df_valid = df.drop_nulls(subset=param_list + [col_llh])
+    mean_llh = df_valid[col_llh].mean()
+    aic = 2 * k - 2 * mean_llh
+    return f"{aic:.1f}"
+
 def filter_nan(df: pl.DataFrame, columns: list[str]):
     return df.drop_nulls(subset=columns)
 
@@ -152,10 +160,31 @@ def show(config_path):
     valid_ratio_model = compute_valid_ratio(df_modelised, columns_to_filter)
     valid_ratio_obs = compute_valid_ratio(df_observed, columns_to_filter)
 
-    # Affichage dans Streamlit (par exemple juste sous les sélecteurs)
-    st.write("Convergence du modèle | ", f"AROME : {valid_ratio_model*100:.1f}% - Station : {valid_ratio_obs*100:.1f}%")
+    # Affichage dans Streamlit (sous les sélecteurs, par exemple)
+    col_conv, col_log, col_aic, colnan, colnanbis, colnanbisbis = st.columns(6)
+    with col_conv:
+        st.markdown("Convergence des données")
+        st.markdown(f"""
+                    - **AROME** : {valid_ratio_model*100:.1f}%  
+                    - **Station** : {valid_ratio_obs*100:.1f}%
+                    """)
+
     if "log_likelihood" in (df_observed.columns and df_modelised.columns):
-        st.write("Vraisemblance moyenne | ", f"AROME : {loglike_score(df_modelised)} - Station : {loglike_score(df_observed)}")
+        with col_log:
+            st.markdown(f"log $\\mathcal{{L}}(\\hat{{\\theta}})$ moyen")
+            st.markdown(f"""
+                        - **AROME** : {loglike_score(df_modelised)}  
+                        - **Station** : {loglike_score(df_observed)}
+                        """)
+        with col_aic:
+            st.markdown("Score AIC moyen")
+            aic_model = mean_aic_score(df_modelised, columns_to_filter)
+            aic_obs = mean_aic_score(df_observed, columns_to_filter)
+            st.markdown(f"""
+                        - **AROME** : {aic_model}  
+                        - **Station** : {aic_obs}
+                        """)
+
 
     # Conversion du choix en clés du DataFrame selon le type de modèle
     if param_choice == "μ":
