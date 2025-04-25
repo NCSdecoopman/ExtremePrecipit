@@ -315,7 +315,7 @@ def show(config_path):
                             with colretour:
                                 col_titre, col_menu_t = st.columns(2)
                                 with col_titre:
-                                    st.markdown(f"Point selectionné : ({params_obs["lat"]:.3f}, {params_obs["lon"]:.3f})", unsafe_allow_html=True)
+                                    st.write(f"Point selectionné : ({params_obs['lat']:.3f}, {params_obs['lon']:.3f})")
 
                                 with col_menu_t:
                                     year_choix = st.slider(
