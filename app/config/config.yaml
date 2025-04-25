@@ -1,0 +1,11 @@
+years:
+  min: 1959
+  max: 2015 # choix dans le menu
+
+statisticals:
+  modelised: data/statisticals/modelised
+  observed: data/statisticals/observed
+
+gev:
+  modelised: data/gev/modelised
+  observed: data/gev/observed
