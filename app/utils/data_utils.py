@@ -47,6 +47,9 @@ def load_data(type_data: str, echelle: str, min_year: int, max_year: int, season
                         .cast(pl.Utf8)  # retour sous forme de string (comme dans l'ancien code Pandas)
                     )
 
+            # Ajout de la colonne year
+            df = df.with_columns(pl.lit(year).alias("year"))
+            
             dataframes.append(df)
 
         except Exception as e:
@@ -58,7 +61,7 @@ def load_data(type_data: str, echelle: str, min_year: int, max_year: int, season
 
     if not dataframes:
         raise ValueError("Aucune donnée chargée.")
-
+    
     return pl.concat(dataframes, how="vertical")
 
 
@@ -159,6 +162,6 @@ def match_and_compare(
         .join(mod.select(["NUM_POSTE_mod", column_to_show]), on="NUM_POSTE_mod", how="left", suffix="_mod")
         .rename({column_to_show: "pr_obs", f"{column_to_show}_mod": "pr_mod"})
     )
-    matched = matched.select(["lat", "lon", "pr_obs", "pr_mod"]).drop_nulls()
+    matched = matched.select(["NUM_POSTE_obs", "lat", "lon", "NUM_POSTE_mod", "pr_obs", "pr_mod"]).drop_nulls()
     
     return matched

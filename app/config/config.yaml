@@ -6,10 +6,6 @@ statisticals:
   modelised: data/statisticals/modelised
   observed: data/statisticals/observed
 
-gev_sta:
+gev:
   modelised: data/gev/modelised
   observed: data/gev/observed
-
-gev_non_sta:
-  modelised: data/gev_non_sta/modelised
-  observed: data/gev_non_sta/observed

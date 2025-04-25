@@ -44,12 +44,12 @@ def show(config_path):
     # Chargement des données
     params_load = (
         stat_choice_key,
-        params_config["scale_choice_key"],
-        params_config["min_year_choice"],
-        params_config["max_year_choice"],
-        params_config["season_choice_key"],
-        params_config["missing_rate"],
-        params_config["quantile_choice"]
+        scale_choice_key,
+        min_year_choice,
+        max_year_choice,
+        season_choice_key,
+        missing_rate,
+        quantile_choice
     )
     result = pipeline_data(params_load, config)
     df_modelised_load = result["modelised_load"]
