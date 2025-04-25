@@ -12,22 +12,22 @@ log = logging.getLogger(__name__).info
 ############################################################
 # ------------------------- STATS -------------------------
 ############################################################
-# Pipeline des données AROME
-log(f"Lancement du traitement .nc to .zarr (echelle horaire obligatoire)")
-subprocess.run(
-    ["python", "-m", "src.pipelines.pipeline_nc_to_zarr"],
-    check=True
-)
+# # Pipeline des données AROME
+# log(f"Lancement du traitement .nc to .zarr (echelle horaire obligatoire)")
+# subprocess.run(
+#     ["python", "-m", "src.pipelines.pipeline_nc_to_zarr"],
+#     check=True
+# )
 
-log(f"Lancement du traitement .zarr MODELISE to stats (echelle horaire obligatoire)")
-subprocess.run(
-    ["python",
-        "-m",
-        f"src.pipelines.pipeline_zarr_to_stats",
-        "--config", "config/observed_settings.yaml",
-        "--echelle", "horaire"],
-    check=True
-)
+# log(f"Lancement du traitement .zarr MODELISE to stats (echelle horaire obligatoire)")
+# subprocess.run(
+#     ["python",
+#         "-m",
+#         f"src.pipelines.pipeline_zarr_to_stats",
+#         "--config", "config/modelised_settings.yaml",
+#         "--echelle", "horaire"],
+#     check=True
+# )
 
 
 # Pipeline des données STATIONS
@@ -66,14 +66,19 @@ subprocess.run(
 # -------------------------- GEV --------------------------
 ############################################################
 # Pipeline GEV
-# log(f"Lancement du traitement stats to gev")
-# for setting in ["config/observed_settings.yaml"]: #"config/modelised_settings.yaml", 
-#         for echelle in ["horaire", "quotidien"]:
-#             subprocess.run(
-#                 ["python",
-#                     "-m",
-#                     "src.pipelines.pipeline_stats_to_gev",
-#                     "--config", f"{setting}",
-#                     "--echelle", f"{echelle}"],
-#                 check=True
-#             )
+log(f"Lancement du traitement stats to gev")
+for setting in ["config/observed_settings.yaml"]:  # , "config/modelised_settings.yaml"
+    for echelle in ["horaire"]: # , "quotidien"
+        for model in ["s_gev", "ns_gev_m1", "ns_gev_m2", "ns_gev_m3"]:
+            subprocess.run(
+                [
+                    "python",
+                    "-m",
+                    "src.pipelines.pipeline_stats_to_gev",
+                    "--config", setting,
+                    "--echelle", echelle,
+                    "--model_structure", model
+                ],
+                check=True
+            )
+
