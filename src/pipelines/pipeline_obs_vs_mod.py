@@ -4,217 +4,200 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from concurrent.futures import as_completed
-import tempfile
 import dask
-from dask.diagnostics import ProgressBar
-from dask import delayed, compute
+from dask import delayed
+from dask import compute
+from dask.distributed import progress
 from tqdm import tqdm
-import numcodecs
+
+from sklearn.metrics import r2_score
 
 from src.utils.config_tools import load_config
 from src.utils.logger import get_logger
 
-def find_exact_point_index(lat_target: float, lon_target: float, da: xr.DataArray) -> int:
-    """
-    Retourne l'indice dans la dimension 'points' du DataArray correspondant exactement à (lat, lon).
-    Lève une erreur si aucune correspondance n'est trouvée.
-    
-    Paramètres :
-    - lat_target : latitude exacte recherchée
-    - lon_target : longitude exacte recherchée
-    - da : DataArray ou Dataset xarray avec les coords 'lat' et 'lon' sur la dimension 'points'
-    
-    Retour :
-    - idx (int) : indice dans la dimension 'points'
-    """
-    # Convertit tout en float32 pour comparaison exacte
-    lat_target = np.float32(lat_target)
-    lon_target = np.float32(lon_target)
-    lat = da["lat"].values.astype(np.float32)
-    lon = da["lon"].values.astype(np.float32)
+from dask.distributed import Client, LocalCluster
+import time
+from more_itertools import chunked
 
-    matches = np.where((lat == lat_target) & (lon == lon_target))[0]
-    if len(matches) == 0:
-        logger.warning(f"Aucun point trouvé pour lat={lat_target}, lon={lon_target}")
-    elif len(matches) > 1:
-        logger.warning(f"Plusieurs points trouvés pour lat={lat_target}, lon={lon_target}")
-    
-    return int(matches[0])
+def start_dask_cluster(n_workers=28, threads_per_worker=2, memory_limit='10GB', retries=5):
+    for attempt in range(retries):
+        try:
+            cluster = LocalCluster(
+                n_workers=n_workers,
+                threads_per_worker=threads_per_worker,
+                memory_limit=memory_limit,
+                processes=True
+            )
+            client = Client(cluster)
+            return client, cluster
+        except Exception as e:
+            print(f"[Tentative {attempt+1}] Échec de démarrage du cluster : {e}")
+            time.sleep(5)
+    raise RuntimeError("Impossible de démarrer le cluster Dask.")
 
 
-def find_matching_point(df, lat_obs, lon_obs):
+def find_matching_point(df, lat_obs, lon_obs, col_mod_lat: str="lat_mod", col_mod_lon: str="lon_mod"):
     # Calcul de la distance euclidienne
-    distances = np.sqrt((df["lat"] - lat_obs)**2 + (df["lon"] - lon_obs)**2)
+    distances = np.sqrt((df[col_mod_lat] - lat_obs)**2 + (df[col_mod_lon] - lon_obs)**2)
     idx_min = distances.idxmin()
 
-    lat_mod = df.loc[idx_min, "lat"]
-    lon_mod = df.loc[idx_min, "lon"]
+    lat_mod = df.loc[idx_min, col_mod_lat]
+    lon_mod = df.loc[idx_min, col_mod_lon]
 
     return lat_mod, lon_mod
 
 
-def load_zarr_years(path: Path, years: list[int], echelle: str = "horaire", type: str = "obs", var: str = "pr") -> xr.DataArray:
-    """Charge et concatène les fichiers Zarr sur plusieurs années pour une variable donnée.
-    Si échelle est 'quotidien', effectue une conversion par somme de 6h à 6h avec timestamp à 00:30.
+def create_commun_point(df_obs: pd.DataFrame, df_mod: pd.DataFrame) -> pd.DataFrame:
     """
-    datasets = [xr.open_zarr(path / f"{year}.zarr") for year in years]
-    # ds_merged = xr.concat(datasets, dim="time")
+    Associe à chaque point observé (NUM_POSTE_obs) le point modélisé (NUM_POSTE_mod)
+    spatialement le plus proche.
+    """
+    # Sélection et renommage clair des colonnes
+    df_obs = df_obs[['NUM_POSTE', 'lat', 'lon']].rename(columns={
+        'NUM_POSTE': 'NUM_POSTE_obs',
+        'lat': 'lat_obs',
+        'lon': 'lon_obs'
+    })
+    df_mod = df_mod[['NUM_POSTE', 'lat', 'lon']].rename(columns={
+        'NUM_POSTE': 'NUM_POSTE_mod',
+        'lat': 'lat_mod',
+        'lon': 'lon_mod'
+    })
 
-    # On concatène un par un avec une barre de progression
-    ds_merged = xr.open_zarr(path / f"{years[0]}.zarr")
-    for year in tqdm(years[1:], desc="Concaténation progressive"):
-        ds = xr.open_zarr(path / f"{year}.zarr")
-        ds_merged = xr.concat([ds_merged, ds], dim="time")
-    logger.info(f"Chargement {path} et concaténation")
+    # Trouver les correspondances (lat/lon les plus proches)
+    correspondances = []
+    for _, row in tqdm(df_obs.iterrows(), total=len(df_obs), desc="Matching obs vs mod"):
+        lat_obs, lon_obs = row["lat_obs"], row["lon_obs"]
+        lat_mod, lon_mod = find_matching_point(df_mod, lat_obs, lon_obs)
 
-    da = ds_merged[var]  # DataArray de la variable demandée
+        match_row = df_mod[
+            (df_mod["lat_mod"] == lat_mod) & (df_mod["lon_mod"] == lon_mod)
+        ]
+        if match_row.empty:
+            raise ValueError(f"Aucune correspondance trouvée pour ({lat_obs}, {lon_obs})")
 
-    if echelle == "quotidien" and type == "mod":
-        logger.info("Décalage temporelle pour l'échelle quotidien")
-        # Étape 1 : décalage de -6h
-        da_shifted = da.copy()
-        da_shifted["time"] = da_shifted["time"] - pd.Timedelta(hours=6)
+        num_poste_mod = match_row["NUM_POSTE_mod"].values[0]
 
-        # Étape 2 : somme journalière
-        da_daily = da_shifted.resample(time="1D").sum(min_count=1)
+        correspondances.append({
+            "NUM_POSTE_obs": int(row["NUM_POSTE_obs"]),
+            "lat_obs": lat_obs,
+            "lon_obs": lon_obs,
+            "NUM_POSTE_mod": int(num_poste_mod),
+            "lat_mod": lat_mod,
+            "lon_mod": lon_mod
+        })
 
-        # Étape 3 : replacer les timestamps à 00:30 du jour J
-        time_new = pd.date_range(
-            start=da_daily["time"].values[0],
-            periods=da_daily.sizes["time"],
-            freq="D"
-        ) + pd.Timedelta(minutes=30)
-
-        da_daily["time"] = time_new
-        da = da_daily
-
-    return da, len(datasets)
-
-
-# Fonction de traitement d'une ligne
-def process_row(lat, lon, df_match, da_obs, da_mod, scale_factor_obs, scale_factor_mod, fill_value = -9999):
-    lat_mod, lon_mod = find_matching_point(df_match, lat, lon)
-
-    idx_obs = find_exact_point_index(lat, lon, da_obs)
-    idx_mod = find_exact_point_index(lat_mod, lon_mod, da_mod)
-
-    times_obs = da_obs["time"].values
-    pr_obs = da_obs["pr"].isel(points=idx_obs).values
-    df_obs = pd.DataFrame({"time": times_obs, "pr_obs": pr_obs})
-    df_obs["pr_obs"] = df_obs["pr_obs"].replace(fill_value, np.nan) / scale_factor_obs
-
-    times_mod = da_mod["time"].values
-    pr_mod = da_mod["pr"].isel(points=idx_mod).values
-    df_mod = pd.DataFrame({"time": times_mod, "pr_mod": pr_mod})
-    df_mod["pr_mod"] = df_mod["pr_mod"].replace(fill_value, np.nan) / scale_factor_mod
-
-    df_merged = pd.merge(df_obs, df_mod, on="time", how="inner", validate="one_to_one")
-    df_merged = df_merged.dropna(subset=["pr_obs"])
-    df_merged["lat"] = lat
-    df_merged["lon"] = lon
-
-    return df_merged
-    
-    
-def wrapper_process_row_with_reload(
-    row,
-    path_zarr_obs,
-    path_zarr_mod,
-    df_match,
-    scale_factor_obs,
-    scale_factor_mod,
-    output_path,
-    fill_value=-9999
-):
-    logger = get_logger(__name__)
-    lat, lon = row
-    try:
-        # Rechargement local (picklable)
-        da_obs = xr.open_zarr(path_zarr_obs)
-        da_mod = xr.open_zarr(path_zarr_mod)
-
-        df_result = process_row(lat, lon, df_match, da_obs, da_mod, scale_factor_obs, scale_factor_mod, fill_value)
-
-        if df_result is not None and not df_result.empty:
-            lat = df_result["lat"].iloc[0]
-            lon = df_result["lon"].iloc[0]
-
-            df_result["me"] = df_result["pr_mod"] - df_result["pr_obs"]
-            mean_error = df_result["me"].mean()
-
-            lat_str = f"{lat}"
-            lon_str = f"{lon}"
-            me_str = "nan" if np.isnan(mean_error) else f"{mean_error:.2f}"
-            filename = f"lat_{lat_str}_lon_{lon_str}_me_{me_str}.parquet"
-
-            df_result.drop(columns="me").to_parquet(Path(output_path) / filename)
-
-            logger.info(f"{len(df_result)} comparaisons dans {filename}")
-            return True
-        else:
-            try:
-                idx_obs = find_exact_point_index(lat, lon, da_obs)
-                pr_obs = da_obs["pr"].isel(points=idx_obs).values
-                pr_obs_clean = np.where(pr_obs == fill_value, np.nan, pr_obs) / scale_factor_obs
-                n_valid_obs = np.count_nonzero(~np.isnan(pr_obs_clean))
-                if n_valid_obs != 0:
-                    logger.error("[ERROR] Comptage anormal")
-            except Exception as e:
-                n_valid_obs = -1
-                logger.warning(f"Impossible de compter les valeurs valides pour ({lat}, {lon}) : {e}")
-
-            logger.info(f"[SKIP] 0 comparaisons pour ({lat},{lon})")
-            return False
-    except Exception as e:
-        print(f"Erreur sur point ({lat}, {lon}) : {e}")
-        return False
-    
-
-@delayed
-def dask_wrapper_process_row(
-    row,
-    path_zarr_obs,
-    path_zarr_mod,
-    df_match,
-    scale_factor_obs,
-    scale_factor_mod,
-    output_path,
-    fill_value=-9999
-):
-    return wrapper_process_row_with_reload(
-        row,
-        path_zarr_obs,
-        path_zarr_mod,
-        df_match,
-        scale_factor_obs,
-        scale_factor_mod,
-        output_path,
-        fill_value
-    )
+    df_match = pd.DataFrame(correspondances)
+    return df_match
 
 
-def write_temp_zarr(da: xr.DataArray, path: Path):
-    for coord in ["lat", "lon"]:
-        da.coords[coord].encoding.pop("chunks", None)
-
-    encoding = {
-        "pr": {
-            "compressor": numcodecs.Blosc(cname="zstd", clevel=9, shuffle=2),
-            "dtype": "float32"
-        }
+# Retourne les années disponibles d'un répertoire
+def get_available_years(path: Path) -> set:
+    return {
+        int(p.stem) for p in path.glob("*.zarr") if p.stem.isdigit()
     }
+
+def clean_array(arr, fill_value, scale):
+    arr = arr.astype("float32")
+    arr[arr == fill_value] = np.nan
+    return arr / scale
+
+# Fonction de traitement
+@delayed
+def process_one_point(
+    num_poste_obs,
+    df_match,
+    path_obs_zarr,
+    path_mod_zarr,
+    years,
+    scale_factor_obs,
+    scale_factor_mod,
+    fill_value=-9999,
+    output_path: Path = None
+) -> str:
+    try:
+        row = df_match[df_match["NUM_POSTE_obs"] == num_poste_obs]
+        if row.empty:
+            raise ValueError(f"Aucune correspondance pour NUM_POSTE_obs = {num_poste_obs}")
+
+        num_poste_mod = row["NUM_POSTE_mod"].item()
+        dfs = []
+
+        is_daily = "quotidien" in str(path_obs_zarr).lower()
+
+        for year in years:
+            # === Observations ===
+            ds_obs = xr.open_zarr(path_obs_zarr / f"{year}.zarr")
+            ds_obs = ds_obs.assign_coords(NUM_POSTE=("NUM_POSTE", ds_obs["NUM_POSTE"].values.astype(str)))
+            pr_obs = ds_obs["pr"].sel(NUM_POSTE=str(num_poste_obs))
+            time_obs = pd.to_datetime(ds_obs["time"].values)
+
+            df_obs = pd.DataFrame({
+                "time": time_obs,
+                "pr_obs": clean_array(pr_obs.values, fill_value, scale_factor_obs)
+            }).dropna()
+
+            # === Modélisation ===
+            ds_mod = xr.open_zarr(path_mod_zarr / f"{year}.zarr")
+            ds_mod = ds_mod.assign_coords(NUM_POSTE=("NUM_POSTE", ds_mod["NUM_POSTE"].values.astype(str)))
+            pr_mod = ds_mod["pr"].sel(NUM_POSTE=str(num_poste_mod))
+            time_mod = pd.to_datetime(ds_mod["time"].values)
+
+            df_mod_full = pd.DataFrame({
+                "time": time_mod,
+                "pr_mod": clean_array(pr_mod.values, fill_value, scale_factor_mod)
+            }).dropna()
+
+            if is_daily:
+                # Agrégation de 06h J à 06h J+1 pour chaque date obs (timestamp à J+1 00:30)
+                pr_mod_agg = []
+                for t_obs in df_obs["time"]:
+                    t0 = t_obs - pd.Timedelta(hours=18)  # 00:30 - 18h = 06h la veille
+                    t1 = t_obs + pd.Timedelta(hours=5, minutes=30)  # 00:30 + 5h30 = 06h
+                    mask = (df_mod_full["time"] >= t0) & (df_mod_full["time"] < t1)
+                    total = df_mod_full.loc[mask, "pr_mod"].sum()
+                    pr_mod_agg.append(total)
+
+                df_obs["pr_mod"] = pr_mod_agg
+                df = df_obs
+            else:
+                # Fusion simple sur les timestamps pour l’échelle horaire
+                df_mod = df_mod_full
+                df = pd.merge(df_obs, df_mod, on="time", how="left")
+
+            dfs.append(df)
+
+        dfs = [df for df in dfs if not df.empty and not df.isna().all().all()]
+        if dfs:
+            df_final = pd.concat(dfs, ignore_index=True)
+        else:
+            df_final = pd.DataFrame()  # ou gérer autrement le cas vide : renvoyer un empty
+
+        if df_final.empty or len(df_final) < 2:
+            filename = f"NUM_POSTE_{num_poste_obs}_R2_NaN.parquet"
+        else:
+            r2 = r2_score(df_final["pr_obs"], df_final["pr_mod"])
+            if not -1 <= r2 <= 1 or np.isnan(r2):
+                filename = f"NUM_POSTE_{num_poste_obs}_R2_NaN.parquet"
+            else:
+                filename = f"NUM_POSTE_{num_poste_obs}_R2_{r2:.3f}.parquet"
+
+        # Sauvegarde
+        output_file = output_path / filename
+        df_final.to_parquet(output_file, index=False)
+
+        return True
+
+    except Exception as e:
+        logger.error(f"Erreur pour NUM_POSTE_obs = {num_poste_obs}: {e}")
+        return f"{num_poste_obs} FAILED"
+
     
-    da.load()
-    da = da.chunk({"time": -1, "points": -1})
-
-    with ProgressBar():
-        da.to_zarr(path, mode="w", encoding=encoding)
-
-
-
+    
 def pipeline_obs_vs_mod(config_obs, config_mod):
     global logger
     logger = get_logger(__name__)
+
     echelles = config_obs.get("echelles", ["horaire", "quotidien"])
     PATH_ZARR_OBS = Path(config_obs["zarr"]["path"]["outputdir"])
     PATH_ZARR_MOD = Path(config_mod["zarr"]["path"]["outputdir"])
@@ -224,75 +207,75 @@ def pipeline_obs_vs_mod(config_obs, config_mod):
     scale_factor_obs = config_obs["zarr"]["variables"]["pr"]["scale_factor"]
     scale_factor_mod = config_mod["zarr"]["variables"]["pr"]["scale_factor"]
 
-    ANNEES = list(range(1959, 2011))
-
+    PATH_METADATA_OBS_VS_MOD = Path(config_obs["obs_vs_mod"]["metadata_path"]["outputdir"])
     OUTPUT_PATH = Path(config_obs["obs_vs_mod"]["path"]["outputdir"])
-    OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        #for echelle in echelles:
-        for echelle in ["quotidien"]:
-            logger.info(f"Traitement {echelle} de {min(ANNEES)} à {max(ANNEES)}")
-            output_path_echelle = OUTPUT_PATH / echelle
-            output_path_echelle.mkdir(parents=True, exist_ok=True)  # Pour être sûr que le dossier existe
+    for echelle in echelles:
+        years_obs = get_available_years(PATH_ZARR_OBS/echelle)
+        years_mod = get_available_years(PATH_ZARR_MOD/"horaire")
+        ANNEES = sorted(years_obs & years_mod)
 
-            # === CHARGEMENT DES DONNÉES OBS & MOD (CENTRALISÉ) ===
-            # métadonnées
-            df_obs = pd.read_csv(f"{PATH_METADATA_OBS}/postes_{echelle}.csv")  # contient lat, lon observés
-            df_match = pd.read_csv(f"{PATH_METADATA_MOD}/arome_horaire.csv")  # contient lat, lon observés
-            
-            # xarray
-            with dask.config.set(scheduler="threads"):
-                da_obs, nb_dataset_obs = load_zarr_years(PATH_ZARR_OBS / echelle, ANNEES, echelle, type="obs")
-                logger.info(f"{len(df_obs)} stations et {nb_dataset_obs} zarr chargés pour les observations")
+        logger.info(f"Traitement {echelle} de {min(ANNEES)} à {max(ANNEES)}")
 
-                da_mod, nb_dataset_mod = load_zarr_years(PATH_ZARR_MOD / "horaire", ANNEES, echelle, type="mod")            
-                logger.info(f"{len(df_match)} stations et {nb_dataset_mod} zarr chargés pour les modélisations")
+        output_path_echelle = OUTPUT_PATH / echelle
+        output_path_echelle.mkdir(parents=True, exist_ok=True)
 
-            # Préparation
-            rows = list(df_obs[["lat", "lon"]].itertuples(index=False, name=None))
-            logger.info(f"{len(rows)} stations à traiter")
+        # === CHARGEMENT DES DONNÉES OBS & MOD (CENTRALISÉ) ===
+        # métadonnées
+        df_obs = pd.read_csv(f"{PATH_METADATA_OBS}/postes_{echelle}.csv")  # contient lat, lon observés
+        df_mod = pd.read_csv(f"{PATH_METADATA_MOD}/postes_{echelle}.csv")  # contient lat, lon observés
 
-            # Sauvegarde des DATA (non picklables)
-            path_zarr_obs_temp = Path(tmpdir) / "da_obs.zarr"
-            path_zarr_mod_temp = Path(tmpdir) / "da_mod.zarr"
-            
-            with dask.config.set(scheduler="threads"):
-                write_temp_zarr(da_obs, path_zarr_obs_temp)
-                write_temp_zarr(da_mod, path_zarr_mod_temp)
+        # Formation du fichiers de metadonnées de correspondance obs - mod
+        df_match = create_commun_point(df_obs, df_mod)
+        PATH_METADATA_OBS_VS_MOD.mkdir(parents=True, exist_ok=True)
+        df_match.to_csv(PATH_METADATA_OBS_VS_MOD / f"obs_vs_mod_{echelle}.csv", index=False)
+        logger.info(f"Fichier de correspondances coordonnées observées - modélisées enregistré sous {PATH_METADATA_OBS_VS_MOD}/obs_vs_mod_{echelle}.csv")
 
-            logger.info("Fichiers rendus pickable")
+        # Liste des stations
+        rows = list(df_match["NUM_POSTE_obs"].values)
+        logger.info(f"{len(rows)} stations à traiter")
 
-            tasks = [
-                dask_wrapper_process_row(
-                    row,
-                    str(path_zarr_obs_temp),
-                    str(path_zarr_mod_temp),
-                    df_match,
-                    scale_factor_obs,
-                    scale_factor_mod,
-                    str(output_path_echelle)
-                )
-                for row in rows
-            ]
+        tasks = [
+            process_one_point(
+                num_poste_obs=row,
+                df_match=df_match,
+                path_obs_zarr=PATH_ZARR_OBS / echelle,
+                path_mod_zarr=PATH_ZARR_MOD / "horaire",
+                years=ANNEES,
+                scale_factor_obs=scale_factor_obs,
+                scale_factor_mod=scale_factor_mod,
+                fill_value=-9999,
+                output_path=output_path_echelle
+            ) for row in rows
+        ]
 
-            results = compute(*tasks)
-            n_true = sum(results)
-            n_false = len(results) - n_true
+        BATCH_SIZE = 100
+        for i, chunk in enumerate(chunked(tasks, BATCH_SIZE)):
+            logger.info(f"Traitement batch {i+1}/{len(tasks)//BATCH_SIZE+1}")
+            futures = client.compute(chunk) # Calcul en parallèle
+            #progress(futures) # Affiche une barre de progression en console
+            results = client.gather(futures)
 
-            logger.info(f"{n_true} enregistrements / {n_false} vides sur {len(results)} points")
+        # Compter les succès et les échecs de manière robuste
+        n_success = sum(1 for r in results if r is True)
+        n_fail = sum(1 for r in results if r is not True)
+
+        logger.info("Résumé du traitement :")
+        logger.info(f"  - {n_success} stations traitées avec succès")
+        logger.info(f"  - {n_fail} stations en échec")
 
 
 if __name__ == "__main__":
-    dask.config.set(scheduler="processes")
+    client, cluster = start_dask_cluster()
 
     parser = argparse.ArgumentParser(description="Pipeline obs vs mod")
     parser.add_argument("--config_obs", type=str, default="config/observed_settings.yaml")
     parser.add_argument("--config_mod", type=str, default="config/modelised_settings.yaml")
-    parser.add_argument("--echelles", nargs="+", default=["horaire", "quotidien"])
+    parser.add_argument("--echelle", type=str, choices=["horaire", "quotidien"], nargs="+", default=["horaire", "quotidien"])
     args = parser.parse_args()
 
     config_obs = load_config(args.config_obs)
     config_mod = load_config(args.config_mod)
+    config_obs["echelles"] = args.echelle
 
     pipeline_obs_vs_mod(config_obs, config_mod)

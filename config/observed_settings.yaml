@@ -40,6 +40,12 @@ statistics:
 obs_vs_mod:
   path:
     outputdir: "data/obs_vs_mod"
+  metadata_path:
+    outputdir: "data/metadonnees/obs_vs_mod"
+    
+gev:
+  path:
+    outputdir: "data/gev/observed"
 
 log:
   directory: "logs/pipeline/observed"  # dossier où sera écrit les fichiers .log
