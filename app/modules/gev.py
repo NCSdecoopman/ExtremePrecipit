@@ -55,7 +55,7 @@ def compute_return_levels_ns(params: dict, model_name: str, T: np.ndarray, t_nor
     sigma = params.get("sigma0", 0) + params["sigma1"] * t_norm if "sigma1" in params else params.get("sigma0", 0) # σ(t)
     xi = params.get("xi", 0) # xi contant
 
-    return genextreme.ppf(1 - 1/T, c=-xi, loc=mu, scale=sigma)
+    return genextreme.ppf(1 - 1/T, c=-xi, loc=mu, scale=sigma)  
 
 
 ns_param_map = {
@@ -211,36 +211,6 @@ def show(config_path):
         params_gev = ns_param_map[model_name]
         columns_to_filter = list(params_gev.keys())
 
-        # Dans la fonction show(), juste après le chargement des fichiers df_modelised et df_observed
-        valid_ratio_model = compute_valid_ratio(df_modelised, columns_to_filter)
-        valid_ratio_obs = compute_valid_ratio(df_observed, columns_to_filter)
-
-        # Affichage dans Streamlit des scores de modèle
-        col_conv, col_log, col_aic, colnan, colnanbis, colnanbisbis = st.columns(6)
-        with col_conv:
-            st.markdown("Convergence des données")
-            st.markdown(f"""
-                        - **AROME** : {valid_ratio_model*100:.1f}%  
-                        - **Station** : {valid_ratio_obs*100:.1f}%
-                        """)
-
-        if "log_likelihood" in (df_observed.columns and df_modelised.columns):
-            with col_log:
-                st.markdown(f"log $\\mathcal{{L}}(\\hat{{\\theta}})$ moyen")
-                st.markdown(f"""
-                            - **AROME** : {loglike_score(df_modelised)}  
-                            - **Station** : {loglike_score(df_observed)}
-                            """)
-            with col_aic:
-                st.markdown("Score AIC moyen")
-                aic_model = mean_aic_score(df_modelised, columns_to_filter)
-                aic_obs = mean_aic_score(df_observed, columns_to_filter)
-                st.markdown(f"""
-                            - **AROME** : {aic_model}  
-                            - **Station** : {aic_obs}
-                            """)
-
-
         # Cherche la clé correspondant au paramètre choisi
         columns_to_filter = [k for k, v in params_gev.items() if v == param_choice]
         params_gev = {k: v for k, v in params_gev.items() if v == param_choice}
@@ -268,7 +238,7 @@ def show(config_path):
             df_obs_vs_mod = pl.read_csv(f"data/metadonnees/obs_vs_mod/obs_vs_mod_{echelle}.csv")
             obs_vs_mod = match_and_compare(df_observed, df_modelised, param, df_obs_vs_mod)
 
-            colmap, colplot = st.columns([0.4, 0.6])
+            colmap, colplot = st.columns([0.45, 0.55])
 
             height=450
 
@@ -282,6 +252,70 @@ def show(config_path):
                 with collegend:
                     html_legend = display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=15, label=label)
                     st.markdown(html_legend, unsafe_allow_html=True)
+
+
+
+
+                if param == "xi":
+                    # Ajout d'une nouvelle colonne xi_xi pour le signe (-1, 0, 1)
+                    df_modelised_leg_xi = df_modelised.with_columns(
+                        pl.when(pl.col(param) < 0).then(pl.lit(-1))
+                        .when(pl.col(param) == 0).then(pl.lit(0))
+                        .otherwise(pl.lit(1))
+                        .alias(f"{param}_xi")
+                    )
+                    df_observed_leg_xi = df_observed.with_columns(
+                        pl.when(pl.col(param) < 0).then(pl.lit(-1))
+                        .when(pl.col(param) == 0).then(pl.lit(0))
+                        .otherwise(pl.lit(1))
+                        .alias(f"{param}_xi")
+                    )
+
+                    # Normalise sur 3 classes (-1, 0, +1)
+                    vmin_modelised = -1
+                    vmax_modelised = 1
+
+                    # Utilise un colormap discret simple
+                    discrete_cmap = plt.cm.get_cmap('bwr', 3)  # bleu-blanc-rouge 3 couleurs
+
+                    df_modelised_leg_xi, vmin, vmax = formalised_legend(
+                        df_modelised_leg_xi, f"{param}_xi", discrete_cmap, vmin=vmin_modelised, vmax=vmax_modelised
+                    )
+                    df_observed_leg_xi, _, _ = formalised_legend(
+                        df_observed_leg_xi, f"{param}_xi", discrete_cmap, vmin=vmin_modelised, vmax=vmax_modelised
+                    )
+
+                    layer_xi = create_layer(df_modelised_leg_xi)
+                    scatter_layer_xi = create_scatter_layer(df_observed_leg_xi, radius=1500)
+                    deck_xi = plot_map([layer_xi, scatter_layer_xi], view_state, tooltip)
+
+                    with colmapping:
+                        st.pydeck_chart(deck_xi, use_container_width=True, height=height)
+
+                    # ➡ Ici affiche la légende discrète rouge-blanc-bleu
+                    with collegend:
+                        st.write("<br/><br/>", unsafe_allow_html=True)
+                        html_legend = """
+                        <div style="text-align: left; font-size: 13px; margin-bottom: 4px;">ξ</div>
+                        <div style="display: flex; flex-direction: column;">
+                            <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                                <div style="width: 18px; height: 18px; background-color: blue; margin-right: 6px; border: 1px solid #ccc;"></div>
+                                <div style="font-size: 12px;">ξ &lt; 0</div>
+                            </div>
+                            <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                                <div style="width: 18px; height: 18px; background-color: white; margin-right: 6px; border: 1px solid #ccc;"></div>
+                                <div style="font-size: 12px;">ξ = 0</div>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <div style="width: 18px; height: 18px; background-color: red; margin-right: 6px; border: 1px solid #ccc;"></div>
+                                <div style="font-size: 12px;">ξ &gt; 0</div>
+                            </div>
+                        </div>
+                        """
+                        st.markdown(html_legend, unsafe_allow_html=True)
+
+
+
 
             with colplot:
                 if obs_vs_mod is not None and obs_vs_mod.height > 0:
@@ -297,6 +331,57 @@ def show(config_path):
                     
                     # Affiche le graphique avec mode sélection activé
                     event = st.plotly_chart(fig, key=f"scatter_{param}", on_select="rerun")
+
+                    if param == "xi":
+                        import pandas as pd
+
+                        # Fonction pour classer en -1, 0 ou 1
+                        def classify_sign(x):
+                            if x > 0:
+                                return 1
+                            elif x < 0:
+                                return -1
+                            else:
+                                return 0
+
+                        # Transforme obs_vs_mod avec une colonne struct
+                        df_sign = obs_vs_mod.with_columns(
+                            pl.struct(["pr_obs", "pr_mod"]).alias("struct")
+                        ).select(
+                            pl.col("struct").map_elements(lambda row: {
+                                "obs_sign": classify_sign(row["pr_obs"]),
+                                "mod_sign": classify_sign(row["pr_mod"])
+                            })
+                        ).unnest(["struct"])
+
+                        # Passe en pandas
+                        df_sign_pd = df_sign.to_pandas()
+
+                        # Crosstab sans reindex
+                        table_contingence = pd.crosstab(
+                            df_sign_pd["obs_sign"], 
+                            df_sign_pd["mod_sign"],
+                            rownames=[""],
+                            colnames=[""]
+                        )
+
+                        # ➔ Nettoyage automatique
+                        table_contingence.columns.name = None
+                        table_contingence.index = table_contingence.index.map({-1: "ξ_obs < 0", 0: "ξ_obs = 0", 1: "ξ_obs > 0"}).dropna()
+                        table_contingence.columns = [f"ξ_mod {c}" for c in table_contingence.columns.map({-1: "<0", 0: "=0", 1: ">0"})]
+
+                        # ➔ Convertir en pourcentage
+                        total_points = table_contingence.values.sum()  # Sur les vraies cases non nulles
+                        table_contingence_pct = (table_contingence / total_points) * 100
+                        table_contingence_pct = table_contingence_pct.round(1)
+
+                        st.write("### Tableau de contingence ξ observé vs ξ modélisé (en %)")
+                        st.dataframe(table_contingence_pct, use_container_width=True)
+
+
+
+
+
 
             if event and event.selection and "points" in event.selection:
                 points = event.selection["points"]
@@ -402,11 +487,12 @@ def show(config_path):
 
                         # Puis, pour chaque année normalisée, tu appelles compute_return_levels_ns
                         T = np.array([nr_year])  # Niveau de retour 20 ans
+                        
                         return_levels_obs = np.array([
                             compute_return_levels_ns(params_obs, model_name, T, t_norm)[0]
                             for t_norm in years_norm
                         ])
-
+                        
                         return_levels_mod = np.array([
                             compute_return_levels_ns(params_mod, model_name, T, t_norm)[0]
                             for t_norm in years_norm

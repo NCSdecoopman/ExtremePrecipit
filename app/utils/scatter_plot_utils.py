@@ -186,9 +186,6 @@ def generate_gev_density_comparison_interactive(
 
 
 
-import numpy as np
-import plotly.graph_objects as go
-
 def generate_time_series_maxima_interactive(
     years_obs: np.ndarray,
     max_obs: np.ndarray,
@@ -223,21 +220,21 @@ def generate_time_series_maxima_interactive(
     # --- Niveau de retour 20 ans observé
     if return_levels_obs is not None:
         fig_time_series.add_trace(go.Scatter(
-            x=[years_obs.min(), years_obs.max()],
+            x=years_obs,   # ➔ Utilise toutes les années observées !
             y=return_levels_obs,
             mode='lines',
             name=f'NR observé {nr_year} ans',
-            line=dict(color='blue', dash='solid')  # Trait plein
+            line=dict(color='blue', dash='solid')
         ))
 
     # --- Niveau de retour 20 ans modélisé
     if return_levels_mod is not None:
         fig_time_series.add_trace(go.Scatter(
-            x=[years_mod.min(), years_mod.max()],
+            x=years_mod,   # ➔ Utilise toutes les années modélisées !
             y=return_levels_mod,
             mode='lines',
             name=f'NR modélisé {nr_year} ans',
-            line=dict(color='orange', dash='solid')  # Trait plein
+            line=dict(color='orange', dash='solid')
         ))
 
     fig_time_series.update_layout(
