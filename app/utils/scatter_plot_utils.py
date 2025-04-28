@@ -2,6 +2,7 @@ import polars as pl
 import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
+from scipy.stats import genextreme
 
 def generate_scatter_plot_interactive(df: pl.DataFrame, stat_choice: str, unit_label: str, height: int,
                                       x_label: str = "pr_mod", y_label: str = "pr_obs"):
@@ -118,3 +119,134 @@ def generate_return_period_plot_interactive(
     )
 
     return fig
+
+
+def generate_gev_density_comparison_interactive(
+    maxima_obs: np.ndarray,
+    maxima_mod: np.ndarray,
+    params_obs: dict,
+    params_mod: dict,
+    unit: str = "mm/j",
+    height: int = 500,
+    t_norm: float = 0.0,  # Covariable normalisée (ex: 0 pour année médiane)
+):
+    """
+    Trace deux courbes de densité GEV (observée et modélisée) superposées, sans histogramme.
+    """
+
+    # --- Récupération des paramètres observés ---
+    mu_obs = params_obs.get("mu0", 0) + params_obs.get("mu1", 0) * t_norm
+    sigma_obs = params_obs.get("sigma0", 1) + params_obs.get("sigma1", 0) * t_norm
+    xi_obs = params_obs.get("xi", 0)
+
+    # --- Récupération des paramètres modélisés ---
+    mu_mod = params_mod.get("mu0", 0) + params_mod.get("mu1", 0) * t_norm
+    sigma_mod = params_mod.get("sigma0", 1) + params_mod.get("sigma1", 0) * t_norm
+    xi_mod = params_mod.get("xi", 0)
+
+    # --- Domaine commun pour tracer ---
+    minima = min(maxima_obs.min(), maxima_mod.min()) * 0.9
+    maxima = max(maxima_obs.max(), maxima_mod.max()) * 1.1
+    x = np.linspace(minima, maxima, 500)
+
+    # --- Densités ---
+    density_obs = genextreme.pdf(x, c=-xi_obs, loc=mu_obs, scale=sigma_obs)
+    density_mod = genextreme.pdf(x, c=-xi_mod, loc=mu_mod, scale=sigma_mod)
+
+    # --- Création figure ---
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        x=x,
+        y=density_obs,
+        mode="lines",
+        name="GEV observée",
+        line=dict(color="blue"),
+        hovertemplate="Maxima : %{x:.1f} " + unit + "<br>Densité : %{y:.3f}<extra></extra>",
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=x,
+        y=density_mod,
+        mode="lines",
+        name="GEV modélisée",
+        line=dict(color="orange"),
+        hovertemplate="Maxima : %{x:.1f} " + unit + "<br>Densité : %{y:.3f}<extra></extra>",
+    ))
+
+    fig.update_layout(
+        title="",
+        xaxis_title=f"Maximum journalier ({unit})",
+        yaxis_title="Densité",
+        template="plotly_white",
+        height=height,
+    )
+
+    return fig
+
+
+
+import numpy as np
+import plotly.graph_objects as go
+
+def generate_time_series_maxima_interactive(
+    years_obs: np.ndarray,
+    max_obs: np.ndarray,
+    years_mod: np.ndarray,
+    max_mod: np.ndarray,
+    unit: str = "mm/j",
+    height: int = 500,
+    nr_year: int = 20,
+    return_levels_obs: float | None = None,
+    return_levels_mod: float | None = None
+):
+    fig_time_series = go.Figure()
+
+    # --- Observations (seulement en 'x' sans lignes)
+    fig_time_series.add_trace(go.Scatter(
+        x=years_obs,
+        y=max_obs,
+        mode='markers',
+        name='Maximas observés',
+        marker=dict(symbol='x', size=4, color="blue")
+    ))
+
+    # --- Modèle (seulement en 'x' sans lignes)
+    fig_time_series.add_trace(go.Scatter(
+        x=years_mod,
+        y=max_mod,
+        mode='markers',
+        name='Maximas modélisés',
+        marker=dict(symbol='x', size=4, color="orange")
+    ))
+
+    # --- Niveau de retour 20 ans observé
+    if return_levels_obs is not None:
+        fig_time_series.add_trace(go.Scatter(
+            x=[years_obs.min(), years_obs.max()],
+            y=return_levels_obs,
+            mode='lines',
+            name=f'NR observé {nr_year} ans',
+            line=dict(color='blue', dash='solid')  # Trait plein
+        ))
+
+    # --- Niveau de retour 20 ans modélisé
+    if return_levels_mod is not None:
+        fig_time_series.add_trace(go.Scatter(
+            x=[years_mod.min(), years_mod.max()],
+            y=return_levels_mod,
+            mode='lines',
+            name=f'NR modélisé {nr_year} ans',
+            line=dict(color='orange', dash='solid')  # Trait plein
+        ))
+
+    fig_time_series.update_layout(
+        title="",
+        xaxis_title="Année",
+        yaxis_title=f"Maxima annuel ({unit})",
+        height=height,
+        template="plotly_white"
+    )
+
+    return fig_time_series
+
