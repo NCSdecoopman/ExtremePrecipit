@@ -1,7 +1,7 @@
 import streamlit as st
 import polars as pl
 import numpy as np
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 def compute_statistic_per_point(df: pl.DataFrame, stat_key: str) -> pl.DataFrame:
     cols = df.columns
@@ -130,8 +130,10 @@ def generate_metrics(df: pl.DataFrame, x_label: str = "pr_mod", y_label: str = "
     rmse = np.sqrt(mean_squared_error(y, x))
     mae = mean_absolute_error(y, x)
     me = np.mean(x - y)
-    r2 = r2_score(y, x)
 
-    return me, mae, rmse, r2
+    corr = np.corrcoef(x, y)[0, 1]  # coefficient de corrélation de Pearson
+    r2_corr = corr**2  # son carré est toujours >= 0
+
+    return me, mae, rmse, r2_corr
 
 

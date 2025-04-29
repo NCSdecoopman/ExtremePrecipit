@@ -117,7 +117,7 @@ def show(config_path):
                 show_info_metric(col3bis, "ME", me)
                 show_info_metric(col4bis, "MAE", mae)
                 show_info_metric(col5bis, "RMSE", rmse)
-                show_info_metric(col6bis, "R²", r2)
+                show_info_metric(col6bis, "r²", r2)
 
             else:
                 st.write("Changer les paramètres afin de générer des stations pour visualiser les scatter plot")

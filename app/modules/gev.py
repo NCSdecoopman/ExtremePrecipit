@@ -313,7 +313,7 @@ def show(config_path):
                     show_info_metric(colm1, "ME", me)
                     show_info_metric(colm2, "MAE", mae)
                     show_info_metric(colm3, "RMSE", rmse)
-                    show_info_metric(colm4, "R²", r2)
+                    show_info_metric(colm4, "r²", r2)
                     
                     # Affiche le graphique avec mode sélection activé
                     event = st.plotly_chart(fig, key=f"scatter_{param}", on_select="rerun")
@@ -550,7 +550,7 @@ def show(config_path):
         col_rsquared, col_score = st.columns(2)
 
         with col_rsquared:
-            st.markdown("### R² entre stations et modélisation")
+            st.markdown("### r² entre stations et modélisation")
 
             try:
                 df_obs_vs_mod_full = pl.read_csv(f"data/metadonnees/obs_vs_mod/obs_vs_mod_{echelle}.csv")
@@ -580,7 +580,7 @@ def show(config_path):
 
                             if obs_vs_mod is not None and obs_vs_mod.height > 0:
                                 _, _, _, r2 = generate_metrics(obs_vs_mod)
-                                st.markdown(f"• **{symbol}** : R² = `{r2:.3f}`")
+                                st.markdown(f"• **{symbol}** : r² = `{r2:.3f}`")
                             else:
                                 st.markdown(f"• **{symbol}** : données insuffisantes")
 
