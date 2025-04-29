@@ -32,9 +32,31 @@ def get_stat_unit(stat_key: str, scale_key: str) -> str:
     else:
         return ""
 
-def formalised_legend(df: pl.DataFrame, column_to_show: str, colormap, vmin=None, vmax=None):
+def formalised_legend(df: pl.DataFrame, column_to_show: str, colormap, vmin=None, vmax=None, is_categorical=False, categories=None):
     df = df.clone()
-    column = df[column_to_show]
+
+    if is_categorical and categories is not None:
+        # Cas spécial catégoriel : ex : best_model
+        mapping = {cat: i for i, cat in enumerate(categories)}  # s_gev=0, ns_gev_m1=1, etc.
+
+        df = df.with_columns([
+            pl.col(column_to_show).map_elements(lambda x: mapping.get(x, None), return_dtype=pl.Float64).alias("value_norm")
+        ])
+        
+        vals = df["value_norm"].to_numpy()
+        colors = (255 * np.array(colormap(vals / (len(categories) - 1)))[:, :3]).astype(np.uint8)
+
+        alpha = np.full((colors.shape[0], 1), 255, dtype=np.uint8)
+        rgba = np.hstack([colors, alpha])
+
+        df = df.with_columns([
+            pl.Series("fill_color", rgba.tolist(), dtype=pl.List(pl.UInt8)),
+            pl.col(column_to_show).alias("val_fmt"),  # on garde le nom du modèle comme texte
+            pl.col("lat").round(3).cast(pl.Utf8).alias("lat_fmt"),
+            pl.col("lon").round(3).cast(pl.Utf8).alias("lon_fmt"),
+        ])
+
+        return df, 0, len(categories) - 1
 
     if column_to_show.startswith("date"):
         # Conversion correcte en datetime (Polars)
@@ -85,7 +107,7 @@ def formalised_legend(df: pl.DataFrame, column_to_show: str, colormap, vmin=None
 
         vmin, vmax = 1, 12
 
-    else:
+    else: # ➔ Cas général (continu)
         vmin = 0 if vmin is None else vmin
         vmax = df[column_to_show].max() if vmax is None else vmax
         value_norm = ((df[column_to_show] - vmin) / (vmax - vmin)).clip(0.0, 1.0)
@@ -116,7 +138,27 @@ def formalised_legend(df: pl.DataFrame, column_to_show: str, colormap, vmin=None
 
     return df, vmin, vmax
 
-def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label=""):
+def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label="", model_labels=None):
+    if model_labels is not None:
+        # Si une liste de labels de modèles est fournie, on fait une légende discrète
+        color_boxes = ""
+        for idx, name in enumerate(model_labels):
+            rgba = colormap(idx / (len(model_labels) - 1))  # Normalisé entre 0-1
+            rgb = [int(255 * c) for c in rgba[:3]]
+            color = f"rgb({rgb[0]}, {rgb[1]}, {rgb[2]})"
+            color_boxes += (
+                f'<div style="display: flex; align-items: center; margin-bottom: 6px;">'
+                f'  <div style="width: 18px; height: 18px; background-color: {color}; margin-right: 8px; border: 1px solid #ccc;"></div>'
+                f'  <div style="font-size: 12px;">{name}</div>'
+                f'</div>'
+            )
+
+        html_legend = (
+            f'<div style="text-align: left; font-size: 13px; margin-bottom: 4px;">{label}</div>'
+            f'<div style="display: flex; flex-direction: column;">{color_boxes}</div>'
+        )
+        return html_legend
+    
     if isinstance(vmin, int) and isinstance(vmax, int) and (1 <= vmin <= 12) and (1 <= vmax <= 12):
         mois_labels = [
             "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
@@ -139,7 +181,6 @@ def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label
             f'<div style="text-align: left; font-size: 13px; margin-bottom: 4px;">{label}</div>'
             f'<div style="display: flex; flex-direction: column;">{color_boxes}</div>'
         )
-        st.markdown(html_mois, unsafe_allow_html=True)
         return html_mois
 
     gradient = np.linspace(1, 0, 64).reshape(64, 1)

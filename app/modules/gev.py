@@ -20,6 +20,7 @@ import numpy as np
 from scipy.stats import genextreme
 
 from app.pipelines.import_data import pipeline_data
+from app.pipelines.import_map import pipeline_map
 
 def standardize_year(year: float, min_year: int, max_year: int) -> float:
     """
@@ -547,7 +548,7 @@ def show(config_path):
 
 
     else:
-        col_rsquared, col_score = st.columns(2)
+        col_rsquared, col_map_model = st.columns([0.4, 0.6])
 
         with col_rsquared:
             st.markdown("### r² entre stations et modélisation")
@@ -559,6 +560,10 @@ def show(config_path):
                 df_obs_vs_mod_full = None
 
             if df_obs_vs_mod_full is not None:
+
+                model_aic_tables = []
+                obs_aic_tables = []
+
                 for label, model in model_options.items():
                     try:
                         st.markdown(f"#### {label}")
@@ -587,3 +592,73 @@ def show(config_path):
                     except Exception as e:
                         st.warning(f"❌ Erreur modèle {model} : {e}")
 
+
+        with col_map_model:
+            df_model_aic = pl.read_parquet(mod_dir / "gev_param_best_model.parquet")
+            df_obs_aic = pl.read_parquet(obs_dir / "gev_param_best_model.parquet")
+
+            df_model_aic = add_metadata(df_model_aic, "mm_h" if echelle == "horaire" else "mm_j", type="modelised")
+            df_obs_aic = add_metadata(df_obs_aic, "mm_h" if echelle == "horaire" else "mm_j", type="observed")
+
+            # liste ordonnée des modèles
+            model_names = list(model_options.values())
+
+            # Chargement des affichages graphiques
+            height=600
+            n_legend = len(model_names)
+            
+            # Définir l'échelle personnalisée continue ou discrète selon le cas
+            colormap = echelle_config("discret", n_colors=n_legend)
+
+            # Normalisation de la légende pour les valeurs modélisées
+            df_model_aic, vmin, vmax = formalised_legend(
+                df_model_aic,
+                column_to_show="model", 
+                colormap=colormap,
+                is_categorical=True,
+                categories=model_names
+            )
+
+            # Création du layer modélisé
+            layer = create_layer(df_model_aic)
+
+            # Normalisation des points observés avec les mêmes bornes
+            df_obs_aic, _, _ = formalised_legend(
+                df_obs_aic,
+                column_to_show="model", 
+                colormap=colormap,
+                is_categorical=True,
+                categories=model_names
+            )
+            plot_station = st.checkbox('Afficher les stations', value=False)
+
+            if plot_station:
+                scatter_layer = create_scatter_layer(df_obs_aic, radius=1500)
+            else:
+                scatter_layer = None
+
+            # Tooltip (tu dois t'assurer que unit_label est défini quelque part ou passé en paramètre)
+            tooltip = create_tooltip("")
+
+            # View par défaut
+            view_state = pdk.ViewState(latitude=46.8, longitude=1.7, zoom=5)
+
+            # Légende vertical
+            html_legend = display_vertical_color_legend(
+                height,
+                colormap,
+                vmin,
+                vmax,
+                n_ticks=n_legend,
+                label="Modèle AIC minimal",
+                model_labels=model_names
+            )
+            col1, col2 = st.columns([1, 0.15])
+
+            with col1:
+                deck = plot_map([layer, scatter_layer], view_state, tooltip)
+                if deck:
+                    st.pydeck_chart(deck, use_container_width=True, height=height)
+
+            with col2:
+                st.markdown(html_legend, unsafe_allow_html=True)  
