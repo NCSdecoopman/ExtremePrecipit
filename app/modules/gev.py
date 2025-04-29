@@ -79,20 +79,6 @@ def compute_valid_ratio(df: pl.DataFrame, param_list: list[str]) -> float:
     n_valid = df.drop_nulls(subset=param_list).height
     return round(n_valid / n_total, 3) if n_total > 0 else 0.0
 
-# Calcul de la moyenne et de l'écart-type d'une colonne
-def loglike_score(df: pl.DataFrame, column: str = "log_likelihood") -> str:
-    mean = df[column].mean()
-    std = df[column].std()
-    return f"{mean:.2f} (± {std:.2f})"
-
-# Calcul AIC
-def mean_aic_score(df: pl.DataFrame, param_list: list[str], col_llh: str = "log_likelihood") -> str:
-    k = len(param_list)
-    df_valid = df.drop_nulls(subset=param_list + [col_llh])
-    mean_llh = df_valid[col_llh].mean()
-    aic = 2 * k - 2 * mean_llh
-    return f"{aic:.1f}"
-
 def filter_nan(df: pl.DataFrame, columns: list[str]):
     return df.drop_nulls(subset=columns)
 
@@ -338,20 +324,23 @@ def show(config_path):
                         # Fonction pour classer en -1, 0 ou 1
                         def classify_sign(x):
                             if x > 0:
-                                return 1
+                                return np.int8(1)
                             elif x < 0:
-                                return -1
+                                return np.int8(-1)
                             else:
-                                return 0
+                                return np.int8(0)
 
                         # Transforme obs_vs_mod avec une colonne struct
                         df_sign = obs_vs_mod.with_columns(
                             pl.struct(["pr_obs", "pr_mod"]).alias("struct")
                         ).select(
-                            pl.col("struct").map_elements(lambda row: {
-                                "obs_sign": classify_sign(row["pr_obs"]),
-                                "mod_sign": classify_sign(row["pr_mod"])
-                            })
+                            pl.col("struct").map_elements(
+                                lambda row: {"obs_sign": classify_sign(row["pr_obs"]), "mod_sign": classify_sign(row["pr_mod"])},
+                                return_dtype=pl.Struct([
+                                    pl.Field("obs_sign", pl.Int64),
+                                    pl.Field("mod_sign", pl.Int64)
+                                ])
+                            )
                         ).unnest(["struct"])
 
                         # Passe en pandas
@@ -460,6 +449,7 @@ def show(config_path):
                     col_density, col_retour, col_times_series = st.columns(3)
 
                     with col_density:
+                        
                         fig_density_comparison = generate_gev_density_comparison_interactive(
                             points_obs["value"],
                             points_mod["value"],
@@ -469,7 +459,23 @@ def show(config_path):
                             height=height,
                             t_norm=year_choice_norm
                         )
+
+                        
                         st.plotly_chart(fig_density_comparison, use_container_width=True)
+
+                        fig_density_comparison = generate_gev_density_comparison_interactive_3D(
+                            maxima_obs=points_obs["value"],
+                            maxima_mod=points_mod["value"],
+                            params_obs=params_obs,
+                            params_mod=params_mod,
+                            unit=unit,
+                            height=height,
+                            min_year=min_year_choice,
+                            max_year=max_year_choice
+                        )
+
+                        st.plotly_chart(fig_density_comparison, use_container_width=True)
+
 
                     with col_retour:
                         fig = generate_return_period_plot_interactive(
@@ -480,6 +486,17 @@ def show(config_path):
                             points_mod=points_mod
                         )
                         st.plotly_chart(fig)
+
+                        if param == "xi":
+                            st.write("AROME")
+                            fig_loglik_profile = generate_loglikelihood_profile_xi(
+                                maxima=points_mod["value"],  # Les maximas bruts modélisés
+                                params=params_mod,            # Les paramètres du modèle sélectionné
+                                unit=unit,
+                                t_norm=year_choice_norm,
+                                height=height
+                            )
+                            st.plotly_chart(fig_loglik_profile, use_container_width=True)
                         
                     with col_times_series:
                         years_range = np.arange(min_year_choice, max_year_choice + 1)  # Toutes les années observées
@@ -512,6 +529,16 @@ def show(config_path):
                         st.plotly_chart(fig_time_series, use_container_width=True)
 
 
+                        if param == "xi":
+                            st.write("Station")
+                            fig_loglik_profile = generate_loglikelihood_profile_xi(
+                                maxima=points_obs["value"],  # Les maximas bruts modélisés
+                                params=points_obs,            # Les paramètres du modèle sélectionné
+                                unit=unit,
+                                t_norm=year_choice_norm,
+                                height=height
+                            )
+                            st.plotly_chart(fig_loglik_profile, use_container_width=True)
 
 
                             
@@ -520,33 +547,8 @@ def show(config_path):
 
 
     else:
-        col_score, col_rsquared = st.columns(2)
+        col_rsquared, col_score = st.columns(2)
 
-        # --- Colonne gauche : Score AIC moyen ---
-        with col_score:
-            st.markdown("### Score AIC moyen par modèle")
-            for label, model in model_options.items():
-                try:
-                    df_model = pl.read_parquet(mod_dir / f"gev_param_{model}.parquet")
-                    df_obs = pl.read_parquet(obs_dir / f"gev_param_{model}.parquet")
-                    param_list = list(ns_param_map[model].keys())
-
-                    aic_model = mean_aic_score(df_model, param_list)
-                    aic_obs = mean_aic_score(df_obs, param_list)
-
-                    st.markdown(
-                        f"""
-                        <div style="margin-bottom: 1rem;">
-                            <strong>{label}</strong><br>
-                            - AROME : <code>{aic_model}</code><br>
-                            - Station : <code>{aic_obs}</code>
-                        </div>
-                        """, unsafe_allow_html=True
-                    )
-                except Exception as e:
-                    st.warning(f"❌ Modèle {model} : erreur de lecture ({e})")
-
-        # --- Colonne droite : R² par paramètre ---
         with col_rsquared:
             st.markdown("### R² entre stations et modélisation")
 
@@ -584,3 +586,4 @@ def show(config_path):
 
                     except Exception as e:
                         st.warning(f"❌ Erreur modèle {model} : {e}")
+

@@ -133,3 +133,5 @@ def generate_metrics(df: pl.DataFrame, x_label: str = "pr_mod", y_label: str = "
     r2 = r2_score(y, x)
 
     return me, mae, rmse, r2
+
+
