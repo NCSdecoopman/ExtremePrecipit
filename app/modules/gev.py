@@ -17,10 +17,8 @@ import pydeck as pdk
 import polars as pl
 import numpy as np
 
-from scipy.stats import genextreme
-
 from app.pipelines.import_data import pipeline_data
-
+from app.pipelines.import_map import pipeline_map
 
 def standardize_year(year: float, min_year: int, max_year: int) -> float:
     """
@@ -44,21 +42,6 @@ def standardize_year(year: float, min_year: int, max_year: int) -> float:
 #   qᵀ(t) = (μ₀ + μ₁ × t) + [(σ₀ + σ₁ × t) / ξ] × [ (−log(1 − (1/T)))^(−ξ) − 1 ]
 
 
-def compute_return_levels_ns(params: dict, model_name: str, T: np.ndarray, t_norm: float) -> np.ndarray:
-    """
-    Calcule les niveaux de retour selon le modèle NS-GEV fourni.
-    - params : dictionnaire des paramètres GEV d'un point
-    - model_name : nom du modèle (clé de MODEL_REGISTRY)
-    - T : périodes de retour (en années)
-    - t_norm : covariable temporelle normalisée (ex : 0 pour année moyenne)
-    """    
-    mu = params.get("mu0", 0) + params["mu1"] * t_norm if "mu1" in params else params.get("mu0", 0) # μ(t)
-    sigma = params.get("sigma0", 0) + params["sigma1"] * t_norm if "sigma1" in params else params.get("sigma0", 0) # σ(t)
-    xi = params.get("xi", 0) # xi contant
-
-    return genextreme.ppf(1 - 1/T, c=-xi, loc=mu, scale=sigma)
-
-
 ns_param_map = {
     "s_gev": {"mu0": "μ₀", "sigma0": "σ₀", "xi": "ξ"},
     "ns_gev_m1": {"mu0": "μ₀", "mu1": "μ₁", "sigma0": "σ₀", "xi": "ξ"},
@@ -79,20 +62,6 @@ def compute_valid_ratio(df: pl.DataFrame, param_list: list[str]) -> float:
     n_total = df.height
     n_valid = df.drop_nulls(subset=param_list).height
     return round(n_valid / n_total, 3) if n_total > 0 else 0.0
-
-# Calcul de la moyenne et de l'écart-type d'une colonne
-def loglike_score(df: pl.DataFrame, column: str = "log_likelihood") -> str:
-    mean = df[column].mean()
-    std = df[column].std()
-    return f"{mean:.2f} (± {std:.2f})"
-
-# Calcul AIC
-def mean_aic_score(df: pl.DataFrame, param_list: list[str], col_llh: str = "log_likelihood") -> str:
-    k = len(param_list)
-    df_valid = df.drop_nulls(subset=param_list + [col_llh])
-    mean_llh = df_valid[col_llh].mean()
-    aic = 2 * k - 2 * mean_llh
-    return f"{aic:.1f}"
 
 def filter_nan(df: pl.DataFrame, columns: list[str]):
     return df.drop_nulls(subset=columns)
@@ -130,11 +99,18 @@ def show(config_path):
     obs_dir = Path(config["gev"]["observed"]) / echelle
 
     if model_label is not None:
+        model_name = model_options[model_label]
+    else:
+        model_name = None
+
+    if model_label is not None:
         with col2:
-            # Choix du paramètre à visualiser (xi, mu, sigma)
+            # Liste dynamique des paramètres disponibles selon le modèle
+            available_params = list(ns_param_map[model_name].values())  # μ₀, μ₁, σ₀, σ₁, ξ...
+
             param_choice = st.selectbox(
                 "Paramètre GEV à afficher",
-                ["μ", "σ", "ξ"],  # Symboles
+                available_params,
                 index=0,
                 key="gev_param_choice"
             )
@@ -166,7 +142,6 @@ def show(config_path):
                 disabled=True  # Empêche la modification
             )
         
-        model_name = model_options[model_label]  # modèle utilisé dans le nom de fichier
 
         # Chargement des données des maximas horaires
         stat_choice_key = "max"
@@ -206,46 +181,9 @@ def show(config_path):
         params_gev = ns_param_map[model_name]
         columns_to_filter = list(params_gev.keys())
 
-        # Dans la fonction show(), juste après le chargement des fichiers df_modelised et df_observed
-        valid_ratio_model = compute_valid_ratio(df_modelised, columns_to_filter)
-        valid_ratio_obs = compute_valid_ratio(df_observed, columns_to_filter)
-
-        # Affichage dans Streamlit des scores de modèle
-        col_conv, col_log, col_aic, colnan, colnanbis, colnanbisbis = st.columns(6)
-        with col_conv:
-            st.markdown("Convergence des données")
-            st.markdown(f"""
-                        - **AROME** : {valid_ratio_model*100:.1f}%  
-                        - **Station** : {valid_ratio_obs*100:.1f}%
-                        """)
-
-        if "log_likelihood" in (df_observed.columns and df_modelised.columns):
-            with col_log:
-                st.markdown(f"log $\\mathcal{{L}}(\\hat{{\\theta}})$ moyen")
-                st.markdown(f"""
-                            - **AROME** : {loglike_score(df_modelised)}  
-                            - **Station** : {loglike_score(df_observed)}
-                            """)
-            with col_aic:
-                st.markdown("Score AIC moyen")
-                aic_model = mean_aic_score(df_modelised, columns_to_filter)
-                aic_obs = mean_aic_score(df_observed, columns_to_filter)
-                st.markdown(f"""
-                            - **AROME** : {aic_model}  
-                            - **Station** : {aic_obs}
-                            """)
-
-
-        # Conversion du choix en clés du DataFrame selon le type de modèle
-        if param_choice == "μ":
-            columns_to_filter = [k for k, v in params_gev.items() if v.startswith("μ")]
-            params_gev = {k: v for k, v in params_gev.items() if k in columns_to_filter}
-        elif param_choice == "σ":
-            columns_to_filter = [k for k, v in params_gev.items() if v.startswith("σ")]
-            params_gev = {k: v for k, v in params_gev.items() if k in columns_to_filter}
-        else:
-            columns_to_filter = ["xi"]
-            params_gev = {"xi": "ξ"}
+        # Cherche la clé correspondant au paramètre choisi
+        columns_to_filter = [k for k, v in params_gev.items() if v == param_choice]
+        params_gev = {k: v for k, v in params_gev.items() if v == param_choice}
 
 
         df_observed = filter_nan(df_observed, columns_to_filter)
@@ -270,7 +208,7 @@ def show(config_path):
             df_obs_vs_mod = pl.read_csv(f"data/metadonnees/obs_vs_mod/obs_vs_mod_{echelle}.csv")
             obs_vs_mod = match_and_compare(df_observed, df_modelised, param, df_obs_vs_mod)
 
-            colmap, colplot, colretour = st.columns([0.3, 0.35, 0.35])
+            colmap, colplot = st.columns([0.45, 0.55])
 
             height=450
 
@@ -285,6 +223,70 @@ def show(config_path):
                     html_legend = display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=15, label=label)
                     st.markdown(html_legend, unsafe_allow_html=True)
 
+
+
+
+                if param == "xi":
+                    # Ajout d'une nouvelle colonne xi_xi pour le signe (-1, 0, 1)
+                    df_modelised_leg_xi = df_modelised.with_columns(
+                        pl.when(pl.col(param) < 0).then(pl.lit(-1))
+                        .when(pl.col(param) == 0).then(pl.lit(0))
+                        .otherwise(pl.lit(1))
+                        .alias(f"{param}_xi")
+                    )
+                    df_observed_leg_xi = df_observed.with_columns(
+                        pl.when(pl.col(param) < 0).then(pl.lit(-1))
+                        .when(pl.col(param) == 0).then(pl.lit(0))
+                        .otherwise(pl.lit(1))
+                        .alias(f"{param}_xi")
+                    )
+
+                    # Normalise sur 3 classes (-1, 0, +1)
+                    vmin_modelised = -1
+                    vmax_modelised = 1
+
+                    # Utilise un colormap discret simple
+                    discrete_cmap = plt.cm.get_cmap('bwr', 3)  # bleu-blanc-rouge 3 couleurs
+
+                    df_modelised_leg_xi, vmin, vmax = formalised_legend(
+                        df_modelised_leg_xi, f"{param}_xi", discrete_cmap, vmin=vmin_modelised, vmax=vmax_modelised
+                    )
+                    df_observed_leg_xi, _, _ = formalised_legend(
+                        df_observed_leg_xi, f"{param}_xi", discrete_cmap, vmin=vmin_modelised, vmax=vmax_modelised
+                    )
+
+                    layer_xi = create_layer(df_modelised_leg_xi)
+                    scatter_layer_xi = create_scatter_layer(df_observed_leg_xi, radius=1500)
+                    deck_xi = plot_map([layer_xi, scatter_layer_xi], view_state, tooltip)
+
+                    with colmapping:
+                        st.pydeck_chart(deck_xi, use_container_width=True, height=height)
+
+                    # ➡ Ici affiche la légende discrète rouge-blanc-bleu
+                    with collegend:
+                        st.write("<br/><br/>", unsafe_allow_html=True)
+                        html_legend = """
+                        <div style="text-align: left; font-size: 13px; margin-bottom: 4px;">ξ</div>
+                        <div style="display: flex; flex-direction: column;">
+                            <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                                <div style="width: 18px; height: 18px; background-color: blue; margin-right: 6px; border: 1px solid #ccc;"></div>
+                                <div style="font-size: 12px;">ξ &lt; 0</div>
+                            </div>
+                            <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                                <div style="width: 18px; height: 18px; background-color: white; margin-right: 6px; border: 1px solid #ccc;"></div>
+                                <div style="font-size: 12px;">ξ = 0</div>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <div style="width: 18px; height: 18px; background-color: red; margin-right: 6px; border: 1px solid #ccc;"></div>
+                                <div style="font-size: 12px;">ξ &gt; 0</div>
+                            </div>
+                        </div>
+                        """
+                        st.markdown(html_legend, unsafe_allow_html=True)
+
+
+
+
             with colplot:
                 if obs_vs_mod is not None and obs_vs_mod.height > 0:
                     fig = generate_scatter_plot_interactive(obs_vs_mod, f"{label}", unit if param!="xi" else "sans unité", height)
@@ -295,121 +297,236 @@ def show(config_path):
                     show_info_metric(colm1, "ME", me)
                     show_info_metric(colm2, "MAE", mae)
                     show_info_metric(colm3, "RMSE", rmse)
-                    show_info_metric(colm4, "R²", r2)
+                    show_info_metric(colm4, "r²", r2)
                     
                     # Affiche le graphique avec mode sélection activé
                     event = st.plotly_chart(fig, key=f"scatter_{param}", on_select="rerun")
 
-                    if event and event.selection and "points" in event.selection:
-                        points = event.selection["points"]
+                    if param == "xi":
+                        import pandas as pd
 
-                        if points and "customdata" in points[0]:
+                        # Fonction pour classer en -1, 0 ou 1
+                        def classify_sign(x):
+                            if x > 0:
+                                return np.int8(1)
+                            elif x < 0:
+                                return np.int8(-1)
+                            else:
+                                return np.int8(0)
 
-                            selected = points[0]
-                            num_poste_obs = selected["customdata"][0]
-                            num_poste_mod = selected["customdata"][1]
+                        # Transforme obs_vs_mod avec une colonne struct
+                        df_sign = obs_vs_mod.with_columns(
+                            pl.struct(["pr_obs", "pr_mod"]).alias("struct")
+                        ).select(
+                            pl.col("struct").map_elements(
+                                lambda row: {"obs_sign": classify_sign(row["pr_obs"]), "mod_sign": classify_sign(row["pr_mod"])},
+                                return_dtype=pl.Struct([
+                                    pl.Field("obs_sign", pl.Int64),
+                                    pl.Field("mod_sign", pl.Int64)
+                                ])
+                            )
+                        ).unnest(["struct"])
 
-                            params_obs = df_observed.filter(pl.col("NUM_POSTE") == num_poste_obs).to_dicts()[0]
-                            params_mod = df_modelised.filter(pl.col("NUM_POSTE") == num_poste_mod).to_dicts()[0]
+                        # Passe en pandas
+                        df_sign_pd = df_sign.to_pandas()
 
-                            with colretour:
-                                col_titre, col_menu_t = st.columns(2)
-                                with col_titre:
-                                    st.markdown(f"Point selectionné : ({params_obs["lat"]:.3f}, {params_obs["lon"]:.3f})", unsafe_allow_html=True)
+                        # Crosstab sans reindex
+                        table_contingence = pd.crosstab(
+                            df_sign_pd["obs_sign"], 
+                            df_sign_pd["mod_sign"],
+                            rownames=[""],
+                            colnames=[""]
+                        )
 
-                                with col_menu_t:
-                                    year_choix = st.slider(
-                                        "Choix de t",
-                                        min_value=min_year_choice,
-                                        max_value=max_year_choice,
-                                        value=int((min_year_choice + max_year_choice) / 2),
-                                        step=1,
-                                        key="year_choix"
-                                    )
-                                    year_choice_norm = standardize_year(year_choix, min_year_choice, max_year_choice)
+                        # ➔ Nettoyage automatique
+                        table_contingence.columns.name = None
+                        table_contingence.index = table_contingence.index.map({-1: "ξ_obs < 0", 0: "ξ_obs = 0", 1: "ξ_obs > 0"}).dropna()
+                        table_contingence.columns = [f"ξ_mod {c}" for c in table_contingence.columns.map({-1: "<0", 0: "=0", 1: ">0"})]
 
-                                T = np.logspace(np.log10(1.01), np.log10(100), 100)
-                                y_obs = compute_return_levels_ns(params_obs, model_name, T, t_norm=year_choice_norm)
-                                y_mod = compute_return_levels_ns(params_mod, model_name, T, t_norm=year_choice_norm)
+                        # ➔ Convertir en pourcentage
+                        total_points = table_contingence.values.sum()  # Sur les vraies cases non nulles
+                        table_contingence_pct = (table_contingence / total_points) * 100
+                        table_contingence_pct = table_contingence_pct.round(1)
 
-                                # Extraction des maximas annuels bruts
-                                df_observed_load = df_observed_load.with_columns(pl.col("NUM_POSTE").cast(pl.Int32))
-                                df_observed_load_point = df_observed_load.filter(pl.col("NUM_POSTE") == num_poste_obs)
+                        st.write("### Tableau de contingence ξ observé vs ξ modélisé (en %)")
+                        st.dataframe(table_contingence_pct, use_container_width=True)
 
-                                if df_observed_load_point.height > 0:
-                                    maximas_sorted = np.sort(df_observed_load_point[column_to_show].drop_nulls().to_numpy())[::-1]
-                                    n = len(maximas_sorted)
-                                    T_empirical = (n + 1) / np.arange(1, n + 1)
-                                    points_obs = {
-                                        "year": T_empirical,
-                                        "value": maximas_sorted
-                                    }
-                                else:
-                                    points_obs = None
 
-                                # Extraction des maximas annuels bruts
-                                df_modelised_load = df_modelised_load.with_columns(pl.col("NUM_POSTE").cast(pl.Int32))
-                                df_modelised_load_point = df_modelised_load.filter(pl.col("NUM_POSTE") == num_poste_mod)
 
-                                if df_modelised_load_point.height > 0:
-                                    maximas_sorted = np.sort(df_modelised_load_point[column_to_show].drop_nulls().to_numpy())[::-1]
-                                    n = len(maximas_sorted)
-                                    T_empirical = (n + 1) / np.arange(1, n + 1)
-                                    points_mod = {
-                                        "year": T_empirical,
-                                        "value": maximas_sorted
-                                    }
-                                else:
-                                    points_mod = None
 
-                                # Tracé final avec les points bruts ajoutés
-                                fig = generate_return_period_plot_interactive(
-                                    T, y_obs, y_mod,
-                                    unit=unit,
-                                    height=height,
-                                    points_obs=points_obs,
-                                    points_mod=points_mod
-                                )
-                                st.plotly_chart(fig)
-                        else:
-                            pass
+
+
+            if event and event.selection and "points" in event.selection:
+                points = event.selection["points"]
+
+                if points and "customdata" in points[0]:
+
+                    selected = points[0]
+                    num_poste_obs = selected["customdata"][0]
+                    num_poste_mod = selected["customdata"][1]
+
+                    params_obs = df_observed.filter(pl.col("NUM_POSTE") == num_poste_obs).to_dicts()[0]
+                    params_mod = df_modelised.filter(pl.col("NUM_POSTE") == num_poste_mod).to_dicts()[0]
+
+                    col_select_point, col_select_year, col_nr_year = st.columns(3)
+
+                    with col_select_point:
+                        st.write(f"Point selectionné : ({params_obs['lat']:.3f}, {params_obs['lon']:.3f})")
+
+                    with col_select_year:
+                        year_choix = st.slider(
+                            "Choix de t",
+                            min_value=min_year_choice,
+                            max_value=max_year_choice,
+                            value=int((min_year_choice + max_year_choice) / 2),
+                            step=1,
+                            key="year_choix"
+                        )
+
+                    with col_nr_year:
+                        nr_year = st.slider(
+                            "Choix du NR",
+                            min_value=10,
+                            max_value=100,
+                            value=20,
+                            step=10,
+                            key="nr_year"
+                        )
+
+                    year_choice_norm = standardize_year(year_choix, min_year_choice, max_year_choice)
+
+                    T = np.logspace(np.log10(1.01), np.log10(100), 100)
+
+                    y_obs = compute_return_levels_ns(params_obs, T, t_norm=year_choice_norm)
+                    y_mod = compute_return_levels_ns(params_mod, T, t_norm=year_choice_norm)
+
+                    # Extraction des maximas annuels bruts
+                    df_observed_load = df_observed_load.with_columns(pl.col("NUM_POSTE").cast(pl.Int32))
+                    df_observed_load_point = df_observed_load.filter(pl.col("NUM_POSTE") == num_poste_obs)
+
+                    if df_observed_load_point.height > 0:
+                        maximas_sorted_obs = np.sort(df_observed_load_point[column_to_show].drop_nulls().to_numpy())[::-1]
+                        n = len(maximas_sorted_obs)
+                        T_empirical_obs = (n + 1) / np.arange(1, n + 1)
+                        points_obs = {
+                            "year": T_empirical_obs,
+                            "value": maximas_sorted_obs
+                        }
                     else:
-                        pass
+                        points_obs = None
 
-                else:
-                    st.warning(f"Aucune donnée disponible pour le scatter plot de {label}.")
+
+                    # Extraction des maximas annuels bruts
+                    df_modelised_load = df_modelised_load.with_columns(pl.col("NUM_POSTE").cast(pl.Int32))
+                    df_modelised_load_point = df_modelised_load.filter(pl.col("NUM_POSTE") == num_poste_mod)
+
+                    if df_modelised_load_point.height > 0:
+                        maximas_sorted_mod = np.sort(df_modelised_load_point[column_to_show].drop_nulls().to_numpy())[::-1]
+                        n = len(maximas_sorted_mod)
+                        T_empirical_mod = (n + 1) / np.arange(1, n + 1)
+                        points_mod = {
+                            "year": T_empirical_mod,
+                            "value": maximas_sorted_mod
+                        }
+                    else:
+                        points_mod = None
+
+                    col_density, col_retour, col_times_series = st.columns(3)
+
+                    with col_density:
+                        
+                        fig_density_comparison = generate_gev_density_comparison_interactive(
+                            points_obs["value"],
+                            points_mod["value"],
+                            params_obs,
+                            params_mod,
+                            unit,
+                            height=height,
+                            t_norm=year_choice_norm
+                        )
+
+                        
+                        st.plotly_chart(fig_density_comparison, use_container_width=True)
+
+                        # fig_density_comparison = generate_gev_density_comparison_interactive_3D(
+                        #     maxima_obs=points_obs["value"],
+                        #     maxima_mod=points_mod["value"],
+                        #     params_obs=params_obs,
+                        #     params_mod=params_mod,
+                        #     unit=unit,
+                        #     height=height,
+                        #     min_year=min_year_choice,
+                        #     max_year=max_year_choice
+                        # )
+
+                        # st.plotly_chart(fig_density_comparison, use_container_width=True)
+
+
+                    with col_retour:
+                        fig = generate_return_period_plot_interactive(
+                            T=T,
+                            y_obs=y_obs,
+                            y_mod=y_mod,
+                            unit=unit,
+                            height=height,
+                            points_obs=points_obs,
+                            points_mod=points_mod
+                        )
+                        st.plotly_chart(fig)
+                        
+                    #with col_times_series:
+                        # if param == "xi":
+                        #     st.write("AROME")
+                        #     fig_loglik_profile = generate_loglikelihood_profile_xi(
+                        #         maxima=points_mod["value"],  # Les maximas bruts modélisés
+                        #         params=params_mod,            # Les paramètres du modèle sélectionné
+                        #         unit=unit,
+                        #         t_norm=year_choice_norm,
+                        #         height=height
+                        #     )
+                        #     st.plotly_chart(fig_loglik_profile, use_container_width=True)
+
+
+
+                        # years_range = np.arange(min_year_choice, max_year_choice + 1)  # Toutes les années observées
+                        # years_norm = np.array([standardize_year(y, min_year_choice, max_year_choice) for y in years_range]) # Normalisation
+
+                        # # Puis, pour chaque année normalisée, tu appelles compute_return_levels_ns
+                        # T = np.array([nr_year])  # Niveau de retour 20 ans
+                        
+                        # return_levels_obs = np.array([
+                        #     compute_return_levels_ns(params_obs, T, t_norm)
+                        #     for t_norm in years_norm
+                        # ])
+                        
+                        # return_levels_mod = np.array([
+                        #     compute_return_levels_ns(params_mod, T, t_norm)
+                        #     for t_norm in years_norm
+                        # ])
+
+                        # fig_time_series = generate_time_series_maxima_interactive(
+                        #     years_obs=df_observed_load_point["year"],
+                        #     max_obs=df_observed_load_point[column_to_show].to_numpy(),
+                        #     years_mod=df_modelised_load_point["year"],
+                        #     max_mod=df_modelised_load_point[column_to_show].to_numpy(),
+                        #     unit=unit,
+                        #     height=height,
+                        #     nr_year=nr_year,
+                        #     return_levels_obs=return_levels_obs,
+                        #     return_levels_mod=return_levels_mod
+                        # )
+                        # st.plotly_chart(fig_time_series, use_container_width=True)
+
+                            
+            else:
+                pass
 
 
     else:
-        col_score, col_rsquared = st.columns(2)
+        col_rsquared, col_map_model = st.columns([0.4, 0.6])
 
-        # --- Colonne gauche : Score AIC moyen ---
-        with col_score:
-            st.markdown("### 🎯 Score AIC moyen par modèle")
-            for label, model in model_options.items():
-                try:
-                    df_model = pl.read_parquet(mod_dir / f"gev_param_{model}.parquet")
-                    df_obs = pl.read_parquet(obs_dir / f"gev_param_{model}.parquet")
-                    param_list = list(ns_param_map[model].keys())
-
-                    aic_model = mean_aic_score(df_model, param_list)
-                    aic_obs = mean_aic_score(df_obs, param_list)
-
-                    st.markdown(
-                        f"""
-                        <div style="margin-bottom: 1rem;">
-                            <strong>{label}</strong><br>
-                            🌀 AROME : <code>{aic_model}</code><br>
-                            🛰️ Station : <code>{aic_obs}</code>
-                        </div>
-                        """, unsafe_allow_html=True
-                    )
-                except Exception as e:
-                    st.warning(f"❌ Modèle {model} : erreur de lecture ({e})")
-
-        # --- Colonne droite : R² par paramètre ---
         with col_rsquared:
-            st.markdown("### 📈 R² entre stations et modélisation")
+            st.markdown("### r² entre stations et modélisation")
 
             try:
                 df_obs_vs_mod_full = pl.read_csv(f"data/metadonnees/obs_vs_mod/obs_vs_mod_{echelle}.csv")
@@ -418,6 +535,10 @@ def show(config_path):
                 df_obs_vs_mod_full = None
 
             if df_obs_vs_mod_full is not None:
+
+                model_aic_tables = []
+                obs_aic_tables = []
+
                 for label, model in model_options.items():
                     try:
                         st.markdown(f"#### {label}")
@@ -439,9 +560,80 @@ def show(config_path):
 
                             if obs_vs_mod is not None and obs_vs_mod.height > 0:
                                 _, _, _, r2 = generate_metrics(obs_vs_mod)
-                                st.markdown(f"• **{symbol}** : R² = `{r2:.3f}`")
+                                st.markdown(f"• **{symbol}** : r² = `{r2:.3f}`")
                             else:
                                 st.markdown(f"• **{symbol}** : données insuffisantes")
 
                     except Exception as e:
                         st.warning(f"❌ Erreur modèle {model} : {e}")
+
+
+        with col_map_model:
+            df_model_aic = pl.read_parquet(mod_dir / "gev_param_best_model.parquet")
+            df_obs_aic = pl.read_parquet(obs_dir / "gev_param_best_model.parquet")
+
+            df_model_aic = add_metadata(df_model_aic, "mm_h" if echelle == "horaire" else "mm_j", type="modelised")
+            df_obs_aic = add_metadata(df_obs_aic, "mm_h" if echelle == "horaire" else "mm_j", type="observed")
+
+            # liste ordonnée des modèles
+            model_names = list(model_options.values())
+
+            # Chargement des affichages graphiques
+            height=600
+            n_legend = len(model_names)
+            
+            # Définir l'échelle personnalisée continue ou discrète selon le cas
+            colormap = echelle_config("discret", n_colors=n_legend)
+
+            # Normalisation de la légende pour les valeurs modélisées
+            df_model_aic, vmin, vmax = formalised_legend(
+                df_model_aic,
+                column_to_show="model", 
+                colormap=colormap,
+                is_categorical=True,
+                categories=model_names
+            )
+
+            # Création du layer modélisé
+            layer = create_layer(df_model_aic)
+
+            # Normalisation des points observés avec les mêmes bornes
+            df_obs_aic, _, _ = formalised_legend(
+                df_obs_aic,
+                column_to_show="model", 
+                colormap=colormap,
+                is_categorical=True,
+                categories=model_names
+            )
+            plot_station = st.checkbox('Afficher les stations', value=False)
+
+            if plot_station:
+                scatter_layer = create_scatter_layer(df_obs_aic, radius=1500)
+            else:
+                scatter_layer = None
+
+            # Tooltip (tu dois t'assurer que unit_label est défini quelque part ou passé en paramètre)
+            tooltip = create_tooltip("")
+
+            # View par défaut
+            view_state = pdk.ViewState(latitude=46.8, longitude=1.7, zoom=5)
+
+            # Légende vertical
+            html_legend = display_vertical_color_legend(
+                height,
+                colormap,
+                vmin,
+                vmax,
+                n_ticks=n_legend,
+                label="Modèle AIC minimal",
+                model_labels=model_names
+            )
+            col1, col2 = st.columns([1, 0.15])
+
+            with col1:
+                deck = plot_map([layer, scatter_layer], view_state, tooltip)
+                if deck:
+                    st.pydeck_chart(deck, use_container_width=True, height=height)
+
+            with col2:
+                st.markdown(html_legend, unsafe_allow_html=True)  

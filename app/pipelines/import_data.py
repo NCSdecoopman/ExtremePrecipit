@@ -64,6 +64,7 @@ def pipeline_data(params, config):
     return {
         "modelised_load": modelised_load,
         "observed_load": observed_load,
+        "observed_cleaning": df_observed_cleaning,
         "modelised_show": modelised_show,
         "modelised": modelised,
         "observed": observed,
