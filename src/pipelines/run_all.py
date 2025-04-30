@@ -67,8 +67,8 @@ log = logging.getLogger(__name__).info
 ############################################################
 # Pipeline GEV
 log(f"Lancement du traitement stats to gev")
-for setting in ["config/observed_settings.yaml"]:  # , "config/modelised_settings.yaml"
-    for echelle in ["horaire"]: # , "quotidien"
+for setting in ["config/observed_settings.yaml", "config/modelised_settings.yaml"]:  
+    for echelle in ["quotidien", "horaire"]:  
         for model in ["s_gev", "ns_gev_m1", "ns_gev_m2", "ns_gev_m3"]:
             subprocess.run(
                 [
@@ -81,4 +81,14 @@ for setting in ["config/observed_settings.yaml"]:  # , "config/modelised_setting
                 ],
                 check=True
             )
-
+        
+        subprocess.run(
+            [
+                "python",
+                "-m",
+                "src.pipelines.pipeline_best_gev",
+                "--config", setting,
+                "--echelle", echelle
+            ],
+            check=True
+        )

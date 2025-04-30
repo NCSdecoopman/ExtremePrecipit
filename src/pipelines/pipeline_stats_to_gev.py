@@ -14,7 +14,7 @@ from src.utils.logger import get_logger
 from src.utils.data_utils import load_data
 
 from hades_stats import sp_dist # GEV stationnaire
-from hades_stats import ns_gev_m1, ns_gev_m2, ns_gev_m12, ns_gev_m3 # GEV non stationnaire
+from hades_stats import ns_gev_m1, ns_gev_m2, ns_gev_m3 # GEV non stationnaire
 from hades_stats import NsDistribution, ObsWithCovar, FitNsDistribution
 from hades_stats.fit import FitDist
 
@@ -75,7 +75,7 @@ MODEL_REGISTRY = {
     "ns_gev_m2":  (ns_gev_m2,  ["mu0", "sigma0", "sigma1", "xi"]),
 
     # μ(t) = μ₀ + μ₁·t ; σ(t) = r × μ(t) ; ξ(t) = ξ
-    "ns_gev_m12": (ns_gev_m12, ["mu0", "mu1", "sigma_ratio", "xi"]),
+    # "ns_gev_m12": (ns_gev_m12, ["mu0", "mu1", "sigma_ratio", "xi"]),
 
     # μ(t) = μ₀ + μ₁·t ; σ(t) = σ₀ + σ₁·t ; ξ(t) = ξ
     "ns_gev_m3":  (ns_gev_m3,  ["mu0", "mu1", "sigma0", "sigma1", "xi"])
@@ -135,14 +135,14 @@ def gev_non_stationnaire(df: pd.DataFrame, col_val: str, model_name: str) -> Tup
     std_emp = values.std()
 
     # Étape 2 : on fixe xi à 0.1 pour éviter les comportements extrêmes (queue trop courte ou trop lourde)
-    xi_init = 0.1
+    xi_init = 0.1 # ξ physique initial voulu
 
     # Étape 3 : on utilise les formules inversées de l'espérance et de la variance de la GEV
     # pour retrouver mu et sigma de manière à ce que la GEV initialisée ait la même moyenne et écart-type
     mu_init, sigma_init = init_gev_params_from_moments(mean_emp, std_emp, xi=xi_init)
 
     # Covariable temporelle : l'année normalisée
-    covar = pd.DataFrame({"x": (df["year"] - df["year"].mean()) / df["year"].std()}, index=df.index)
+    covar = pd.DataFrame({"x": df["year_norm"]}, index=df.index)
 
     obs = ObsWithCovar(values, covar)
     ns_dist = NsDistribution("gev", model_struct) # model_struct peut être None (stationnaire)
@@ -154,7 +154,8 @@ def gev_non_stationnaire(df: pd.DataFrame, col_val: str, model_name: str) -> Tup
         "mu1": 0,                   # μ₁ = 0
         "sigma0": sigma_init,       # σ₀ = σ
         "sigma1": 0,                # σ₁ = 0 
-        "xi": xi_init               # ξ = constante choisie dès le début
+        # Attention ! inversion car to_params_ts() retourne -xi
+        "xi": -xi_init              # ξ = constante choisie dès le début
     }
     # Cela revient à repartir de la vraisemblance obtenue dans le cas stationnaire, 
     # sauf que dans le cas non stationnaire on autorise plus de paramètres donc la vraisemblance va augmenter.
@@ -184,6 +185,11 @@ def gev_non_stationnaire(df: pd.DataFrame, col_val: str, model_name: str) -> Tup
             p = fit.ns_distribution.to_params_ts()
             param_names = fit.ns_distribution.par_names
             param_values = list(p)
+
+            # Corrige xi : to_params_ts() retourne -xi, nous on veut xi
+            # xi est toujours le dernier paramètre de la liste param_names générée par NsDistribution
+            param_values[-1] = -param_values[-1]
+
             if all(np.isfinite(param_values)):
                 return tuple(param_values) + (log_likelihood,)
             else:
@@ -213,6 +219,11 @@ def fit_gev_par_point(df_pl: pl.DataFrame, col_val: str, len_serie: int, model_n
     if "year" not in df.columns:
         logger.error("La colonne 'year' est absente du DataFrame. Elle est requise pour le modèle NS-GEV.")
         raise ValueError("Colonne 'year' manquante dans les données.")
+
+    # Normalisation globale entre min_year et max_year
+    min_year = df["year"].min()
+    max_year = df["year"].max()
+    df["year_norm"] = (df["year"] - min_year) / (max_year - min_year)
 
     grouped = list(df.groupby('NUM_POSTE'))
 
@@ -287,7 +298,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pipeline application de la GEV sur les maximas.")
     parser.add_argument("--config", type=str, default="config/observed_settings.yaml")
     parser.add_argument("--echelle", type=str, choices=["horaire", "quotidien"], nargs="+", default=["horaire", "quotidien"])
-    parser.add_argument("--model_structure", type=str, choices=list(MODEL_REGISTRY.keys()), default="ns_gev_m12")
+    parser.add_argument("--model_structure", type=str, choices=list(MODEL_REGISTRY.keys()), default="")
     args = parser.parse_args()
 
     config = load_config(args.config)
