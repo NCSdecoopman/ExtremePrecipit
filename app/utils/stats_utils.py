@@ -137,3 +137,20 @@ def generate_metrics(df: pl.DataFrame, x_label: str = "pr_mod", y_label: str = "
     return me, mae, rmse, r2_corr
 
 
+def compute_return_levels_ns(params: dict, T: np.ndarray, t_norm: float) -> np.ndarray:
+    """
+    Calcule les niveaux de retour selon le modèle NS-GEV fourni.
+    - params : dictionnaire des paramètres GEV d'un point
+    - T : périodes de retour (en années)
+    - t_norm : covariable temporelle normalisée (ex : 0 pour année moyenne)
+    """    
+    mu = params.get("mu0", 0) + params["mu1"] * t_norm if "mu1" in params else params.get("mu0", 0) # μ(t)
+    sigma = params.get("sigma0", 0) + params["sigma1"] * t_norm if "sigma1" in params else params.get("sigma0", 0) # σ(t)
+    xi = params.get("xi", 0) # xi contant
+
+    if xi != 0:
+        qT = mu + (sigma / xi) * ((-np.log(1 - 1 / T))**(-xi) - 1)
+    else:
+        qT = mu - sigma * np.log(-np.log(1 - 1/T))
+
+    return qT

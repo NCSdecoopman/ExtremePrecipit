@@ -136,12 +136,12 @@ def generate_gev_density_comparison_interactive(
 
     # --- Récupération des paramètres observés ---
     mu_obs = params_obs.get("mu0", 0) + params_obs.get("mu1", 0) * t_norm
-    sigma_obs = params_obs.get("sigma0", 1) + params_obs.get("sigma1", 0) * t_norm
+    sigma_obs = params_obs.get("sigma0", 0) + params_obs.get("sigma1", 0) * t_norm
     xi_obs = params_obs.get("xi", 0)
 
     # --- Récupération des paramètres modélisés ---
     mu_mod = params_mod.get("mu0", 0) + params_mod.get("mu1", 0) * t_norm
-    sigma_mod = params_mod.get("sigma0", 1) + params_mod.get("sigma1", 0) * t_norm
+    sigma_mod = params_mod.get("sigma0", 0) + params_mod.get("sigma1", 0) * t_norm
     xi_mod = params_mod.get("xi", 0)
 
     # --- Domaine commun pour tracer ---
@@ -228,7 +228,7 @@ def generate_gev_density_comparison_interactive_3D(
 
         # Densité observée
         mu_obs = params_obs.get("mu0", 0) + params_obs.get("mu1", 0) * t_norm
-        sigma_obs = params_obs.get("sigma0", 1) + params_obs.get("sigma1", 0) * t_norm
+        sigma_obs = params_obs.get("sigma0", 0) + params_obs.get("sigma1", 0) * t_norm
         xi_obs = params_obs.get("xi", 0)
 
         density_obs = genextreme.pdf(x, c=-xi_obs, loc=mu_obs, scale=sigma_obs)
@@ -245,7 +245,7 @@ def generate_gev_density_comparison_interactive_3D(
 
         # Densité modélisée
         mu_mod = params_mod.get("mu0", 0) + params_mod.get("mu1", 0) * t_norm
-        sigma_mod = params_mod.get("sigma0", 1) + params_mod.get("sigma1", 0) * t_norm
+        sigma_mod = params_mod.get("sigma0", 0) + params_mod.get("sigma1", 0) * t_norm
         xi_mod = params_mod.get("xi", 0)
 
         density_mod = genextreme.pdf(x, c=-xi_mod, loc=mu_mod, scale=sigma_mod)
@@ -360,7 +360,7 @@ def generate_loglikelihood_profile_xi(
 
     # Récupération des paramètres (à t_norm donné)
     mu = params.get("mu0", 0) + params.get("mu1", 0) * t_norm
-    sigma = params.get("sigma0", 1) + params.get("sigma1", 0) * t_norm
+    sigma = params.get("sigma0", 0) + params.get("sigma1", 0) * t_norm
     xi_fit = params.get("xi", 0)
 
     def compute_nllh(x, mu, sigma, xi):
@@ -386,11 +386,23 @@ def generate_loglikelihood_profile_xi(
         name="Log-vraisemblance",
         hovertemplate="ξ : %{x:.3f}<br>Log-likelihood : %{y:.1f}<extra></extra>"
     ))
+    
+    # Conversion en array pour traitement
+    logliks = np.array(logliks)
 
-    # Ligne verticale au ξ ajusté
+    # Filtrage des valeurs finies
+    finite_logliks = logliks[np.isfinite(logliks)]
+
+    if finite_logliks.size > 0:
+        ymin = finite_logliks.min() - 1  # Marge sous le min réel
+        ymax = finite_logliks.max()
+    else:
+        ymin, ymax = -10, 0  # Valeurs par défaut si tout est -inf
+
+    # Ajout de la ligne verticale
     fig.add_trace(go.Scatter(
         x=[xi_fit, xi_fit],
-        y=[min(logliks), max(logliks)],
+        y=[ymin, ymax],
         mode="lines",
         line=dict(color="red", dash="dash"),
         name=f"ξ ajusté ({xi_fit:.3f})"

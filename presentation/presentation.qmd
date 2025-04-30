@@ -1,0 +1,35 @@
+---
+title: "Avancement stage"
+author: "DECOOPMAN Nicolas"
+subtitle: "Caractérisation et évolution des précipitations extrêmes horaires en France à partir d’un modèle régional de climat à convection profonde résolue"
+format:
+  revealjs:
+    embed-resources: true
+    theme: simple
+    slide-level: 2
+    toc: false
+    css: presentation/assets/styles.css
+jupyter: stage
+---
+
+# Objectifs
+
+:::{.columns}
+
+::: {.column width="70%"}
+- **Données** du CP-RCM CNRM-AROME et données pluviométriques
+- **Application de modèles GEV** stationnaires et non stationnaires pour :
+  1. **Obtenir des périodes de retour**
+  2. **Caractériser l’évolution des précipitations extrêmes horaires** sur la période
+:::
+
+::: {.column width="30%" .center}
+[![](presentation/assets/qrcode.png){width="70%"}](https://urls.fr/4JLwyV)
+:::
+
+:::
+
+## Nombre de jour de pluie 
+
+
+

@@ -45,25 +45,6 @@ def standardize_year(year: float, min_year: int, max_year: int) -> float:
     std = (max_year - min_year) / 2
     return (year - mean) / std
 
-def compute_return_levels_ns(params: dict, T: np.ndarray, t_norm: float) -> np.ndarray:
-    """
-    Calcule les niveaux de retour selon le modèle NS-GEV fourni.
-    - params : dictionnaire des paramètres GEV d'un point
-    - model_name : nom du modèle (clé de MODEL_REGISTRY)
-    - T : périodes de retour (en années)
-    - t_norm : covariable temporelle normalisée (ex : 0 pour année moyenne)
-    """    
-    mu = params.get("mu0", 0) + params["mu1"] * t_norm if "mu1" in params else params.get("mu0", 0) # μ(t)
-    sigma = params.get("sigma0", 0) + params["sigma1"] * t_norm if "sigma1" in params else params.get("sigma0", 0) # σ(t)
-    xi = params.get("xi", 0) # xi contant
-
-    if xi != 0:
-        qT = mu + (sigma / xi) * ((-np.log(1 - 1 / T))**(-xi) - 1)
-    else:
-        qT = mu - sigma * np.log(-np.log(1 - 1/T))
-
-    return qT
-
 import math
 def safe_compute_return(row, T_array, t_norm):
     """Force les None à 0 et retourne 0 si résultat invalide."""

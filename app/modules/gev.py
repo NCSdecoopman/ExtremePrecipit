@@ -17,8 +17,6 @@ import pydeck as pdk
 import polars as pl
 import numpy as np
 
-from scipy.stats import genextreme
-
 from app.pipelines.import_data import pipeline_data
 from app.pipelines.import_map import pipeline_map
 
@@ -42,21 +40,6 @@ def standardize_year(year: float, min_year: int, max_year: int) -> float:
 # La quantile notée qᵀ(t) (précipitation pour une période de retour T à l’année t) s’écrit :
 #   qᵀ(t) = μ(t) + [σ(t) / ξ] × [ (−log(1 − p))^(−ξ) − 1 ]
 #   qᵀ(t) = (μ₀ + μ₁ × t) + [(σ₀ + σ₁ × t) / ξ] × [ (−log(1 − (1/T)))^(−ξ) − 1 ]
-
-
-def compute_return_levels_ns(params: dict, model_name: str, T: np.ndarray, t_norm: float) -> np.ndarray:
-    """
-    Calcule les niveaux de retour selon le modèle NS-GEV fourni.
-    - params : dictionnaire des paramètres GEV d'un point
-    - model_name : nom du modèle (clé de MODEL_REGISTRY)
-    - T : périodes de retour (en années)
-    - t_norm : covariable temporelle normalisée (ex : 0 pour année moyenne)
-    """    
-    mu = params.get("mu0", 0) + params["mu1"] * t_norm if "mu1" in params else params.get("mu0", 0) # μ(t)
-    sigma = params.get("sigma0", 0) + params["sigma1"] * t_norm if "sigma1" in params else params.get("sigma0", 0) # σ(t)
-    xi = params.get("xi", 0) # xi contant
-
-    return genextreme.ppf(1 - 1/T, c=-xi, loc=mu, scale=sigma)  
 
 
 ns_param_map = {
@@ -413,20 +396,21 @@ def show(config_path):
                     year_choice_norm = standardize_year(year_choix, min_year_choice, max_year_choice)
 
                     T = np.logspace(np.log10(1.01), np.log10(100), 100)
-                    y_obs = compute_return_levels_ns(params_obs, model_name, T, t_norm=year_choice_norm)
-                    y_mod = compute_return_levels_ns(params_mod, model_name, T, t_norm=year_choice_norm)
+
+                    y_obs = compute_return_levels_ns(params_obs, T, t_norm=year_choice_norm)
+                    y_mod = compute_return_levels_ns(params_mod, T, t_norm=year_choice_norm)
 
                     # Extraction des maximas annuels bruts
                     df_observed_load = df_observed_load.with_columns(pl.col("NUM_POSTE").cast(pl.Int32))
                     df_observed_load_point = df_observed_load.filter(pl.col("NUM_POSTE") == num_poste_obs)
 
                     if df_observed_load_point.height > 0:
-                        maximas_sorted = np.sort(df_observed_load_point[column_to_show].drop_nulls().to_numpy())[::-1]
-                        n = len(maximas_sorted)
-                        T_empirical = (n + 1) / np.arange(1, n + 1)
+                        maximas_sorted_obs = np.sort(df_observed_load_point[column_to_show].drop_nulls().to_numpy())[::-1]
+                        n = len(maximas_sorted_obs)
+                        T_empirical_obs = (n + 1) / np.arange(1, n + 1)
                         points_obs = {
-                            "year": T_empirical,
-                            "value": maximas_sorted
+                            "year": T_empirical_obs,
+                            "value": maximas_sorted_obs
                         }
                     else:
                         points_obs = None
@@ -437,12 +421,12 @@ def show(config_path):
                     df_modelised_load_point = df_modelised_load.filter(pl.col("NUM_POSTE") == num_poste_mod)
 
                     if df_modelised_load_point.height > 0:
-                        maximas_sorted = np.sort(df_modelised_load_point[column_to_show].drop_nulls().to_numpy())[::-1]
-                        n = len(maximas_sorted)
-                        T_empirical = (n + 1) / np.arange(1, n + 1)
+                        maximas_sorted_mod = np.sort(df_modelised_load_point[column_to_show].drop_nulls().to_numpy())[::-1]
+                        n = len(maximas_sorted_mod)
+                        T_empirical_mod = (n + 1) / np.arange(1, n + 1)
                         points_mod = {
-                            "year": T_empirical,
-                            "value": maximas_sorted
+                            "year": T_empirical_mod,
+                            "value": maximas_sorted_mod
                         }
                     else:
                         points_mod = None
@@ -464,83 +448,74 @@ def show(config_path):
                         
                         st.plotly_chart(fig_density_comparison, use_container_width=True)
 
-                        fig_density_comparison = generate_gev_density_comparison_interactive_3D(
-                            maxima_obs=points_obs["value"],
-                            maxima_mod=points_mod["value"],
-                            params_obs=params_obs,
-                            params_mod=params_mod,
-                            unit=unit,
-                            height=height,
-                            min_year=min_year_choice,
-                            max_year=max_year_choice
-                        )
+                        # fig_density_comparison = generate_gev_density_comparison_interactive_3D(
+                        #     maxima_obs=points_obs["value"],
+                        #     maxima_mod=points_mod["value"],
+                        #     params_obs=params_obs,
+                        #     params_mod=params_mod,
+                        #     unit=unit,
+                        #     height=height,
+                        #     min_year=min_year_choice,
+                        #     max_year=max_year_choice
+                        # )
 
-                        st.plotly_chart(fig_density_comparison, use_container_width=True)
+                        # st.plotly_chart(fig_density_comparison, use_container_width=True)
 
 
                     with col_retour:
                         fig = generate_return_period_plot_interactive(
-                            T, y_obs, y_mod,
+                            T=T,
+                            y_obs=y_obs,
+                            y_mod=y_mod,
                             unit=unit,
                             height=height,
                             points_obs=points_obs,
                             points_mod=points_mod
                         )
                         st.plotly_chart(fig)
-
-                        if param == "xi":
-                            st.write("AROME")
-                            fig_loglik_profile = generate_loglikelihood_profile_xi(
-                                maxima=points_mod["value"],  # Les maximas bruts modélisés
-                                params=params_mod,            # Les paramètres du modèle sélectionné
-                                unit=unit,
-                                t_norm=year_choice_norm,
-                                height=height
-                            )
-                            st.plotly_chart(fig_loglik_profile, use_container_width=True)
                         
-                    with col_times_series:
-                        years_range = np.arange(min_year_choice, max_year_choice + 1)  # Toutes les années observées
-                        years_norm = np.array([standardize_year(y, min_year_choice, max_year_choice) for y in years_range]) # Normalisation
+                    #with col_times_series:
+                        # if param == "xi":
+                        #     st.write("AROME")
+                        #     fig_loglik_profile = generate_loglikelihood_profile_xi(
+                        #         maxima=points_mod["value"],  # Les maximas bruts modélisés
+                        #         params=params_mod,            # Les paramètres du modèle sélectionné
+                        #         unit=unit,
+                        #         t_norm=year_choice_norm,
+                        #         height=height
+                        #     )
+                        #     st.plotly_chart(fig_loglik_profile, use_container_width=True)
 
-                        # Puis, pour chaque année normalisée, tu appelles compute_return_levels_ns
-                        T = np.array([nr_year])  # Niveau de retour 20 ans
+
+
+                        # years_range = np.arange(min_year_choice, max_year_choice + 1)  # Toutes les années observées
+                        # years_norm = np.array([standardize_year(y, min_year_choice, max_year_choice) for y in years_range]) # Normalisation
+
+                        # # Puis, pour chaque année normalisée, tu appelles compute_return_levels_ns
+                        # T = np.array([nr_year])  # Niveau de retour 20 ans
                         
-                        return_levels_obs = np.array([
-                            compute_return_levels_ns(params_obs, model_name, T, t_norm)[0]
-                            for t_norm in years_norm
-                        ])
+                        # return_levels_obs = np.array([
+                        #     compute_return_levels_ns(params_obs, T, t_norm)
+                        #     for t_norm in years_norm
+                        # ])
                         
-                        return_levels_mod = np.array([
-                            compute_return_levels_ns(params_mod, model_name, T, t_norm)[0]
-                            for t_norm in years_norm
-                        ])
+                        # return_levels_mod = np.array([
+                        #     compute_return_levels_ns(params_mod, T, t_norm)
+                        #     for t_norm in years_norm
+                        # ])
 
-                        fig_time_series = generate_time_series_maxima_interactive(
-                            years_obs=df_observed_load_point["year"],
-                            max_obs=df_observed_load_point[column_to_show].to_numpy(),
-                            years_mod=df_modelised_load_point["year"],
-                            max_mod=df_modelised_load_point[column_to_show].to_numpy(),
-                            unit=unit,
-                            height=height,
-                            nr_year=nr_year,
-                            return_levels_obs=return_levels_obs,
-                            return_levels_mod=return_levels_mod
-                        )
-                        st.plotly_chart(fig_time_series, use_container_width=True)
-
-
-                        if param == "xi":
-                            st.write("Station")
-                            fig_loglik_profile = generate_loglikelihood_profile_xi(
-                                maxima=points_obs["value"],  # Les maximas bruts modélisés
-                                params=points_obs,            # Les paramètres du modèle sélectionné
-                                unit=unit,
-                                t_norm=year_choice_norm,
-                                height=height
-                            )
-                            st.plotly_chart(fig_loglik_profile, use_container_width=True)
-
+                        # fig_time_series = generate_time_series_maxima_interactive(
+                        #     years_obs=df_observed_load_point["year"],
+                        #     max_obs=df_observed_load_point[column_to_show].to_numpy(),
+                        #     years_mod=df_modelised_load_point["year"],
+                        #     max_mod=df_modelised_load_point[column_to_show].to_numpy(),
+                        #     unit=unit,
+                        #     height=height,
+                        #     nr_year=nr_year,
+                        #     return_levels_obs=return_levels_obs,
+                        #     return_levels_mod=return_levels_mod
+                        # )
+                        # st.plotly_chart(fig_time_series, use_container_width=True)
 
                             
             else:

@@ -1,5 +1,5 @@
 import streamlit as st
-from app.modules import statisticals, gev, niveau_retour
+from app.modules import statisticals, gev, niveau_retour, temp_stats, scatter_plot, all_max
 
 st.set_page_config(layout="wide", page_title="Visualisation des précipitations", page_icon="🌧️")
 
@@ -64,7 +64,7 @@ option = "Statistiques descriptives"
 st.sidebar.title("Navigation")
 option = st.sidebar.selectbox(
     "Navigation",
-    ("Statistiques descriptives", "GEV", "Niveau de retour"), #"Scatter plot", "Période de retour"
+    ("Statistiques descriptives", "GEV", "Niveau de retour"), #"Scatter plot", "Période de retour", "Temp stats", "Scatter plot", "Tous les max"
     label_visibility="hidden"
 )
 
@@ -76,5 +76,14 @@ if option == "Statistiques descriptives":
 elif option == "GEV":
     gev.show(config_path)
 
+elif option == "Scatter plot":
+    scatter_plot.show(config_path)
+
 elif option == "Niveau de retour":
     niveau_retour.show(config_path)
+
+elif option == "Tous les max":
+    all_max.show(config_path)
+
+elif option == "Temp stats":
+    temp_stats.show(config_path)

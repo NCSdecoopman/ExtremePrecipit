@@ -32,7 +32,7 @@ try:
         cache_dir=cache_path,
         allow_patterns=["statisticals/observed*"]
     )
-    print("Téléchargement des GEV AROME...")
+    print("Téléchargement des GEVs AROME...")
     snapshot_download(
         repo_id="ncsdecoopman/ExtremePrecipit",
         repo_type="dataset",
@@ -41,7 +41,7 @@ try:
         cache_dir=cache_path,
         allow_patterns=["gev/modelised*"]
     )
-    print("Téléchargement des GEV STATIONS...")
+    print("Téléchargement des GEVs STATIONS...")
     snapshot_download(
         repo_id="ncsdecoopman/ExtremePrecipit",
         repo_type="dataset",
