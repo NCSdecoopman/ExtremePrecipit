@@ -160,8 +160,21 @@ def match_and_compare(
         obs_vs_mod
         .join(obs.select(["NUM_POSTE_obs", "lat", "lon", column_to_show]), on="NUM_POSTE_obs", how="left")
         .join(mod.select(["NUM_POSTE_mod", column_to_show]), on="NUM_POSTE_mod", how="left", suffix="_mod")
-        .rename({column_to_show: "pr_obs", f"{column_to_show}_mod": "pr_mod"})
+        .rename({column_to_show: "Station", f"{column_to_show}_mod": "AROME"})
     )
-    matched = matched.select(["NUM_POSTE_obs", "lat", "lon", "NUM_POSTE_mod", "pr_obs", "pr_mod"]).drop_nulls()
+    matched = matched.select(["NUM_POSTE_obs", "lat", "lon", "NUM_POSTE_mod", "Station", "AROME"]).drop_nulls()
     
     return matched
+
+
+def standardize_year(year: float, min_year: int, max_year: int) -> float:
+    """
+    Centre et réduit une année `year` en utilisant min_year et max_year.
+    """
+    mean = (min_year + max_year) / 2
+    std = (max_year - min_year) / 2
+    return (year - mean) / std
+
+
+def filter_nan(df: pl.DataFrame, columns: list[str]):
+    return df.drop_nulls(subset=columns)

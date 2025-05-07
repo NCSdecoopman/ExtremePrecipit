@@ -1,7 +1,6 @@
 import pydeck as pdk
 import streamlit as st
 import polars as pl
-import numpy as np
 
 def prepare_layer(df: pl.DataFrame) -> pl.DataFrame:
     return df.select([
@@ -46,7 +45,7 @@ def create_layer(df: pl.DataFrame) -> pdk.Layer:
         extruded=False
     )
 
-def create_scatter_layer(df: pl.DataFrame, radius=1000) -> pdk.Layer:
+def create_scatter_layer(df: pl.DataFrame, radius=1500) -> pdk.Layer:
     df = prepare_layer(df)
 
     return pdk.Layer(
@@ -55,7 +54,7 @@ def create_scatter_layer(df: pl.DataFrame, radius=1000) -> pdk.Layer:
         get_position=["lon", "lat"],
         get_fill_color="fill_color",
         get_line_color=[0, 0, 0],
-        line_width_min_pixels=1,
+        line_width_min_pixels=0.2,
         get_radius=radius,
         radius_scale=1,
         radius_min_pixels=2,

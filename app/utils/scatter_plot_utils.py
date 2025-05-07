@@ -5,7 +5,7 @@ import numpy as np
 from scipy.stats import genextreme
 
 def generate_scatter_plot_interactive(df: pl.DataFrame, stat_choice: str, unit_label: str, height: int,
-                                      x_label: str = "pr_mod", y_label: str = "pr_obs"):
+                                      x_label: str = "AROME", y_label: str = "Station"):
     df_pd = df.select(["NUM_POSTE_obs", "NUM_POSTE_mod", "lat", "lon", x_label, y_label]).to_pandas()
 
     fig = px.scatter(
@@ -36,18 +36,31 @@ def generate_scatter_plot_interactive(df: pl.DataFrame, stat_choice: str, unit_l
     min_diag = min(x_range[0], y_range[0])
     max_diag = min(x_range[1], y_range[1])
 
+    # Ajouter le trait y = x sans légende
     fig.add_trace(
         go.Scatter(
             x=[min_diag, max_diag],
             y=[min_diag, max_diag],
             mode='lines',
             line=dict(color='red', dash='dash'),
-            name='y = x',
+            showlegend=False,
             hoverinfo='skip'
         )
     )
 
+    # Ajouter une annotation "y = x" en bout de ligne
+    fig.add_annotation(
+        x=max_diag,
+        y=max_diag,
+        text="y = x",
+        showarrow=False,
+        font=dict(color='red'),
+        xanchor="left",
+        yanchor="bottom"
+    )
+
     return fig
+
 
 
 

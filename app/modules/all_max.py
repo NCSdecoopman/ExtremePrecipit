@@ -14,7 +14,11 @@ from app.pipelines.import_data import pipeline_data
 from app.pipelines.import_config import pipeline_config
 from app.pipelines.import_map import pipeline_map
 from app.pipelines.import_scatter import pipeline_scatter
-def pipeline_config(config_path): 
+
+import plotly.express as px
+import pandas as pd
+
+def pipeline_config(config_path: dict): 
     config = load_config(config_path)
     STATS, SEASON, SCALE = menu_config()
 
@@ -32,7 +36,7 @@ def pipeline_config(config_path):
     }
 
 
-def show(config_path):
+def show(config_path, min_year: int, max_year: int, middle_year: int):
     st.title("🔬 Tableau scientifique des performances")
     st.markdown(
         """
@@ -44,25 +48,28 @@ def show(config_path):
     )
 
     saisons = {
-        "Année hydrologique": "hydro",
-        "Hiver": "djf",
-        "Printemps": "mam",
-        "Été": "jja",
-        "Automne": "son"
+        "Hydro": "hydro",
+        "DJF": "djf",
+        "MAM": "mam",
+        "JJA": "jja",
+        "SON": "son"
     }
     echelles = {
         "Horaire": "mm_h",
         "Journalière": "mm_j"
     }
-    periodes = {
-        "mm_h": [(2000, 2015)],
-        "mm_j": [(1960, 2015), (2000, 2015)]
-    }
 
     params_config = pipeline_config(config_path)
 
+    periodes = {
+        "mm_h": [(middle_year, max_year)],
+        "mm_j": [(min_year, max_year)]
+    }
+
     results = []
     results_grouped = []
+
+    renvoi_final = []
 
     for nom_saison, saison_key in saisons.items():
         for nom_echelle, echelle_key in echelles.items():
@@ -99,11 +106,11 @@ def show(config_path):
                 # Sélection des colonnes utiles
                 df_obs = observed_cleaning.select(["NUM_POSTE", "year", column_to_show]).rename({
                     "NUM_POSTE": "NUM_POSTE_obs",
-                    column_to_show: "pr_obs"
+                    column_to_show: "Station"
                 })
                 df_mod = df_modelised_load.select(["NUM_POSTE", "year", column_to_show]).rename({
                     "NUM_POSTE": "NUM_POSTE_mod",
-                    column_to_show: "pr_mod"
+                    column_to_show: "AROME"
                 })
 
                 # Jointure 1 : obs + mapping
@@ -112,8 +119,12 @@ def show(config_path):
                 # Jointure 2 : mod + mapping
                 df = df.join(df_mod, on=["NUM_POSTE_mod", "year"], how="left")
 
-                df = df.filter(df["pr_obs"].is_not_null() & df["pr_mod"].is_not_null())
+                df = df.filter(df["Station"].is_not_null() & df["AROME"].is_not_null())
       
+
+                if echelle_key == "mm_j" and saison_key == "hydro":
+                    renvoi_final = df
+                    
                 me, _, _, r2 = generate_metrics(df)
                 results.append({
                     "Echelle": nom_echelle,
@@ -177,7 +188,7 @@ def show(config_path):
         df_grouped = pl.DataFrame(results_grouped)
 
         # Ordre voulu pour les saisons
-        ordered_seasons = ["Année hydrologique", "Hiver", "Printemps", "Été", "Automne"]
+        ordered_seasons = ["Hydro", "DJF", "MAM", "JJA", "SON"]
 
         # Création d'une colonne d'ordre temporaire
         df = df.with_columns([
@@ -230,5 +241,82 @@ def show(config_path):
         st.dataframe(rows)
         st.dataframe(rows_grouped)
 
+
+
+
+        # Remplacer ceci par le chemin vers tes fichiers ou l’objet déjà chargé
+        df_annuel = rows_grouped
+        df_moyenne = rows
+        # Liste des colonnes communes (tu peux l'étendre selon besoin)
+        common_columns = df_annuel.columns
+
+        # On cast toutes les colonnes de df_moyenne pour matcher les types de df_annuel
+        schema_annuel = {col: df_annuel.schema[col] for col in common_columns}
+
+        # Fonction de cast uniforme
+        def cast_to_schema(df, schema):
+            return df.with_columns([
+                pl.col(col).cast(dtype) for col, dtype in schema.items()
+            ])
+
+        df_annuel = cast_to_schema(df_annuel, schema_annuel)
+        df_moyenne = cast_to_schema(df_moyenne, schema_annuel)
+
+        # Ajout des colonnes Type
+        df_annuel = df_annuel.with_columns(pl.lit("Moyenne des maxima").alias("Type"))
+        df_moyenne = df_moyenne.with_columns(pl.lit("Maxima annuels").alias("Type"))
+
+        # Concaténation
+        df_all = pl.concat([df_annuel, df_moyenne])
+
+        # Passage à pandas pour Plotly
+        df_all = df_all.to_pandas()
+
+        def melt_metrics(df, metric):
+            """Transforme le DataFrame pour Plotly."""
+            melted = pd.DataFrame()
+            seasons = ["Hydro", "DJF", "MAM", "JJA", "SON"]
+            for saison in seasons:
+                col = f"{saison}_{metric}"
+                if col in df.columns:
+                    temp = df[["Echelle", "Période", "Type"]].copy()
+                    temp["Saison"] = saison
+                    temp[metric] = df[col]
+                    melted = pd.concat([melted, temp], ignore_index=True)
+            return melted
+
+        df_r2 = melt_metrics(df_all, "r²")
+        df_me = melt_metrics(df_all, "ME")
+
+        # Affichage dans Streamlit
+        st.subheader("Comparaison des r² par saison et type")
+        fig_r2 = px.bar(
+            df_r2,
+            x="Saison",
+            y="r²",
+            color="Type",
+            barmode="group",
+            facet_col="Echelle",
+            title="r² par saison",
+            height=500
+        )
+        st.plotly_chart(fig_r2, use_container_width=True)
+
+        st.subheader("Comparaison des erreurs moyennes (ME) par saison et type")
+        fig_me = px.bar(
+            df_me,
+            x="Saison",
+            y="ME",
+            color="Type",
+            barmode="group",
+            facet_col="Echelle",
+            title="Erreur moyenne (ME) par saison",
+            height=500
+        )
+        st.plotly_chart(fig_me, use_container_width=True)
+
+        return renvoi_final, df_r2, df_me
+
     else:
         st.warning("Aucune donnée appariée sur la période.")
+

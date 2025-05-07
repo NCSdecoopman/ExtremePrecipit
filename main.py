@@ -1,5 +1,5 @@
 import streamlit as st
-from app.modules import statisticals, gev, niveau_retour
+from app.modules import statisticals, gev, niveau_retour, change_niveau_retour, all_max
 
 st.set_page_config(layout="wide", page_title="Visualisation des précipitations", page_icon="🌧️")
 
@@ -60,21 +60,28 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-option = "Statistiques descriptives"
-st.sidebar.title("Navigation")
-option = st.sidebar.selectbox(
-    "Navigation",
-    ("Statistiques descriptives", "GEV", "Niveau de retour") #"Scatter plot", "Période de retour", "Temp stats", "Scatter plot", "Tous les max"
-    #label_visibility="hidden"
-)
+st.write("MAJ EN COURS")
+# option = "Statistiques descriptives"
+# st.sidebar.title("Navigation")
+# option = st.sidebar.selectbox(
+#     "Navigation",
+#     ("Statistiques descriptives", "GEV", "Niveau de retour", "Changement niveaux de retour", "Toux les max") #"Scatter plot", "Période de retour", "Temp stats", "Scatter plot", , 
+#     #label_visibility="hidden"
+# )
 
-config_path = "app/config/config.yaml"
+# config_path = "app/config/config.yaml"
 
-if option == "Statistiques descriptives":
-    statisticals.show(config_path)
+# if option == "Statistiques descriptives":
+#     statisticals.show(config_path)
 
-elif option == "GEV":
-    gev.show(config_path)
+# elif option == "GEV":
+#     gev.show(config_path)
 
-elif option == "Niveau de retour":
-    niveau_retour.show(config_path)
+# elif option == "Niveau de retour":
+#     niveau_retour.show(config_path)
+
+# elif option == "Changement niveaux de retour":
+#     change_niveau_retour.show(config_path)
+
+# elif option == "Tous les max":
+#     all_max.show(config_path, 1960, 2020, 2000)

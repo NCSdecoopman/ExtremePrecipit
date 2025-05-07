@@ -1,4 +1,3 @@
-import streamlit as st
 from io import BytesIO
 import base64
 import polars as pl
@@ -198,7 +197,7 @@ def display_vertical_color_legend(height, colormap, vmin, vmax, n_ticks=5, label
         ticks = [dt.datetime.fromtimestamp(t).strftime("%Y-%m-%d") for t in ticks_seconds]
     else:
         ticks_vals = np.linspace(vmax, vmin, n_ticks)
-        ticks = [f"{val:.1f}" for val in ticks_vals]
+        ticks = [f"{val:.2f}" for val in ticks_vals]
 
     html_gradient = f"""
         <div style="text-align: left; font-size: 13px;">{label}</div>

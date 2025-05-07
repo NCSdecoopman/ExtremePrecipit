@@ -12,6 +12,7 @@ from app.utils.legends_utils import *
 from app.utils.hist_utils import *
 from app.utils.scatter_plot_utils import *
 from app.utils.show_info import show_info_metric
+from app.utils.gev_utils import compute_return_levels_ns
 
 import pydeck as pdk
 import polars as pl
@@ -51,10 +52,10 @@ ns_param_map = {
 
 # Liste complète des modèles avec leurs équations explicites
 model_options = {
-    "Stationnaire : μ(t) = μ₀ ; σ(t) = σ₀ ; ξ(t) = ξ": "s_gev",
-    "Modèle 1 : μ(t) = μ₀ + μ₁·t ; σ(t) = σ₀ ; ξ(t) = ξ": "ns_gev_m1",
-    "Modèle 2 : μ(t) = μ₀ ; σ(t) = σ₀ + σ₁·t ; ξ(t) = ξ": "ns_gev_m2",
-    "Modèle 3 : μ(t) = μ₀ + μ₁·t ; σ(t) = σ₀ + σ₁·t ; ξ(t) = ξ": "ns_gev_m3"
+    "M₁(μ₀, σ₀) : μ(t) = μ₀ ; σ(t) = σ₀ ; ξ(t) = ξ": "s_gev",
+    "M₂(μ, σ₀) : μ(t) = μ₀ + μ₁·t ; σ(t) = σ₀ ; ξ(t) = ξ": "ns_gev_m1",
+    "M₃(μ₀, σ) : μ(t) = μ₀ ; σ(t) = σ₀ + σ₁·t ; ξ(t) = ξ": "ns_gev_m2",
+    "M₄(μ, σ) : μ(t) = μ₀ + μ₁·t ; σ(t) = σ₀ + σ₁·t ; ξ(t) = ξ": "ns_gev_m3"
 }
 
 # Calcul du ratio de stations valides
@@ -575,6 +576,9 @@ def show(config_path):
             df_model_aic = add_metadata(df_model_aic, "mm_h" if echelle == "horaire" else "mm_j", type="modelised")
             df_obs_aic = add_metadata(df_obs_aic, "mm_h" if echelle == "horaire" else "mm_j", type="observed")
 
+            df_obs_aic = filter_nan(df_obs_aic, "xi") # xi est toujours valable
+
+
             # liste ordonnée des modèles
             model_names = list(model_options.values())
 
@@ -634,6 +638,19 @@ def show(config_path):
                 deck = plot_map([layer, scatter_layer], view_state, tooltip)
                 if deck:
                     st.pydeck_chart(deck, use_container_width=True, height=height)
+
+                    param_list = ["mu0", "mu1", "sigma0", "sigma1", "xi"]
+                    df_model_aic = df_model_aic.with_columns(pl.col("NUM_POSTE").cast(pl.Int32))
+                    df_obs_aic = df_obs_aic.with_columns(pl.col("NUM_POSTE").cast(pl.Int32))
+
+                    for param in param_list:
+                        obs_vs_mod = match_and_compare(df_obs_aic, df_model_aic, param, df_obs_vs_mod_full)
+
+                        if obs_vs_mod is not None and obs_vs_mod.height > 0:
+                            _, _, _, r2 = generate_metrics(obs_vs_mod)
+                            st.markdown(f"• **{param}** : r² = `{r2:.3f}`")
+                        else:
+                            st.markdown(f"• **{param}** : données insuffisantes")
 
             with col2:
                 st.markdown(html_legend, unsafe_allow_html=True)  

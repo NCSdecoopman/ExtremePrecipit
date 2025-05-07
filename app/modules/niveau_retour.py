@@ -12,6 +12,7 @@ from app.utils.legends_utils import *
 from app.utils.hist_utils import *
 from app.utils.scatter_plot_utils import *
 from app.utils.show_info import show_info_metric
+from app.utils.gev_utils import compute_return_levels_ns
 
 import pydeck as pdk
 import polars as pl
@@ -45,7 +46,6 @@ def standardize_year(year: float, min_year: int, max_year: int) -> float:
     std = (max_year - min_year) / 2
     return (year - mean) / std
 
-import math
 def safe_compute_return(row, T_array, t_norm):
     """Force les None à 0 et retourne 0 si résultat invalide."""
     params = {
@@ -66,18 +66,6 @@ def compute_valid_ratio(df: pl.DataFrame, param_list: list[str]) -> float:
 
 def filter_nan(df: pl.DataFrame, columns: list[str]):
     return df.drop_nulls(subset=columns)
-
-def filter_percentile_all(df: pl.DataFrame, quantile_choice: float, columns: list[str]):
-    quantiles = {
-        col: df.select(pl.col(col).quantile(quantile_choice, "nearest")).item()
-        for col in columns
-    }
-    filter_expr = reduce(
-        lambda acc, col: acc & (pl.col(col) <= quantiles[col]),
-        columns[1:],
-        pl.col(columns[0]) <= quantiles[columns[0]]
-    )
-    return df.filter(filter_expr)
 
 def show(config_path):
     config = load_config(config_path)
@@ -204,3 +192,64 @@ def show(config_path):
             
             # Affiche le graphique avec mode sélection activé
             st.plotly_chart(fig)
+
+
+            # Histogramme de r² en fonction de T
+            st.markdown("### Évolution de r² en fonction de la période de retour T")
+            r2_values = []
+            T_values = list(range(10, 101, 10))
+
+            for T in T_values:
+                T_array_tmp = np.array([T])
+                df_mod_tmp = df_modelised.with_columns(
+                    pl.struct(["mu0", "mu1", "sigma0", "sigma1", "xi"]).map_elements(
+                        lambda row: safe_compute_return(row, T_array_tmp, t_norm),
+                        return_dtype=pl.Float64
+                    ).alias("qT")
+                )
+
+                df_obs_tmp = df_observed.with_columns(
+                    pl.struct(["mu0", "mu1", "sigma0", "sigma1", "xi"]).map_elements(
+                        lambda row: safe_compute_return(row, T_array_tmp, t_norm),
+                        return_dtype=pl.Float64
+                    ).alias("qT")
+                )
+
+                obs_vs_mod_tmp = match_and_compare(df_obs_tmp, df_mod_tmp, "qT", df_obs_vs_mod)
+                if obs_vs_mod_tmp is not None and obs_vs_mod_tmp.height > 0:
+                    _, _, _, r2_tmp = generate_metrics(obs_vs_mod_tmp)
+                    r2_values.append(r2_tmp)
+                else:
+                    r2_values.append(None)
+
+            r2_mean = np.nanmean(r2_values)
+
+            fig_r2 = go.Figure()
+
+            # Barres de r²
+            fig_r2.add_trace(go.Bar(
+                x=T_values,
+                y=r2_values,
+                name="r²",
+                marker_color='steelblue'
+            ))
+
+            # Ligne rouge verticale
+            fig_r2.add_trace(go.Scatter(
+                x=[T_values[0]-5, T_values[-1]+10],
+                y=[r2_mean, r2_mean],
+                mode="lines+text",
+                name="r² moyen",
+                line=dict(color="red", dash="dash"),
+                text=[None, f"{r2_mean:.3f}"],
+                textposition="top right"
+            ))
+
+            fig_r2.update_layout(
+                title="",
+                xaxis_title="Période de retour T (ans)",
+                yaxis_title="r²",
+                height=400
+            )
+
+            st.plotly_chart(fig_r2, use_container_width=True)
