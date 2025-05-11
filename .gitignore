@@ -19,3 +19,6 @@ __pycache__/
 *.pyc
 *.cache
 *.log
+
+# Ignorer les caches Jupyter
+.jupyter_cache/

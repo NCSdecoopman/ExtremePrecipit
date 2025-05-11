@@ -107,7 +107,11 @@ def formalised_legend(df: pl.DataFrame, column_to_show: str, colormap, vmin=None
         vmin, vmax = 1, 12
 
     else: # ➔ Cas général (continu)
-        vmin = 0 if vmin is None else vmin
+        if vmin is None:
+            vmin = df[column_to_show].min()
+            if vmin > 0:
+                vmin = 0        
+
         vmax = df[column_to_show].max() if vmax is None else vmax
         value_norm = ((df[column_to_show] - vmin) / (vmax - vmin)).clip(0.0, 1.0)
         df = df.with_columns(value_norm.alias("value_norm"))

@@ -123,7 +123,10 @@ def pipeline_map_quarto(
     les ensembles de données 'modelised_show' et 'observed'.
     """
     # Normalisation des couleurs sur les données modélisées
-    colormap = echelle_config("continu" if continu else "discret", n_colors=n_colors)
+    if "echelle" in result:
+        colormap = echelle_config("diverging_zero_white", n_colors=n_colors)
+    else:
+        colormap = echelle_config("continu" if continu else "discret", n_colors=n_colors)
 
     # Normalisation des valeurs modélisées
     result_df_modelised_show, vmin_mod, vmax_mod = formalised_legend(
@@ -144,8 +147,10 @@ def pipeline_map_quarto(
     )
 
     # Calcul des bornes communes
-    vmin_commun = min(vmin_mod, vmin_obs)
-    vmax_commun = max(vmax_mod, vmax_obs)
+    if "vmin" in result and "vmax" in result:
+        vmin_commun, vmax_commun = result["vmin"], result["vmax"]
+    else:
+        vmin_commun, vmax_commun = min(vmin_mod, vmin_obs), max(vmax_mod, vmax_obs)
 
     # Mise à jour de la normalisation pour les deux ensembles de données avec les bornes communes
     result_df_modelised_show, _, _ = formalised_legend(
