@@ -869,14 +869,22 @@ z_T(t) =
 </div>
 <div class="revealjs-slide" data-background-transparent="true">
 <script>
-Reveal.on('slidechanged', event => {
-  const iframes = event.currentSlide.querySelectorAll('iframe');
+function reloadIframes(slide) {
+  const iframes = slide.querySelectorAll('iframe');
   for (const iframe of iframes) {
     const src = iframe.src;
-    iframe.src = '';        // reset src
-    iframe.src = src;       // reload src
+    // Skip empty iframes or already reloaded
+    if (!src) continue;
+    iframe.src = '';  // Unload
+    iframe.src = src; // Reload
   }
-});
+}
+
+// Au chargement initial
+Reveal.on('ready', event => reloadIframes(event.currentSlide));
+
+// À chaque transition (plus fiable que slidechanged)
+Reveal.on('slidetransitionend', event => reloadIframes(event.currentSlide));
 </script>
 </div>
 
