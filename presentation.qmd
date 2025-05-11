@@ -473,6 +473,7 @@ html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
     echelle=echelle,
     stat_choice_label="Moyenne des maxima"
 )
+
 display(HTML(f"""
     <div style="font-size: 18px; color: #333;">
         <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
@@ -504,6 +505,89 @@ display(HTML(f"Δ (AROME - Stations) : {me:+.3f} mm/h ({percent*100:.1f}%)"))
 
 - Rappel : le cumul était bon donc les orages horaires les plus forts ont une faible emprise spatiale ?
 - Oui : le regroupement de stations sur une même grille réduit le Δ
+
+
+---
+
+```{python}
+# Nouvelle version qui utilise directement le nom du quadrant
+def afficher_quadrant_par_nom(result, config, quadrant_name, quadrants, echelle="horaire", stat_label="Moyenne des maxima"):
+    year_display_min = 2000
+    year_display_max = config["years"]["max"]
+
+    # Extraire les bornes géographiques du quadrant
+    bounds = quadrants.get(quadrant_name.upper())
+    if bounds is None:
+        raise ValueError(f"Quadrant '{quadrant_name}' non reconnu. Choisir parmi {list(quadrants.keys())}")
+
+    lat_min = bounds["lat_min"]
+    lat_max = bounds["lat_max"]
+    lon_min = bounds["lon_min"]
+    lon_max = bounds["lon_max"]
+
+    # Filtrage des données
+    result_filtered = {}
+    for key, value in result.items():
+        if isinstance(value, pl.DataFrame):
+            result_filtered[key] = value.filter(
+                (value["lat"] >= lat_min) & (value["lat"] < lat_max) &
+                (value["lon"] >= lon_min) & (value["lon"] < lon_max)
+            )
+        elif isinstance(value, pd.DataFrame):
+            result_filtered[key] = value[
+                (value["lat"] >= lat_min) & (value["lat"] < lat_max) &
+                (value["lon"] >= lon_min) & (value["lon"] < lon_max)
+            ]
+        else:
+            result_filtered[key] = value
+
+    # Génération de la carte et du scatter
+    html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
+        name=f"{echelle}_mean_max_{year_display_min}_{quadrant_name}",
+        result=result_filtered,
+        echelle=echelle,
+        stat_choice_label=stat_label,
+    )
+
+    # Affichage HTML
+    display(HTML(f"""
+        <div style="font-size: 18px; color: #333;">
+            <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title} {quadrant_name.upper()}</p>
+            <p style="font-size: 18px; color: #3498db;">
+                de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à 
+                <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
+                (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | 
+                Échelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
+            </p> 
+        </div>    
+    """))
+
+    display(HTML(f"""
+    <div class="columns" style="display: flex; gap: 0px; margin: 0;">
+        <div class="column" style="width: 50%;">{html_map_legend}</div>
+        <div class="column" style="width: 50%;">{html_scatter}</div>
+    </div>
+    """))
+
+    display(HTML(f"Δ (AROME - Stations) : {me:+.3f} mm/h ({percent*100:.1f}%)"))
+
+
+
+# Définitions approximatives pour chaque quadrant
+quadrants = {
+    "SE": {"lat_min": 42, "lat_max": 46.5, "lon_min": 2.5, "lon_max": 7.9},
+    "NE": {"lat_min": 46, "lat_max": 51.5, "lon_min": 2.5, "lon_max": 10},
+    "SO": {"lat_min": 42, "lat_max": 46.5, "lon_min": -5.0, "lon_max": 2.5},
+    "NO": {"lat_min": 46.5, "lat_max": 51.5, "lon_min": -5.0, "lon_max": 2.5},
+}
+```
+
+```{python}
+afficher_quadrant_par_nom(result, config, "SE", quadrants)
+```
+
+
+
 
 # Précipitations extrêmes
 
@@ -1162,29 +1246,3 @@ display(HTML(f"""
 """))
 display(HTML(html_all))
 ```
-
-
-::: {.revealjs-slide background-transparent=true}
-
-```{=html}
-<script>
-function reloadIframes(slide) {
-  const iframes = slide.querySelectorAll('iframe');
-  for (const iframe of iframes) {
-    const src = iframe.src;
-    // Skip empty iframes or already reloaded
-    if (!src) continue;
-    iframe.src = '';  // Unload
-    iframe.src = src; // Reload
-  }
-}
-
-// Au chargement initial
-Reveal.on('ready', event => reloadIframes(event.currentSlide));
-
-// À chaque transition (plus fiable que slidechanged)
-Reveal.on('slidetransitionend', event => reloadIframes(event.currentSlide));
-</script>
-
-
-:::
