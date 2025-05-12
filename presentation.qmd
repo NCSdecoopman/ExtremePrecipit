@@ -60,10 +60,20 @@ with open(config_path, "r") as f:
 ```
 
 
-Caractérisation et évolution des précipitations extrêmes horaires en France à partir d’un modèle régional de climat à convection profonde résolue :  
+## Précipitations extrêmes horaires en France
 
-- Données du CP-RCM CNRM-AROME et données stations Météo-France
-- GEV stationnaires et non stationnaires
+1. Objectif : analyser les tendances des précipitations extrêmes horaires en France (1959–2022) à partir du modèle CP-RCM CNRM-AROME (2.5 km) forcé par ERA5
+
+2. Méthodes
+
+- GEV stationnaire et non stationnaire
+- Comparaison avec observations Météo-France (+ EDF ?)
+
+3. Enjeux
+
+- Effet du réchauffement climatique sur les extrêmes
+- Zones à forte variabilité (Alpes, Méditerranée)
+- Contribution à la connaissance du risque hydrométéo
 
 
 # AROME vs. stations
