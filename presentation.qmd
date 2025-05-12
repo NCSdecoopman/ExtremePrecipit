@@ -803,7 +803,7 @@ for ax in axes:
 for mu in mu_values:
     y = genextreme.pdf(x, c=-0.1, loc=mu, scale=2)
     axes[0].plot(x, y, label=f"$\\mu$ = {mu}")
-axes[0].set_title("Effet de $\\mu$", loc='right')
+axes[0].set_title("Effet de $\\mu$ (position)", loc='right')
 axes[0].set_xlabel("x")
 axes[0].set_ylabel("Densité")
 axes[0].legend(frameon=False, fontsize=9)
@@ -812,7 +812,7 @@ axes[0].legend(frameon=False, fontsize=9)
 for sigma in sigma_values:
     y = genextreme.pdf(x, c=-0.1, loc=0, scale=sigma)
     axes[1].plot(x, y, label=f"$\\sigma$ = {sigma}")
-axes[1].set_title("Effet de $\\sigma$", loc='right')
+axes[1].set_title("Effet de $\\sigma$ (échelle)", loc='right')
 axes[1].set_xlabel("x")
 axes[1].legend(frameon=False, fontsize=9)
 
@@ -820,7 +820,7 @@ axes[1].legend(frameon=False, fontsize=9)
 for xi in xi_values:
     y = genextreme.pdf(x, c=-xi, loc=0, scale=2)
     axes[2].plot(x, y, label=f"$\\xi$ = {xi}")
-axes[2].set_title("Effet de $\\xi$", loc='right')
+axes[2].set_title("Effet de $\\xi$ (forme)", loc='right')
 axes[2].set_xlabel("x")
 axes[2].legend(frameon=False, fontsize=9)
 
