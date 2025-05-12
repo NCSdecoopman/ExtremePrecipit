@@ -1057,6 +1057,7 @@ display(HTML(html_scatter))
 display(HTML(f"Δ (AROME - Stations) : {me:+.3f} ({percent*100:+.1f}%)"))
 ```
 
+
 # Niveau de retour
   
 $$

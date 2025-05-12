@@ -1,5 +1,5 @@
 import streamlit as st
-from app.modules import statisticals #, gev, niveau_retour, change_niveau_retour, all_max
+from app.modules import statisticals, gev#, niveau_retour, change_niveau_retour, all_max
 
 st.set_page_config(layout="wide", page_title="Visualisation des précipitations", page_icon="🌧️")
 
@@ -63,20 +63,23 @@ st.markdown("""
 option = "Statistiques descriptives"
 
 
-# st.sidebar.title("Navigation")
-# option = st.sidebar.selectbox(
-#     "Navigation",
-#     ("Statistiques descriptives", "GEV", "Niveau de retour", "Changement niveaux de retour", "Toux les max") #"Scatter plot", "Période de retour", "Temp stats", "Scatter plot", , 
-#     #label_visibility="hidden"
-# )
+st.sidebar.title("Navigation")
+option = st.sidebar.selectbox(
+    "Navigation",
+    ("Statistiques descriptives", "GEV")
+    #label_visibility="hidden"
+)
+
+# , "Niveau de retour", "Changement niveaux de retour", "Toux les max"
+# "Scatter plot", "Période de retour", "Temp stats", "Scatter plot", , 
 
 config_path = "app/config/config.yaml"
 
 if option == "Statistiques descriptives":
     statisticals.show(config_path)
 
-# elif option == "GEV":
-#     gev.show(config_path)
+elif option == "GEV":
+    gev.show(config_path)
 
 # elif option == "Niveau de retour":
 #     niveau_retour.show(config_path)
