@@ -30,9 +30,9 @@ jobs:
           HF_USER: "ncsdecoopman"
           HF_SPACE: "ExtremePrecipit"
         run: |
-          # a) Créer le dossier "deploy" et y copier tout sauf .git/.github/data/deploy
+          # a) Créer le dossier "deploy" et y copier tout sauf ....
           mkdir deploy
-          rsync -av --exclude=deploy --exclude=.git --exclude=.github --exclude=data . deploy/
+          rsync -av --exclude=deploy --exclude=.git --exclude=.github --exclude=data --exclude=assets --exclude=presentation_files . deploy/
 
           # b) Créer le Dockerfile dans deploy/
           cat <<'EOF' > deploy/Dockerfile
