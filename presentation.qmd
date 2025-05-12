@@ -121,7 +121,8 @@ html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
 display(HTML(f"""
     <div style="font-size: 18px; color: #333;">
         <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
-        <p style="font-size: 18px; color: #3498db;">de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
+        <p style="font-size: 18px; color: #3498db;">
+            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
             (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
         </p> 
     </div>
