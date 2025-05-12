@@ -62,14 +62,19 @@ with open(config_path, "r") as f:
 
 ## Précipitations extrêmes horaires en France
 
-1. Objectif : analyser les tendances des précipitations extrêmes horaires en France (1959–2022) à partir du modèle CP-RCM CNRM-AROME (2.5 km) forcé par ERA5
+<br><br>
 
-2. Méthodes
+### 1. Objectif
+Analyser les tendances des précipitations extrêmes horaires en France (1959–2022) à partir du modèle CP-RCM CNRM-AROME (2.5 km) forcé par ERA5
+<br>
+
+### 2. Méthodes
 
 - GEV stationnaire et non stationnaire
 - Comparaison avec observations Météo-France (+ EDF ?)
+<br>
 
-3. Enjeux
+### 3. Enjeux
 
 - Effet du réchauffement climatique sur les extrêmes
 - Zones à forte variabilité (Alpes, Méditerranée)
