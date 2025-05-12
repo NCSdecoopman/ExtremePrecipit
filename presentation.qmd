@@ -1023,7 +1023,7 @@ html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
     result=result,
     echelle=echelle,
     stat_choice_label=title,
-    unit_choice="jours"
+    unit_choice=""
 )
 
 
