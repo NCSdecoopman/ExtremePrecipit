@@ -999,6 +999,65 @@ display(HTML(html_scatter))
 :::
 :::
 
+---
+
+```{python}
+title="Valeurs de ξ"
+``` 
+
+```{python}
+year_display_min = config["years"]["min"]
+year_display_max = config["years"]["max"]
+echelle="quotidien"
+
+# Étape 1 : récupérer résultats avec pipeline_data_quarto
+result = {
+    "modelised": df_model_aic,
+    "modelised_show": df_model_aic,
+    "observed": df_obs_aic,
+    "observed_show": df_obs_aic,
+    "column": "xi"
+}
+# Étape 2 : affichage carte + scatter
+html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
+    name="jour_pluie_total",
+    result=result,
+    echelle=echelle,
+    stat_choice_label=title,
+    unit_choice="jours"
+)
+
+
+display(HTML(f"""
+    <div style="font-size: 18px; color: #333;">
+        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
+        <p style="font-size: 18px; color: #3498db;">
+            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
+            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
+        </p> 
+    </div>
+
+"""))
+```
+
+
+::: {.columns style="display: flex; gap: 0px; margin: 0;"}
+::: {.column width="50%"}
+```{python}
+display(HTML(html_map_legend))
+```
+:::
+::: {.column width="50%"}
+```{python}
+display(HTML(html_scatter))
+```
+:::
+:::
+
+```{python}
+display(HTML(f"Δ (AROME - Stations) : {me:+.3f} ({percent*100:+.1f}%)"))
+```
+
 # Niveau de retour
   
 $$
