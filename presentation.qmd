@@ -117,7 +117,6 @@ html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
     unit_choice="jours"
 )
 
-
 display(HTML(f"""
     <div style="font-size: 18px; color: #333;">
         <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
@@ -1020,7 +1019,7 @@ result = {
 }
 # Étape 2 : affichage carte + scatter
 html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
-    name="jour_pluie_total",
+    name="valeur_de_xi",
     result=result,
     echelle=echelle,
     stat_choice_label=title,
