@@ -365,7 +365,7 @@ display(HTML(f"Δ (AROME - Stations) : {me:+.3f} mm/h ({percent*100:+.1f}%)"))
 
 - Résultat semblable
 
-# Conclusion : des pluies...
+# Conclusion : avec AROME il y a des pluies...
 
 
 - **plus fréquentes**... surestime le nombre de jours de pluie  
