@@ -1,5 +1,5 @@
 import streamlit as st
-from app.modules import statisticals, gev, niveau_retour, change_niveau_retour, all_max
+from app.modules import statisticals #, gev, niveau_retour, change_niveau_retour, all_max
 
 st.set_page_config(layout="wide", page_title="Visualisation des précipitations", page_icon="🌧️")
 
@@ -60,8 +60,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.write("MAJ EN COURS")
-# option = "Statistiques descriptives"
+option = "Statistiques descriptives"
+
+
 # st.sidebar.title("Navigation")
 # option = st.sidebar.selectbox(
 #     "Navigation",
@@ -69,10 +70,10 @@ st.write("MAJ EN COURS")
 #     #label_visibility="hidden"
 # )
 
-# config_path = "app/config/config.yaml"
+config_path = "app/config/config.yaml"
 
-# if option == "Statistiques descriptives":
-#     statisticals.show(config_path)
+if option == "Statistiques descriptives":
+    statisticals.show(config_path)
 
 # elif option == "GEV":
 #     gev.show(config_path)
