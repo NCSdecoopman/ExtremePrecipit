@@ -1197,7 +1197,7 @@ models = ["ns_gev_m1", "ns_gev_m2", "ns_gev_m3", "best_model"]
 
 # Bornes des années utilisées pour la standardisation
 min_year, max_year = config["years"]["min"], config["years"]["max"]
-std_year = (max_year - min_year) / 2  # σₜ = (max - min) / 2
+std_year = max_year - min_year
 
 # Lecture des données GEV
 mod_dir = Path(config["gev"]["modelised"]) / echelle
