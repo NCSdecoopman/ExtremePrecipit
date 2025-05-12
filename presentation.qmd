@@ -145,7 +145,7 @@ display(HTML(html_scatter))
 :::
 
 ```{python}
-display(HTML(f"Δ (AROME - Stations) : {me:+.1f} jours ({percent*100:.1f}%)"))
+display(HTML(f"Δ (AROME - Stations) : {me:+.1f} jours ({percent*100:+.1f}%)"))
 ```
 
 - tendance à déclencher des jours de pluie plus fréquemment que ce qui est observé  
@@ -208,7 +208,7 @@ display(HTML(html_scatter))
 :::
 
 ```{python}
-display(HTML(f"Δ (AROME - Stations) : {me:+.1f} jours ({percent*100:.1f}%)"))
+display(HTML(f"Δ (AROME - Stations) : {me:+.1f} jours ({percent*100:+.1f}%)"))
 ```
 
 
@@ -301,8 +301,8 @@ _, _, _, me_2000, _, percent_2000 = pipeline_map_legend_scatter(
 
 
 ```{python}
-display(HTML(f"Δ (AROME - Stations) de {config["years"]["min"]} à {year_display_max} : {me_1959:+.3f} mm/j ({percent_1959*100:.1f}%)"))
-display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me_2000:+.3f} mm/j ({percent_2000*100:.1f}%)"))
+display(HTML(f"Δ (AROME - Stations) de {config["years"]["min"]} à {year_display_max} : {me_1959:+.3f} mm/j ({percent_1959*100:+.1f}%)"))
+display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me_2000:+.3f} mm/j ({percent_2000*100:+.1f}%)"))
 ```
 
 - Répartition correcte de la quantité totale d’eau 
@@ -360,7 +360,7 @@ display(HTML(html_scatter))
 :::
 
 ```{python}
-display(HTML(f"Δ (AROME - Stations) : {me:+.3f} mm/h ({percent*100:.1f}%)"))
+display(HTML(f"Δ (AROME - Stations) : {me:+.3f} mm/h ({percent*100:+.1f}%)"))
 ```
 
 - Résultat semblable
@@ -456,8 +456,8 @@ _, _, _, me_2000, _, percent_2000 = pipeline_map_legend_scatter(
     stat_choice_label="Moyenne des maxima"
 )
 
-display(HTML(f"Δ (AROME - Stations) de {config["years"]["min"]} à {year_display_max} : {me_1959:+.3f} mm/j ({percent_1959*100:.1f}%)"))
-display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me_2000:+.3f} mm/j ({percent_2000*100:.1f}%)"))
+display(HTML(f"Δ (AROME - Stations) de {config["years"]["min"]} à {year_display_max} : {me_1959:+.3f} mm/j ({percent_1959*100:+.1f}%)"))
+display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me_2000:+.3f} mm/j ({percent_2000*100:+.1f}%)"))
 ```
 
 - Estimation bruitée sur une période restreinte ?
@@ -515,7 +515,7 @@ display(HTML(html_scatter))
 :::
 
 ```{python}
-display(HTML(f"Δ (AROME - Stations) : {me:+.3f} mm/h ({percent*100:.1f}%)"))
+display(HTML(f"Δ (AROME - Stations) : {me:+.3f} mm/h ({percent*100:+.1f}%)"))
 ```
 
 - Rappel : le cumul était bon donc les orages horaires les plus forts ont une faible emprise spatiale ?
@@ -584,7 +584,7 @@ def afficher_quadrant_par_nom(result, config, quadrant_name, quadrants, echelle=
     </div>
     """))
 
-    display(HTML(f"Δ (AROME - Stations) : {me:+.3f} mm/h ({percent*100:.1f}%)"))
+    display(HTML(f"Δ (AROME - Stations) : {me:+.3f} mm/h ({percent*100:+.1f}%)"))
 
 
 
