@@ -1197,7 +1197,8 @@ models = ["ns_gev_m1", "ns_gev_m2", "ns_gev_m3", "best_model"]
 
 # Bornes des années utilisées pour la standardisation
 min_year, max_year = config["years"]["min"], config["years"]["max"]
-std_year = max_year - min_year
+year_range = max_year - min_year
+
 
 # Lecture des données GEV
 mod_dir = Path(config["gev"]["modelised"]) / echelle
@@ -1217,8 +1218,8 @@ for model in models:
 
         df = ensure_mu1_sigma1(df)
 
-        mu1_natural = df["mu1"] / std_year
-        sigma1_natural = df["sigma1"] / std_year
+        mu1_natural = df["mu1"] / year_range
+        sigma1_natural = df["sigma1"] / year_range
         xi = df["xi"]
 
         C_T = (log_term ** (-xi)) - 1
@@ -1257,8 +1258,8 @@ for model in models:
     # Conversion des dérivées ∂qT/∂t du temps standardisé → temps réel
     # ∂μ/∂tₙᵒʳᵐ = μ₁  donc ∂μ/∂année = μ₁ / σₜ
     # ∂σ/∂année = σ₁ / σₜ
-    mu1_natural = pl.col("mu1") / std_year
-    sigma1_natural = pl.col("sigma1") / std_year
+    mu1_natural = pl.col("mu1") / year_range
+    sigma1_natural = pl.col("sigma1") / year_range
 
     # Calcul du terme C_T :  Cₜ = (−log(1−1/T))^(−ξ) − 1
     log_term = -np.log(1 - 1 / T_choice)
