@@ -1,5 +1,5 @@
 import streamlit as st
-from app.modules import statisticals, gev#, niveau_retour, change_niveau_retour, all_max
+from app.modules import statisticals, gev #, niveau_retour, change_niveau_retour, all_max
 
 st.set_page_config(layout="wide", page_title="Visualisation des précipitations", page_icon="🌧️")
 

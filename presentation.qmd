@@ -23,19 +23,19 @@ jupyter: stage
 ---
 
 ```{python}
-# import shutil
-# shutil.rmtree("__quarto_cache", ignore_errors=True)
+import shutil
+shutil.rmtree("__quarto_cache", ignore_errors=True)
+shutil.rmtree(".jupyter_cache", ignore_errors=True)
 
 # Imports
 import yaml
 from pathlib import Path
-
 import pandas as pd
 import polars as pl
 import numpy as np
 
 import plotly.express as px
-from IPython.display import display, HTML
+from IPython.display import display, HTML, Markdown
 import plotly.io as pio
 
 from app.utils.data_utils import (
@@ -49,7 +49,7 @@ from app.utils.data_utils import (
 from app.utils.stats_utils import (
     generate_metrics
 )
-
+from app.pipelines.pipeline_quarto import pipeline_map_legend_scatter
 from app.utils.gev_utils import safe_compute_return
 from app.pipelines.pipeline_quarto import *
 
@@ -775,10 +775,13 @@ display(HTML(f"""
 ```{python}
 # Liste complète des modèles avec leurs équations explicites
 model_options = {
-    "M₁(μ₀, σ₀) : μ(t) = μ₀ ; σ(t) = σ₀ ; ξ(t) = ξ": "s_gev",
-    "M₂(μ, σ₀) : μ(t) = μ₀ + μ₁·t ; σ(t) = σ₀ ; ξ(t) = ξ": "ns_gev_m1",
-    "M₃(μ₀, σ) : μ(t) = μ₀ ; σ(t) = σ₀ + σ₁·t ; ξ(t) = ξ": "ns_gev_m2",
-    "M₄(μ, σ) : μ(t) = μ₀ + μ₁·t ; σ(t) = σ₀ + σ₁·t ; ξ(t) = ξ": "ns_gev_m3"
+    "M₀(μ₀, σ₀) : μ(t) = μ₀ ; σ(t) = σ₀ ; ξ(t) = ξ": "s_gev",
+    "M₁(μ, σ₀) : μ(t) = μ₀ + μ₁·t ; σ(t) = σ₀ ; ξ(t) = ξ": "ns_gev_m1",
+    "M₂(μ₀, σ) : μ(t) = μ₀ ; σ(t) = σ₀ + σ₁·t ; ξ(t) = ξ": "ns_gev_m2",
+    "M₃(μ, σ) : μ(t) = μ₀ + μ₁·t ; σ(t) = σ₀ + σ₁·t ; ξ(t) = ξ": "ns_gev_m3",
+    "M₁⋆(μ, σ₀) : μ(t) = μ₀ + μ₁·t₊ ; σ(t) = σ₀ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m1_break_year",
+    "M₂⋆(μ₀, σ) : μ(t) = μ₀ ; σ(t) = σ₀ + σ₁·t₊ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m2_break_year",
+    "M₃⋆(μ, σ) : μ(t) = μ₀ + μ₁·t₊ ; σ(t) = σ₀ + σ₁·t₊ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m3_break_year",
 }
 model_labels = {v: k.split(" :")[0] for k, v in model_options.items()}
 ```
@@ -841,18 +844,30 @@ axes[2].legend(frameon=False, fontsize=9)
 plt.show()
 ```
 
-::: {.table .striped}
+---
 
-Soit :
+### Modèles sans rupture temporelle
 
-| Modèle | μ(t)            | σ(t)            | ξ(t) |
-|--------|------------------|------------------|------|
-| M₁     | μ₀               | σ₀               | ξ    |
-| M₂     | μ₀ + μ₁·t        | σ₀               | ξ    |
-| M₃     | μ₀               | σ₀ + σ₁·t        | ξ    |
-| M₄     | μ₀ + μ₁·t        | σ₀ + σ₁·t        | ξ    |
+| Modèle | μ(t)              | σ(t)              | ξ(t) |
+|:------:|:------------------|:------------------|:-----:|
+| M₀     | μ₀                | σ₀                | ξ    |
+| M₁     | μ₀ + μ₁·t         | σ₀                | ξ    |
+| M₂     | μ₀                | σ₀ + σ₁·t         | ξ    |
+| M₃     | μ₀ + μ₁·t         | σ₀ + σ₁·t         | ξ    |
 
-:::
+
+### Modèles avec rupture en 1985
+
+<span style="font-size: 1.05em;">Soit</span>
+**t₊ = t × 𝟙{t &gt; 1985}**,
+on a :
+
+| Modèle         | μ(t)                 | σ(t)                 | ξ(t) |
+|:--------------:|:---------------------|:---------------------|:-----:|
+| M₁⋆ (rupture)  | μ₀ + μ₁·t₊           | σ₀                   | ξ    |
+| M₂⋆ (rupture)  | μ₀                   | σ₀ + σ₁·t₊           | ξ    |
+| M₃⋆ (rupture)  | μ₀ + μ₁·t₊           | σ₀ + σ₁·t₊           | ξ    |
+
 
 
 ---
@@ -885,6 +900,7 @@ df_obs_aic = df_obs_aic.with_columns(
 
 # liste ordonnée des modèles
 categories = list(model_labels.values())  # ["M₁(μ₀, σ₀)", "M₂(μ, σ₀)", ...]
+
 result = {
     "modelised": df_model_aic,
     "modelised_show": df_model_aic,
@@ -1075,7 +1091,7 @@ echelle = "quotidien"
 unit_choice = "mm/j"
 quantile_choice = 0.999
 
-stat_choice_label = "Niveau de retour T=20 ans"
+stat_choice_label = "Niveau de retour T = 20 ans"
 T_choice = 20
 
 min_year_choice = config["years"]["min"]
@@ -1142,7 +1158,7 @@ html_map_legend, html_scatter, r2, me, n, _ = pipeline_map_legend_scatter(
     stat_choice_label="Niveau de retour 20 stationnaire"
 )
 
-title = f"Niveau de retour {T_choice} sans effet temporel"
+title = f"Niveau de retour {T_choice} ans sans effet temporel"
 display(HTML(f"""
     <div style="font-size: 18px; color: #333;">
         <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
@@ -1171,8 +1187,6 @@ display(HTML(html_scatter))
 
 # Changement du niveau de retour par 10 ans
 
----
-
 ```{python}
 # Remplace les valeurs manquantes (None) par 0 pour les paramètres manquants
 def ensure_mu1_sigma1(df: pl.DataFrame) -> pl.DataFrame:
@@ -1187,129 +1201,93 @@ def ensure_mu1_sigma1(df: pl.DataFrame) -> pl.DataFrame:
     else:
         df_new = df_new.with_columns(pl.col("sigma1").fill_null(0.0))
     return df_new
+
+def get_year_range(model: str, min_year: int, max_year: int) -> int:
+    if "break_year" in model:
+        return max_year - 1985
+    else:
+        return max_year - min_year
 ```
 
 ```{python}
-from app.pipelines.import_map import pipeline_map
+# -------------------- CONFIGURATION --------------------
 T_choice = 20
-echelle="quotidien"
+log_term = -np.log(1 - 1 / T_choice)
 quantile_choice = 0.9999
-models = ["ns_gev_m1", "ns_gev_m2", "ns_gev_m3", "best_model"]
+echelle = "quotidien"
 
-# Bornes des années utilisées pour la standardisation
+column_to_show = "delta_qT"
+
+# Unités selon l'échelle
+unit = "mm_h" if echelle == "horaire" else "mm_j"
+models = [v for v in model_options.values() if v != "s_gev"]
+
 min_year, max_year = config["years"]["min"], config["years"]["max"]
-year_range = max_year - min_year
-
-
-# Lecture des données GEV
 mod_dir = Path(config["gev"]["modelised"]) / echelle
 obs_dir = Path(config["gev"]["observed"]) / echelle
 
-html_all = '<div style="display: flex; justify-content: space-between; gap: 1%;">'
-
-all_deltas = []
-
-log_term = -np.log(1 - 1 / T_choice)
-
+# -------------------- BOUCLE D’AFFICHAGE PAR MODÈLE --------------------
 for model in models:
-    for typ, dir_ in [("modelised", mod_dir), ("observed", obs_dir)]:
-        df = pl.read_parquet(dir_ / f"gev_param_{model}.parquet")
+    year_range = get_year_range(model, min_year, max_year)
+
+    def load_and_prepare(df_path, typ):
+        df = pl.read_parquet(df_path)
         df = filter_nan(df, "xi")
-        df = add_metadata(df, "mm_j", type=typ)
-
+        df = add_metadata(df, unit, type=typ)
         df = ensure_mu1_sigma1(df)
+        return df
 
-        mu1_natural = df["mu1"] / year_range
-        sigma1_natural = df["sigma1"] / year_range
-        xi = df["xi"]
+    df_mod = load_and_prepare(mod_dir / f"gev_param_{model}.parquet", "modelised")
+    df_obs = load_and_prepare(obs_dir / f"gev_param_{model}.parquet", "observed")
 
-        C_T = (log_term ** (-xi)) - 1
-        delta_qT = (mu1_natural + (sigma1_natural / xi) * C_T) * 10
-
-        all_deltas.append(delta_qT.to_numpy())
-
-# Concatène tous les delta_qT
-all_values = np.concatenate(all_deltas)
-
-# Calcule des bornes globales sur l'ensemble des modèles + obs
-vmin_global = np.nanpercentile(all_values, 0)
-vmax_global = np.nanpercentile(all_values, quantile_choice * 100)
-
-# CENTRER EN 0
-abs_max = max(abs(vmin_global), abs(vmax_global))
-vmin_global = -abs_max
-vmax_global = abs_max
-
-
-for model in models:
-    df_modelised = pl.read_parquet(mod_dir / f"gev_param_{model}.parquet")
-    df_observed = pl.read_parquet(obs_dir / f"gev_param_{model}.parquet")
-
-    df_modelised = filter_nan(df_modelised, "xi") # xi est toujours valable   
-    df_observed = filter_nan(df_observed, "xi") # xi est toujours valable
-
-    df_modelised = add_metadata(df_modelised, "mm_h" if echelle == "horaire" else "mm_j", type="modelised")
-    df_observed = add_metadata(df_observed, "mm_h" if echelle == "horaire" else "mm_j", type="observed")
-
-    df_modelised = ensure_mu1_sigma1(df_modelised)
-    df_observed = ensure_mu1_sigma1(df_observed)
-
-    column_to_show = "delta_qT"
-
-    # Conversion des dérivées ∂qT/∂t du temps standardisé → temps réel
-    # ∂μ/∂tₙᵒʳᵐ = μ₁  donc ∂μ/∂année = μ₁ / σₜ
-    # ∂σ/∂année = σ₁ / σₜ
-    mu1_natural = pl.col("mu1") / year_range
-    sigma1_natural = pl.col("sigma1") / year_range
-
-    # Calcul du terme C_T :  Cₜ = (−log(1−1/T))^(−ξ) − 1
-    log_term = -np.log(1 - 1 / T_choice)
+    # Expressions Polars pour ∂qT/∂année
+    mu1_nat_expr = pl.col("mu1") / year_range
+    sigma1_nat_expr = pl.col("sigma1") / year_range
     C_T_expr = (log_term ** (-pl.col("xi"))) - 1
+    delta_expr = ((mu1_nat_expr + (sigma1_nat_expr / pl.col("xi")) * C_T_expr) * 10).alias(column_to_show)
 
-    # Variation décennale de qT :
-    # ΔqT = (μ₁ + (σ₁ / ξ) × Cₜ) × 10   (dans l’espace temporel réel)
-    df_modelised_delta = df_modelised.with_columns([
-        ((mu1_natural + (sigma1_natural / pl.col("xi")) * C_T_expr) * 10).alias("delta_qT")
-    ])
-    df_observed_delta = df_observed.with_columns([
-        ((mu1_natural + (sigma1_natural / pl.col("xi")) * C_T_expr) * 10).alias("delta_qT")
-    ])
+    df_mod = df_mod.with_columns([delta_expr])
+    df_obs = df_obs.with_columns([delta_expr])
 
+    df_mod_show = dont_show_extreme(df_mod, column_to_show, quantile_choice, stat_choice_key=None)
+    df_obs_show = dont_show_extreme(df_obs, column_to_show, quantile_choice, stat_choice_key=None)
 
-    ### MAP
-    df_modelised_show = dont_show_extreme(df_modelised_delta, column_to_show, quantile_choice, stat_choice_key=None)
-    df_observed_show = dont_show_extreme(df_observed_delta, column_to_show, quantile_choice, stat_choice_key=None)
-
-    # Chargement des affichages graphiques
     result = {
-        "modelised": df_modelised_delta,
-        "modelised_show": df_modelised_show,
-        "observed": df_observed_delta,
-        "observed_show": df_observed_show,
+        "modelised": df_mod,
+        "modelised_show": df_mod_show,
+        "observed": df_obs,
+        "observed_show": df_obs_show,
         "column": column_to_show,
-        "vmin": vmin_global,
-        "vmax": vmax_global,
         "echelle": "diverging_zero_white"
     }
 
-    # Étape 2 : affichage carte + scatter
-    html_map_legend, _, r2, _, n, _ = pipeline_map_legend_scatter(
+    _, _, r2, me, _, percent = pipeline_map_legend_scatter(
         name=f"changement_retour_{T_choice}_{model}",
         result=result,
         echelle=echelle,
-        stat_choice_label="Moyenne des précipitations"
+        stat_choice_label=""
     )
-    html_all += f"""
-    <div style="width: 24%; font-size: 0.8em;">
-        <strong>{model_labels.get(model, model)}</strong><br>
-        {html_map_legend}
-        <strong>r²</strong> = {r2:.3f}<br>
-        <strong>n</strong> = {n}
-    </div>
-    """
 
-html_all += "</div>"
-title = f"Changement du niveau de retour {T_choice} ans par 10 ans"
+    display(HTML(f"""
+        <div style="font-size: 18px; color: #333; margin-bottom: 15px;">
+            <p style="font-size: 20px; font-weight: bold; color: #2c3e50; margin-bottom: 5px;">
+                {model_labels[model]}
+            </p>
+            <p style="font-size: 17px; color: #3498db; margin: 0;">
+                <strong>r²</strong> = {r2:.3f} &nbsp;|&nbsp;
+                <strong>ME</strong> = {me:+.3f} {unit} &nbsp;|&nbsp;
+                <strong>Δ</strong> = {percent * 100:+.1f}%
+            </p>
+        </div>
+    """))
+```
+
+
+---
+
+```{python}
+model = "ns_gev_m1"
+title = f"Changement du niveau de retour par 10 ans du modèle {model_labels[model]}"
 display(HTML(f"""
     <div style="font-size: 18px; color: #333;">
         <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
@@ -1319,5 +1297,449 @@ display(HTML(f"""
         </p> 
     </div>
 """))
-display(HTML(html_all))
+
+year_range = get_year_range(model, min_year, max_year)
+
+def load_and_prepare(df_path, typ):
+    df = pl.read_parquet(df_path)
+    df = filter_nan(df, "xi")
+    df = add_metadata(df, unit, type=typ)
+    df = ensure_mu1_sigma1(df)
+    return df
+
+df_mod = load_and_prepare(mod_dir / f"gev_param_{model}.parquet", "modelised")
+df_obs = load_and_prepare(obs_dir / f"gev_param_{model}.parquet", "observed")
+
+# Expressions Polars pour ∂qT/∂année
+mu1_nat_expr = pl.col("mu1") / year_range
+sigma1_nat_expr = pl.col("sigma1") / year_range
+C_T_expr = (log_term ** (-pl.col("xi"))) - 1
+delta_expr = ((mu1_nat_expr + (sigma1_nat_expr / pl.col("xi")) * C_T_expr) * 10).alias(column_to_show)
+
+df_mod = df_mod.with_columns([delta_expr])
+df_obs = df_obs.with_columns([delta_expr])
+
+df_mod_show = dont_show_extreme(df_mod, column_to_show, quantile_choice, stat_choice_key=None)
+df_obs_show = dont_show_extreme(df_obs, column_to_show, quantile_choice, stat_choice_key=None)
+
+val_max = max(df_mod_show[column_to_show].max(), df_obs_show[column_to_show].max())
+val_min = min(df_mod_show[column_to_show].min(), df_obs_show[column_to_show].min())
+abs_max = max(abs(val_min), abs(val_max))
+
+result = {
+    "modelised": df_mod,
+    "modelised_show": df_mod_show,
+    "observed": df_obs,
+    "observed_show": df_obs_show,
+    "column": column_to_show,
+    "vmin": -abs_max,
+    "vmax": abs_max,
+    "echelle": "diverging_zero_white"
+}
+
+html_map_legend, html_scatter, r2, me, _, percent = pipeline_map_legend_scatter(
+    name=f"changement_retour_{T_choice}_{model}",
+    result=result,
+    echelle=echelle,
+    stat_choice_label=""
+)
 ```
+
+
+::: {.columns style="display: flex; gap: 0px; margin: 0;"}
+::: {.column width="50%"}
+```{python}
+display(HTML(html_map_legend))
+```
+:::
+::: {.column width="50%"}
+```{python}
+display(HTML(html_scatter))
+```
+:::
+:::
+
+
+---
+
+```{python}
+model = "ns_gev_m1_break_year"
+title = f"Changement du niveau de retour par 10 ans du modèle {model_labels[model]}"
+display(HTML(f"""
+    <div style="font-size: 18px; color: #333;">
+        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
+        <p style="font-size: 18px; color: #3498db;">
+            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
+            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
+        </p> 
+    </div>
+"""))
+
+year_range = get_year_range(model, min_year, max_year)
+
+def load_and_prepare(df_path, typ):
+    df = pl.read_parquet(df_path)
+    df = filter_nan(df, "xi")
+    df = add_metadata(df, unit, type=typ)
+    df = ensure_mu1_sigma1(df)
+    return df
+
+df_mod = load_and_prepare(mod_dir / f"gev_param_{model}.parquet", "modelised")
+df_obs = load_and_prepare(obs_dir / f"gev_param_{model}.parquet", "observed")
+
+# Expressions Polars pour ∂qT/∂année
+mu1_nat_expr = pl.col("mu1") / year_range
+sigma1_nat_expr = pl.col("sigma1") / year_range
+C_T_expr = (log_term ** (-pl.col("xi"))) - 1
+delta_expr = ((mu1_nat_expr + (sigma1_nat_expr / pl.col("xi")) * C_T_expr) * 10).alias(column_to_show)
+
+df_mod = df_mod.with_columns([delta_expr])
+df_obs = df_obs.with_columns([delta_expr])
+
+df_mod_show = dont_show_extreme(df_mod, column_to_show, quantile_choice, stat_choice_key=None)
+df_obs_show = dont_show_extreme(df_obs, column_to_show, quantile_choice, stat_choice_key=None)
+
+val_max = max(df_mod_show[column_to_show].max(), df_obs_show[column_to_show].max())
+val_min = min(df_mod_show[column_to_show].min(), df_obs_show[column_to_show].min())
+abs_max = max(abs(val_min), abs(val_max))
+
+result = {
+    "modelised": df_mod,
+    "modelised_show": df_mod_show,
+    "observed": df_obs,
+    "observed_show": df_obs_show,
+    "column": column_to_show,
+    "vmin": -abs_max,
+    "vmax": abs_max,
+    "echelle": "diverging_zero_white"
+}
+
+html_map_legend, html_scatter, r2, me, _, percent = pipeline_map_legend_scatter(
+    name=f"changement_retour_{T_choice}_{model}",
+    result=result,
+    echelle=echelle,
+    stat_choice_label=""
+)
+```
+
+
+::: {.columns style="display: flex; gap: 0px; margin: 0;"}
+::: {.column width="50%"}
+```{python}
+display(HTML(html_map_legend))
+```
+:::
+::: {.column width="50%"}
+```{python}
+display(HTML(html_scatter))
+```
+:::
+:::
+
+
+---
+
+```{python}
+model = "ns_gev_m2"
+title = f"Changement du niveau de retour par 10 ans du modèle {model_labels[model]}"
+display(HTML(f"""
+    <div style="font-size: 18px; color: #333;">
+        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
+        <p style="font-size: 18px; color: #3498db;">
+            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
+            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
+        </p> 
+    </div>
+"""))
+
+year_range = get_year_range(model, min_year, max_year)
+
+def load_and_prepare(df_path, typ):
+    df = pl.read_parquet(df_path)
+    df = filter_nan(df, "xi")
+    df = add_metadata(df, unit, type=typ)
+    df = ensure_mu1_sigma1(df)
+    return df
+
+df_mod = load_and_prepare(mod_dir / f"gev_param_{model}.parquet", "modelised")
+df_obs = load_and_prepare(obs_dir / f"gev_param_{model}.parquet", "observed")
+
+# Expressions Polars pour ∂qT/∂année
+mu1_nat_expr = pl.col("mu1") / year_range
+sigma1_nat_expr = pl.col("sigma1") / year_range
+C_T_expr = (log_term ** (-pl.col("xi"))) - 1
+delta_expr = ((mu1_nat_expr + (sigma1_nat_expr / pl.col("xi")) * C_T_expr) * 10).alias(column_to_show)
+
+df_mod = df_mod.with_columns([delta_expr])
+df_obs = df_obs.with_columns([delta_expr])
+
+df_mod_show = dont_show_extreme(df_mod, column_to_show, quantile_choice, stat_choice_key=None)
+df_obs_show = dont_show_extreme(df_obs, column_to_show, quantile_choice, stat_choice_key=None)
+
+val_max = max(df_mod_show[column_to_show].max(), df_obs_show[column_to_show].max())
+val_min = min(df_mod_show[column_to_show].min(), df_obs_show[column_to_show].min())
+abs_max = max(abs(val_min), abs(val_max))
+
+result = {
+    "modelised": df_mod,
+    "modelised_show": df_mod_show,
+    "observed": df_obs,
+    "observed_show": df_obs_show,
+    "column": column_to_show,
+    "vmin": -abs_max,
+    "vmax": abs_max,
+    "echelle": "diverging_zero_white"
+}
+
+html_map_legend, html_scatter, r2, me, _, percent = pipeline_map_legend_scatter(
+    name=f"changement_retour_{T_choice}_{model}",
+    result=result,
+    echelle=echelle,
+    stat_choice_label=""
+)
+```
+
+
+::: {.columns style="display: flex; gap: 0px; margin: 0;"}
+::: {.column width="50%"}
+```{python}
+display(HTML(html_map_legend))
+```
+:::
+::: {.column width="50%"}
+```{python}
+display(HTML(html_scatter))
+```
+:::
+:::
+
+
+---
+
+```{python}
+model = "ns_gev_m2_break_year"
+title = f"Changement du niveau de retour par 10 ans du modèle {model_labels[model]}"
+display(HTML(f"""
+    <div style="font-size: 18px; color: #333;">
+        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
+        <p style="font-size: 18px; color: #3498db;">
+            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
+            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
+        </p> 
+    </div>
+"""))
+
+year_range = get_year_range(model, min_year, max_year)
+
+def load_and_prepare(df_path, typ):
+    df = pl.read_parquet(df_path)
+    df = filter_nan(df, "xi")
+    df = add_metadata(df, unit, type=typ)
+    df = ensure_mu1_sigma1(df)
+    return df
+
+df_mod = load_and_prepare(mod_dir / f"gev_param_{model}.parquet", "modelised")
+df_obs = load_and_prepare(obs_dir / f"gev_param_{model}.parquet", "observed")
+
+# Expressions Polars pour ∂qT/∂année
+mu1_nat_expr = pl.col("mu1") / year_range
+sigma1_nat_expr = pl.col("sigma1") / year_range
+C_T_expr = (log_term ** (-pl.col("xi"))) - 1
+delta_expr = ((mu1_nat_expr + (sigma1_nat_expr / pl.col("xi")) * C_T_expr) * 10).alias(column_to_show)
+
+df_mod = df_mod.with_columns([delta_expr])
+df_obs = df_obs.with_columns([delta_expr])
+
+df_mod_show = dont_show_extreme(df_mod, column_to_show, quantile_choice, stat_choice_key=None)
+df_obs_show = dont_show_extreme(df_obs, column_to_show, quantile_choice, stat_choice_key=None)
+
+val_max = max(df_mod_show[column_to_show].max(), df_obs_show[column_to_show].max())
+val_min = min(df_mod_show[column_to_show].min(), df_obs_show[column_to_show].min())
+abs_max = max(abs(val_min), abs(val_max))
+
+result = {
+    "modelised": df_mod,
+    "modelised_show": df_mod_show,
+    "observed": df_obs,
+    "observed_show": df_obs_show,
+    "column": column_to_show,
+    "vmin": -abs_max,
+    "vmax": abs_max,
+    "echelle": "diverging_zero_white"
+}
+
+html_map_legend, html_scatter, r2, me, _, percent = pipeline_map_legend_scatter(
+    name=f"changement_retour_{T_choice}_{model}",
+    result=result,
+    echelle=echelle,
+    stat_choice_label=""
+)
+```
+
+
+::: {.columns style="display: flex; gap: 0px; margin: 0;"}
+::: {.column width="50%"}
+```{python}
+display(HTML(html_map_legend))
+```
+:::
+::: {.column width="50%"}
+```{python}
+display(HTML(html_scatter))
+```
+:::
+:::
+
+
+---
+
+```{python}
+model = "ns_gev_m3"
+title = f"Changement du niveau de retour par 10 ans du modèle {model_labels[model]}"
+display(HTML(f"""
+    <div style="font-size: 18px; color: #333;">
+        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
+        <p style="font-size: 18px; color: #3498db;">
+            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
+            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
+        </p> 
+    </div>
+"""))
+
+year_range = get_year_range(model, min_year, max_year)
+
+def load_and_prepare(df_path, typ):
+    df = pl.read_parquet(df_path)
+    df = filter_nan(df, "xi")
+    df = add_metadata(df, unit, type=typ)
+    df = ensure_mu1_sigma1(df)
+    return df
+
+df_mod = load_and_prepare(mod_dir / f"gev_param_{model}.parquet", "modelised")
+df_obs = load_and_prepare(obs_dir / f"gev_param_{model}.parquet", "observed")
+
+# Expressions Polars pour ∂qT/∂année
+mu1_nat_expr = pl.col("mu1") / year_range
+sigma1_nat_expr = pl.col("sigma1") / year_range
+C_T_expr = (log_term ** (-pl.col("xi"))) - 1
+delta_expr = ((mu1_nat_expr + (sigma1_nat_expr / pl.col("xi")) * C_T_expr) * 10).alias(column_to_show)
+
+df_mod = df_mod.with_columns([delta_expr])
+df_obs = df_obs.with_columns([delta_expr])
+
+df_mod_show = dont_show_extreme(df_mod, column_to_show, quantile_choice, stat_choice_key=None)
+df_obs_show = dont_show_extreme(df_obs, column_to_show, quantile_choice, stat_choice_key=None)
+
+val_max = max(df_mod_show[column_to_show].max(), df_obs_show[column_to_show].max())
+val_min = min(df_mod_show[column_to_show].min(), df_obs_show[column_to_show].min())
+abs_max = max(abs(val_min), abs(val_max))
+
+result = {
+    "modelised": df_mod,
+    "modelised_show": df_mod_show,
+    "observed": df_obs,
+    "observed_show": df_obs_show,
+    "column": column_to_show,
+    "vmin": -abs_max,
+    "vmax": abs_max,
+    "echelle": "diverging_zero_white"
+}
+
+html_map_legend, html_scatter, r2, me, _, percent = pipeline_map_legend_scatter(
+    name=f"changement_retour_{T_choice}_{model}",
+    result=result,
+    echelle=echelle,
+    stat_choice_label=""
+)
+```
+
+
+::: {.columns style="display: flex; gap: 0px; margin: 0;"}
+::: {.column width="50%"}
+```{python}
+display(HTML(html_map_legend))
+```
+:::
+::: {.column width="50%"}
+```{python}
+display(HTML(html_scatter))
+```
+:::
+:::
+
+
+---
+
+```{python}
+model = "ns_gev_m3_break_year"
+title = f"Changement du niveau de retour par 10 ans du modèle {model_labels[model]}"
+display(HTML(f"""
+    <div style="font-size: 18px; color: #333;">
+        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
+        <p style="font-size: 18px; color: #3498db;">
+            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
+            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
+        </p> 
+    </div>
+"""))
+
+year_range = get_year_range(model, min_year, max_year)
+
+def load_and_prepare(df_path, typ):
+    df = pl.read_parquet(df_path)
+    df = filter_nan(df, "xi")
+    df = add_metadata(df, unit, type=typ)
+    df = ensure_mu1_sigma1(df)
+    return df
+
+df_mod = load_and_prepare(mod_dir / f"gev_param_{model}.parquet", "modelised")
+df_obs = load_and_prepare(obs_dir / f"gev_param_{model}.parquet", "observed")
+
+# Expressions Polars pour ∂qT/∂année
+mu1_nat_expr = pl.col("mu1") / year_range
+sigma1_nat_expr = pl.col("sigma1") / year_range
+C_T_expr = (log_term ** (-pl.col("xi"))) - 1
+delta_expr = ((mu1_nat_expr + (sigma1_nat_expr / pl.col("xi")) * C_T_expr) * 10).alias(column_to_show)
+
+df_mod = df_mod.with_columns([delta_expr])
+df_obs = df_obs.with_columns([delta_expr])
+
+df_mod_show = dont_show_extreme(df_mod, column_to_show, quantile_choice, stat_choice_key=None)
+df_obs_show = dont_show_extreme(df_obs, column_to_show, quantile_choice, stat_choice_key=None)
+
+val_max = max(df_mod_show[column_to_show].max(), df_obs_show[column_to_show].max())
+val_min = min(df_mod_show[column_to_show].min(), df_obs_show[column_to_show].min())
+abs_max = max(abs(val_min), abs(val_max))
+
+result = {
+    "modelised": df_mod,
+    "modelised_show": df_mod_show,
+    "observed": df_obs,
+    "observed_show": df_obs_show,
+    "column": column_to_show,
+    "vmin": -abs_max,
+    "vmax": abs_max,
+    "echelle": "diverging_zero_white"
+}
+
+html_map_legend, html_scatter, r2, me, _, percent = pipeline_map_legend_scatter(
+    name=f"changement_retour_{T_choice}_{model}",
+    result=result,
+    echelle=echelle,
+    stat_choice_label=""
+)
+```
+
+
+::: {.columns style="display: flex; gap: 0px; margin: 0;"}
+::: {.column width="50%"}
+```{python}
+display(HTML(html_map_legend))
+```
+:::
+::: {.column width="50%"}
+```{python}
+display(HTML(html_scatter))
+```
+:::
+:::
