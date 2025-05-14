@@ -157,19 +157,14 @@ def show(config_path, min_year: int, max_year: int, middle_year: int):
 
 
                 params_scatter = (
-                    df_modelised_load, 
-                    df_observed_load, 
-                    column_to_show, 
-                    result_df_modelised, 
-                    result_df_modelised_show, 
-                    result_df_observed, 
+                    result,
                     stat_choice_key, 
                     scale_choice_key, 
-                    stat_choice,"", 
-                    0
+                    stat_choice,
+                    "",# unit 
+                    0 # height
                 )
-                me_grouped, r2_grouped = pipeline_scatter(params_scatter)
-
+                _, _, me_grouped, _, _, r2_grouped, _ = pipeline_scatter(params_scatter)
                 # Calcul des métriques à partir des moyennes par station
                 results_grouped.append({
                     "Echelle": nom_echelle,

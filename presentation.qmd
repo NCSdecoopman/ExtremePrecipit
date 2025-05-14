@@ -23,6 +23,7 @@ jupyter: stage
 ---
 
 ```{python}
+#| label: import
 import shutil
 shutil.rmtree("__quarto_cache", ignore_errors=True)
 shutil.rmtree(".jupyter_cache", ignore_errors=True)
@@ -33,7 +34,6 @@ from pathlib import Path
 import pandas as pd
 import polars as pl
 import numpy as np
-
 import plotly.express as px
 from IPython.display import display, HTML, Markdown
 import plotly.io as pio
@@ -49,14 +49,34 @@ from app.utils.data_utils import (
 from app.utils.stats_utils import (
     generate_metrics
 )
-from app.pipelines.pipeline_quarto import pipeline_map_legend_scatter
+
 from app.utils.gev_utils import safe_compute_return
-from app.pipelines.pipeline_quarto import *
+from app.pipelines.import_quarto import *
 
 # Charger les paramètres depuis config.yaml
 config_path = Path("app/config/config.yaml")
 with open(config_path, "r") as f:
     config = yaml.safe_load(f)
+
+def pipeline_total_title_map_legend_scatter_delta(
+    title: str,
+    year_min: int,
+    year_max: int,
+    echelle: str,
+    html_map_legend: str,
+    html_scatter: str,
+    me: int,
+    percent: int,
+    unit: str=None,
+    nb_after_comma: int=1
+):
+    if unit is None:
+        unit = "mm/j" if echelle == "quotidien" else "mm/h"
+
+    title_show = pipeline_title(title, year_min, year_max, echelle)
+    display(HTML(title_show))
+    display(HTML(pipeline_show_html(html_map_legend, html_scatter)))
+    display(HTML(f"Δ (AROME - Stations) : {me:+.{nb_after_comma}f} {unit} ({percent*100:+.1f}%)"))
 ```
 
 
@@ -85,13 +105,11 @@ Analyser les tendances des précipitations extrêmes horaires en France (1959–
 
 Nombre de jours de pluie
 
-```{python}
-title="Nombre de jour de pluie moyen"
-``` 
-
 ---
 
 ```{python}
+#| label: jours_pluie_total
+title="Nombre de jour de pluie moyen"
 year_display_min = config["years"]["min"]
 year_display_max = config["years"]["max"]
 echelle="quotidien"
@@ -108,6 +126,7 @@ result = pipeline_data_quarto(
     missing_choice=0.15,
     quantile_choice=0.995
 )
+
 # Étape 2 : affichage carte + scatter
 html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
     name="jour_pluie_total",
@@ -117,34 +136,17 @@ html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
     unit_choice="jours"
 )
 
-display(HTML(f"""
-    <div style="font-size: 18px; color: #333;">
-        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
-        <p style="font-size: 18px; color: #3498db;">
-            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
-            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
-        </p> 
-    </div>
-
-"""))
-```
-
-
-::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="50%"}
-```{python}
-display(HTML(html_map_legend))
-```
-:::
-::: {.column width="50%"}
-```{python}
-display(HTML(html_scatter))
-```
-:::
-:::
-
-```{python}
-display(HTML(f"Δ (AROME - Stations) : {me:+.1f} jours ({percent*100:+.1f}%)"))
+pipeline_total_title_map_legend_scatter_delta(
+    title,
+    year_display_min,
+    year_display_max,
+    echelle,
+    html_map_legend,
+    html_scatter,
+    me,
+    percent,
+    unit="jours"
+)
 ```
 
 - tendance à déclencher des jours de pluie plus fréquemment que ce qui est observé  
@@ -155,6 +157,7 @@ display(HTML(f"Δ (AROME - Stations) : {me:+.1f} jours ({percent*100:+.1f}%)"))
 
 
 ```{python}
+#| label: jours_pluie_2000_MAX
 year_display_min = 2000
 year_display_max = config["years"]["max"]
 echelle="quotidien"
@@ -172,7 +175,6 @@ result = pipeline_data_quarto(
     quantile_choice=0.995
 )
 
-me_prev = me
 # Étape 2 : affichage carte + scatter
 html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
     name="jour_pluie_2000",
@@ -182,32 +184,17 @@ html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
     unit_choice="jours"
 )
 
-display(HTML(f"""
-    <div style="font-size: 18px; color: #333;">
-        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
-        <p style="font-size: 18px; color: #3498db;">
-            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
-            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
-        </p> 
-    </div>
-"""))
-```
-
-::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="50%"}
-```{python}
-display(HTML(html_map_legend))
-```
-:::
-::: {.column width="50%"}
-```{python}
-display(HTML(html_scatter))
-```
-:::
-:::
-
-```{python}
-display(HTML(f"Δ (AROME - Stations) : {me:+.1f} jours ({percent*100:+.1f}%)"))
+pipeline_total_title_map_legend_scatter_delta(
+    title,
+    year_display_min,
+    year_display_max,
+    echelle,
+    html_map_legend,
+    html_scatter,
+    me,
+    percent,
+    unit="jours"
+)
 ```
 
 
@@ -215,13 +202,11 @@ display(HTML(f"Δ (AROME - Stations) : {me:+.1f} jours ({percent*100:+.1f}%)"))
 
 Cumul des précipitations
 
-```{python}
-title="Moyenne des précipitations"
-``` 
-
 ---
 
 ```{python}
+#| label: moy_precipit_jour_total
+title="Cumul des précipitations"
 year_display_min = config["years"]["min"]
 year_display_max = config["years"]["max"]
 echelle="quotidien"
@@ -239,40 +224,28 @@ result = pipeline_data_quarto(
 )
 
 # Étape 2 : affichage carte + scatter
-html_map_legend, html_scatter, r2, me_1959, n, percent_1959 = pipeline_map_legend_scatter(
+html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
     name="jour_mean_total",
     result=result,
     echelle=echelle,
     stat_choice_label="Moyenne des précipitations"
 )
 
-display(HTML(f"""
-    <div style="font-size: 18px; color: #333;">
-        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
-        <p style="font-size: 18px; color: #3498db;">
-            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
-            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
-        </p> 
-    </div>
-"""))
+pipeline_total_title_map_legend_scatter_delta(
+    title,
+    year_display_min,
+    year_display_max,
+    echelle,
+    html_map_legend,
+    html_scatter,
+    me,
+    percent,
+    nb_after_comma=3
+)
 ```
 
-
-
-::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="50%"}
 ```{python}
-display(HTML(html_map_legend))
-```
-:::
-::: {.column width="50%"}
-```{python}
-display(HTML(html_scatter))
-```
-:::
-:::
-
-```{python}
+#| label: moy_precipit_jour_2000_MAX_only_metric
 year_display_min = 2000
 year_display_max = config["years"]["max"]
 echelle="quotidien"
@@ -290,25 +263,22 @@ result = pipeline_data_quarto(
 )
 
 # Étape 2 : affichage carte + scatter
-_, _, _, me_2000, _, percent_2000 = pipeline_map_legend_scatter(
+_, _, _, me, _, percent = pipeline_map_legend_scatter(
     name="jour_mean_2000",
     result=result,
     echelle=echelle,
     stat_choice_label="Moyenne des précipitations"
 )
+display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me:+.3f} mm/j ({percent*100:+.1f}%)"))
 ```
 
-
-```{python}
-display(HTML(f"Δ (AROME - Stations) de {config["years"]["min"]} à {year_display_max} : {me_1959:+.3f} mm/j ({percent_1959*100:+.1f}%)"))
-display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me_2000:+.3f} mm/j ({percent_2000*100:+.1f}%)"))
-```
 
 - Répartition correcte de la quantité totale d’eau 
 
 ---
 
 ```{python}
+#| label: moy_precipit_horaire_2000_MAX
 year_display_min = 2000
 year_display_max = config["years"]["max"]
 echelle="horaire"
@@ -333,33 +303,17 @@ html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
     stat_choice_label="Moyenne des précipitations"
 )
 
-display(HTML(f"""
-    <div style="font-size: 18px; color: #333;">
-        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
-        <p style="font-size: 18px; color: #3498db;">
-            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
-            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
-        </p> 
-    </div>
-"""))
-```
-
-
-::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="50%"}
-```{python}
-display(HTML(html_map_legend))
-```
-:::
-::: {.column width="50%"}
-```{python}
-display(HTML(html_scatter))
-```
-:::
-:::
-
-```{python}
-display(HTML(f"Δ (AROME - Stations) : {me:+.3f} mm/h ({percent*100:+.1f}%)"))
+pipeline_total_title_map_legend_scatter_delta(
+    title,
+    year_display_min,
+    year_display_max,
+    echelle,
+    html_map_legend,
+    html_scatter,
+    me,
+    percent,
+    nb_after_comma=3
+)
 ```
 
 - Résultat semblable
@@ -374,13 +328,11 @@ display(HTML(f"Δ (AROME - Stations) : {me:+.3f} mm/h ({percent*100:+.1f}%)"))
 
 Evaluation des structures spatiales via les valeurs moyennées sur la période
 
-```{python}
-title="Moyenne des maxima des précipitations"
-``` 
-
 ---
 
 ```{python}
+#| label: moy_max_precipit_jour_total
+title="Moyenne des maxima des précipitations"
 year_display_min = config["years"]["min"]
 year_display_max = config["years"]["max"]
 echelle="quotidien"
@@ -398,39 +350,28 @@ result = pipeline_data_quarto(
 )
 
 # Étape 2 : affichage carte + scatter
-html_map_legend, html_scatter, r2, me_1959, n, percent_1959 = pipeline_map_legend_scatter(
+html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
     name="jour_mean_max_total",
     result=result,
     echelle=echelle,
     stat_choice_label="Moyenne des maxima"
 )
 
-display(HTML(f"""
-    <div style="font-size: 18px; color: #333;">
-        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
-        <p style="font-size: 18px; color: #3498db;">
-            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
-            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
-        </p> 
-    </div>
-"""))
+pipeline_total_title_map_legend_scatter_delta(
+    title,
+    year_display_min,
+    year_display_max,
+    echelle,
+    html_map_legend,
+    html_scatter,
+    me,
+    percent,
+    nb_after_comma=3
+)
 ```
 
-
-::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="50%"}
 ```{python}
-display(HTML(html_map_legend))
-```
-:::
-::: {.column width="50%"}
-```{python}
-display(HTML(html_scatter))
-```
-:::
-:::
-
-```{python}
+#| label: moy_max_precipit_jour_2000_MAX
 year_display_min = 2000
 year_display_max = config["years"]["max"]
 echelle="quotidien"
@@ -448,15 +389,14 @@ result = pipeline_data_quarto(
 )
 
 # Étape 2 : affichage carte + scatter
-_, _, _, me_2000, _, percent_2000 = pipeline_map_legend_scatter(
+_, _, _, me, _, percent = pipeline_map_legend_scatter(
     name="jour_mean_max_2000",
     result=result,
     echelle=echelle,
     stat_choice_label="Moyenne des maxima"
 )
 
-display(HTML(f"Δ (AROME - Stations) de {config["years"]["min"]} à {year_display_max} : {me_1959:+.3f} mm/j ({percent_1959*100:+.1f}%)"))
-display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me_2000:+.3f} mm/j ({percent_2000*100:+.1f}%)"))
+display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me:+.3f} mm/j ({percent*100:+.1f}%)"))
 ```
 
 - Estimation bruitée sur une période restreinte ?
@@ -464,6 +404,7 @@ display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max}
 ---
 
 ```{python}
+#| label: moy_max_precipit_horaire_2000_MAX
 year_display_min = 2000
 year_display_max = config["years"]["max"]
 echelle="horaire"
@@ -488,118 +429,21 @@ html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
     stat_choice_label="Moyenne des maxima"
 )
 
-display(HTML(f"""
-    <div style="font-size: 18px; color: #333;">
-        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
-        <p style="font-size: 18px; color: #3498db;">
-            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
-            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
-        </p> 
-    </div>    
-"""))
-```
-
-
-::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="50%"}
-```{python}
-display(HTML(html_map_legend))
-```
-:::
-::: {.column width="50%"}
-```{python}
-display(HTML(html_scatter))
-```
-:::
-:::
-
-```{python}
-display(HTML(f"Δ (AROME - Stations) : {me:+.3f} mm/h ({percent*100:+.1f}%)"))
+pipeline_total_title_map_legend_scatter_delta(
+    title,
+    year_display_min,
+    year_display_max,
+    echelle,
+    html_map_legend,
+    html_scatter,
+    me,
+    percent,
+    nb_after_comma=3
+)
 ```
 
 - Rappel : le cumul était bon donc les orages horaires les plus forts ont une faible emprise spatiale ?
 - Oui : le regroupement de stations sur une même grille réduit le Δ
-
-
----
-
-```{python}
-# Nouvelle version qui utilise directement le nom du quadrant
-def afficher_quadrant_par_nom(result, config, quadrant_name, quadrants, echelle="horaire", stat_label="Moyenne des maxima"):
-    year_display_min = 2000
-    year_display_max = config["years"]["max"]
-
-    # Extraire les bornes géographiques du quadrant
-    bounds = quadrants.get(quadrant_name.upper())
-    if bounds is None:
-        raise ValueError(f"Quadrant '{quadrant_name}' non reconnu. Choisir parmi {list(quadrants.keys())}")
-
-    lat_min = bounds["lat_min"]
-    lat_max = bounds["lat_max"]
-    lon_min = bounds["lon_min"]
-    lon_max = bounds["lon_max"]
-
-    # Filtrage des données
-    result_filtered = {}
-    for key, value in result.items():
-        if isinstance(value, pl.DataFrame):
-            result_filtered[key] = value.filter(
-                (value["lat"] >= lat_min) & (value["lat"] < lat_max) &
-                (value["lon"] >= lon_min) & (value["lon"] < lon_max)
-            )
-        elif isinstance(value, pd.DataFrame):
-            result_filtered[key] = value[
-                (value["lat"] >= lat_min) & (value["lat"] < lat_max) &
-                (value["lon"] >= lon_min) & (value["lon"] < lon_max)
-            ]
-        else:
-            result_filtered[key] = value
-
-    # Génération de la carte et du scatter
-    html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
-        name=f"{echelle}_mean_max_{year_display_min}_{quadrant_name}",
-        result=result_filtered,
-        echelle=echelle,
-        stat_choice_label=stat_label,
-    )
-
-    # Affichage HTML
-    display(HTML(f"""
-        <div style="font-size: 18px; color: #333;">
-            <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title} {quadrant_name.upper()}</p>
-            <p style="font-size: 18px; color: #3498db;">
-                de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à 
-                <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
-                (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | 
-                Échelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
-            </p> 
-        </div>    
-    """))
-
-    display(HTML(f"""
-    <div class="columns" style="display: flex; gap: 0px; margin: 0;">
-        <div class="column" style="width: 50%;">{html_map_legend}</div>
-        <div class="column" style="width: 50%;">{html_scatter}</div>
-    </div>
-    """))
-
-    display(HTML(f"Δ (AROME - Stations) : {me:+.3f} mm/h ({percent*100:+.1f}%)"))
-
-
-
-# Définitions approximatives pour chaque quadrant
-quadrants = {
-    "SE": {"lat_min": 42, "lat_max": 46.5, "lon_min": 2.5, "lon_max": 7.9},
-    "NE": {"lat_min": 46, "lat_max": 51.5, "lon_min": 2.5, "lon_max": 10},
-    "SO": {"lat_min": 42, "lat_max": 46.5, "lon_min": -5.0, "lon_max": 2.5},
-    "NO": {"lat_min": 46.5, "lat_max": 51.5, "lon_min": -5.0, "lon_max": 2.5},
-}
-```
-
-```{python}
-afficher_quadrant_par_nom(result, config, "SE", quadrants)
-```
-
 
 
 
@@ -610,12 +454,16 @@ Evaluation temporelle via la comparaison aux séries annuelles
 ---
 
 ```{python}
+# | label: moyenne-max_vs_series-max
+# suppresion de l'affichage ici
 year_display_min = config["years"]["min"]
 year_display_max = config["years"]["max"]
 echelle="quotidien"
 title="Comparaison de la moyenne des maxima aux maxima annuels des précipitations"
+title_show = pipeline_title(title, year_display_min, year_display_max, echelle)
+display(HTML(title_show))
 
-# Étape 1 : récupérer les résultats avec pipeline_data_quarto
+# --------------- VALEURS MOYENNES
 result = pipeline_data_quarto(
     config=config,
     stat_choice="mean-max",
@@ -627,51 +475,38 @@ result = pipeline_data_quarto(
     quantile_choice=0.995
 )
 
-# Étape 2 : affichage carte + scatter
-_, html_scatter, r2_mean, me_mean, n_mean, _ = pipeline_map_legend_scatter(
-    name="jour_mean_max_2000",
+_, html_scatter_mean, r2_mean, me_mean, n_mean, _ = pipeline_map_legend_scatter(
+    name="jour_mean_max_total",
     result=result,
     echelle=echelle,
     stat_choice_label="Moyenne des maxima"
 )
-display(HTML(f"""
-    <div style="font-size: 18px; color: #333;">
-        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
-        <p style="font-size: 18px; color: #3498db;">
-            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
-            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
-        </p> 
-    </div>    
-"""))
-```
 
-```{python}
+
+#  --------------- MAX ANNNUELS
 from app.modules import all_max
-
 from app.utils.scatter_plot_utils import generate_scatter_plot_interactive
 from app.utils.stats_utils import generate_metrics
 
-year_display_min = config["years"]["min"]
-year_display_max = config["years"]["max"]
-year_display_middle = 2000
-height = 500
-unit_choice = "mm/j"
-
+year_display_middle, height, unit_choice = 2000, 500, "mm/j"
 df_all, df_r2_all_max, _ = all_max.show(config_path, year_display_min, year_display_max, year_display_middle)
+df_all = df_all.rename({"lat_obs": "lat", "lon_obs": "lon"})
 
 # Ajout du scatter plot pour AROME vs station annuels
 fig_r2_all_max_hydro_jour = generate_scatter_plot_interactive(
-    df=df_all.rename({"lat_obs": "lat", "lon_obs": "lon"}),
+    df=df_all,
     stat_choice="",
     unit_label=unit_choice,
     height=height-60
 )
+
 fig_r2_all_max_hydro_jour.update_layout(
     template="simple_white",
     margin=dict(l=100, r=0, t=50, b=50),
     xaxis=dict(title=dict(text=f"AROME ({unit_choice})"), showticklabels=True),
     yaxis=dict(title=dict(text=f"Stations ({unit_choice})"), showticklabels=True)
 )
+
 me_all, _, _, r2_all = generate_metrics(df_all)
 scatter_path = "assets/fig_r2_all_max_hydro_jour.html"
 pio.write_html(fig_r2_all_max_hydro_jour, file=scatter_path, include_plotlyjs="cdn", full_html=False)
@@ -681,7 +516,7 @@ pio.write_html(fig_r2_all_max_hydro_jour, file=scatter_path, include_plotlyjs="c
 ::: {.column width="50%"}
 ```{python}
 display(HTML('<div style="text-align: center; font-weight: bold;">Moyenne des maxima</div>'))
-display(HTML(html_scatter))
+display(HTML(html_scatter_mean))
 ```
 :::
 ::: {.column width="50%"}
@@ -702,8 +537,8 @@ display(HTML(f"""
 
 ---
 
-
 ```{python}
+#| label: moyenne-max_vs_series-max_ALL
 title = "Comparaison de la moyenne des maxima aux maxima annuels des précipitations suivant la saison et l'échelle"
 display(HTML(f"""
     <div style="font-size: 18px; color: #333;">
@@ -716,9 +551,7 @@ display(HTML(f"""
         </p> 
     </div>    
 """))
-```
 
-```{python}
 df_r2_all_max["Echelle"] = pd.Categorical(df_r2_all_max["Echelle"], categories=["Journalière", "Horaire"], ordered=True)
 # Création de la figure avec px.bar
 fig_r2_all_max = px.bar(
@@ -773,6 +606,7 @@ display(HTML(f"""
 # Application GEV (μ, σ, ξ)
 
 ```{python}
+#| label: define_gev
 # Liste complète des modèles avec leurs équations explicites
 model_options = {
     "M₀(μ₀, σ₀) : μ(t) = μ₀ ; σ(t) = σ₀ ; ξ(t) = ξ": "s_gev",
@@ -784,11 +618,9 @@ model_options = {
     "M₃⋆(μ, σ) : μ(t) = μ₀ + μ₁·t₊ ; σ(t) = σ₀ + σ₁·t₊ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m3_break_year",
 }
 model_labels = {v: k.split(" :")[0] for k, v in model_options.items()}
-```
 
 
-```{python}
-import numpy as np
+# Représentation graphique de GEV classiques
 import matplotlib.pyplot as plt
 from scipy.stats import genextreme
 
@@ -873,11 +705,8 @@ on a :
 ---
 
 ```{python}
+#| label: minimize_gev_aic_map
 title = "Modèle minimisant l'AIC"
-```
-
-
-```{python}
 echelle = "quotidien"
 mod_dir = Path(config["gev"]["modelised"]) / echelle
 obs_dir = Path(config["gev"]["observed"]) / echelle
@@ -898,46 +727,26 @@ df_obs_aic = df_obs_aic.with_columns(
     pl.col("model").replace(model_labels)
 )
 
-# liste ordonnée des modèles
-categories = list(model_labels.values())  # ["M₁(μ₀, σ₀)", "M₂(μ, σ₀)", ...]
-
 result = {
     "modelised": df_model_aic,
     "modelised_show": df_model_aic,
     "observed": df_obs_aic,
     "observed_show": df_obs_aic,
-    "column": "model"
+    "column": "model",
+    "echelle": "diverging_zero_white",
+    "continu": False,
+    "categories": list(model_labels.values())  # ["M₁(μ₀, σ₀)", "M₂(μ, σ₀)", ...]
 }
 
-deck, legend = pipeline_map_quarto(
-    column="model",
+html_map_legend = pipeline_map_quarto(
+    name="model_minim_AIC",
     result=result,
-    unit_label="",
-    continu=False,
-    categories=categories,
-    n_colors=len(categories)
+    echelle=echelle,
+    stat_choice_label=None
 )
 
-# Enregistrement de la carte
-deck.to_html(f"assets/deck_map_jour_model_min_AIC.html", notebook_display=False)
-
-# Affichage côte à côte
-html_map_legend = f"""
-<div style="display: flex; flex-direction: row; align-items: flex-start; margin-top: 10px;">
-    <iframe loading="lazy" src="assets/deck_map_jour_model_min_AIC.html" height=500px frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
-    <div style="flex: 1; max-width: 220px; margin-left: 5px;">{legend}</div>
-</div>
-"""
-
-display(HTML(f"""
-    <div style="font-size: 18px; color: #333;">
-        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
-        <p style="font-size: 18px; color: #3498db;">
-            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
-            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
-        </p> 
-    </div>
-"""))
+title_show = pipeline_title(title, config["years"]["min"], config["years"]["max"], echelle)
+display(HTML(title_show))
 ```
 
 ::: {.columns style="display: flex; gap: 0px; margin: 0;"}
@@ -948,6 +757,7 @@ display(HTML(html_map_legend))
 :::
 
 ```{python}
+#| label: minimize_gev_aic_hist
 import plotly.graph_objects as go
 
 # Mapping des noms vers leur affichage en unicode/math
@@ -1016,13 +826,10 @@ display(HTML(html_scatter))
 
 ---
 
-```{python}
-title="Valeurs de ξ"
-``` 
 
 ```{python}
-year_display_min = config["years"]["min"]
-year_display_max = config["years"]["max"]
+#| label: show_xi
+title="Valeurs de ξ"
 echelle="quotidien"
 
 # Étape 1 : récupérer résultats avec pipeline_data_quarto
@@ -1042,37 +849,19 @@ html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
     unit_choice=""
 )
 
-
-display(HTML(f"""
-    <div style="font-size: 18px; color: #333;">
-        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
-        <p style="font-size: 18px; color: #3498db;">
-            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
-            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
-        </p> 
-    </div>
-
-"""))
+pipeline_total_title_map_legend_scatter_delta(
+    title=title,
+    year_min=config["years"]["min"],
+    year_max=config["years"]["max"],
+    echelle=echelle,
+    html_map_legend=html_map_legend,
+    html_scatter=html_scatter,
+    me=me,
+    percent=percent,
+    unit="",
+    nb_after_comma=3
+)
 ```
-
-
-::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="50%"}
-```{python}
-display(HTML(html_map_legend))
-```
-:::
-::: {.column width="50%"}
-```{python}
-display(HTML(html_scatter))
-```
-:::
-:::
-
-```{python}
-display(HTML(f"Δ (AROME - Stations) : {me:+.3f} ({percent*100:+.1f}%)"))
-```
-
 
 # Niveau de retour
   
@@ -1087,6 +876,7 @@ $$
 --- 
 
 ```{python}
+#| label: niveau_retour_20_ans_sans_effet_temporel
 echelle = "quotidien"
 unit_choice = "mm/j"
 quantile_choice = 0.999
@@ -1108,7 +898,6 @@ df_observed = filter_nan(df_observed, "xi") # xi est toujours valable
 
 df_modelised = add_metadata(df_modelised, "mm_h" if echelle == "horaire" else "mm_j", type="modelised")
 df_observed = add_metadata(df_observed, "mm_h" if echelle == "horaire" else "mm_j", type="observed")       
-
 
 t_norm = 0 # stationnaire
 df_modelised = df_modelised.with_columns([
@@ -1151,7 +940,7 @@ result = {
     "column": "qT"
 }
 # Étape 2 : affichage carte + scatter
-html_map_legend, html_scatter, r2, me, n, _ = pipeline_map_legend_scatter(
+html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
     name=f"retour_{T_choice}_stationnaire",
     result=result,
     echelle=echelle,
@@ -1159,30 +948,18 @@ html_map_legend, html_scatter, r2, me, n, _ = pipeline_map_legend_scatter(
 )
 
 title = f"Niveau de retour {T_choice} ans sans effet temporel"
-display(HTML(f"""
-    <div style="font-size: 18px; color: #333;">
-        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
-        <p style="font-size: 18px; color: #3498db;">
-            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
-            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
-        </p> 
-    </div>
-"""))
+pipeline_total_title_map_legend_scatter_delta(
+    title=title,
+    year_min=min_year_choice,
+    year_max=max_year_choice,
+    echelle=echelle,
+    html_map_legend=html_map_legend,
+    html_scatter=html_scatter,
+    me=me,
+    percent=percent,
+    unit="mm/j"
+)
 ```
-
-
-::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="50%"}
-```{python}
-display(HTML(html_map_legend))
-```
-:::
-::: {.column width="50%"}
-```{python}
-display(HTML(html_scatter))
-```
-:::
-:::
 
 
 # Changement du niveau de retour par 10 ans
@@ -1210,6 +987,7 @@ def get_year_range(model: str, min_year: int, max_year: int) -> int:
 ```
 
 ```{python}
+#| label: changement_niveau_retour_par_10_ans
 # -------------------- CONFIGURATION --------------------
 T_choice = 20
 log_term = -np.log(1 - 1 / T_choice)
@@ -1258,7 +1036,8 @@ for model in models:
         "observed": df_obs,
         "observed_show": df_obs_show,
         "column": column_to_show,
-        "echelle": "diverging_zero_white"
+        "echelle": "diverging_zero_white",
+        "continu": True
     }
 
     _, _, r2, me, _, percent = pipeline_map_legend_scatter(
@@ -1334,7 +1113,8 @@ result = {
     "column": column_to_show,
     "vmin": -abs_max,
     "vmax": abs_max,
-    "echelle": "diverging_zero_white"
+    "echelle": "diverging_zero_white",
+    "continu": True
 }
 
 html_map_legend, html_scatter, r2, me, _, percent = pipeline_map_legend_scatter(
@@ -1411,7 +1191,8 @@ result = {
     "column": column_to_show,
     "vmin": -abs_max,
     "vmax": abs_max,
-    "echelle": "diverging_zero_white"
+    "echelle": "diverging_zero_white",
+    "continu": True
 }
 
 html_map_legend, html_scatter, r2, me, _, percent = pipeline_map_legend_scatter(
@@ -1488,7 +1269,8 @@ result = {
     "column": column_to_show,
     "vmin": -abs_max,
     "vmax": abs_max,
-    "echelle": "diverging_zero_white"
+    "echelle": "diverging_zero_white",
+    "continu": True
 }
 
 html_map_legend, html_scatter, r2, me, _, percent = pipeline_map_legend_scatter(
@@ -1565,7 +1347,8 @@ result = {
     "column": column_to_show,
     "vmin": -abs_max,
     "vmax": abs_max,
-    "echelle": "diverging_zero_white"
+    "echelle": "diverging_zero_white",
+    "continu": True
 }
 
 html_map_legend, html_scatter, r2, me, _, percent = pipeline_map_legend_scatter(
@@ -1596,15 +1379,8 @@ display(HTML(html_scatter))
 ```{python}
 model = "ns_gev_m3"
 title = f"Changement du niveau de retour par 10 ans du modèle {model_labels[model]}"
-display(HTML(f"""
-    <div style="font-size: 18px; color: #333;">
-        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
-        <p style="font-size: 18px; color: #3498db;">
-            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
-            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
-        </p> 
-    </div>
-"""))
+title_show = pipeline_title(title, year_display_min, year_display_max, echelle)
+display(HTML(title_show))
 
 year_range = get_year_range(model, min_year, max_year)
 
@@ -1642,7 +1418,8 @@ result = {
     "column": column_to_show,
     "vmin": -abs_max,
     "vmax": abs_max,
-    "echelle": "diverging_zero_white"
+    "echelle": "diverging_zero_white",
+    "continu": True
 }
 
 html_map_legend, html_scatter, r2, me, _, percent = pipeline_map_legend_scatter(
@@ -1673,15 +1450,8 @@ display(HTML(html_scatter))
 ```{python}
 model = "ns_gev_m3_break_year"
 title = f"Changement du niveau de retour par 10 ans du modèle {model_labels[model]}"
-display(HTML(f"""
-    <div style="font-size: 18px; color: #333;">
-        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
-        <p style="font-size: 18px; color: #3498db;">
-            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
-            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
-        </p> 
-    </div>
-"""))
+title_show = pipeline_title(title, year_display_min, year_display_max, echelle)
+display(HTML(title_show))
 
 year_range = get_year_range(model, min_year, max_year)
 
@@ -1719,7 +1489,8 @@ result = {
     "column": column_to_show,
     "vmin": -abs_max,
     "vmax": abs_max,
-    "echelle": "diverging_zero_white"
+    "echelle": "diverging_zero_white",
+    "continu": True
 }
 
 html_map_legend, html_scatter, r2, me, _, percent = pipeline_map_legend_scatter(

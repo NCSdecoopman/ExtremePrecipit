@@ -169,11 +169,10 @@ def match_and_compare(
 
 def standardize_year(year: float, min_year: int, max_year: int) -> float:
     """
-    Centre et réduit une année `year` en utilisant min_year et max_year.
+    Normalise une année `year` entre 0 et 1 avec une transformation min-max.
     """
-    mean = (min_year + max_year) / 2
-    std = (max_year - min_year) / 2
-    return (year - mean) / std
+    return (year - min_year) / (max_year - min_year)
+
 
 
 def filter_nan(df: pl.DataFrame, columns: list[str]):

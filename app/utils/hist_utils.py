@@ -58,7 +58,7 @@ def plot_histogramme(df: pl.DataFrame, var, stat, stat_key, unit, height):
             yaxis_title="Pourcentage de stations",
             height=height
         )
-    st.plotly_chart(fig, use_container_width=True)
+    return fig
 
 
 def plot_histogramme_comparatif(df_observed: pl.DataFrame, df_modelised: pl.DataFrame, var, stat, stat_key, unit, height):
@@ -124,4 +124,4 @@ def plot_histogramme_comparatif(df_observed: pl.DataFrame, df_modelised: pl.Data
             height=height
         )
 
-    st.plotly_chart(fig, use_container_width=True)
+    return fig

@@ -7,8 +7,12 @@ from app.pipelines.import_data import pipeline_data
 from app.pipelines.import_config import pipeline_config
 from app.pipelines.import_map import pipeline_map
 from app.pipelines.import_scatter import pipeline_scatter
+from app.utils.show_info import show_info_data, show_info_metric
 
-def show(config_path):
+def show(
+    config_path: dict, 
+    height: int=600
+):
     st.markdown("<h3>Visualisation des précipitations</h3>", unsafe_allow_html=True)
     
     # Chargement des config
@@ -35,32 +39,14 @@ def show(config_path):
         quantile_choice
     )
 
-    # Chargement des données
-    params_load = (
-        stat_choice_key,
-        scale_choice_key,
-        min_year_choice,
-        max_year_choice,
-        season_choice_key,
-        missing_rate,
-        quantile_choice
-    )
-    result = pipeline_data(params_load, config)
-    df_modelised_load = result["modelised_load"]
-    df_observed_load = result["observed_load"]
-    result_df_modelised_show = result["modelised_show"]
-    result_df_modelised = result["modelised"]
-    result_df_observed = result["observed"]
-    column_to_show = result["column"]
+    # Obtention des données
+    result = pipeline_data(params_load, config, use_cache=True)
 
     # Chargement des affichages graphiques
     unit_label = get_stat_unit(stat_choice_key, scale_choice_key)
-    height=650
     params_map = (
         stat_choice_key,
-        column_to_show,
-        result_df_modelised_show,
-        result_df_observed,
+        result,
         unit_label,
         height
     )
@@ -94,15 +80,22 @@ def show(config_path):
 
     with col3:
         params_scatter = (
-            df_modelised_load, 
-            df_observed_load, 
-            column_to_show, 
-            result_df_modelised, 
-            result_df_modelised_show, 
-            result_df_observed, 
+            result,
             stat_choice_key, 
             scale_choice_key, 
             stat_choice,unit_label, 
             height
         )
-        pipeline_scatter(params_scatter)
+        n_tot_mod, n_tot_obs, me, mae, rmse, r2, scatter = pipeline_scatter(params_scatter)
+
+        col0bis, col1bis, col2bis, col3bis, col4bis, col5bis, col6bis = st.columns(7)
+
+        show_info_data(col0bis, "CP-AROME map", result["modelised_show"].shape[0], n_tot_mod)
+        show_info_data(col1bis, "Stations", result["observed_show"].shape[0], n_tot_obs)
+        show_info_data(col2bis, "CP-AROME plot", result["modelised"].shape[0], n_tot_mod)
+        show_info_metric(col3bis, "ME", me)
+        show_info_metric(col4bis, "MAE", mae)
+        show_info_metric(col5bis, "RMSE", rmse)
+        show_info_metric(col6bis, "r²", r2)
+
+        st.plotly_chart(scatter, use_container_width=True)

@@ -21,13 +21,7 @@ import numpy as np
 from app.pipelines.import_data import pipeline_data
 from app.pipelines.import_map import pipeline_map
 
-def standardize_year(year: float, min_year: int, max_year: int) -> float:
-    """
-    Centre et réduit une année `year` en utilisant min_year et max_year.
-    """
-    mean = (min_year + max_year) / 2
-    std = (max_year - min_year) / 2
-    return (year - mean) / std
+from app.utils.data_utils import standardize_year, filter_nan
 
 
 # --- Quantile GEV ---
@@ -56,18 +50,19 @@ ns_param_map = {
 # Liste complète des modèles avec leurs équations explicites
 model_options = {
     # Stationnaire
-    "M₁(μ₀, σ₀) : μ(t) = μ₀ ; σ(t) = σ₀ ; ξ(t) = ξ": "s_gev",
+    "M₀(μ₀, σ₀) : μ(t) = μ₀ ; σ(t) = σ₀ ; ξ(t) = ξ": "s_gev",
 
     # Non stationnaires simples
-    "M₂(μ, σ₀) : μ(t) = μ₀ + μ₁·t ; σ(t) = σ₀ ; ξ(t) = ξ": "ns_gev_m1",
-    "M₃(μ₀, σ) : μ(t) = μ₀ ; σ(t) = σ₀ + σ₁·t ; ξ(t) = ξ": "ns_gev_m2",
-    "M₄(μ, σ) : μ(t) = μ₀ + μ₁·t ; σ(t) = σ₀ + σ₁·t ; ξ(t) = ξ": "ns_gev_m3",
+    "M₁(μ, σ₀) : μ(t) = μ₀ + μ₁·t ; σ(t) = σ₀ ; ξ(t) = ξ": "ns_gev_m1",
+    "M₂(μ₀, σ) : μ(t) = μ₀ ; σ(t) = σ₀ + σ₁·t ; ξ(t) = ξ": "ns_gev_m2",
+    "M₃(μ, σ) : μ(t) = μ₀ + μ₁·t ; σ(t) = σ₀ + σ₁·t ; ξ(t) = ξ": "ns_gev_m3",
 
     # Non stationnaires avec rupture
-    "M₂⋆(μ, σ₀) : μ(t) = μ₀ + μ₁·t₊ ; σ(t) = σ₀ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m1_break_year",
-    "M₃⋆(μ₀, σ) : μ(t) = μ₀ ; σ(t) = σ₀ + σ₁·t₊ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m2_break_year",
-    "M₄⋆(μ, σ) : μ(t) = μ₀ + μ₁·t₊ ; σ(t) = σ₀ + σ₁·t₊ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m3_break_year",
+    "M₁⋆(μ, σ₀) : μ(t) = μ₀ + μ₁·t₊ ; σ(t) = σ₀ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m1_break_year",
+    "M₂⋆(μ₀, σ) : μ(t) = μ₀ ; σ(t) = σ₀ + σ₁·t₊ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m2_break_year",
+    "M₃⋆(μ, σ) : μ(t) = μ₀ + μ₁·t₊ ; σ(t) = σ₀ + σ₁·t₊ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m3_break_year",
 }
+
 
 # Calcul du ratio de stations valides
 def compute_valid_ratio(df: pl.DataFrame, param_list: list[str]) -> float:
@@ -75,8 +70,7 @@ def compute_valid_ratio(df: pl.DataFrame, param_list: list[str]) -> float:
     n_valid = df.drop_nulls(subset=param_list).height
     return round(n_valid / n_total, 3) if n_total > 0 else 0.0
 
-def filter_nan(df: pl.DataFrame, columns: list[str]):
-    return df.drop_nulls(subset=columns)
+
 
 def filter_percentile_all(df: pl.DataFrame, quantile_choice: float, columns: list[str]):
     quantiles = {
@@ -90,10 +84,12 @@ def filter_percentile_all(df: pl.DataFrame, quantile_choice: float, columns: lis
     )
     return df.filter(filter_expr)
 
+
+
 def show(config_path):
     config = load_config(config_path)
 
-    col0, col1, col2, col3, col4 = st.columns(5)
+    col0, col1, col2, col3 = st.columns([0.5, 1, 0.5, 0.5])
     with col0:
         Echelle = st.selectbox("Choix de l'échelle temporelle", ["Journalière", "Horaire"], key="scale_choice")
         echelle = "quotidien" if Echelle.lower() == "journalière" else "horaire"
@@ -137,31 +133,21 @@ def show(config_path):
                 format="%.3f",
                 key="quantile_choice"
             )
-
-
-        with col4:
-            min_calcul_year = 10 # nombre minimale d'année nécessaire pour la GEV
-            max_calcul_year = 56 # nombre maximal possible
-            value_fixe = 48 if echelle == "quotidien" else 20
-            
-            st.slider(
-                "Nombre d'années minimales",
-                min_value=min_calcul_year,
-                max_value=max_calcul_year,
-                value=value_fixe,
-                step=1,
-                key="len_serie",
-                disabled=True  # Empêche la modification
-            )
         
 
         # Chargement des données des maximas horaires
         stat_choice_key = "max"
         scale_choice_key = "mm_j" if echelle=="quotidien" else "mm_h"
-        min_year_choice = 1960
-        max_year_choice = 2015
         season_choice_key = "hydro"
-        missing_rate = value_fixe/(max_calcul_year - min_calcul_year + 1)
+
+        if season_choice_key == "hydro":
+            min_year_choice = config["years"]["min"]+1
+        else:
+            min_year_choice = config["years"]["min"]
+
+        max_year_choice = config["years"]["max"]
+
+        missing_rate = 0.15
         params_load = (
             stat_choice_key,
             scale_choice_key,
@@ -314,57 +300,6 @@ def show(config_path):
                     # Affiche le graphique avec mode sélection activé
                     event = st.plotly_chart(fig, key=f"scatter_{param}", on_select="rerun")
 
-                    if param == "xi":
-                        import pandas as pd
-
-                        # Fonction pour classer en -1, 0 ou 1
-                        def classify_sign(x):
-                            if x > 0:
-                                return np.int8(1)
-                            elif x < 0:
-                                return np.int8(-1)
-                            else:
-                                return np.int8(0)
-
-                        # Transforme obs_vs_mod avec une colonne struct
-                        df_sign = obs_vs_mod.with_columns(
-                            pl.struct(["pr_obs", "pr_mod"]).alias("struct")
-                        ).select(
-                            pl.col("struct").map_elements(
-                                lambda row: {"obs_sign": classify_sign(row["pr_obs"]), "mod_sign": classify_sign(row["pr_mod"])},
-                                return_dtype=pl.Struct([
-                                    pl.Field("obs_sign", pl.Int64),
-                                    pl.Field("mod_sign", pl.Int64)
-                                ])
-                            )
-                        ).unnest(["struct"])
-
-                        # Passe en pandas
-                        df_sign_pd = df_sign.to_pandas()
-
-                        # Crosstab sans reindex
-                        table_contingence = pd.crosstab(
-                            df_sign_pd["obs_sign"], 
-                            df_sign_pd["mod_sign"],
-                            rownames=[""],
-                            colnames=[""]
-                        )
-
-                        # ➔ Nettoyage automatique
-                        table_contingence.columns.name = None
-                        table_contingence.index = table_contingence.index.map({-1: "ξ_obs < 0", 0: "ξ_obs = 0", 1: "ξ_obs > 0"}).dropna()
-                        table_contingence.columns = [f"ξ_mod {c}" for c in table_contingence.columns.map({-1: "<0", 0: "=0", 1: ">0"})]
-
-                        # ➔ Convertir en pourcentage
-                        total_points = table_contingence.values.sum()  # Sur les vraies cases non nulles
-                        table_contingence_pct = (table_contingence / total_points) * 100
-                        table_contingence_pct = table_contingence_pct.round(1)
-
-                        st.write("### Tableau de contingence ξ observé vs ξ modélisé (en %)")
-                        st.dataframe(table_contingence_pct, use_container_width=True)
-
-
-
 
 
 
@@ -485,6 +420,88 @@ def show(config_path):
                             points_mod=points_mod
                         )
                         st.plotly_chart(fig)
+
+
+
+
+                        years_range = np.arange(min_year_choice, max_year_choice + 1)
+                        years_norm = np.array([
+                            standardize_year(y, min_year_choice, max_year_choice) for y in years_range
+                        ])
+                        T = np.array([nr_year])  # Période de retour choisie
+
+                        # --- Observations ---
+                        if df_observed_load_point.height > 0:
+                            max_obs = df_observed_load_point[column_to_show].to_numpy()
+                            years_obs = df_observed_load_point["year"].to_numpy()
+
+                            return_levels_obs = np.array([
+                                compute_return_levels_ns(params_obs, T, t_norm)
+                                for t_norm in years_norm
+                            ]).flatten()
+
+                            fig_obs = go.Figure()
+                            fig_obs.add_trace(go.Scatter(
+                                x=years_obs, y=max_obs,
+                                mode="lines",
+                                marker=dict(color="blue"),
+                                name="Maximas annuels (obs)"
+                            ))
+                            fig_obs.add_trace(go.Scatter(
+                                x=years_range, y=return_levels_obs,
+                                mode="lines",
+                                line=dict(color="black", dash="dash"),
+                                name=f"NR {nr_year} ans (obs)"
+                            ))
+                            
+
+                        # --- Modélisation ---
+                        if df_modelised_load_point.height > 0:
+                            max_mod = df_modelised_load_point[column_to_show].to_numpy()
+                            years_mod = df_modelised_load_point["year"].to_numpy()
+
+                            return_levels_mod = np.array([
+                                compute_return_levels_ns(params_mod, T, t_norm)
+                                for t_norm in years_norm
+                            ]).flatten()
+
+                            fig_mod = go.Figure()
+                            fig_mod.add_trace(go.Scatter(
+                                x=years_mod, y=max_mod,
+                                mode="lines",
+                                marker=dict(color="orange"),
+                                name="Maximas annuels (mod)"
+                            ))
+                            fig_mod.add_trace(go.Scatter(
+                                x=years_range, y=return_levels_mod,
+                                mode="lines",
+                                line=dict(color="black", dash="dash"),
+                                name=f"NR {nr_year} ans (mod)"
+                            ))
+
+
+
+                        ymin, ymax = 0, max(np.nanmax(max_obs), np.nanmax(max_mod))
+                    with col_density:
+                        fig_obs.update_layout(
+                            title="Série temporelle - Observations",
+                            xaxis_title="Année",
+                            yaxis_title=unit,
+                            yaxis=dict(range=[ymin, ymax]),
+                            height=height
+                        )
+                        st.plotly_chart(fig_obs, use_container_width=True)
+
+                    with col_retour:
+                        fig_mod.update_layout(
+                            title="Série temporelle - Modélisation",
+                            xaxis_title="Année",
+                            yaxis_title=unit,
+                            yaxis=dict(range=[ymin, ymax]),
+                            height=height
+                        )
+                        st.plotly_chart(fig_mod, use_container_width=True)
+
                         
                     #with col_times_series:
                         # if param == "xi":
