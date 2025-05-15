@@ -16,8 +16,8 @@ def show(
 
     # Chargement des données
     params_config = pipeline_config(config_path, type="gev")
-    params_config["stat_choice"] = f"Changements du niveau de retour {params_config["T_choice"]} ans"
-    params_config["unit"] = f"{params_config["unit"]}/{params_config["par_X_annees"]} ans"
+    params_config["stat_choice"] = f"Changements du niveau de retour {params_config['T_choice']} ans"
+    params_config["unit"] = f"{params_config['unit']}/{params_config['par_X_annees']} ans"
 
     result = pipeline_data_gev(params_config, params_config["T_choice"], params_config["par_X_annees"])
     result["stat_choice_key"] = None
@@ -38,7 +38,7 @@ def show(
         st.markdown(
             f"""
             <div style='text-align: left; margin-bottom: 10px;'>
-                <b>Changements du niveau de retour {params_config["T_choice"]} ans par 10 ans</b>
+                <b>Changements du niveau de retour {params_config['T_choice']} ans par {params_config['par_X_annees']} ans</b>
             </div>
             """,
             unsafe_allow_html=True
