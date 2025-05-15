@@ -87,8 +87,8 @@ def pipeline_data(params, config, use_cache=False):
 
 def pipeline_data_gev(params, T_choice: int, par_X_annees: int=None):
 
-    df_modelised_load = pl.read_parquet(params["mod_dir"] / f"gev_param_{params["model_name"]}.parquet")
-    df_observed_load = pl.read_parquet(params["obs_dir"] / f"gev_param_{params["model_name"]}.parquet")
+    df_modelised_load = pl.read_parquet(params["mod_dir"] / f"gev_param_{params['model_name']}.parquet")
+    df_observed_load = pl.read_parquet(params["obs_dir"] / f"gev_param_{params['model_name']}.parquet")
 
     df_modelised = filter_nan(df_modelised_load, "xi") # xi est toujours valable   
     df_observed = filter_nan(df_observed_load, "xi") # xi est toujours valable
