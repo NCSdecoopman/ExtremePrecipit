@@ -15,14 +15,14 @@ def show(
 ):
     # Chargement des données
     params_config = pipeline_config(config_path, type="gev", show_param=show_param)
-    params_config["stat_choice"] = f"{params_config["param_choice_pres"]}"
+    params_config["stat_choice"] = f"{params_config['param_choice_pres']}"
     
     if params_config["stat_choice"] == "Δqᵀ":
         params_config["unit"] = f"{params_config['unit']}/{params_config['par_X_annees']} ans"
         title = f"Changements du niveau de retour {params_config['T_choice']} ans par {params_config['par_X_annees']} ans"
     else:
         params_config["unit"] = ""
-        title = f"Paramètre {params_config["param_choice_pres"]} du modèle {params_config["model_name_pres"]}"
+        title = f"Paramètre {params_config['param_choice_pres']} du modèle {params_config['model_name_pres']}"
     
     result = pipeline_data_gev(params_config)
     result["stat_choice_key"] = None
