@@ -59,6 +59,22 @@ def menu_config_gev():
 
     return MODEL_PARAM, MODEL_NAME
 
+def reverse_param_label(param_label: str, model_name: str, model_param_map: dict) -> str:
+    """
+    Convertit un label unicode (e.g. 'μ₀') en nom de paramètre interne (e.g. 'mu0'),
+    en utilisant le mapping inverse de model_param_map.
+    """
+    if model_name not in model_param_map:
+        raise ValueError(f"Modèle {model_name} non trouvé dans le mapping.")
+    
+    reverse_map = {v: k for k, v in model_param_map[model_name].items()}
+    
+    if param_label not in reverse_map:
+        raise ValueError(f"Label {param_label} non trouvé pour le modèle {model_name}.")
+    
+    return reverse_map[param_label]
+
+
 
 def load_config(config_path: str) -> dict:
     with open(config_path, "r") as f:

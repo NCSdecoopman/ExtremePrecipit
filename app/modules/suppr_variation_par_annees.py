@@ -12,14 +12,12 @@ def show(
     config_path: dict, 
     height: int=600
 ):
-    st.markdown("<h3>Visualisation des changements du niveau de retour</h3>", unsafe_allow_html=True)
-
     # Chargement des données
     params_config = pipeline_config(config_path, type="gev")
-    params_config["stat_choice"] = f"Changements du niveau de retour {params_config['T_choice']} ans"
+    params_config["stat_choice"] = f"Δqᵀ"
     params_config["unit"] = f"{params_config['unit']}/{params_config['par_X_annees']} ans"
 
-    result = pipeline_data_gev(params_config, params_config["T_choice"], params_config["par_X_annees"])
+    result = pipeline_data_gev(params_config)
     result["stat_choice_key"] = None
 
     # Chargement des affichages graphiques

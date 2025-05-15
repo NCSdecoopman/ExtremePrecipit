@@ -1,7 +1,7 @@
 import streamlit as st
 from pathlib import Path
 
-
+from app.utils.config_utils import reverse_param_label
 
 def menu_statisticals(min_years: int, max_years: int, STATS, SEASON):
     if "selected_point" not in st.session_state:
@@ -84,11 +84,11 @@ def menu_statisticals(min_years: int, max_years: int, STATS, SEASON):
 
 
 
-def menu_gev(config: dict, model_options: dict, ns_param_map: dict, show_param: bool):
+def menu_gev(config: dict, model_options: dict, ns_param_map: dict, SEASON, show_param: bool):
     if "run_analysis" not in st.session_state:
         st.session_state["run_analysis"] = False
 
-    col0, col1, col2, col3, col4, col5, col6 = st.columns([0.5, 1, 0.5, 0.5, 0.5, 0.5, 0.5])
+    col0, col1, col2, col3, col4, col5, col6, col7 = st.columns([0.5, 1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
 
     # Échelle
     with col0:
@@ -98,7 +98,7 @@ def menu_gev(config: dict, model_options: dict, ns_param_map: dict, show_param: 
 
     # Modèle
     with col1:
-        st.selectbox(
+        selected_model = st.selectbox(
             "Modèle GEV",
             [None] + list(model_options.keys()),
             format_func=lambda x: "— Choisir un modèle —" if x is None else x,
@@ -111,6 +111,9 @@ def menu_gev(config: dict, model_options: dict, ns_param_map: dict, show_param: 
 
         # Quantile
         with col2:
+            st.selectbox("Choix de la saison", list(SEASON.keys()), key="season_choice")
+
+        with col3:
             st.slider(
                 "Percentile de retrait",
                 min_value=0.950,
@@ -122,41 +125,47 @@ def menu_gev(config: dict, model_options: dict, ns_param_map: dict, show_param: 
             )
 
         # Paramètre GEV
-        with col3:
+        with col4:
             if show_param:
-                available_params = list(ns_param_map[model_name].values())
-                st.selectbox(
+                param_map = ns_param_map[model_name]
+                available_params = list(param_map.values())  # labels unicode
+                selected_label = st.selectbox(
                     "Paramètre GEV à afficher",
                     available_params,
                     index=0,
                     key="gev_param_choice"
                 )
-                st.session_state["param_choice"] = st.session_state["gev_param_choice"]
+                # Conversion propre
+                st.session_state["param_choice"] = reverse_param_label(
+                    selected_label, model_name, ns_param_map
+                )
             else:
-                st.session_state["param_choice"] = None
+                st.session_state["param_choice"] = "Δqᵀ"
+                selected_label = "Δqᵀ"
 
-        with col4:
-            st.slider(
-                "Niveau de retour",
-                min_value=10,
-                max_value=100,
-                value=20,
-                step=10,
-                key="T_choice"
-            )
+        if selected_label == "Δqᵀ":
+            with col5:
+                st.slider(
+                    "Niveau de retour",
+                    min_value=10,
+                    max_value=100,
+                    value=20,
+                    step=10,
+                    key="T_choice"
+                )
 
-        with col5:
-            st.slider(
-                "Delta annees",
-                min_value=1,
-                max_value=60,
-                value=10,
-                step=1,
-                key="par_X_annees"
-            )
+            with col6:
+                st.slider(
+                    "Delta annees",
+                    min_value=1,
+                    max_value=60,
+                    value=10,
+                    step=1,
+                    key="par_X_annees"
+                )
 
         # Bouton d’analyse
-        with col6:
+        with col7:
             if st.button("Lancer l’analyse"):
                 st.session_state["run_analysis"] = True
 
@@ -168,16 +177,18 @@ def menu_gev(config: dict, model_options: dict, ns_param_map: dict, show_param: 
             min_year_choice = config["years"]["min"] + 1 if season_choice_key == "hydro" else config["years"]["min"]
             max_year_choice = config["years"]["max"]
             missing_rate = 0.15
-
+            season_key = SEASON[st.session_state["season_choice"]]
             # Répertoires
-            mod_dir = Path(config["gev"]["modelised"]) / st.session_state["echelle"]
-            obs_dir = Path(config["gev"]["observed"]) / st.session_state["echelle"]
+            mod_dir = Path(config["gev"]["modelised"]) / st.session_state["echelle"] / season_key
+            obs_dir = Path(config["gev"]["observed"]) / st.session_state["echelle"] / season_key
 
             return {
                 "echelle": st.session_state["echelle"],
                 "unit": st.session_state["unit"],
                 "model_name": st.session_state["model_name"],
+                "model_name_pres": selected_model,
                 "param_choice": st.session_state["param_choice"],
+                "param_choice_pres": selected_label,
                 "quantile_choice": st.session_state["quantile_choice"],
                 "stat_choice_key": stat_choice_key,
                 "scale_choice_key": scale_choice_key,

@@ -67,38 +67,42 @@ def compute_return_levels_ns(params: dict, T: np.ndarray, t_norm: float) -> np.n
     return qT
 
 
-def delta_qT_X_years(mu1, sigma1, xi, T, year_range, X_years):
+def delta_qT_X_years(mu1, sigma1, xi, T, year_range, par_X_annees):
     """
     Calcule la variation décennale du quantile de retour qᵀ(t)
     dans un modèle GEV non stationnaire avec t ∈ [0, 1].
 
     La variation est ramenée à l’échelle des années civiles en tenant compte de la
     durée totale du modèle (year_range = a_max - a_min).
+    Si un point de rupture est introduit year_range = a_max - a_rupture,
+    avec une Δqᵀ = 0 avant la rupture.
 
-    Δqᵀ = (X / year_range) × (μ₁ + (σ₁ / ξ) × z_T)
+    Δqᵀ = (par_X_annees / year_range) × (μ₁ + (σ₁ / ξ) × z_T)
     avec :
     - z_T = [ -log(1 - 1/T) ]^(-ξ) - 1   si ξ ≠ 0
           = log(-log(1 - 1/T))          si ξ = 0 (Gumbel)
+
+    par_X_annees représente 10, 20, 30 ans dans Δ_10ans qᵀ
     """
     try:
         p = 1 - 1 / T
         if xi == 0:
             z_T = np.log(-np.log(p))
-            delta_q = (X_years / year_range) * (mu1 + sigma1 * z_T)
+            delta_q = (par_X_annees / year_range) * (mu1 + sigma1 * z_T)
         else:
             z_T = (-np.log(p))**(-xi) - 1
-            delta_q = (X_years / year_range) * (mu1 + (sigma1 / xi) * z_T)
+            delta_q = (par_X_annees / year_range) * (mu1 + (sigma1 / xi) * z_T)
         return float(delta_q)
     except Exception:
         return np.nan
 
 
-def compute_delta_qT(row, T_choice, year_range, X_years):
+def compute_delta_qT(row, T_choice, year_range, par_X_annees):
     return delta_qT_X_years(
         row["mu1"], 
         row["sigma1"], 
         row["xi"], 
         T=T_choice, 
         year_range=year_range,
-        X_years=X_years
+        par_X_annees=par_X_annees
     )

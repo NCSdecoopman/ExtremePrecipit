@@ -3,7 +3,7 @@ import streamlit as st
 from app.utils.config_utils import load_config, menu_config_statisticals, menu_config_gev
 from app.utils.menus_utils import menu_statisticals, menu_gev
 
-def pipeline_config(config_path: str, type: str): 
+def pipeline_config(config_path: str, type: str, show_param: bool=False): 
     # Chargement de la configuration
     config = load_config(config_path)
 
@@ -41,12 +41,14 @@ def pipeline_config(config_path: str, type: str):
 
     elif type == "gev":
         MODEL_PARAM, MODEL_NAME = menu_config_gev()
+        _, SEASON, _ = menu_config_statisticals()
 
         params = menu_gev(
             config,
             MODEL_NAME,
             MODEL_PARAM,
-            show_param=False
+            SEASON,
+            show_param=show_param
         )
 
         if params is None:

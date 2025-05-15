@@ -85,7 +85,7 @@ def pipeline_data(params, config, use_cache=False):
         "column": column
     }
 
-def pipeline_data_gev(params, T_choice: int, par_X_annees: int=None):
+def pipeline_data_gev(params):
     df_modelised_load = pl.read_parquet(params["mod_dir"] / f"gev_param_{params['model_name']}.parquet")
     df_observed_load = pl.read_parquet(params["obs_dir"] / f"gev_param_{params['model_name']}.parquet")
 
@@ -100,42 +100,62 @@ def pipeline_data_gev(params, T_choice: int, par_X_annees: int=None):
     df_observed = safe_compute_return_df(df_observed)
 
     # Étape 2 : appliquer delta_qT_decennale (avec numpy)
-    T_choice = 20  # ou récupéré dynamiquement via Streamlit
-    year_range = params["max_year_choice"] - params["min_year_choice"]
+    T_choice = params["T_choice"]  # ou récupéré dynamiquement via Streamlit
+
+    if "_break_year" in params['model_name']: # dans le cas des modèles avec point de rupture
+        year_range = params["max_year_choice"] - params["config"]["years"]["rupture"] # Δa+ = a_max - a_rupture
+    else:
+        year_range = params["max_year_choice"] - params["min_year_choice"] # Δa = a_max - a_min
 
     # Calcul du delta qT
     df_modelised = df_modelised.with_columns([
         pl.struct(["mu1", "sigma1", "xi"])
-        .map_elements(lambda row: compute_delta_qT(row, T_choice, year_range, par_X_annees), return_dtype=pl.Float64)
+        .map_elements(lambda row: compute_delta_qT(row, T_choice, year_range, params["par_X_annees"]), return_dtype=pl.Float64)
         .alias("delta_qT")
     ])
 
     df_observed = df_observed.with_columns([
         pl.struct(["mu1", "sigma1", "xi"])
-        .map_elements(lambda row: compute_delta_qT(row, T_choice, year_range, par_X_annees), return_dtype=pl.Float64)
+        .map_elements(lambda row: compute_delta_qT(row, T_choice, year_range, params["par_X_annees"]), return_dtype=pl.Float64)
         .alias("delta_qT")
     ])
 
-    column = "delta_qT"
+    column = params["param_choice"]
+    if column == "Δqᵀ":
+        column = "delta_qT"
 
     # Retrait des percentiles
     modelised_show = dont_show_extreme(df_modelised, column, params["quantile_choice"])
     observed_show = dont_show_extreme(df_observed, column, params["quantile_choice"])
    
-    val_max = max(modelised_show[column].max(), observed_show[column].max())
-    val_min = min(modelised_show[column].min(), observed_show[column].min())
-    abs_max = max(abs(val_min), abs(val_max))
+    if column == "delta_qT":
 
-    return {
-        "modelised_load": df_modelised_load,
-        "observed_load": df_observed_load,
-        "modelised": df_modelised,
-        "observed": df_observed,
-        "modelised_show": modelised_show,
-        "observed_show": observed_show, 
-        "column": column,
-        "vmin": -abs_max,
-        "vmax": abs_max,
-        "echelle": "diverging_zero_white",
-        "continu": True
-    }
+        val_max = max(modelised_show[column].max(), observed_show[column].max())
+        val_min = min(modelised_show[column].min(), observed_show[column].min())
+        abs_max = max(abs(val_min), abs(val_max))
+
+        return {
+            "modelised_load": df_modelised_load,
+            "observed_load": df_observed_load,
+            "modelised": df_modelised,
+            "observed": df_observed,
+            "modelised_show": modelised_show,
+            "observed_show": observed_show, 
+            "column": column,
+            "vmin": -abs_max,
+            "vmax": abs_max,
+            "echelle": "diverging_zero_white",
+            "continu": True
+        }
+    
+    else:
+
+        return {
+            "modelised_load": df_modelised_load,
+            "observed_load": df_observed_load,
+            "modelised": df_modelised,
+            "observed": df_observed,
+            "modelised_show": modelised_show,
+            "observed_show": observed_show, 
+            "column": column
+        }

@@ -1,6 +1,7 @@
 years:
   min: 1959
   max: 2020 # choix dans le menu
+  rupture: 1985
 
 statisticals:
   modelised: data/statisticals/modelised
