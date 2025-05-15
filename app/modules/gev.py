@@ -23,20 +23,6 @@ from app.pipelines.import_map import pipeline_map
 
 from app.utils.data_utils import standardize_year, filter_nan
 
-
-# --- Quantile GEV ---
-# Soit :
-#   μ(t)     = μ₀ + μ₁ × t                  # localisation dépendante du temps
-#   σ(t)     = σ₀ + σ₁ × t                  # échelle dépendante du temps
-#   ξ        = constante                    # forme
-#   T        = période de retour (années)
-#   p        = 1 − 1 / T                    # probabilité non-excédée associée
-
-# La quantile notée qᵀ(t) (précipitation pour une période de retour T à l’année t) s’écrit :
-#   qᵀ(t) = μ(t) + [σ(t) / ξ] × [ (−log(1 − p))^(−ξ) − 1 ]
-#   qᵀ(t) = (μ₀ + μ₁ × t) + [(σ₀ + σ₁ × t) / ξ] × [ (−log(1 − (1/T)))^(−ξ) − 1 ]
-
-
 ns_param_map = {
     "s_gev": {"mu0": "μ₀", "sigma0": "σ₀", "xi": "ξ"},
     "ns_gev_m1": {"mu0": "μ₀", "mu1": "μ₁", "sigma0": "σ₀", "xi": "ξ"},

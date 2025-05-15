@@ -1,7 +1,15 @@
 import streamlit as st
 
-from app.utils.data_utils import load_data, cleaning_data_observed, dont_show_extreme, add_metadata, get_column_load
+from app.utils.data_utils import (
+    load_data, 
+    cleaning_data_observed, 
+    dont_show_extreme, 
+    add_metadata, 
+    get_column_load,
+    filter_nan
+)
 from app.utils.stats_utils import compute_statistic_per_point
+from app.utils.gev_utils import safe_compute_return_df, compute_delta_qT
 from app.utils.legends_utils import get_stat_column_name
 
 import polars as pl
@@ -75,4 +83,60 @@ def pipeline_data(params, config, use_cache=False):
         "modelised": modelised,
         "observed": observed,
         "column": column
+    }
+
+def pipeline_data_gev(params, T_choice: int, par_X_annees: int=None):
+
+    df_modelised_load = pl.read_parquet(params["mod_dir"] / f"gev_param_{params["model_name"]}.parquet")
+    df_observed_load = pl.read_parquet(params["obs_dir"] / f"gev_param_{params["model_name"]}.parquet")
+
+    df_modelised = filter_nan(df_modelised_load, "xi") # xi est toujours valable   
+    df_observed = filter_nan(df_observed_load, "xi") # xi est toujours valable
+
+    df_modelised = add_metadata(df_modelised, "mm_h" if params["echelle"] == "horaire" else "mm_j", type="modelised")
+    df_observed = add_metadata(df_observed, "mm_h" if params["echelle"] == "horaire" else "mm_j", type="observed")       
+    
+    # Étape 1 : créer une colonne avec les paramètres nettoyés
+    df_modelised = safe_compute_return_df(df_modelised)
+    df_observed = safe_compute_return_df(df_observed)
+
+    # Étape 2 : appliquer delta_qT_decennale (avec numpy)
+    T_choice = 20  # ou récupéré dynamiquement via Streamlit
+    year_range = params["max_year_choice"] - params["min_year_choice"]
+
+    # Calcul du delta qT
+    df_modelised = df_modelised.with_columns([
+        pl.struct(["mu1", "sigma1", "xi"])
+        .map_elements(lambda row: compute_delta_qT(row, T_choice, year_range, par_X_annees), return_dtype=pl.Float64)
+        .alias("delta_qT")
+    ])
+
+    df_observed = df_observed.with_columns([
+        pl.struct(["mu1", "sigma1", "xi"])
+        .map_elements(lambda row: compute_delta_qT(row, T_choice, year_range, par_X_annees), return_dtype=pl.Float64)
+        .alias("delta_qT")
+    ])
+
+    column = "delta_qT"
+
+    # Retrait des percentiles
+    modelised_show = dont_show_extreme(df_modelised, column, params["quantile_choice"])
+    observed_show = dont_show_extreme(df_observed, column, params["quantile_choice"])
+   
+    val_max = max(modelised_show[column].max(), observed_show[column].max())
+    val_min = min(modelised_show[column].min(), observed_show[column].min())
+    abs_max = max(abs(val_min), abs(val_max))
+
+    return {
+        "modelised_load": df_modelised_load,
+        "observed_load": df_observed_load,
+        "modelised": df_modelised,
+        "observed": df_observed,
+        "modelised_show": modelised_show,
+        "observed_show": observed_show, 
+        "column": column,
+        "vmin": -abs_max,
+        "vmax": abs_max,
+        "echelle": "diverging_zero_white",
+        "continu": True
     }

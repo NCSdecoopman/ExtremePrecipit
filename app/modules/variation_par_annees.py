@@ -1,53 +1,32 @@
 import streamlit as st
 
 from app.utils.map_utils import plot_map
-from app.utils.legends_utils import get_stat_unit
-
-from app.pipelines.import_data import pipeline_data
+from app.pipelines.import_data import pipeline_data_gev
 from app.pipelines.import_config import pipeline_config
 from app.pipelines.import_map import pipeline_map
 from app.pipelines.import_scatter import pipeline_scatter
 from app.utils.show_info import show_info_data, show_info_metric
 
+
 def show(
     config_path: dict, 
     height: int=600
 ):
-    st.markdown("<h3>Visualisation des précipitations</h3>", unsafe_allow_html=True)
-    
-    # Chargement des config
-    params_config = pipeline_config(config_path, type="stat")
-    config = params_config["config"]
-    stat_choice = params_config["stat_choice"]
-    season_choice = params_config["season_choice"]
-    stat_choice_key = params_config["stat_choice_key"]
-    scale_choice_key = params_config["scale_choice_key"]
-    min_year_choice = params_config["min_year_choice"]
-    max_year_choice = params_config["max_year_choice"]
-    season_choice_key = params_config["season_choice_key"]
-    missing_rate = params_config["missing_rate"]
-    quantile_choice = params_config["quantile_choice"]
-    
-    # Préparation des paramètres pour pipeline_data
-    params_load = (
-        stat_choice_key,
-        scale_choice_key,
-        min_year_choice,
-        max_year_choice,
-        season_choice_key,
-        missing_rate,
-        quantile_choice
-    )
+    st.markdown("<h3>Visualisation des changements du niveau de retour</h3>", unsafe_allow_html=True)
 
-    # Obtention des données
-    result = pipeline_data(params_load, config, use_cache=True)
+    # Chargement des données
+    params_config = pipeline_config(config_path, type="gev")
+    params_config["stat_choice"] = f"Changements du niveau de retour {params_config["T_choice"]} ans"
+    params_config["unit"] = f"{params_config["unit"]}/{params_config["par_X_annees"]} ans"
+
+    result = pipeline_data_gev(params_config, params_config["T_choice"], params_config["par_X_annees"])
+    result["stat_choice_key"] = None
 
     # Chargement des affichages graphiques
-    unit_label = get_stat_unit(stat_choice_key, scale_choice_key)
     params_map = (
-        stat_choice_key,
+        result["stat_choice_key"],
         result,
-        unit_label,
+        params_config["unit"],
         height
     )
     layer, scatter_layer, tooltip, view_state, html_legend = pipeline_map(params_map)
@@ -59,7 +38,7 @@ def show(
         st.markdown(
             f"""
             <div style='text-align: left; margin-bottom: 10px;'>
-                <b>{stat_choice} des précipitations de {min_year_choice} à {max_year_choice} ({season_choice.lower()})</b>
+                <b>Changements du niveau de retour {params_config["T_choice"]} ans par 10 ans</b>
             </div>
             """,
             unsafe_allow_html=True
@@ -81,9 +60,10 @@ def show(
     with col3:
         params_scatter = (
             result,
-            stat_choice_key, 
-            scale_choice_key, 
-            stat_choice,unit_label, 
+            result["stat_choice_key"], 
+            params_config["scale_choice_key"], 
+            params_config["stat_choice"],
+            params_config["unit"], 
             height
         )
         n_tot_mod, n_tot_obs, me, mae, rmse, r2, scatter = pipeline_scatter(params_scatter)

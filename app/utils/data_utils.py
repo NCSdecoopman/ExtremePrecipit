@@ -2,7 +2,7 @@ import polars as pl
 import streamlit as st
 from scipy.spatial import cKDTree
 
-from app.utils.config_utils import menu_config
+from app.utils.config_utils import menu_config_statisticals
 
 def get_column_load(stat: str, scale: str):
     if stat == "mean":
@@ -25,7 +25,7 @@ def load_season(year: int, season_key: str, base_path: str, col_to_load: str) ->
     return pl.read_parquet(filename, columns=col_to_load)
 
 def load_data(type_data: str, echelle: str, min_year: int, max_year: int, season: str, col_to_load: str, config) -> pl.DataFrame:
-    _, SEASON, _ = menu_config()
+    _, SEASON, _ = menu_config_statisticals()
     if season not in SEASON.values():
         raise ValueError(f"Saison inconnue : {season}")
 
@@ -80,7 +80,7 @@ def cleaning_data_observed(df: pl.DataFrame, nan_limit: float = 0.1) -> pl.DataF
 
     return df_filtered
 
-def dont_show_extreme(modelised, column, quantile_choice, stat_choice_key):
+def dont_show_extreme(modelised, column, quantile_choice, stat_choice_key: str=None):
     if stat_choice_key not in ["month", "date"]:
         percentile_95 = modelised.select(
             pl.col(column).quantile(quantile_choice, "nearest")
@@ -172,7 +172,6 @@ def standardize_year(year: float, min_year: int, max_year: int) -> float:
     Normalise une année `year` entre 0 et 1 avec une transformation min-max.
     """
     return (year - min_year) / (max_year - min_year)
-
 
 
 def filter_nan(df: pl.DataFrame, columns: list[str]):

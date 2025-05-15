@@ -1,5 +1,5 @@
 import streamlit as st
-from app.modules import statisticals, gev #, niveau_retour, change_niveau_retour, all_max
+from app.modules import statisticals, gev, variation_par_annees #, niveau_retour, change_niveau_retour, all_max
 
 st.set_page_config(layout="wide", page_title="Visualisation des précipitations", page_icon="🌧️")
 
@@ -66,7 +66,7 @@ option = "Statistiques descriptives"
 st.sidebar.title("Navigation")
 option = st.sidebar.selectbox(
     "Navigation",
-    ("Statistiques descriptives", "GEV")
+    ("Statistiques descriptives", "GEV", "Variation décennale")
     #label_visibility="hidden"
 )
 
@@ -80,6 +80,9 @@ if option == "Statistiques descriptives":
 
 elif option == "GEV":
     gev.show(config_path)
+
+elif option == "Variation décennale":
+    variation_par_annees.show(config_path)
 
 # elif option == "Niveau de retour":
 #     niveau_retour.show(config_path)
