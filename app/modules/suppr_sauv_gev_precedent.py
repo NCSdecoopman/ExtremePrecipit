@@ -12,7 +12,6 @@ from app.utils.legends_utils import *
 from app.utils.hist_utils import *
 from app.utils.scatter_plot_utils import *
 from app.utils.show_info import show_info_metric
-from app.utils.gev_utils import compute_return_levels_ns
 
 import pydeck as pdk
 import polars as pl
@@ -31,6 +30,7 @@ ns_param_map = {
     "ns_gev_m1_break_year": {"mu0": "μ₀", "mu1": "μ₁", "sigma0": "σ₀", "xi": "ξ"},
     "ns_gev_m2_break_year": {"mu0": "μ₀", "sigma0": "σ₀", "sigma1": "σ₁", "xi": "ξ"},
     "ns_gev_m3_break_year": {"mu0": "μ₀", "mu1": "μ₁", "sigma0": "σ₀", "sigma1": "σ₁", "xi": "ξ"},
+    "best_model": {"mu0": "μ₀", "mu1": "μ₁", "sigma0": "σ₀", "sigma1": "σ₁", "xi": "ξ"}
 }
 
 # Liste complète des modèles avec leurs équations explicites
@@ -47,7 +47,52 @@ model_options = {
     "M₁⋆(μ, σ₀) : μ(t) = μ₀ + μ₁·t₊ ; σ(t) = σ₀ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m1_break_year",
     "M₂⋆(μ₀, σ) : μ(t) = μ₀ ; σ(t) = σ₀ + σ₁·t₊ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m2_break_year",
     "M₃⋆(μ, σ) : μ(t) = μ₀ + μ₁·t₊ ; σ(t) = σ₀ + σ₁·t₊ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m3_break_year",
+
+    "best_model": "best_model"
 }
+
+import numpy as np
+
+def compute_return_levels_ns(params: dict, T: np.ndarray, t_norm: float) -> np.ndarray:
+    """
+    Calcule les niveaux de retour pour une GEV non stationnaire.
+    Sécurise les accès aux paramètres GEV pour éviter les erreurs de type.
+
+    Arguments :
+        params : dictionnaire des paramètres (mu0, mu1, sigma0, sigma1, xi)
+        T : tableau de périodes de retour
+        t_norm : temps normalisé ∈ [0, 1]
+
+    Retour :
+        Niveaux de retour qᵀ(t) (array de même taille que T)
+    """
+    def safe_get(key):
+        val = params.get(key, 0.0)
+        return float(val) if val is not None else 0.0
+
+    mu0 = safe_get("mu0")
+    mu1 = safe_get("mu1")
+    sigma0 = safe_get("sigma0")
+    sigma1 = safe_get("sigma1")
+    xi = safe_get("xi")
+
+    # μ(t) et σ(t)
+    mu = mu0 + mu1 * t_norm
+    sigma = sigma0 + sigma1 * t_norm
+
+    # z_T selon la valeur de xi
+    p = 1 - 1 / T
+    with np.errstate(divide='ignore', invalid='ignore'):
+        if xi != 0:
+            z = np.power(-np.log(p), -xi) - 1
+            qT = mu + (sigma / xi) * z
+        else:
+            z = np.log(-np.log(p))
+            qT = mu + sigma * z
+
+    return qT
+
+
 
 
 # Calcul du ratio de stations valides
@@ -90,8 +135,10 @@ def show(config_path):
             key="model_type"
         )
 
-    mod_dir = Path(config["gev"]["modelised"]) / echelle
-    obs_dir = Path(config["gev"]["observed"]) / echelle
+        season = st.selectbox("Choix de la saison", ["hydro", "djf", "mam", "jja", "son"], key="season_choice")
+
+    mod_dir = Path(config["gev"]["modelised"]) / echelle / season
+    obs_dir = Path(config["gev"]["observed"]) / echelle / season
 
     if model_label is not None:
         model_name = model_options[model_label]
@@ -331,82 +378,82 @@ def show(config_path):
 
                     T = np.logspace(np.log10(1.01), np.log10(100), 100)
 
-                    y_obs = compute_return_levels_ns(params_obs, T, t_norm=year_choice_norm)
-                    y_mod = compute_return_levels_ns(params_mod, T, t_norm=year_choice_norm)
+                    # y_obs = compute_return_levels_ns(params_obs, T, t_norm=year_choice_norm)
+                    # y_mod = compute_return_levels_ns(params_mod, T, t_norm=year_choice_norm)
 
                     # Extraction des maximas annuels bruts
                     df_observed_load = df_observed_load.with_columns(pl.col("NUM_POSTE").cast(pl.Int32))
                     df_observed_load_point = df_observed_load.filter(pl.col("NUM_POSTE") == num_poste_obs)
 
-                    if df_observed_load_point.height > 0:
-                        maximas_sorted_obs = np.sort(df_observed_load_point[column_to_show].drop_nulls().to_numpy())[::-1]
-                        n = len(maximas_sorted_obs)
-                        T_empirical_obs = (n + 1) / np.arange(1, n + 1)
-                        points_obs = {
-                            "year": T_empirical_obs,
-                            "value": maximas_sorted_obs
-                        }
-                    else:
-                        points_obs = None
+                    # if df_observed_load_point.height > 0:
+                    #     maximas_sorted_obs = np.sort(df_observed_load_point[column_to_show].drop_nulls().to_numpy())[::-1]
+                    #     n = len(maximas_sorted_obs)
+                    #     T_empirical_obs = (n + 1) / np.arange(1, n + 1)
+                    #     points_obs = {
+                    #         "year": T_empirical_obs,
+                    #         "value": maximas_sorted_obs
+                    #     }
+                    # else:
+                    #     points_obs = None
 
 
                     # Extraction des maximas annuels bruts
                     df_modelised_load = df_modelised_load.with_columns(pl.col("NUM_POSTE").cast(pl.Int32))
                     df_modelised_load_point = df_modelised_load.filter(pl.col("NUM_POSTE") == num_poste_mod)
 
-                    if df_modelised_load_point.height > 0:
-                        maximas_sorted_mod = np.sort(df_modelised_load_point[column_to_show].drop_nulls().to_numpy())[::-1]
-                        n = len(maximas_sorted_mod)
-                        T_empirical_mod = (n + 1) / np.arange(1, n + 1)
-                        points_mod = {
-                            "year": T_empirical_mod,
-                            "value": maximas_sorted_mod
-                        }
-                    else:
-                        points_mod = None
+                    # if df_modelised_load_point.height > 0:
+                    #     maximas_sorted_mod = np.sort(df_modelised_load_point[column_to_show].drop_nulls().to_numpy())[::-1]
+                    #     n = len(maximas_sorted_mod)
+                    #     T_empirical_mod = (n + 1) / np.arange(1, n + 1)
+                    #     points_mod = {
+                    #         "year": T_empirical_mod,
+                    #         "value": maximas_sorted_mod
+                    #     }
+                    # else:
+                    #     points_mod = None
 
                     col_density, col_retour, col_times_series = st.columns(3)
 
-                    with col_density:
+                    #with col_density:
                         
-                        fig_density_comparison = generate_gev_density_comparison_interactive(
-                            points_obs["value"],
-                            points_mod["value"],
-                            params_obs,
-                            params_mod,
-                            unit,
-                            height=height,
-                            t_norm=year_choice_norm
-                        )
+                    #     fig_density_comparison = generate_gev_density_comparison_interactive(
+                    #         points_obs["value"],
+                    #         points_mod["value"],
+                    #         params_obs,
+                    #         params_mod,
+                    #         unit,
+                    #         height=height,
+                    #         t_norm=year_choice_norm
+                    #     )
 
                         
-                        st.plotly_chart(fig_density_comparison, use_container_width=True)
+                    #     st.plotly_chart(fig_density_comparison, use_container_width=True)
 
-                        # fig_density_comparison = generate_gev_density_comparison_interactive_3D(
-                        #     maxima_obs=points_obs["value"],
-                        #     maxima_mod=points_mod["value"],
-                        #     params_obs=params_obs,
-                        #     params_mod=params_mod,
-                        #     unit=unit,
-                        #     height=height,
-                        #     min_year=min_year_choice,
-                        #     max_year=max_year_choice
-                        # )
+                    #     # fig_density_comparison = generate_gev_density_comparison_interactive_3D(
+                    #     #     maxima_obs=points_obs["value"],
+                    #     #     maxima_mod=points_mod["value"],
+                    #     #     params_obs=params_obs,
+                    #     #     params_mod=params_mod,
+                    #     #     unit=unit,
+                    #     #     height=height,
+                    #     #     min_year=min_year_choice,
+                    #     #     max_year=max_year_choice
+                    #     # )
 
-                        # st.plotly_chart(fig_density_comparison, use_container_width=True)
+                    #     # st.plotly_chart(fig_density_comparison, use_container_width=True)
 
 
                     with col_retour:
-                        fig = generate_return_period_plot_interactive(
-                            T=T,
-                            y_obs=y_obs,
-                            y_mod=y_mod,
-                            unit=unit,
-                            height=height,
-                            points_obs=points_obs,
-                            points_mod=points_mod
-                        )
-                        st.plotly_chart(fig)
+                    #     fig = generate_return_period_plot_interactive(
+                    #         T=T,
+                    #         y_obs=y_obs,
+                    #         y_mod=y_mod,
+                    #         unit=unit,
+                    #         height=height,
+                    #         points_obs=points_obs,
+                    #         points_mod=points_mod
+                    #     )
+                    #     st.plotly_chart(fig)
 
 
 

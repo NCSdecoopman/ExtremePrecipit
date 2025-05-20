@@ -1,5 +1,5 @@
 import streamlit as st
-from app.modules import statisticals, gev
+from app.modules import statisticals, gev, suppr_sauv_gev_precedent
 
 st.set_page_config(layout="wide", page_title="Visualisation des précipitations", page_icon="🌧️")
 
@@ -66,7 +66,7 @@ option = "Statistiques descriptives"
 st.sidebar.title("Navigation")
 option = st.sidebar.selectbox(
     "Navigation",
-    ("Statistiques descriptives", "GEV", "Variation décennale")
+    ("Statistiques descriptives", "Variation décennale", "temp")
     #label_visibility="hidden"
 )
 
@@ -75,8 +75,8 @@ config_path = "app/config/config.yaml"
 if option == "Statistiques descriptives":
     statisticals.show(config_path)
 
-elif option == "GEV":
-    gev.show(config_path, True)
-
 elif option == "Variation décennale":
-    gev.show(config_path, False)
+    gev.show(config_path)
+
+elif option == "temp":
+    suppr_sauv_gev_precedent.show(config_path)

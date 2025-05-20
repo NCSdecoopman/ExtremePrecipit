@@ -164,6 +164,11 @@ def menu_gev(config: dict, model_options: dict, ns_param_map: dict, SEASON, show
                     key="par_X_annees"
                 )
 
+        else:
+            st.session_state["T_choice"] = None
+            st.session_state["par_X_annees"] = None
+        
+
         # Bouton d’analyse
         with col7:
             if st.button("Lancer l’analyse"):

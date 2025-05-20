@@ -10,7 +10,7 @@ from app.utils.show_info import show_info_data, show_info_metric
 
 def show(
     config_path: dict,
-    show_param: bool,
+    show_param: bool=False,
     height: int=600
 ):
     # Chargement des données
@@ -19,7 +19,7 @@ def show(
     
     if params_config["stat_choice"] == "Δqᵀ":
         params_config["unit"] = f"{params_config['unit']}/{params_config['par_X_annees']} ans"
-        title = f"Changements du niveau de retour {params_config['T_choice']} ans par {params_config['par_X_annees']} ans"
+        title = f"Changements du niveau de retour {params_config['T_choice']} ans par {params_config['par_X_annees']} ans du modèle {params_config["model_name_pres"]}"
     else:
         params_config["unit"] = ""
         title = f"Paramètre {params_config['param_choice_pres']} du modèle {params_config['model_name_pres']}"

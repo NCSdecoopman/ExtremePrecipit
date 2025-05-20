@@ -706,10 +706,11 @@ on a :
 
 ```{python}
 #| label: minimize_gev_aic_map
-title = "Modèle minimisant l'AIC"
 echelle = "quotidien"
-mod_dir = Path(config["gev"]["modelised"]) / echelle
-obs_dir = Path(config["gev"]["observed"]) / echelle
+season = "hydro"
+title = f"Modèle minimisant l'AIC (SAISON {season})"
+mod_dir = Path(config["gev"]["modelised"]) / echelle / season
+obs_dir = Path(config["gev"]["observed"]) / echelle / season
 
 df_model_aic = pl.read_parquet(mod_dir / "gev_param_best_model.parquet")
 df_obs_aic = pl.read_parquet(obs_dir / "gev_param_best_model.parquet")

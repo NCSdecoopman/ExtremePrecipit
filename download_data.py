@@ -14,6 +14,7 @@ try:
         cache_dir=cache_path,
         allow_patterns=["metadonnees/*"]
     )
+    
     print("Téléchargement des statistiques AROMES (mod)...")
     snapshot_download(
         repo_id="ncsdecoopman/ExtremePrecipit",
@@ -23,6 +24,7 @@ try:
         cache_dir=cache_path,
         allow_patterns=["statisticals/modelised*"]
     )
+
     print("Téléchargement des statistiques STATIONS observées...")
     snapshot_download(
         repo_id="ncsdecoopman/ExtremePrecipit",
@@ -32,6 +34,7 @@ try:
         cache_dir=cache_path,
         allow_patterns=["statisticals/observed*"]
     )   
+
     print("Téléchargement des GEVs AROME...")
     snapshot_download(
         repo_id="ncsdecoopman/ExtremePrecipit",
@@ -41,6 +44,7 @@ try:
         cache_dir=cache_path,
         allow_patterns=["gev/modelised*"]
     )
+
     print("Téléchargement des GEVs STATIONS...")
     snapshot_download(
         repo_id="ncsdecoopman/ExtremePrecipit",
