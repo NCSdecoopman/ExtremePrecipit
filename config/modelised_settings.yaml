@@ -18,7 +18,7 @@ spatial_filter:
 zarr:
   path:
     outputdir: "data/processed/modelised/zarr"
-  overwrite: true  # Ecraser ou non les .zarr existants
+  overwrite: false  # Ecraser ou non les .zarr existants
   chunks:
     time: .inf  # on garde full time
     NUM_POSTE: 100  # par 100 points
@@ -42,6 +42,7 @@ statistics:
 gev:
   path:
     outputdir: "data/gev/modelised"
+  break_year: 1985
 
 log:
   directory: "logs/pipeline/modelised"  # dossier où sera écrit les fichiers .log
