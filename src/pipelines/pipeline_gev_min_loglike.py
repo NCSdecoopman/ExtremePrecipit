@@ -1,3 +1,6 @@
+# PERMET DE TROUVER LE POINT DE RUPTURE QUI MINIMISE LOGLIKE
+
+
 import argparse
 from pathlib import Path
 import numpy as np
@@ -88,29 +91,6 @@ MODEL_REGISTRY = {
     "ns_gev_m3_break_year":  (ns_gev_m3,  ["mu0", "mu1", "sigma0", "sigma1", "xi"])
 }
 
-# Initialisation des modèles :
-# 
-# - s_gev (stationnaire) :
-#     μ₀, σ₀, ξ initialisés par les moments empiriques (moyenne et écart-type).
-#
-# - ns_gev_m1 (effet sur μ) :
-#     μ₀, σ₀, ξ initialisés par s_gev ; μ₁ fixé à 0.
-#     → Hypothèse : pas de tendance sur σ.
-#
-# - ns_gev_m2 (effet sur σ) :
-#     μ₀, σ₀, ξ initialisés par s_gev ; σ₁ fixé à 0.
-#     → Hypothèse : pas de tendance sur μ.
-#
-# - ns_gev_m3 (effet sur μ et σ) :
-#     Initialisation hybride basée sur la performance de ns_gev_m1 et ns_gev_m2 :
-#       • Si log-vraisemblance(ns_gev_m1) > log-vraisemblance(ns_gev_m2) :
-#           μ₀, μ₁, σ₀, ξ initialisés depuis ns_gev_m1 ; σ₁ fixé à 0.
-#       • Sinon :
-#           μ₀, σ₀, σ₁, ξ initialisés depuis ns_gev_m2 ; μ₁ fixé à 0.
-#     → On repart du meilleur modèle unidimensionnel pour estimer l’autre effet.
-
-
-
 
 # Soit Γ une loi gamma, notons gₖ = Γ(1 - kξ) avec k dans {1, 2, 3, 4}
 # --- Calcul de l'espérance de la GEV ---
@@ -152,12 +132,7 @@ def postprocess_s_gev_results(results: list[Tuple]) -> Tuple[list[str], list[Tup
     return param_names, filtered_results
 
 
-def gev_non_stationnaire(
-    df: pd.DataFrame,
-    col_val: str,
-    model_name: str,
-    init_params: dict[str, float] = None
-) -> Tuple:
+def gev_non_stationnaire(df: pd.DataFrame, col_val: str, model_name: str) -> Tuple:
     global logger
     df = df.dropna(subset=[col_val])
     values = pd.Series(df[col_val].values, index=df.index)
@@ -183,31 +158,20 @@ def gev_non_stationnaire(
     ns_dist = NsDistribution("gev", model_struct) # model_struct peut être None (stationnaire)
     bounds = [PARAM_DEFAULTS[param]["bounds"] for param in param_names]
 
-    # On récupère les initiations déjà trouvées issues de modèles plus simples
-    if init_params:
-        # μ₀, σ₀ et ξ viennent soit des moments empiriques, soit d’un modèle stationnaire précédent
-        mu_init = init_params.get("mu0", mu_init)
-        sigma_init = init_params.get("sigma0", sigma_init)
-        xi_init = init_params.get("xi", xi_init)
-
+    # Initialisation personnalisée basée sur une GEV stationnaire
     custom_x0 = {
-        "mu0": mu_init,         # μ₀
-        "mu1": 0,               # μ₁ = 0 pour commencer et le définir
-        "sigma0": sigma_init,   # σ₀
-        "sigma1": 0,            # σ₁ = 0 pour commencer et le définir
+        "mu0": mu_init,             # μ₀ = μ
+        "mu1": 0,                   # μ₁ = 0
+        "sigma0": sigma_init,       # σ₀ = σ
+        "sigma1": 0,                # σ₁ = 0 
         # Attention ! inversion car to_params_ts() retourne -xi
-        "xi": -xi_init          # ξ = constante choisie dès le début
+        "xi": -xi_init              # ξ = constante choisie dès le début
     }
-
-    if model_name in ["ns_gev_m3", "ns_gev_m3_break_year"]: # Effet temporel sur μ et σ
-        # On récupère les paramètres déjà estimés dans les modèles plus simples
-        custom_x0["mu1"] = init_params.get("mu1", 0)
-        custom_x0["sigma1"] = init_params.get("sigma1", 0)
-
     # Cela revient à repartir de la vraisemblance obtenue dans le cas stationnaire, 
     # sauf que dans le cas non stationnaire on autorise plus de paramètres donc la vraisemblance va augmenter.
 
     x0 = [custom_x0[param] for param in param_names]
+
 
     # METHODES D'OPTIMISATION
     # BFGS libre uniquement pour les modèles non-stationnaires, L-BFGS-B sinon (pour fixer mu1 = 0 permanent)
@@ -286,24 +250,13 @@ def gev_non_stationnaire(
     logger.warning(f"Échec total du fit pour NUM_POSTE={poste} (toutes les méthodes)")
     return (np.nan,) * len(param_names) + (np.nan,) # toujours param + log_likelihood
 
-def fit_ns_gev_for_point(
-    key: int,
-    group: pd.DataFrame,
-    col_val: str,
-    len_serie: int,
-    model_name: str,
-    init_params: dict[str, float] = None
-):
-
+def fit_ns_gev_for_point(key: int, group: pd.DataFrame, col_val: str, len_serie: int, model_name: str) -> Tuple:
     num_poste = key
     serie_valide = group.dropna(subset=[col_val])
     if len(serie_valide) < len_serie:
         return (num_poste,) + (np.nan,) * len(MODEL_REGISTRY[model_name][1]) + (np.nan,) # toujours param + log_likelihood
     try:
-        result = gev_non_stationnaire(
-            serie_valide, col_val, model_name,
-            init_params=init_params
-        )
+        result = gev_non_stationnaire(serie_valide, col_val, model_name)
         return (num_poste,) + result
     except Exception as e:
         logger.error(f"Erreur pour NUM_POSTE={num_poste} : {type(e).__name__} - {e}")
@@ -315,10 +268,8 @@ def fit_gev_par_point(
     len_serie: int,
     model_name: str,
     break_year: Union[int, None] = None,
-    max_workers: int = 48,
-    output_dir: Union[str, Path] = None,
+    max_workers: int = 48
 ) -> pd.DataFrame:
-
     
     df = df_pl.to_pandas()
     if "year" not in df.columns:
@@ -345,91 +296,10 @@ def fit_gev_par_point(
 
     grouped = list(df.groupby('NUM_POSTE'))
 
-    # Récupération des paramètres déjà initialisés s'ils existent
-    init_params_by_poste = None
-
-    if model_name != "s_gev" and output_dir is not None:
-        try:
-            df_init = pd.read_parquet(Path(output_dir) / "gev_param_s_gev.parquet")
-            init_params_by_poste = {
-                row["NUM_POSTE"]: {
-                    "mu0": row["mu0"],
-                    "sigma0": row["sigma0"],
-                    "xi": row["xi"],
-                    "mu1": row.get("mu1", 0),
-                    "sigma1": row.get("sigma1", 0),
-                }
-                for _, row in df_init.iterrows()
-            }
-
-            if model_name in ["ns_gev_m3", "ns_gev_m3_break_year"]:
-                try:
-                    # Utilise le suffixe "_break_year" si nécessaire
-                    suffix = "_break_year" if "break_year" in model_name else ""
-
-                    path_m1 = Path(output_dir) / f"gev_param_ns_gev_m1{suffix}.parquet"
-                    path_m2 = Path(output_dir) / f"gev_param_ns_gev_m2{suffix}.parquet"
-
-                    if path_m1.exists() and path_m2.exists():
-                        df_m1 = pd.read_parquet(path_m1).set_index("NUM_POSTE")
-                        df_m2 = pd.read_parquet(path_m2).set_index("NUM_POSTE")
-
-                        for poste in init_params_by_poste:
-                            row_m1 = df_m1.loc[poste] if poste in df_m1.index else None
-                            row_m2 = df_m2.loc[poste] if poste in df_m2.index else None
-
-                            if row_m1 is not None and row_m2 is not None:
-                                if row_m1["log_likelihood"] >= row_m2["log_likelihood"]:
-                                    init_params_by_poste[poste]["mu0"] = row_m1["mu0"]
-                                    init_params_by_poste[poste]["mu1"] = row_m1["mu1"]
-                                    init_params_by_poste[poste]["sigma0"] = row_m1["sigma0"]
-                                    init_params_by_poste[poste]["xi"] = row_m1["xi"]
-                                    init_params_by_poste[poste]["sigma1"] = 0.0
-                                else:
-                                    init_params_by_poste[poste]["mu0"] = row_m2["mu0"]
-                                    init_params_by_poste[poste]["mu1"] = 0.0
-                                    init_params_by_poste[poste]["sigma0"] = row_m2["sigma0"]
-                                    init_params_by_poste[poste]["sigma1"] = row_m2["sigma1"]
-                                    init_params_by_poste[poste]["xi"] = row_m2["xi"]
-
-                            elif row_m1 is not None:
-                                init_params_by_poste[poste]["mu0"] = row_m1["mu0"]
-                                init_params_by_poste[poste]["mu1"] = row_m1["mu1"]
-                                init_params_by_poste[poste]["sigma0"] = row_m1["sigma0"]
-                                init_params_by_poste[poste]["xi"] = row_m1["xi"]
-                                init_params_by_poste[poste]["sigma1"] = 0.0
-
-                            elif row_m2 is not None:
-                                init_params_by_poste[poste]["mu0"] = row_m2["mu0"]
-                                init_params_by_poste[poste]["mu1"] = 0.0
-                                init_params_by_poste[poste]["sigma0"] = row_m2["sigma0"]
-                                init_params_by_poste[poste]["sigma1"] = row_m2["sigma1"]
-                                init_params_by_poste[poste]["xi"] = row_m2["xi"]
-
-                    else:
-                        logger.warning(f"Fichiers d'initialisation manquants pour {model_name} : {path_m1} ou {path_m2}")
-
-                except Exception as e:
-                    logger.warning(f"Impossible de charger ns_gev_m1/m2 pour initialisation {model_name} : {e}")
-
-
-
-        except Exception as e:
-            logger.warning(f"Impossible de charger les paramètres stationnaires pour initialiser {model_name}: {e}")
-
-
     results = []
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = {
-            executor.submit(
-                fit_ns_gev_for_point,
-                key,
-                group,
-                col_val,
-                len_serie,
-                model_name,
-                init_params_by_poste.get(key) if init_params_by_poste else None
-            )
+            executor.submit(fit_ns_gev_for_point, key, group, col_val, len_serie, model_name): key
             for key, group in grouped
         }
 
@@ -459,6 +329,37 @@ def fit_gev_par_point(
     n_failed = df_result[param_names[0]].isna().sum()
     logger.info(f"NS-GEV fitting terminé : {n_total - n_failed} réussites, {n_failed} échecs.")
     return df_result
+
+
+def compare_loglikelihoods_across_break_years(
+        df: pl.DataFrame,
+        col_val: str,
+        model_name: str,
+        years_range: range,
+        len_serie: int = 30,
+        max_workers: int = 48
+    ) -> pd.DataFrame:
+        loglik_list = []
+
+        for break_year in tqdm(years_range, desc="Scan break years"):
+            try:
+                df_result = fit_gev_par_point(
+                    df,
+                    col_val=col_val,
+                    len_serie=len_serie,
+                    model_name=model_name,
+                    break_year=break_year,
+                    max_workers=max_workers
+                )
+                mean_loglik = df_result["log_likelihood"].dropna().mean()
+                loglik_list.append((model_name, break_year, mean_loglik))
+            except Exception as e:
+                print(f"Erreur à {break_year} : {e}")
+                loglik_list.append((model_name, break_year, np.nan))
+
+        return pd.DataFrame(loglik_list, columns=["model_name", "break_year", "mean_loglik"])
+
+
 
 def pipeline_gev_from_statisticals(config, max_workers: int = 48):
     global logger
@@ -496,7 +397,7 @@ def pipeline_gev_from_statisticals(config, max_workers: int = 48):
             sys.exit(1)
 
         # Création du répertoire de sortie
-        output_dir = Path(config["gev"]["path"]["outputdir"]) / echelle / season
+        output_dir = Path(config["gev"]["path"]["outputdir"]) / echelle
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # Fixation de l'échelle pour le choix des colonnes à lire
@@ -510,8 +411,8 @@ def pipeline_gev_from_statisticals(config, max_workers: int = 48):
         ]
 
         if years:
-            min_year = min(years) if echelle == "quotidien" else 1990 # Année minimale
-            max_year = 2020 # max(years) A CHANGER ICI ------------------------------------------------------------------------------------------------------------------->
+            min_year = min(years)
+            max_year = max(years)
         else:
             logger.error("Aucune année valide trouvée.")
 
@@ -522,27 +423,52 @@ def pipeline_gev_from_statisticals(config, max_workers: int = 48):
         logger.info(f"Chargement des données de {min_year} à {max_year} : {input_dir}")
         df = load_data(input_dir, season, echelle, cols, min_year, max_year)
 
-        logger.info(f"Application de la GEV pour la saison {season}")
-        len_serie = 50 if echelle=="quotidien" else 20 # Longueur minimale d'une série valide
+        logger.info("Application de la GEV")
+        len_serie = 50 if echelle=="quotidien" else 30 # Longueur minimale d'une série valide
 
-        # # TESTER SUR UNE STATION BORDER LINE
+        ## TESTER SUR UNE STATION BORDER LINE
         # df = df.with_columns(pl.col("NUM_POSTE").cast(pl.Utf8))
         # df = df.filter(pl.col("NUM_POSTE") == "76114001")
 
-        df_gev_param = fit_gev_par_point(
-            df, 
-            mesure, 
-            len_serie=len_serie, 
-            model_name=model_name, 
-            break_year=break_year,
-            max_workers=max_workers,
-            output_dir=output_dir
-        )
+        scan_break_years = config.get("gev", {}).get("scan_break_years", True)
+
+        if scan_break_years and "break_year" in model_name:
+            # Définition de la plage de scan (ex. : Blanchet = 1977 à 1994 inclus)
+            years_range = range(1977, 1995)
+
+            logger.info(f"Scan multi-ruptures activé : {model_name} de {years_range.start} à {years_range.stop - 1}")
+
+            df_loglik = compare_loglikelihoods_across_break_years(
+                df=df,
+                col_val=mesure,
+                model_name=model_name,
+                years_range=years_range,
+                len_serie=len_serie,
+                max_workers=max_workers
+            )
+
+            # Enregistrement
+            filename = f"loglik_scan_{model_name}_{echelle}.parquet"
+            df_loglik.to_parquet(output_dir / filename)
+            logger.info(f"Log-vraisemblances sauvegardées : {filename}")
+
+        else:
+            df_gev_param = fit_gev_par_point(
+                df, 
+                mesure, 
+                len_serie=len_serie, 
+                model_name=model_name, 
+                break_year=break_year,
+                max_workers=max_workers
+            )
+
+            df_gev_param.to_parquet(f"{output_dir}/gev_param_{model_name}.parquet")
+            logger.info(f"Enregistré sous {output_dir}/gev_param_{model_name}.parquet")
+            logger.info(df_gev_param)
 
 
-        df_gev_param.to_parquet(f"{output_dir}/gev_param_{model_name}.parquet")
-        logger.info(f"Enregistré sous {output_dir}/gev_param_{model_name}.parquet")
-        logger.info(df_gev_param)
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pipeline application de la GEV sur les maximas.")

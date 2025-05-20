@@ -229,6 +229,7 @@ def pipeline_obs_vs_mod(config_obs, config_mod):
         df_match = create_commun_point(df_obs, df_mod)
         PATH_METADATA_OBS_VS_MOD.mkdir(parents=True, exist_ok=True)
         df_match.to_csv(PATH_METADATA_OBS_VS_MOD / f"obs_vs_mod_{echelle}.csv", index=False)
+        print(df_match.shape[0])
         logger.info(f"Fichier de correspondances coordonnées observées - modélisées enregistré sous {PATH_METADATA_OBS_VS_MOD}/obs_vs_mod_{echelle}.csv")
 
         # Liste des stations

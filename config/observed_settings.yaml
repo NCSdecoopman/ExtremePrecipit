@@ -46,6 +46,7 @@ obs_vs_mod:
 gev:
   path:
     outputdir: "data/gev/observed"
+  break_year: 1985
 
 log:
   directory: "logs/pipeline/observed"  # dossier où sera écrit les fichiers .log
