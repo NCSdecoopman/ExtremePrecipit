@@ -10,8 +10,11 @@ import polars as pl
 MODEL_LIST = {
     "s_gev": ["mu0", "sigma0", "xi"],
     "ns_gev_m1": ["mu0", "mu1", "sigma0", "xi"],
+    "ns_gev_m1_break_year": ["mu0", "mu1", "sigma0", "xi"],
     "ns_gev_m2": ["mu0", "sigma0", "sigma1", "xi"],
+    "ns_gev_m2_break_year": ["mu0", "sigma0", "sigma1", "xi"],
     "ns_gev_m3": ["mu0", "mu1", "sigma0", "sigma1", "xi"],
+    "ns_gev_m3_break_year": ["mu0", "mu1", "sigma0", "sigma1", "xi"],
 }
 
 def get_all_model_outputs(path_dir: Path) -> dict[str, pl.DataFrame]:
@@ -30,30 +33,35 @@ def get_all_model_outputs(path_dir: Path) -> dict[str, pl.DataFrame]:
 
 def merge_and_select_best_model(model_outputs: dict[str, pl.DataFrame]) -> pl.DataFrame:
     """
-    Concatène tous les modèles, calcule l’AIC et sélectionne le meilleur par NUM_POSTE.
+    Concatène tous les modèles, calcule l’AIC et sélectionne le meilleur par NUM_POSTE,
+    uniquement si la log-vraisemblance est disponible.
     """
     dfs = []
     for model, df in model_outputs.items():
         k = len(MODEL_LIST[model])  # nombre de paramètres
-        df = df.with_columns((2 * k - 2 * pl.col("log_likelihood")).alias("AIC")) # Calcul de l'AIC
+        df = df.with_columns((2 * k - 2 * pl.col("log_likelihood")).alias("AIC"))  # Calcul AIC
         dfs.append(df)
 
-    # Concatène tous les dataframes en remplissant NaN si la colonne n'existe pas 4 modèles * tous les points
     df_all = pl.concat(dfs, how="diagonal")
-    # Meilleur AIC par station
+
+    # Retire les lignes sans log-likelihood (pas de fit réussi)
+    df_all = df_all.filter(pl.col("log_likelihood").is_not_null())
+
+    # Meilleur AIC par station uniquement sur les lignes valides
     best = (
         df_all.sort("AIC")
         .group_by("NUM_POSTE")
         .first()
     )
 
-    # Ajoute colonnes manquantes pour harmonisation
+    # Ajoute les colonnes manquantes pour harmonisation
     all_cols = ["NUM_POSTE", "mu0", "mu1", "sigma0", "sigma1", "xi", "model"]
     for col in all_cols:
         if col not in best.columns:
             best = best.with_columns(pl.lit(None).alias(col))
 
     return best.select(all_cols)
+
 
 def pipeline_select_best_model(config) -> pl.DataFrame:
     """
@@ -63,12 +71,13 @@ def pipeline_select_best_model(config) -> pl.DataFrame:
     logger = get_logger(__name__)
     
     echelles = config.get("echelles")
-    model_path = config.get("model")
+    season = config.get("season", "hydro")
+    model_path = config.get("config")
     gev_dir = config["gev"]["path"]["outputdir"]
 
     for echelle in echelles:
         logger.info(f"--- Traitement de {model_path} - échelle : {echelle.upper()} ---")
-        path_dir = Path(gev_dir) / echelle
+        path_dir = Path(gev_dir) / echelle / season
 
         # Charge les fichiers GEV pour tous les modèles dans le dossier donné
         model_outputs = get_all_model_outputs(path_dir)
@@ -82,10 +91,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pipeline cherche meilleur GEV.")
     parser.add_argument("--config", type=str, default="config/observed_settings.yaml")
     parser.add_argument("--echelle", type=str, choices=["horaire", "quotidien"], nargs="+", default=["horaire", "quotidien"])
+    parser.add_argument("--season", type=str, default="hydro")
     args = parser.parse_args()
 
     config = load_config(args.config)
     config["echelles"] = args.echelle
-    config["model"] = args.config
+    config["season"] = args.season
+    config["config"] = args.config
 
     df_best = pipeline_select_best_model(config)
