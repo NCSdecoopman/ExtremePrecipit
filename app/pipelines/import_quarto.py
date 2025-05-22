@@ -277,8 +277,10 @@ def pipeline_quarto_gev_half_france(
     # 1. Limites latitudes
     if half == "nord":
         min_lat, max_lat = 46.2, 51.2
+        min_lon, max_lon = -np.inf, np.inf
     elif half == "sud":
-        min_lat, max_lat = 42.5, 46.2
+        min_lat, max_lat = 41.0, 46.2
+        min_lon, max_lon = -2, 7.7
     else:
         raise ValueError("half doit être 'nord' ou 'sud'")
 
@@ -286,10 +288,13 @@ def pipeline_quarto_gev_half_france(
     name = f"gev_{model_name}_{season_choice}_{half}"
 
     # Filtrage spatial
-    def filter_lat(df, min_lat, max_lat):
-        return df.filter((pl.col("lat") >= min_lat) & (pl.col("lat") < max_lat))
-    result["modelised_show"] = filter_lat(result["modelised_show"], min_lat, max_lat)
-    result["observed_show"] = filter_lat(result["observed_show"], min_lat, max_lat)
+    def filter_latlon(df, min_lat, max_lat, min_lon, max_lon):
+        return df.filter(
+            (pl.col("lat") >= min_lat) & (pl.col("lat") < max_lat) &
+            (pl.col("lon") >= min_lon) & (pl.col("lon") < max_lon)
+        )
+    result["modelised_show"] = filter_latlon(result["modelised_show"], min_lat, max_lat, min_lon, max_lon)
+    result["observed_show"] = filter_latlon(result["observed_show"], min_lat, max_lat, min_lon, max_lon)
 
     # 5. Carte (Pydeck + légende)
     params_map = (

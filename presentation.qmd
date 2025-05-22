@@ -41,7 +41,9 @@ from app.utils.data_utils import (
     standardize_year,
     filter_nan
 )
+
 from app.utils.stats_utils import generate_metrics
+
 from app.pipelines.import_quarto import (
     pipeline_data_quarto, pipeline_data_gev_quarto,
     pipeline_map_quarto,
