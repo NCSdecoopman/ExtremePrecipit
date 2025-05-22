@@ -149,7 +149,7 @@ def menu_gev(config: dict, model_options: dict, ns_param_map: dict, SEASON, show
                     "Niveau de retour",
                     min_value=10,
                     max_value=100,
-                    value=20,
+                    value=10,
                     step=10,
                     key="T_choice"
                 )
@@ -178,16 +178,15 @@ def menu_gev(config: dict, model_options: dict, ns_param_map: dict, SEASON, show
             # Valeurs par défaut
             stat_choice_key = "max"
             scale_choice_key = "mm_j" if st.session_state["echelle"] == "quotidien" else "mm_h"
-            season_choice_key = "hydro"
-            min_year_choice = config["years"]["min"] + 1 if season_choice_key == "hydro" else config["years"]["min"]
+            season_choice_key = SEASON[st.session_state["season_choice"]]
+            min_year_choice = config["years"]["min"] + 1 if season_choice_key in ["hydro", "djf"] else config["years"]["min"]
             max_year_choice = config["years"]["max"]
             missing_rate = 0.15
-            season_key = SEASON[st.session_state["season_choice"]]
             # Répertoires
-            mod_dir = Path(config["gev"]["modelised"]) / st.session_state["echelle"] / season_key
-            obs_dir = Path(config["gev"]["observed"]) / st.session_state["echelle"] / season_key
+            mod_dir = Path(config["gev"]["modelised"]) / st.session_state["echelle"] / season_choice_key
+            obs_dir = Path(config["gev"]["observed"]) / st.session_state["echelle"] / season_choice_key
 
-            return {
+            return {    
                 "echelle": st.session_state["echelle"],
                 "unit": st.session_state["unit"],
                 "model_name": st.session_state["model_name"],
@@ -198,6 +197,7 @@ def menu_gev(config: dict, model_options: dict, ns_param_map: dict, SEASON, show
                 "stat_choice_key": stat_choice_key,
                 "scale_choice_key": scale_choice_key,
                 "season_choice_key": season_choice_key,
+                "season_choice": st.session_state["season_choice"],
                 "min_year_choice": min_year_choice,
                 "max_year_choice": max_year_choice,
                 "missing_rate": missing_rate,

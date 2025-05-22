@@ -5,7 +5,7 @@ from app.pipelines.import_data import pipeline_data
 from app.pipelines.import_config import pipeline_config
 from app.utils.data_utils import add_metadata
 from app.utils.stats_utils import generate_metrics
-from app.utils.config_utils import load_config, menu_config
+from app.utils.config_utils import load_config, menu_config_statisticals
 
 from app.utils.map_utils import plot_map
 from app.utils.legends_utils import get_stat_unit
@@ -20,7 +20,7 @@ import pandas as pd
 
 def pipeline_config(config_path: dict): 
     config = load_config(config_path)
-    STATS, SEASON, SCALE = menu_config()
+    STATS, SEASON, SCALE = menu_config_statisticals()
 
     return {
         "config": config,

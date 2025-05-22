@@ -19,7 +19,7 @@ def show(
     
     if params_config["stat_choice"] == "Δqᵀ":
         params_config["unit"] = f"{params_config['unit']}/{params_config['par_X_annees']} ans"
-        title = f"Changements du niveau de retour {params_config['T_choice']} ans par {params_config['par_X_annees']} ans du modèle {params_config['model_name_pres']}"
+        title = f"Changements du niveau de retour {params_config['T_choice']} ans par {params_config['par_X_annees']} ans du modèle {params_config['model_name_pres']} en {params_config['season_choice'].lower()}"
     else:
         params_config["unit"] = ""
         title = f"Paramètre {params_config['param_choice_pres']} du modèle {params_config['model_name_pres']}"

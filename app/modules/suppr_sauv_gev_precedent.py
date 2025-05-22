@@ -579,7 +579,6 @@ def show(config_path):
                         #     return_levels_mod=return_levels_mod
                         # )
                         # st.plotly_chart(fig_time_series, use_container_width=True)
-
                             
             else:
                 pass
@@ -598,9 +597,6 @@ def show(config_path):
                 df_obs_vs_mod_full = None
 
             if df_obs_vs_mod_full is not None:
-
-                model_aic_tables = []
-                obs_aic_tables = []
 
                 for label, model in model_options.items():
                     try:
@@ -631,27 +627,24 @@ def show(config_path):
                         st.warning(f"❌ Erreur modèle {model} : {e}")
 
 
+
+
         with col_map_model:
             df_model_aic = pl.read_parquet(mod_dir / "gev_param_best_model.parquet")
             df_obs_aic = pl.read_parquet(obs_dir / "gev_param_best_model.parquet")
 
             df_model_aic = add_metadata(df_model_aic, "mm_h" if echelle == "horaire" else "mm_j", type="modelised")
             df_obs_aic = add_metadata(df_obs_aic, "mm_h" if echelle == "horaire" else "mm_j", type="observed")
+            df_obs_aic = filter_nan(df_obs_aic, "xi")
 
-            df_obs_aic = filter_nan(df_obs_aic, "xi") # xi est toujours valable
+            # Modèles disponibles (hors best_model)
+            model_names = [v for k, v in model_options.items() if v != "best_model"]
+            best_model_name = "best_model"
 
-
-            # liste ordonnée des modèles
-            model_names = list(model_options.values())
-
-            # Chargement des affichages graphiques
-            height=600
+            height = 600
             n_legend = len(model_names)
-            
-            # Définir l'échelle personnalisée continue ou discrète selon le cas
             colormap = echelle_config("discret", n_colors=n_legend)
 
-            # Normalisation de la légende pour les valeurs modélisées
             df_model_aic, vmin, vmax = formalised_legend(
                 df_model_aic,
                 column_to_show="model", 
@@ -660,31 +653,50 @@ def show(config_path):
                 categories=model_names
             )
 
-            # Création du layer modélisé
+            # 🔁 Ajouter les AIC de tous les autres modèles
+            for model in model_names:
+                try:
+                    df_other = pl.read_parquet(mod_dir / f"gev_param_{model}.parquet")
+                    df_other = df_other.select(["NUM_POSTE", "log_likelihood"]).with_columns([
+                        (2 * len(ns_param_map[model]) - 2 * pl.col("log_likelihood")).alias(f"aic_{model}")
+                    ])
+                    df_model_aic = df_model_aic.join(df_other.select(["NUM_POSTE", f"aic_{model}"]), on="NUM_POSTE", how="left")
+                except Exception as e:
+                    st.warning(f"Erreur lecture AIC {model} : {e}")
+
+            # ➕ Formatter les AIC dans une seule colonne val_fmt pour le tooltip
+            df_model_pd = df_model_aic.to_pandas()
+
+            def format_aic_for_tooltip(row):
+                lignes = []
+                for model in model_names:
+                    val = row.get(f"aic_{model}")
+                    if val is not None and not np.isnan(val):
+                        lignes.append(f"AIC {model} : {val:.1f}")
+                return "<br>".join(lignes)
+
+            df_model_pd["val_fmt"] = df_model_pd.apply(format_aic_for_tooltip, axis=1)
+            df_model_aic = pl.from_pandas(df_model_pd)
+
+            # Création du layer AROME (modèle AIC min)
             layer = create_layer(df_model_aic)
 
-            # Normalisation des points observés avec les mêmes bornes
+            # Normalisation des points observés avec la même colormap
             df_obs_aic, _, _ = formalised_legend(
                 df_obs_aic,
                 column_to_show="model", 
                 colormap=colormap,
                 is_categorical=True,
-                categories=model_names
+                categories=model_names + [best_model_name]
             )
-            plot_station = st.checkbox('Afficher les stations', value=False)
 
-            if plot_station:
-                scatter_layer = create_scatter_layer(df_obs_aic, radius=1500)
-            else:
-                scatter_layer = None
+            scatter_layer = create_scatter_layer(df_obs_aic, radius=1500) if st.checkbox("Afficher les stations", value=False) else None
 
-            # Tooltip (tu dois t'assurer que unit_label est défini quelque part ou passé en paramètre)
-            tooltip = create_tooltip("")
+            # Tooltip HTML standardisé avec val_fmt
+            tooltip = create_tooltip("AIC (tous modèles)")
 
-            # View par défaut
             view_state = pdk.ViewState(latitude=46.8, longitude=1.7, zoom=5)
 
-            # Légende vertical
             html_legend = display_vertical_color_legend(
                 height,
                 colormap,
@@ -694,7 +706,8 @@ def show(config_path):
                 label="Modèle AIC minimal",
                 model_labels=model_names
             )
-            col1, col2 = st.columns([1, 0.15])
+
+            col1, col2 = st.columns([0.7, 0.3])
 
             with col1:
                 deck = plot_map([layer, scatter_layer], view_state, tooltip)
@@ -707,7 +720,6 @@ def show(config_path):
 
                     for param in param_list:
                         obs_vs_mod = match_and_compare(df_obs_aic, df_model_aic, param, df_obs_vs_mod_full)
-
                         if obs_vs_mod is not None and obs_vs_mod.height > 0:
                             _, _, _, r2 = generate_metrics(obs_vs_mod)
                             st.markdown(f"• **{param}** : r² = `{r2:.3f}`")
@@ -715,4 +727,4 @@ def show(config_path):
                             st.markdown(f"• **{param}** : données insuffisantes")
 
             with col2:
-                st.markdown(html_legend, unsafe_allow_html=True)  
+                st.markdown(html_legend, unsafe_allow_html=True)

@@ -10,8 +10,10 @@ from app.utils.data_utils import match_and_compare
 from app.utils.stats_utils import generate_metrics
 from app.utils.scatter_plot_utils import generate_scatter_plot_interactive
 
-from app.pipelines.import_data import pipeline_data
+from app.pipelines.import_data import pipeline_data, pipeline_data_gev
 from app.pipelines.import_map import pipeline_map
+
+from app.utils.config_utils import get_readable_season
 
 def pipeline_data_quarto(
         config: dict,
@@ -54,6 +56,41 @@ def pipeline_data_quarto(
     result = pipeline_data(params_load, config, use_cache=False)
 
     return result
+
+def pipeline_data_gev_quarto(
+        config: dict,
+        model_name: str,
+        echelle: str,
+        min_year: int,
+        max_year: int,
+        season_choice: str,
+        T_choice: int = 10,
+        par_X_annees: int = 10,
+        quantile_choice: float = 0.999,
+        param_choice: str = "Δqᵀ"
+    ):
+
+    # Préparation des chemins vers les dossiers Parquet GEV
+    mod_dir = Path(config["gev"]["modelised"]) / echelle / season_choice
+    obs_dir = Path(config["gev"]["observed"]) / echelle / season_choice
+
+    params = {
+        "mod_dir": mod_dir,
+        "obs_dir": obs_dir,
+        "model_name": model_name,
+        "echelle": echelle,
+        "T_choice": T_choice,
+        "par_X_annees": par_X_annees,
+        "quantile_choice": quantile_choice,
+        "min_year_choice": min_year,
+        "max_year_choice": max_year,
+        "param_choice": param_choice,
+        "config": config  # pour l’accès à rupture, etc.
+    }
+
+    result = pipeline_data_gev(params)
+    return result
+
 
 
 def pipeline_map_quarto(
@@ -157,6 +194,7 @@ def pipeline_scatter_quarto(
     return html_scatter, r2, me, n, delta
 
 
+
 def pipeline_map_legend_scatter(
     name: str,
     result: dict,
@@ -195,23 +233,172 @@ def pipeline_title(
     title: str,
     year_display_min: int,
     year_display_max: int,
-    echelle: str
+    echelle: str,
+    season_choice: str="hydro",
 ):
+    
+
     return f"""
     <div style="font-size: 18px; color: #333;">
         <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
         <p style="font-size: 18px; color: #3498db;">
             de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
-            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
+            (Saison : <span style="font-weight: bold; color: #f39c12;">{get_readable_season(season_choice)}</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">{echelle}</span>)
         </p> 
     </div>
-
     """
 
-def pipeline_show_html(map_legend, scatter):
-    return f"""
-    <div class="columns" style="display: flex; gap: 0px; margin: 0;">
-        <div class="column" style="width: 50%;">{map_legend}</div>
-        <div class="column" style="width: 50%;">{scatter}</div>
+def pipeline_show_html(map_legend, scatter: None):
+    if scatter is None:
+        return f"""
+        <div class="columns" style="display: flex; gap: 0; margin: 0; width: 100%; max-width: 100%; padding: 0;">
+            <div class="column" style="flex: 1; width: 100%; padding: 0;">{map_legend}</div>
+        </div>
+        """
+    else:
+        return f"""
+        <div class="columns" style="display: flex; gap: 0px; margin: 0;">
+            <div class="column" style="width: 50%;">{map_legend}</div>
+            <div class="column" style="width: 50%;">{scatter}</div>
+        </div>
+        """
+
+
+def pipeline_quarto_gev_half_france(
+    model_name: str,
+    season_choice: str,
+    echelle: str,
+    par_X_annees: int,
+    result: dict, 
+    half: str = "nord",           # "nord" ou "sud"
+    height: int = 500,
+    assets_dir: str = "assets"
+):
+    # 1. Limites latitudes
+    if half == "nord":
+        min_lat, max_lat = 46.2, 51.2
+    elif half == "sud":
+        min_lat, max_lat = 42.5, 46.2
+    else:
+        raise ValueError("half doit être 'nord' ou 'sud'")
+
+    Path(assets_dir).mkdir(exist_ok=True)
+    name = f"gev_{model_name}_{season_choice}_{half}"
+
+    # Filtrage spatial
+    def filter_lat(df, min_lat, max_lat):
+        return df.filter((pl.col("lat") >= min_lat) & (pl.col("lat") < max_lat))
+    result["modelised_show"] = filter_lat(result["modelised_show"], min_lat, max_lat)
+    result["observed_show"] = filter_lat(result["observed_show"], min_lat, max_lat)
+
+    # 5. Carte (Pydeck + légende)
+    params_map = (
+        result["stat_choice_key"] if "stat_choice_key" in result else "Δqᵀ",
+        result,
+        f"mm/j/{par_X_annees} ans",
+        height
+    )
+    layer, scatter_layer, tooltip, view_state, legend = pipeline_map(
+        params_map,
+        param_view={
+            "latitude": 44.3 if half == "sud" else 48.0, 
+            "longitude": 3.1, 
+            "zoom": 6.3
+        }
+    )
+
+    # AJOUT DES COURBES DE NIVEAUX
+    import geopandas as gpd
+    import pydeck as pdk
+
+
+    # Lire et reprojeter le shapefile
+    gdf = gpd.read_file(Path("data/external/niveaux/selection_courbes_niveau_france.shp").resolve()).to_crs(epsg=4326)
+
+    # Extraire les chemins
+    path_data = []
+    for _, row in gdf.iterrows():
+        geom = row.geometry
+        altitude = row["coordonnees"]  # ou la colonne correcte (parfois 'ALTITUDE', à adapter)
+
+        if geom.geom_type == "LineString":
+            path_data.append({"path": list(geom.coords), "altitude": altitude})
+        elif geom.geom_type == "MultiLineString":
+            for line in geom.geoms:
+                path_data.append({"path": list(line.coords), "altitude": altitude})
+
+    # Couleur fixe noire ; possibilité d’ajouter une couleur par altitude (cf. remarque ci-dessous)
+    contour_layer = pdk.Layer(
+        "PathLayer",
+        data=path_data,
+        get_path="path",
+        get_color="[0, 0, 0, 100]",  # ou map dynamique : 'd.altitude > 1000 ? [0,0,0,255] : [150,150,150,150]'
+        width_scale=1,
+        width_min_pixels=0.5,
+        pickable=False
+    )
+
+    deck = plot_map([layer, scatter_layer, contour_layer], view_state, tooltip)
+    deck_path = f"{assets_dir}/deck_map_{name}.html"
+    deck.to_html(deck_path, notebook_display=False)
+
+    html_map = f"""
+    <div style="display: flex; flex-direction: row; align-items: flex-start; margin-top: 10px;">
+        <iframe loading="lazy" src="{deck_path}" height="{height}" frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
+        <div style="flex: 1; max-width: 220px; margin-left: 5px;">{legend}</div>
     </div>
     """
+
+    # 6. Scatterplot + métriques
+    scatter_html, r2, me, n, delta = pipeline_scatter_quarto_gev(
+        name,
+        result,
+        echelle,
+        stat_choice_label="Δqᵀ",
+        unit_choice=f"mm/j/{par_X_annees} ans",
+        height=height
+    )
+
+    return html_map, scatter_html, r2, me, n, delta
+
+# -- Sous-fonction scatter
+def pipeline_scatter_quarto_gev(
+    name: str,
+    result: dict,
+    echelle: str,
+    stat_choice_label: str,
+    unit_choice: str = None,
+    height: int = 500
+):
+    scatter_path = f"assets/scatter_plot_{name}.html"
+    echelle_match = "quotidien" if echelle == "quotidien" else "horaire"
+    df_obs_vs_mod = pl.read_csv(f"data/metadonnees/obs_vs_mod/obs_vs_mod_{echelle_match}.csv")
+    obs_vs_mod = match_and_compare(result["observed"], result["modelised"], result["column"], df_obs_vs_mod)
+
+    me, _, _, r2 = generate_metrics(obs_vs_mod)
+    n = obs_vs_mod.shape[0]
+    mean_mod = obs_vs_mod.select(pl.col("AROME").mean()).item()
+    mean_obs = obs_vs_mod.select(pl.col("Station").mean()).item()
+    delta = me / np.mean([mean_mod, mean_obs]) if (mean_mod is not None and mean_obs is not None) else None
+
+    fig_scatter = generate_scatter_plot_interactive(
+        df=obs_vs_mod, 
+        stat_choice=stat_choice_label,
+        unit_label=unit_choice, 
+        height=height-60
+    )
+    pio.write_html(
+        fig_scatter,
+        file=scatter_path,
+        include_plotlyjs='cdn',
+        full_html=False
+    )
+    html_scatter = f"""
+    <div style="height: {height-10}px; border: 1px solid #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px;">
+        <iframe loading="lazy" src="{scatter_path}" width="100%" height="100%" frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
+    </div>
+    <div class="metric-caption">
+        <strong>r²</strong> = {r2:.3f} &nbsp;|&nbsp; <strong>ME</strong> = {me:.3f} &nbsp;|&nbsp; <strong>n</strong> = {n:.0f}
+    </div>
+    """
+    return html_scatter, r2, me, n, delta

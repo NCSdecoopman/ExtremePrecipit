@@ -146,3 +146,14 @@ def echelle_config(type_: bool, echelle: str = None, n_colors: int = 256):
 
         return ListedColormap(couleurs_par_mois)
 
+
+def get_readable_season(season_code: str) -> str:
+    """
+    Retourne le nom humainement lisible d'une saison à partir de son code ("hydro", "djf", etc.).
+    Résultat en minuscules.
+    """
+    _, SEASON, _ = menu_config_statisticals()
+    reverse_season = {v: k.lower() for k, v in SEASON.items()}
+    if season_code not in reverse_season:
+        raise ValueError(f"Code saison inconnu : {season_code}")
+    return reverse_season[season_code]
