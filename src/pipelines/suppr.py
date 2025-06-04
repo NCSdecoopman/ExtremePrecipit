@@ -159,9 +159,9 @@ def gev_non_stationnaire(
     init_params: dict[str, float] = None
 ) -> Tuple:
     global logger
+    logger = get_logger(__name__)  # (re)définit le logger dans chaque worker
     df = df.dropna(subset=[col_val])
     values = pd.Series(df[col_val].values, index=df.index)
-
     model_struct, param_names = MODEL_REGISTRY[model_name]
 
     # === Initialisation personnalisée basée sur les moments empiriques d'un GEV stationnaire ===
@@ -249,7 +249,8 @@ def gev_non_stationnaire(
     for method in BOUND_COMPATIBLE_METHODS:
         optim_methods.append({"method": method, "x0": x0, "bounds": bounds})
 
-    for optim_kwargs in optim_methods:        
+    for optim_kwargs in optim_methods:     
+        logger.debug(f"[DEBUG] Test méthode : {optim_kwargs}")
         try:
             fit = FitNsDistribution(obs, ns_distribution=ns_dist, fit_kwargs=[optim_kwargs])
             with suppress_stdout():
@@ -277,6 +278,7 @@ def gev_non_stationnaire(
             if all(np.isfinite(param_values)):
                 return tuple(param_values) + (log_likelihood,)
             else:
+                print(f"[FIT NON FINI] param_values = {param_values}")
                 logger.warning(f"Fit non fini pour NUM_POSTE={df['NUM_POSTE'].iloc[0]} : {param_values}")
         except Exception as e:
             # Tente de récupérer le message de l'optimiseur s’il existe
@@ -285,8 +287,8 @@ def gev_non_stationnaire(
                 msg = fit._result.message
             else:
                 msg = str(e)
-
-            logger.debug(f"[DEBUG] Échec avec méthode {optim_kwargs['method']} pour NUM_POSTE={df['NUM_POSTE'].iloc[0]} : {msg}")
+            print(f"param_values = {param_values}")
+            logger.warning(f"[DEBUG] Échec avec méthode {optim_kwargs['method']} pour NUM_POSTE={df['NUM_POSTE'].iloc[0]} : {msg}")
             logger.debug(f"[DEBUG] x0 utilisés : {optim_kwargs.get('x0')}")
             logger.debug(f"[DEBUG] Bornes utilisées : {optim_kwargs.get('bounds')}")
 
@@ -303,10 +305,11 @@ def fit_ns_gev_for_point(
     model_name: str,
     init_params: dict[str, float] = None
 ):
-
+    
     num_poste = key
     serie_valide = group.dropna(subset=[col_val])
     if len(serie_valide) < len_serie:
+        print(f"LONGUEUR {len(serie_valide)}")
         return (num_poste,) + (np.nan,) * len(MODEL_REGISTRY[model_name][1]) + (np.nan,) # toujours param + log_likelihood
     try:
         result = gev_non_stationnaire(
@@ -467,6 +470,11 @@ def fit_gev_par_point(
     n_total = len(df_result)
     n_failed = df_result[param_names].isna().all(axis=1).sum()
     logger.info(f"NS-GEV fitting terminé : {n_total - n_failed} réussites, {n_failed} échecs.")
+    mask_total_fail = df_result[param_names].isna().all(axis=1)
+    num_poste_failed = df_result.loc[mask_total_fail, "NUM_POSTE"].tolist()
+    print("Stations échec total:", num_poste_failed)
+    print(df_result)
+    print("\n\n")
     return df_result
 
 def pipeline_gev_from_statisticals(config, max_workers: int=48, n_bootstrap: int=100):
@@ -551,15 +559,18 @@ def pipeline_gev_from_statisticals(config, max_workers: int=48, n_bootstrap: int
 
         # Bootstrap par rééchantillonnage avec remise sur les années
         # en conservant les covariables correspondantes
+
+        num_poste_select = ["10391001", "10034001"]
         if config.get("model_bootstrap", False):
             logger.info(f"--- Bootstrap activé pour le modèle {model_name} ---")
 
             # 1. Charge les paramètres de référence pour l'initialisation
             df_ref = pd.read_parquet(output_dir / f"gev_param_{model_name}.parquet")
-
+            df_ref = df_ref[df_ref["NUM_POSTE"].isin(num_poste_select)]
             # Ne garder que les stations qui ont un fit valide (xi non NaN)
             valid_ref = df_ref.dropna(subset=["xi"])
             poste_list = valid_ref["NUM_POSTE"].tolist()
+            poste_list = poste_list[:100]
             logger.info(f"{len(poste_list)} stations conservées pour le bootstrap sur {len(df_ref)} au total")
 
             # Prépare un dict { NUM_POSTE: {mu0:…, mu1:…, sigma0:…, sigma1:…, xi:…} }
@@ -575,7 +586,7 @@ def pipeline_gev_from_statisticals(config, max_workers: int=48, n_bootstrap: int
             # 2. Tableau pour stocker tous les résultats bootstrap
             N_BOOTSTRAP = n_bootstrap
             param_names = MODEL_REGISTRY[model_name][1]
-            all_records = []
+            all_results = np.full((N_BOOTSTRAP, len(poste_list), len(param_names)), np.nan)
 
             for i in tqdm(range(N_BOOTSTRAP), desc="Bootstrapping NS-GEV"):
                 # 3a. Bootstrap par station
@@ -586,14 +597,13 @@ def pipeline_gev_from_statisticals(config, max_workers: int=48, n_bootstrap: int
 
                     #  – supprime les nan                    
                     valid_pdf_poste = pdf_poste.dropna(subset=[mesure])
-                    valid_len_serie = len(valid_pdf_poste)
 
-                    if valid_len_serie < len_serie:
+                    if len(valid_pdf_poste) < len_serie:
                         logger.warning(f"[BOOTSTRAP] Station {poste} ignorée — seulement {len(valid_pdf_poste)} valeurs valides < {len_serie}")
                         continue  # skip cette station dans le bootstrap
 
                     # tirage avec remise sur uniquement les années valides
-                    pdf_bs = valid_pdf_poste.sample(n=valid_len_serie, replace=True, random_state=None)
+                    pdf_bs = valid_pdf_poste.sample(n=len_serie, replace=True, random_state=None)
 
                     list_pdf.append(pdf_bs)
 
@@ -615,35 +625,43 @@ def pipeline_gev_from_statisticals(config, max_workers: int=48, n_bootstrap: int
 
                 # 3c. On réordonne et stocke…
                 df_boot_i = df_boot_i.set_index("NUM_POSTE").reindex(poste_list)
+                all_results[i, :, :] = df_boot_i[param_names].to_numpy()
 
-                # Enregistrement des paramètres du bootstrap courant dans all_records
-                for idx, poste in enumerate(poste_list):
-                    if poste not in df_boot_i.index:
-                        continue  # station échouée
 
-                    row = df_boot_i.loc[poste]
-                    if row[param_names].isnull().any():
-                        continue  # fit invalide
+            # 4. Calcul des quantiles et création du DataFrame final
+            q05 = np.nanquantile(all_results, 0.05, axis=0)
+            q95 = np.nanquantile(all_results, 0.95, axis=0)
 
-                    record = {"NUM_POSTE": poste, "bootstrap_id": i}
-                    for p in param_names:
-                        record[p] = row[p]
-                    all_records.append(record)
-                    
+            rows = []
+            for idx, poste in enumerate(poste_list):
+                ref_row = df_ref.loc[df_ref["NUM_POSTE"] == poste].iloc[0]
+                vals = []
+                for j, pname in enumerate(param_names):
+                    lo, hi = q05[idx, j], q95[idx, j]
+                    val = ref_row[pname]
+                    if pd.isna(val):
+                        vals.append(np.nan)
+                    else:
+                        # q05[idx_mu1] * q95[idx_mu1] > 0 → tendance significative 
+                        # (l’intervalle ne contient pas 0)
+                        # sinon tendance non significative (l'intervalle contient 0)
+                        vals.append(val if lo * hi > 0 else 0.0)
+                    vals.extend([lo, hi])
+                rows.append([poste] + vals)
 
-            # === ENREGISTREMENT DU FICHIER COMPLET DES PARAMÈTRES BOOTSTRAPÉS ===
-            df_all = pd.DataFrame.from_records(all_records)
-            path_full = output_dir / f"gev_param_{model_name}_bootstrap.parquet"
-            df_all.to_parquet(path_full)
-            logger.info(f"Enregistré tous les paramètres bootstrapés dans : {path_full}")
-            logger.info(df_all)
+            cols = ["NUM_POSTE"] + sum([[p, f"{p}_q05", f"{p}_q95"] for p in param_names], [])
+            df_bootstrap = pd.DataFrame(rows, columns=cols)
+            #df_bootstrap.to_parquet(output_dir / f"gev_param_{model_name}_bootstrap.parquet")
+            #logger.info(f"Enregistré le bootstrap sous {output_dir}/gev_param_{model_name}_bootstrap.parquet")
+            logger.info(df_bootstrap)
+
 
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pipeline application de la GEV sur les maximas.")
     parser.add_argument("--config", type=str, default="config/observed_settings.yaml")
-    parser.add_argument("--echelle", type=str, choices=["horaire", "quotidien"], nargs="+", default=["horaire", "quotidien"])
+    parser.add_argument("--echelle", type=str, choices=["horaire", "quotidien"], nargs="+", default=["quotidien"])
     parser.add_argument("--season", type=str, default="hydro")
     parser.add_argument("--model", type=str, choices=list(MODEL_REGISTRY.keys()), default="")
     parser.add_argument("--model_bootstrap", type=bool, default=False)
@@ -657,4 +675,4 @@ if __name__ == "__main__":
     config["model"] = args.model
     config["model_bootstrap"] = args.model_bootstrap
 
-    pipeline_gev_from_statisticals(config, max_workers=96, n_bootstrap=100)
+    pipeline_gev_from_statisticals(config, max_workers=96, n_bootstrap=5)

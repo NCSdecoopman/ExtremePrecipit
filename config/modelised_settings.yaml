@@ -37,7 +37,7 @@ zarr:
 statistics:
   path:
     outputdir: "data/statisticals/modelised"
-  overwrite: true  # ou false pour ne pas écraser les .parquet existants par défaut
+  overwrite: false  # ou false pour ne pas écraser les .parquet existants par défaut
     
 gev:
   path:
