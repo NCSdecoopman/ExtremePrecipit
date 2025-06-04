@@ -562,7 +562,11 @@ display(HTML(f"""
     </div>    
 """))
 
-afficher_cat = ["Journalière", "1h", "3h glissante", "6h glissante", "9h glissante", "12h glissante", "24h glissante"]
+afficher_cat = [
+    f"Journalière ({year_display_min}-{year_display_max})", f"Journalière ({year_display_middle}-{year_display_max})",
+    "1h", "3h glissante", "6h glissante", "9h glissante", "12h glissante", "24h glissante"
+    ]
+
 df_r2_all_max["Echelle"] = pd.Categorical(df_r2_all_max["Echelle"], categories=afficher_cat, ordered=True)
 df_r2_all_max["r2_txt"] = df_r2_all_max["r²"].apply(lambda x: f"{x:.2f}".lstrip("0"))
 
@@ -591,7 +595,8 @@ fig_r2_all_max.update_traces(
 
 # Définir une palette manuelle cohérente
 color_map = {
-    "Journalière": "#1f77b4",       # Bleu (Plotly[0])
+    f"Journalière ({year_display_min}-{year_display_max})": "#17becf",       # Bleu clair
+    f"Journalière ({year_display_middle}-{year_display_max})": "#1f77b4",       # Bleu (Plotly[0])
     "1h": "#ff7f0e",                # Orange (Plotly[1])
     "3h glissante": "#2ca02c",      # Vert (Plotly[2])
     "6h glissante": "#d62728",      # Rouge (Plotly[3])
