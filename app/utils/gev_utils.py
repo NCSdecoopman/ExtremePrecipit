@@ -1,5 +1,6 @@
 import numpy as np
 import polars as pl
+from scipy.special import gamma
 
 # --- Quantile GEV ---
 # Soit :
@@ -106,3 +107,65 @@ def compute_delta_qT(row, T_choice, year_range, par_X_annees):
         year_range=year_range,
         par_X_annees=par_X_annees
     )
+
+
+# --- Espérence, variance, CV de GEV ---
+
+def gev_moments(mu, sigma, xi):
+    if xi >= 0.5:
+        return np.nan, np.nan, np.nan  # variance indéfinie
+    try:
+        mean = mu + sigma / xi * (gamma(1 - xi) - 1)
+        var = (sigma ** 2) / (xi ** 2) * (gamma(1 - 2 * xi) - gamma(1 - xi) ** 2)
+        cv = np.sqrt(var) / mean if mean != 0 else np.nan
+        return mean, var, cv
+    except Exception:
+        return np.nan, np.nan, np.nan
+
+
+def eval_params_nsgev(mu0, mu1, sigma0, sigma1, xi, t, t0):
+    mu_t = mu0 + mu1 * (t - t0)
+    sigma_t = sigma0 + sigma1 * (t - t0)
+    return gev_moments(mu_t, sigma_t, xi)
+
+
+def compute_delta_stat(row, stat: str, year_start: int, year_ref: int, year_end: int, par_X_annees: int) -> float:
+    """
+    Calcule la variation du moment statistique GEV (moyenne, variance, CV)
+    exprimée en changement moyen par 10 ans.
+
+    Parameters:
+    - row : dictionnaire contenant les paramètres GEV
+    - stat : "ΔE", "ΔVar" ou "ΔCV"
+    - year_start, year_end : années de début et de fin
+    - year_ref : année de référence (t0)
+
+    Returns:
+    - Variation du moment sélectionné rapportée à 10 ans
+    """
+    Δa = year_end - year_start
+    if Δa == 0:
+        return np.nan  # évite division par zéro
+
+    # Moments aux deux dates
+    mean_start, var_start, cv_start = eval_params_nsgev(
+        mu0=row["mu0"], mu1=row.get("mu1", 0.0),
+        sigma0=row["sigma0"], sigma1=row.get("sigma1", 0.0),
+        xi=row["xi"], t=year_start, t0=year_ref
+    )
+
+    mean_end, var_end, cv_end = eval_params_nsgev(
+        mu0=row["mu0"], mu1=row.get("mu1", 0.0),
+        sigma0=row["sigma0"], sigma1=row.get("sigma1", 0.0),
+        xi=row["xi"], t=year_end, t0=year_ref
+    )
+
+    if stat == "ΔE":
+        return (mean_end - mean_start)  * par_X_annees / Δa
+    elif stat == "ΔVar":
+        return (var_end - var_start) * par_X_annees / Δa
+    elif stat == "ΔCV":
+        return (cv_end - cv_start) * par_X_annees / Δa
+    else:
+        return np.nan
+

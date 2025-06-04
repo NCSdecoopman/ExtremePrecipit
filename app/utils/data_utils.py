@@ -30,7 +30,7 @@ def load_data(type_data: str, echelle: str, min_year: int, max_year: int, season
         raise ValueError(f"Saison inconnue : {season}")
 
     base_path = f'{config["statisticals"][type_data]}/{echelle}'
-
+    
     dataframes = []
     errors = []
 

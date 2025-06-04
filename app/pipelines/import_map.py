@@ -44,7 +44,7 @@ def pipeline_map(
 
     result_df_modelised_show = result["modelised_show"]
     result_df_observed_show = result["observed_show"]
-   
+  
     # Normalisation des valeurs modélisées
     result_df_modelised_show, vmin_mod, vmax_mod = formalised_legend(
         result["modelised_show"], 
@@ -62,7 +62,6 @@ def pipeline_map(
         is_categorical=not continu,
         categories=categories
     )
-
 
     # Calcul des bornes communes
     if "vmin" in result and "vmax" in result:

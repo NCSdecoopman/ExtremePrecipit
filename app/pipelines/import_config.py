@@ -66,7 +66,8 @@ def pipeline_config(config_path: str, type: str, show_param: bool=False):
             "max_year_choice": max_year_choice,
             "season_choice_key": SEASON[season_choice],
             "missing_rate": missing_rate,
-            "quantile_choice": quantile_choice
+            "quantile_choice": quantile_choice,
+            "scale_choice": scale_choice
         }
 
     elif type == "gev":

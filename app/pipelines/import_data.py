@@ -9,7 +9,7 @@ from app.utils.data_utils import (
     filter_nan
 )
 from app.utils.stats_utils import compute_statistic_per_point
-from app.utils.gev_utils import safe_compute_return_df, compute_delta_qT
+from app.utils.gev_utils import safe_compute_return_df, compute_delta_qT, compute_delta_stat
 from app.utils.legends_utils import get_stat_column_name
 
 import polars as pl
@@ -26,15 +26,20 @@ def load_data_inner(type_data: str, echelle: str, min_year: int, max_year: int, 
 
 def pipeline_data(params, config, use_cache=False):
     
-    stat_choice_key, scale_choice_key, min_year_choice, max_year_choice, season_choice_key, missing_rate, quantile_choice = params
+    stat_choice_key, scale_choice_key, min_year_choice, max_year_choice, season_choice_key, missing_rate, quantile_choice, scale_choice = params
     loader = load_data_cached(use_cache)
 
     # Colonne de statistique nécessaire au chargement
     col_to_load, col_important = get_column_load(stat_choice_key, scale_choice_key)
 
+    if scale_choice == "Journalière":
+        scale_choice = "quotidien"
+    elif scale_choice == "Horaire":
+        scale_choice = "horaire"
+
     try:
         modelised_load = loader(
-            'modelised', 'horaire',
+            'modelised', scale_choice if scale_choice != "quotidien" else "horaire",
             min_year_choice,
             max_year_choice,
             season_choice_key,
@@ -46,7 +51,7 @@ def pipeline_data(params, config, use_cache=False):
 
     try:
         observed_load = loader(
-            'observed', 'horaire' if scale_choice_key == 'mm_h' else 'quotidien',
+            'observed', scale_choice,
             min_year_choice,
             max_year_choice,
             season_choice_key,
@@ -86,6 +91,15 @@ def pipeline_data(params, config, use_cache=False):
     }
 
 def pipeline_data_gev(params):
+
+    column = params["param_choice"]
+
+    BOOTSTRAP = False
+    if "_bootstrap" in params['model_name']: # dans le cas des modèles avec bootstrap
+        BOOTSTRAP = True
+        # On repasse sur les fichiers non boostrapés
+        params['model_name'] = params['model_name'].replace('_bootstrap', '')
+
     df_modelised_load = pl.read_parquet(params["mod_dir"] / f"gev_param_{params['model_name']}.parquet")
     df_observed_load = pl.read_parquet(params["obs_dir"] / f"gev_param_{params['model_name']}.parquet")
 
@@ -107,28 +121,118 @@ def pipeline_data_gev(params):
     else:
         year_range = params["max_year_choice"] - params["min_year_choice"] # Δa = a_max - a_min
 
-    # Calcul du delta qT
-    df_modelised = df_modelised.with_columns([
-        pl.struct(["mu1", "sigma1", "xi"])
-        .map_elements(lambda row: compute_delta_qT(row, T_choice, year_range, params["par_X_annees"]), return_dtype=pl.Float64)
-        .alias("delta_qT")
-    ])
 
-    df_observed = df_observed.with_columns([
-        pl.struct(["mu1", "sigma1", "xi"])
-        .map_elements(lambda row: compute_delta_qT(row, T_choice, year_range, params["par_X_annees"]), return_dtype=pl.Float64)
-        .alias("delta_qT")
-    ])
-
-    column = params["param_choice"]
     if column == "Δqᵀ":
-        column = "delta_qT"
+        # Calcul du delta qT
+        df_modelised = df_modelised.with_columns([
+            pl.struct(["mu1", "sigma1", "xi"])
+            .map_elements(lambda row: compute_delta_qT(row, T_choice, year_range, params["par_X_annees"]), return_dtype=pl.Float64)
+            .alias("Δqᵀ")
+        ])
+
+        df_observed = df_observed.with_columns([
+            pl.struct(["mu1", "sigma1", "xi"])
+            .map_elements(lambda row: compute_delta_qT(row, T_choice, year_range, params["par_X_annees"]), return_dtype=pl.Float64)
+            .alias("Δqᵀ")
+        ])
+
+
+    elif column in ["ΔE", "ΔVar", "ΔCV"]:
+        t_start = params["min_year_choice"]
+        t_end = params["max_year_choice"]
+        t0 = params["config"]["years"]["rupture"]
+
+        df_modelised = df_modelised.with_columns([
+            pl.struct(["mu0", "mu1", "sigma0", "sigma1", "xi"])
+            .map_elements(lambda row: compute_delta_stat(row, column, t_start, t0 , t_end, params["par_X_annees"]), return_dtype=pl.Float64)
+            .alias(column)
+        ])
+
+        df_observed = df_observed.with_columns([
+            pl.struct(["mu0", "mu1", "sigma0", "sigma1", "xi"])
+            .map_elements(lambda row: compute_delta_stat(row, column, t_start, t0, t_end, params["par_X_annees"]), return_dtype=pl.Float64)
+            .alias(column)
+        ])
+
+
+
+    if BOOTSTRAP:
+        df_mod_bootstrap = pl.read_parquet(params["mod_dir"] / f"gev_param_{params['model_name']}_bootstrap.parquet")
+        df_obs_bootstrap = pl.read_parquet(params["obs_dir"] / f"gev_param_{params['model_name']}_bootstrap.parquet")
+
+        # Recalcule delta_qT pour chaque bootstrap
+        df_mod_bootstrap = df_mod_bootstrap.with_columns([
+            pl.struct(["mu1", "sigma1", "xi"]).map_elements(
+                lambda row: compute_delta_qT(
+                    row,
+                    params["T_choice"],
+                    year_range,
+                    params["par_X_annees"]
+                ),
+                return_dtype=pl.Float64
+            ).alias("Δqᵀ")
+        ])
+
+        df_obs_bootstrap = df_obs_bootstrap.with_columns([
+            pl.struct(["mu1", "sigma1", "xi"]).map_elements(
+                lambda row: compute_delta_qT(
+                    row,
+                    params["T_choice"],
+                    year_range,
+                    params["par_X_annees"]
+                ),
+                return_dtype=pl.Float64
+            ).alias("Δqᵀ")
+        ])
+
+        # Calcule les bornes de l'intervalle de confiance
+        df_ic_mod = (
+            df_mod_bootstrap
+            .group_by("NUM_POSTE")
+            .agg([
+                pl.col("Δqᵀ").quantile(0.05, "nearest").alias("Δqᵀ_q050"),
+                pl.col("Δqᵀ").quantile(0.95, "nearest").alias("Δqᵀ_q950"),
+            ])
+        )
+
+        df_ic_obs = (
+            df_obs_bootstrap
+            .group_by("NUM_POSTE")
+            .agg([
+                pl.col("Δqᵀ").quantile(0.05, "nearest").alias("Δqᵀ_q050"),
+                pl.col("Δqᵀ").quantile(0.95, "nearest").alias("Δqᵀ_q950"),
+            ])
+        )
+
+        # Forcer NUM_POSTE à être de même type (int) dans les deux DataFrames
+        df_ic_mod = df_ic_mod.with_columns([pl.col("NUM_POSTE").cast(pl.Int64)])
+        df_ic_obs = df_ic_obs.with_columns([pl.col("NUM_POSTE").cast(pl.Int64)])
+        df_modelised = df_modelised.with_columns([pl.col("NUM_POSTE").cast(pl.Int64)])
+        df_observed = df_observed.with_columns([pl.col("NUM_POSTE").cast(pl.Int64)])
+
+
+        # Join à df_observed
+        df_modelised = df_modelised.join(df_ic_mod, on="NUM_POSTE", how="left")
+        df_observed = df_observed.join(df_ic_obs, on="NUM_POSTE", how="left")
+
+        # Création d'une colonne est significatif ou non (ne recoupe pas l'intervalle)
+        df_modelised = df_modelised.with_columns([
+            (
+                ~((pl.col("Δqᵀ_q050") <= 0) & (pl.col("Δqᵀ_q950") >= 0))
+            ).alias("is_significant")
+        ])
+
+        df_observed = df_observed.with_columns([
+            (
+                ~((pl.col("Δqᵀ_q050") <= 0) & (pl.col("Δqᵀ_q950") >= 0))
+            ).alias("is_significant")
+        ])
 
     # Retrait des percentiles
     modelised_show = dont_show_extreme(df_modelised, column, params["quantile_choice"])
     observed_show = dont_show_extreme(df_observed, column, params["quantile_choice"])
    
-    if column == "delta_qT":
+    if column in ["Δqᵀ", "ΔE", "ΔVar", "ΔCV"]:
 
         val_max = max(modelised_show[column].max(), observed_show[column].max())
         val_min = min(modelised_show[column].min(), observed_show[column].min())

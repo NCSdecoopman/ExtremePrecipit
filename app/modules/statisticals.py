@@ -27,6 +27,7 @@ def show(
     season_choice_key = params_config["season_choice_key"]
     missing_rate = params_config["missing_rate"]
     quantile_choice = params_config["quantile_choice"]
+    scale_choice = params_config["scale_choice"]
     
     # Préparation des paramètres pour pipeline_data
     params_load = (
@@ -36,7 +37,8 @@ def show(
         max_year_choice,
         season_choice_key,
         missing_rate,
-        quantile_choice
+        quantile_choice,
+        scale_choice
     )
 
     # Obtention des données

@@ -1,6 +1,6 @@
 years:
   min: 1959
-  max: 2020 # choix dans le menu
+  max: 2022 # choix dans le menu
   rupture: 1985
 
 statisticals:

@@ -30,7 +30,8 @@ ns_param_map = {
     "ns_gev_m1_break_year": {"mu0": "μ₀", "mu1": "μ₁", "sigma0": "σ₀", "xi": "ξ"},
     "ns_gev_m2_break_year": {"mu0": "μ₀", "sigma0": "σ₀", "sigma1": "σ₁", "xi": "ξ"},
     "ns_gev_m3_break_year": {"mu0": "μ₀", "mu1": "μ₁", "sigma0": "σ₀", "sigma1": "σ₁", "xi": "ξ"},
-    "best_model": {"mu0": "μ₀", "mu1": "μ₁", "sigma0": "σ₀", "sigma1": "σ₁", "xi": "ξ"}
+    "best_model": {"mu0": "μ₀", "mu1": "μ₁", "sigma0": "σ₀", "sigma1": "σ₁", "xi": "ξ"},
+    "best_model_lrt": {"mu0": "μ₀", "mu1": "μ₁", "sigma0": "σ₀", "sigma1": "σ₁", "xi": "ξ"}
 }
 
 # Liste complète des modèles avec leurs équations explicites
@@ -48,7 +49,8 @@ model_options = {
     "M₂⋆(μ₀, σ) : μ(t) = μ₀ ; σ(t) = σ₀ + σ₁·t₊ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m2_break_year",
     "M₃⋆(μ, σ) : μ(t) = μ₀ + μ₁·t₊ ; σ(t) = σ₀ + σ₁·t₊ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m3_break_year",
 
-    "best_model": "best_model"
+    "best_model": "best_model",
+    "best_model_lrt": "best_model_lrt"
 }
 
 import numpy as np
@@ -638,7 +640,7 @@ def show(config_path):
             df_obs_aic = filter_nan(df_obs_aic, "xi")
 
             # Modèles disponibles (hors best_model)
-            model_names = [v for k, v in model_options.items() if v != "best_model"]
+            model_names = [v for k, v in model_options.items() if v not in ["best_model", "best_model_lrt"]]
             best_model_name = "best_model"
 
             height = 600
@@ -653,33 +655,8 @@ def show(config_path):
                 categories=model_names
             )
 
-            # 🔁 Ajouter les AIC de tous les autres modèles
-            for model in model_names:
-                try:
-                    df_other = pl.read_parquet(mod_dir / f"gev_param_{model}.parquet")
-                    df_other = df_other.select(["NUM_POSTE", "log_likelihood"]).with_columns([
-                        (2 * len(ns_param_map[model]) - 2 * pl.col("log_likelihood")).alias(f"aic_{model}")
-                    ])
-                    df_model_aic = df_model_aic.join(df_other.select(["NUM_POSTE", f"aic_{model}"]), on="NUM_POSTE", how="left")
-                except Exception as e:
-                    st.warning(f"Erreur lecture AIC {model} : {e}")
-
-            # ➕ Formatter les AIC dans une seule colonne val_fmt pour le tooltip
-            df_model_pd = df_model_aic.to_pandas()
-
-            def format_aic_for_tooltip(row):
-                lignes = []
-                for model in model_names:
-                    val = row.get(f"aic_{model}")
-                    if val is not None and not np.isnan(val):
-                        lignes.append(f"AIC {model} : {val:.1f}")
-                return "<br>".join(lignes)
-
-            df_model_pd["val_fmt"] = df_model_pd.apply(format_aic_for_tooltip, axis=1)
-            df_model_aic = pl.from_pandas(df_model_pd)
-
             # Création du layer AROME (modèle AIC min)
-            layer = create_layer(df_model_aic)
+            layer = create_layer(df_model_aic) if st.checkbox("Afficher AROME", value=True, key="show_modelised_aic") else None
 
             # Normalisation des points observés avec la même colormap
             df_obs_aic, _, _ = formalised_legend(
@@ -690,7 +667,7 @@ def show(config_path):
                 categories=model_names + [best_model_name]
             )
 
-            scatter_layer = create_scatter_layer(df_obs_aic, radius=1500) if st.checkbox("Afficher les stations", value=False) else None
+            scatter_layer = create_scatter_layer(df_obs_aic, radius=1500) if st.checkbox("Afficher les stations", value=False, key="show_stations_aic") else None
 
             # Tooltip HTML standardisé avec val_fmt
             tooltip = create_tooltip("AIC (tous modèles)")
@@ -704,6 +681,89 @@ def show(config_path):
                 vmax,
                 n_ticks=n_legend,
                 label="Modèle AIC minimal",
+                model_labels=model_names
+            )
+
+            col1, col2 = st.columns([0.7, 0.3])
+
+            with col1:
+                deck = plot_map([layer, scatter_layer], view_state, tooltip)
+                if deck:
+                    st.pydeck_chart(deck, use_container_width=True, height=height)
+
+                    param_list = ["mu0", "mu1", "sigma0", "sigma1", "xi"]
+                    df_model_aic = df_model_aic.with_columns(pl.col("NUM_POSTE").cast(pl.Int32))
+                    df_obs_aic = df_obs_aic.with_columns(pl.col("NUM_POSTE").cast(pl.Int32))
+
+                    for param in param_list:
+                        obs_vs_mod = match_and_compare(df_obs_aic, df_model_aic, param, df_obs_vs_mod_full)
+                        if obs_vs_mod is not None and obs_vs_mod.height > 0:
+                            _, _, _, r2 = generate_metrics(obs_vs_mod)
+                            st.markdown(f"• **{param}** : r² = `{r2:.3f}`")
+                        else:
+                            st.markdown(f"• **{param}** : données insuffisantes")
+
+            with col2:
+                st.markdown(html_legend, unsafe_allow_html=True)
+
+
+
+
+
+
+
+
+
+        with col_map_model:
+            df_model_aic = pl.read_parquet(mod_dir / "gev_param_best_model_lrt.parquet")
+            df_obs_aic = pl.read_parquet(obs_dir / "gev_param_best_model_lrt.parquet")
+
+            df_model_aic = add_metadata(df_model_aic, "mm_h" if echelle == "horaire" else "mm_j", type="modelised")
+            df_obs_aic = add_metadata(df_obs_aic, "mm_h" if echelle == "horaire" else "mm_j", type="observed")
+            df_obs_aic = filter_nan(df_obs_aic, "xi")
+
+            # Modèles disponibles (hors best_model)
+            model_names = [v for k, v in model_options.items() if v not in ["best_model", "best_model_lrt"]]
+            best_model_name = "best_model_lrt"
+
+            height = 600
+            n_legend = len(model_names)
+            colormap = echelle_config("discret", n_colors=n_legend)
+
+            df_model_aic, vmin, vmax = formalised_legend(
+                df_model_aic,
+                column_to_show="model", 
+                colormap=colormap,
+                is_categorical=True,
+                categories=model_names
+            )
+
+            # Création du layer AROME (modèle AIC min) 
+            layer = create_layer(df_model_aic) if st.checkbox("Afficher AROME", value=True, key="show_modelised_lrt") else None
+
+            # Normalisation des points observés avec la même colormap
+            df_obs_aic, _, _ = formalised_legend(
+                df_obs_aic,
+                column_to_show="model", 
+                colormap=colormap,
+                is_categorical=True,
+                categories=model_names + [best_model_name]
+            )
+
+            scatter_layer = create_scatter_layer(df_obs_aic, radius=1500) if st.checkbox("Afficher les stations", value=False, key="show_stations_lrt") else None
+
+            # Tooltip HTML standardisé avec val_fmt
+            tooltip = create_tooltip("pval (tous modèles)")
+
+            view_state = pdk.ViewState(latitude=46.8, longitude=1.7, zoom=5)
+
+            html_legend = display_vertical_color_legend(
+                height,
+                colormap,
+                vmin,
+                vmax,
+                n_ticks=n_legend,
+                label="Modèle pval minimal",
                 model_labels=model_names
             )
 

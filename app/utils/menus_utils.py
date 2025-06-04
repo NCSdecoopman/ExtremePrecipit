@@ -53,7 +53,9 @@ def menu_statisticals(min_years: int, max_years: int, STATS, SEASON):
         if st.session_state["stat_choice"] in ["Cumul", "Jour de pluie"]:
             st.selectbox("Choix de l'échelle temporelle", ["Journalière"], key="scale_choice")
         else:
-            st.selectbox("Choix de l'échelle temporelle", ["Journalière", "Horaire"], key="scale_choice")
+            st.selectbox("Choix de l'échelle temporelle", ["Journalière", "Horaire", 
+            
+            "w3", "w6", "w9", "w12", "w24"], key="scale_choice")
 
     with col5:
         st.slider(
@@ -88,7 +90,7 @@ def menu_gev(config: dict, model_options: dict, ns_param_map: dict, SEASON, show
     if "run_analysis" not in st.session_state:
         st.session_state["run_analysis"] = False
 
-    col0, col1, col2, col3, col4, col5, col6, col7 = st.columns([0.5, 1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
+    col0, col1, col2, col3, col4, col5, col6, col7 = st.columns([0.6, 0.9, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
 
     # Échelle
     with col0:
@@ -140,10 +142,17 @@ def menu_gev(config: dict, model_options: dict, ns_param_map: dict, SEASON, show
                     selected_label, model_name, ns_param_map
                 )
             else:
-                st.session_state["param_choice"] = "Δqᵀ"
-                selected_label = "Δqᵀ"
+                # st.session_state["param_choice"] = "Δqᵀ"
+                # selected_label = "Δqᵀ"
+                selected_label = st.selectbox(
+                    "Quantité à afficher",
+                    ["Δqᵀ", "ΔE", "ΔVar", "ΔCV"],
+                    index=0,
+                    key="delta_param_choice"
+                )
+                st.session_state["param_choice"] = selected_label
 
-        if selected_label == "Δqᵀ":
+        if selected_label in ["Δqᵀ"]:
             with col5:
                 st.slider(
                     "Niveau de retour",
@@ -153,7 +162,10 @@ def menu_gev(config: dict, model_options: dict, ns_param_map: dict, SEASON, show
                     step=10,
                     key="T_choice"
                 )
+        else:
+            st.session_state["T_choice"] = None
 
+        if selected_label in ["Δqᵀ", "ΔE", "ΔVar", "ΔCV"]:
             with col6:
                 st.slider(
                     "Delta annees",
@@ -163,9 +175,7 @@ def menu_gev(config: dict, model_options: dict, ns_param_map: dict, SEASON, show
                     step=1,
                     key="par_X_annees"
                 )
-
         else:
-            st.session_state["T_choice"] = None
             st.session_state["par_X_annees"] = None
         
 

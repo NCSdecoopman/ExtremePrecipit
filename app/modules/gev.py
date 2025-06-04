@@ -20,6 +20,36 @@ def show(
     if params_config["stat_choice"] == "Δqᵀ":
         params_config["unit"] = f"{params_config['unit']}/{params_config['par_X_annees']} ans"
         title = f"Changements du niveau de retour {params_config['T_choice']} ans par {params_config['par_X_annees']} ans du modèle {params_config['model_name_pres']} en {params_config['season_choice'].lower()}"
+
+    elif params_config["stat_choice"] in ["ΔE", "ΔVar", "ΔCV"]:
+        base_unit = params_config.get("unit", "")  # ex: "mm/j"
+        
+        if params_config["stat_choice"] == "ΔE":
+            params_config["unit"] = base_unit  # ΔE a la même unité que les données (mm, mm/h…)
+        
+        elif params_config["stat_choice"] == "ΔVar":
+            if base_unit:
+                params_config["unit"] = f"{base_unit}²"  # mm²/j²
+            else:
+                params_config["unit"] = ""  # au cas où unit était vide
+        
+        elif params_config["stat_choice"] == "ΔCV":
+            params_config["unit"] = ""  # CV est adimensionnel
+
+        STAT_TITLES = {
+            "Δqᵀ": lambda p: f"Changements du niveau de retour {p['T_choice']} ans par {p['par_X_annees']} ans",
+            "ΔE":   lambda p: f"Changements de la moyenne des extrêmes par {p['par_X_annees']} ans",
+            "ΔVar": lambda p: f"Changements de la variance des extrêmes par {p['par_X_annees']} ans",
+            "ΔCV":  lambda p: f"Changements du coefficient de variation des extrêmes par {p['par_X_annees']} ans",
+        }
+
+        stat_desc = STAT_TITLES.get(params_config["stat_choice"], lambda p: "Statistique inconnue")(params_config)
+
+        title = (
+            f"{stat_desc} du modèle {params_config['model_name_pres']} "
+            f"en {params_config['season_choice'].lower()}"
+        )
+
     else:
         params_config["unit"] = ""
         title = f"Paramètre {params_config['param_choice_pres']} du modèle {params_config['model_name_pres']}"

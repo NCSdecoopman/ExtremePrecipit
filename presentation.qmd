@@ -34,6 +34,8 @@ import plotly.express as px
 from IPython.display import display, HTML, Markdown
 import plotly.io as pio
 
+from app.utils.config_utils import menu_config_gev
+
 from app.utils.data_utils import (
     match_and_compare,
     add_metadata,
@@ -41,7 +43,6 @@ from app.utils.data_utils import (
     standardize_year,
     filter_nan
 )
-
 from app.utils.stats_utils import generate_metrics
 
 from app.pipelines.import_quarto import (
@@ -497,7 +498,7 @@ from app.modules import all_max
 from app.utils.scatter_plot_utils import generate_scatter_plot_interactive
 from app.utils.stats_utils import generate_metrics
 
-year_display_middle, height, unit_choice = 2000, 500, "mm/j"
+year_display_middle, height, unit_choice = 1990, 500, "mm/j"
 df_all, df_r2_all_max, _ = all_max.show(config_path, year_display_min, year_display_max, year_display_middle)
 df_all = df_all.rename({"lat_obs": "lat", "lon_obs": "lon"})
 
@@ -561,37 +562,47 @@ display(HTML(f"""
     </div>    
 """))
 
-df_r2_all_max["Echelle"] = pd.Categorical(df_r2_all_max["Echelle"], categories=["Journalière", "Horaire"], ordered=True)
+afficher_cat = ["Journalière", "1h", "3h glissante", "6h glissante", "9h glissante", "12h glissante", "24h glissante"]
+df_r2_all_max["Echelle"] = pd.Categorical(df_r2_all_max["Echelle"], categories=afficher_cat, ordered=True)
+df_r2_all_max["r2_txt"] = df_r2_all_max["r²"].apply(lambda x: f"{x:.2f}".lstrip("0"))
+
 # Création de la figure avec px.bar
 fig_r2_all_max = px.bar(
     df_r2_all_max,
     x="Saison",
     y="r²",
-    color="Type",
-    text="r²",
+    color="Echelle",  # Utiliser "Echelle" pour la couleur
+    text="r2_txt",
     barmode="group",
-    facet_col="Echelle",
-    category_orders={"Echelle": ["Journalière", "Horaire"]},
+    facet_col="Type",  # Facet par "Type" (Moyenne des maxima, Maxima annuels)
+    category_orders={"Echelle": afficher_cat},
     title="",
     facet_col_spacing=0.1,
     height=500-100
 )
 
-# Positionne automatiquement le texte au bon endroit
-fig_r2_all_max.update_traces(texttemplate="%{text:.2f}", textposition="outside")
-
-# Optionnel : ajuste les marges ou la taille si les textes dépassent
-fig_r2_all_max.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
+# Positionner le texte à l'extérieur des barres
+fig_r2_all_max.update_traces(
+    textfont=dict(size=6),  # réduit la taille du texte à 10 px
+    texttemplate="%{text}",  # Afficher uniquement la partie décimale comme .93, .41, etc.
+    textposition="outside",  # Positionner le texte à l'extérieur de la barre
+    insidetextanchor="start"  # Assure que le texte est bien visible à l'extérieur
+)
 
 # Définir une palette manuelle cohérente
 color_map = {
-    "Moyenne des maxima": px.colors.qualitative.Plotly[0],
-    "Maxima annuels": px.colors.qualitative.Plotly[1]    
+    "Journalière": "#1f77b4",       # Bleu (Plotly[0])
+    "1h": "#ff7f0e",                # Orange (Plotly[1])
+    "3h glissante": "#2ca02c",      # Vert (Plotly[2])
+    "6h glissante": "#d62728",      # Rouge (Plotly[3])
+    "9h glissante": "#9467bd",      # Violet (Plotly[4])
+    "12h glissante": "#8c564b",     # Marron (Plotly[5])
+    "24h glissante": "#e377c2",     # Rose (Plotly[6])
 }
 
 fig_r2_all_max.update_layout(
     template="simple_white",
-    legend_title_text=None
+    legend_title_text="Pas de temps"  # Ajout du titre à la légende
 )
 fig_r2_all_max.update_xaxes(title=None, tickangle=0)
 
@@ -716,7 +727,7 @@ on a :
 ```{python}
 #| label: minimize_gev_aic_map
 echelle = "quotidien"
-season = "hydro"
+season = "son"
 title = f"Modèle minimisant l'AIC"
 mod_dir = Path(config["gev"]["modelised"]) / echelle / season
 obs_dir = Path(config["gev"]["observed"]) / echelle / season
@@ -752,10 +763,11 @@ html_map_legend = pipeline_map_quarto(
     name="model_minim_AIC",
     result=result,
     echelle=echelle,
-    stat_choice_label=None
+    stat_choice_label=None,
+    unit_choice=""
 )
 
-title_show = pipeline_title(title, config["years"]["min"], config["years"]["max"], echelle)
+title_show = pipeline_title(title, config["years"]["min"], config["years"]["max"], echelle, season)
 display(HTML(title_show))
 ```
 
@@ -834,44 +846,132 @@ display(HTML(html_scatter))
 :::
 :::
 
+
+
 ---
 
-
 ```{python}
-#| label: show_xi
-title="Valeurs de ξ"
-echelle="quotidien"
+#| label: minimize_gev_pval_map
+echelle = "quotidien"
+season = "son"
+title = f"Modèle minimisant la p-value"
+mod_dir = Path(config["gev"]["modelised"]) / echelle / season
+obs_dir = Path(config["gev"]["observed"]) / echelle / season
 
-# Étape 1 : récupérer résultats avec pipeline_data_quarto
+df_model_pval = pl.read_parquet(mod_dir / "gev_param_best_model_lrt.parquet")
+df_obs_pval = pl.read_parquet(obs_dir / "gev_param_best_model_lrt.parquet")
+
+df_model_pval = add_metadata(df_model_pval, "mm_h" if echelle == "horaire" else "mm_j", type="modelised")
+df_obs_pval = add_metadata(df_obs_pval, "mm_h" if echelle == "horaire" else "mm_j", type="observed")
+
+df_model_pval = filter_nan(df_model_pval, "xi") # xi est toujours valable
+df_obs_pval = filter_nan(df_obs_pval, "xi") # xi est toujours valable
+
+df_model_pval = df_model_pval.with_columns(
+    pl.col("model").replace(model_labels)  # remplace par noms lisibles
+)
+df_obs_pval = df_obs_pval.with_columns(
+    pl.col("model").replace(model_labels)
+)
+
 result = {
-    "modelised": df_model_aic,
-    "modelised_show": df_model_aic,
-    "observed": df_obs_aic,
-    "observed_show": df_obs_aic,
-    "column": "xi"
+    "modelised": df_model_pval,
+    "modelised_show": df_model_pval,
+    "observed": df_obs_pval,
+    "observed_show": df_obs_pval,
+    "column": "model",
+    "echelle": "diverging_zero_white",
+    "continu": False,
+    "categories": list(model_labels.values())  # ["M₁(μ₀, σ₀)", "M₂(μ, σ₀)", ...]
 }
-# Étape 2 : affichage carte + scatter
-html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
-    name="valeur_de_xi",
+
+html_map_legend = pipeline_map_quarto(
+    name="model_minim_pval",
     result=result,
     echelle=echelle,
-    stat_choice_label=title,
+    stat_choice_label=None,
     unit_choice=""
 )
 
-pipeline_total_title_map_legend_scatter_delta(
-    title=title,
-    year_min=config["years"]["min"],
-    year_max=config["years"]["max"],
-    echelle=echelle,
-    html_map_legend=html_map_legend,
-    html_scatter=html_scatter,
-    me=me,
-    percent=percent,
-    unit="",
-    nb_after_comma=3
-)
+title_show = pipeline_title(title, config["years"]["min"], config["years"]["max"], echelle, season)
+display(HTML(title_show))
 ```
+
+::: {.columns style="display: flex; gap: 0px; margin: 0;"}
+::: {.column width="50%"}
+```{python}
+display(HTML(html_map_legend))
+```
+:::
+
+```{python}
+#| label: minimize_gev_pval_hist
+import plotly.graph_objects as go
+
+# Mapping des noms vers leur affichage en unicode/math
+param_display = {
+    "mu0": "μ₀",
+    "mu1": "μ₁",
+    "sigma0": "σ₀",
+    "sigma1": "σ₁",
+    "xi": "ξ"
+}
+
+df_model_pval = df_model_pval.with_columns(pl.col("NUM_POSTE").cast(pl.Int32))
+df_obs_pval = df_obs_pval.with_columns(pl.col("NUM_POSTE").cast(pl.Int32))
+df_obs_vs_mod_full = pl.read_csv(f"data/metadonnees/obs_vs_mod/obs_vs_mod_{echelle}.csv")
+
+r2_values = {}
+params = ["mu0", "mu1", "sigma0", "sigma1", "xi"]
+
+for param in params:
+    obs_vs_mod = match_and_compare(df_obs_pval, df_model_pval, param, df_obs_vs_mod_full)
+
+    if obs_vs_mod is not None and obs_vs_mod.height > 0:
+        _, _, _, r2 = generate_metrics(obs_vs_mod)
+        r2_values[param_display[param]] = r2
+    else:
+        r2_values[param_display[param]] = None  # ou np.nan si tu préfères
+
+# Préparation des données pour l'histogramme
+labels = list(r2_values.keys())
+values = [r2_values[label] if r2_values[label] is not None else 0 for label in labels]
+colors = ["grey" if r2_values[label] is not None else "white" for label in labels]
+
+# Création de la figure Plotly
+fig_r2_all_max = go.Figure(data=[
+    go.Bar(x=labels, y=values, marker_color=colors, text=[f"{v:.3f}" if r2_values[l] is not None else "NA" for l, v in zip(labels, values)],
+           textposition="outside")
+])
+
+fig_r2_all_max.update_layout(
+    title="",
+    xaxis_title="Paramètre",
+    yaxis_title="r² (AROME - Stations)",
+    yaxis=dict(range=[0, 1])
+)
+
+# Appliquer le template
+fig_r2_all_max.update_layout(template="simple_white")
+
+# Sauvegarde et affichage dans un iframe
+scatter_path = f"assets/hist_r2_jour_model_min_pval.html"
+pio.write_html(fig_r2_all_max, file=scatter_path, include_plotlyjs="cdn", full_html=False)
+
+html_scatter = f"""
+<div style="height: 500px; border: 1px solid #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px;">
+    <iframe loading="lazy" src="{scatter_path}" width="100%" height="100%" frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
+</div>
+"""
+```
+
+::: {.column width="50%"}
+```{python}
+display(HTML(html_scatter))
+```
+:::
+:::
+
 
 # Changement du niveau de retour
 
@@ -904,7 +1004,12 @@ year_display_min = config["years"]["min"]
 year_display_max = config["years"]["max"]
 
 
-def carte_retour(model_name, echelle, season_choice, model_title, half):
+def carte_retour(model_name, echelle, season_choice, half):
+    MODEL_PARAM, MODEL_NAME = menu_config_gev()
+    MODEL_TITLE = {v: k for k, v in MODEL_NAME.items()}
+
+    model_title = MODEL_TITLE.get(model_name, model_name)
+
     title = f"Changement du niveau de retour {T_choice} ans par {par_X_annees} ans du modèle {model_title}"
     result_gev = pipeline_data_gev_quarto(
         config=config,
@@ -945,18 +1050,29 @@ echelle="quotidien"
 season_choice = "djf"
 model_title="minimisant l'AIC"
 half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, model_title, half)
+carte_retour(model_name, echelle, season_choice, half)
 ```
 
 ---
 
 ```{python}
-model_name="ns_gev_m3"
+model_name="ns_gev_m3_break_year"
 echelle="quotidien"
 season_choice = "djf"
 model_title="M₃⋆(μ, σ)" # M ₀, ₁,₂, ₃, ⋆
 half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, model_title, half)
+carte_retour(model_name, echelle, season_choice, half)
+```
+
+---
+
+```{python}
+model_name="ns_gev_m3_break_year_bootstrap"
+echelle="quotidien"
+season_choice = "djf"
+model_title="M₃⋆ᵇ(μ, σ)" # M ₀, ₁,₂, ₃, ⋆
+half = "sud"  # ou "nord"
+carte_retour(model_name, echelle, season_choice, half)
 ```
 
 ---
@@ -967,18 +1083,29 @@ echelle="quotidien"
 season_choice = "mam"
 model_title="minimisant l'AIC"
 half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, model_title, half)
+carte_retour(model_name, echelle, season_choice, half)
 ```
 
 ---
 
 ```{python}
-model_name="ns_gev_m3"
+model_name="ns_gev_m3_break_year"
 echelle="quotidien"
 season_choice = "mam"
 model_title="M₃⋆(μ, σ)" # M ₀, ₁,₂, ₃, ⋆
 half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, model_title, half)
+carte_retour(model_name, echelle, season_choice, half)
+```
+
+---
+
+```{python}
+model_name="ns_gev_m3_break_year_bootstrap"
+echelle="quotidien"
+season_choice = "mam"
+model_title="M₃⋆ᵇ(μ, σ)" # M ₀, ₁,₂, ₃, ⋆
+half = "sud"  # ou "nord"
+carte_retour(model_name, echelle, season_choice, half)
 ```
 
 ---
@@ -989,18 +1116,29 @@ echelle="quotidien"
 season_choice = "jja"
 model_title="minimisant l'AIC"
 half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, model_title, half)
+carte_retour(model_name, echelle, season_choice, half)
 ```
 
 ---
 
 ```{python}
-model_name="ns_gev_m3"
+model_name="ns_gev_m3_break_year"
 echelle="quotidien"
 season_choice = "jja"
 model_title="M₃⋆(μ, σ)" # M ₀, ₁,₂, ₃, ⋆
 half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, model_title, half)
+carte_retour(model_name, echelle, season_choice, half)
+```
+
+---
+
+```{python}
+model_name="ns_gev_m3_break_year_bootstrap"
+echelle="quotidien"
+season_choice = "jja"
+model_title="M₃⋆ᵇ(μ, σ)" # M ₀, ₁,₂, ₃, ⋆
+half = "sud"  # ou "nord"
+carte_retour(model_name, echelle, season_choice, half)
 ```
 
 ---
@@ -1011,16 +1149,27 @@ echelle="quotidien"
 season_choice = "son"
 model_title="minimisant l'AIC"
 half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, model_title, half)
+carte_retour(model_name, echelle, season_choice, half)
 ```
 
 ---
 
 ```{python}
-model_name="ns_gev_m3"
+model_name="ns_gev_m3_break_year"
 echelle="quotidien"
 season_choice = "son"
 model_title="M₃⋆(μ, σ)" # M ₀, ₁,₂, ₃, ⋆
 half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, model_title, half)
+carte_retour(model_name, echelle, season_choice, half)
+```
+
+---
+
+```{python}
+model_name="ns_gev_m3_break_year_bootstrap"
+echelle="quotidien"
+season_choice = "son"
+model_title="M₃⋆ᵇ(μ, σ)" # M ₀, ₁,₂, ₃, ⋆
+half = "sud"  # ou "nord"
+carte_retour(model_name, echelle, season_choice, half)
 ```

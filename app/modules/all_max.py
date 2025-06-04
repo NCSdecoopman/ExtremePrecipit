@@ -37,7 +37,7 @@ def pipeline_config(config_path: dict):
 
 
 def show(config_path, min_year: int, max_year: int, middle_year: int):
-    st.title("🔬 Tableau scientifique des performances")
+    st.title("Tableau scientifique des performances")
     st.markdown(
         """
         Ce tableau présente les performances de la modélisation pour différentes saisons, échelles temporelles
@@ -55,15 +55,29 @@ def show(config_path, min_year: int, max_year: int, middle_year: int):
         "SON": "son"
     }
     echelles = {
+        "w3": "mm_h",
+        "w6": "mm_h",
+        "w9": "mm_h",
+        "w12": "mm_h",
+        "w24": "mm_h",
         "Horaire": "mm_h",
         "Journalière": "mm_j"
+    }
+    echelle_labels = {
+        "w3": "3h glissante",
+        "w6": "6h glissante",
+        "w9": "9h glissante",
+        "w12": "12h glissante",
+        "w24": "24h glissante",
+        "Horaire": "1h",
+        "Journalière": "Journalière"
     }
 
     params_config = pipeline_config(config_path)
 
     periodes = {
         "mm_h": [(middle_year, max_year)],
-        "mm_j": [(min_year, max_year)]
+        "mm_j": [(min_year, max_year), (middle_year, max_year)]
     }
 
     results = []
@@ -73,12 +87,23 @@ def show(config_path, min_year: int, max_year: int, middle_year: int):
 
     for nom_saison, saison_key in saisons.items():
         for nom_echelle, echelle_key in echelles.items():
+
+            if nom_echelle == "Journalière" and len(periodes["mm_j"]) > 1:
+                echelle_affiche = f"{echelle_labels[nom_echelle]} ({min_year}-{max_year})"
+            else:
+                echelle_affiche = echelle_labels[nom_echelle]
+
             for min_year, max_year in periodes[echelle_key]:
                 config = params_config["config"]
                 stat_choice_key = "mean-max"
                 quantile_choice = 1
                 missing_rate = 0.15
                 column_to_show = f"max_{echelle_key}"
+
+                if nom_echelle == "Journalière":
+                    scale_choice = "quotidien"
+                else:
+                    scale_choice = nom_echelle.lower()
 
                 params_load = (
                     stat_choice_key,
@@ -87,7 +112,8 @@ def show(config_path, min_year: int, max_year: int, middle_year: int):
                     max_year,
                     saison_key,
                     missing_rate,
-                    quantile_choice
+                    quantile_choice,
+                    scale_choice
                 )
 
 
@@ -127,7 +153,7 @@ def show(config_path, min_year: int, max_year: int, middle_year: int):
                     
                 me, _, _, r2 = generate_metrics(df)
                 results.append({
-                    "Echelle": nom_echelle,
+                    "Echelle": echelle_affiche,
                     "Saison": nom_saison,
                     "Période": f"{min_year} - {max_year}",
                     "Stations": df["NUM_POSTE_obs"].n_unique(),
@@ -167,7 +193,7 @@ def show(config_path, min_year: int, max_year: int, middle_year: int):
                 _, _, me_grouped, _, _, r2_grouped, _ = pipeline_scatter(params_scatter)
                 # Calcul des métriques à partir des moyennes par station
                 results_grouped.append({
-                    "Echelle": nom_echelle,
+                    "Echelle": echelle_affiche,
                     "Saison": nom_saison,
                     "Période": f"{min_year} - {max_year}",
                     "Stations": "",

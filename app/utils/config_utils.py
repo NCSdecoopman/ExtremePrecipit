@@ -21,6 +21,11 @@ def menu_config_statisticals():
 
     SCALE = {
         "Horaire": "mm_h",
+        "w3": "mm_h",
+        "w6": "mm_h",
+        "w9": "mm_h",
+        "w12": "mm_h",
+        "w24": "mm_h",
         "Journalière": "mm_j"
     }
 
@@ -53,8 +58,11 @@ def menu_config_gev():
         "M₂⋆(μ₀, σ) : μ(t) = μ₀ ; σ(t) = σ₀ + σ₁·t₊ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m2_break_year",
         "M₃⋆(μ, σ) : μ(t) = μ₀ + μ₁·t₊ ; σ(t) = σ₀ + σ₁·t₊ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m3_break_year",
 
-        # Modèle minimisant l'AIC
-        "Modèle minimisant l'AIC": "best_model"
+        "M₃⋆ᵇ(μ, σ) : μ(t) = μ₀ + μ₁·t₊ ; σ(t) = σ₀ + σ₁·t₊ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m3_break_year_bootstrap",
+
+        # Autres
+        "M(minimisant AIC)": "best_model",
+        "M(minimisant pval)": "best_model_lrt"
     }
 
     return MODEL_PARAM, MODEL_NAME

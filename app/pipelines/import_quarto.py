@@ -42,6 +42,11 @@ def pipeline_data_quarto(
     if echelle in {"hydro", "djf"}:
         min_year += 1
 
+    if echelle == "quotidien":
+        scale_choice = "Journalière"
+    else:
+        scale_choice = echelle.lower()
+
     # Préparation des paramètres pour pipeline_data
     params_load = (
         stat_choice,
@@ -50,7 +55,8 @@ def pipeline_data_quarto(
         max_year,
         season_choice,
         missing_choice,
-        quantile_choice
+        quantile_choice,
+        scale_choice
     )
 
     result = pipeline_data(params_load, config, use_cache=False)
@@ -312,38 +318,7 @@ def pipeline_quarto_gev_half_france(
         }
     )
 
-    # AJOUT DES COURBES DE NIVEAUX
-    import geopandas as gpd
-    import pydeck as pdk
-
-
-    # Lire et reprojeter le shapefile
-    gdf = gpd.read_file(Path("data/external/niveaux/selection_courbes_niveau_france.shp").resolve()).to_crs(epsg=4326)
-
-    # Extraire les chemins
-    path_data = []
-    for _, row in gdf.iterrows():
-        geom = row.geometry
-        altitude = row["coordonnees"]  # ou la colonne correcte (parfois 'ALTITUDE', à adapter)
-
-        if geom.geom_type == "LineString":
-            path_data.append({"path": list(geom.coords), "altitude": altitude})
-        elif geom.geom_type == "MultiLineString":
-            for line in geom.geoms:
-                path_data.append({"path": list(line.coords), "altitude": altitude})
-
-    # Couleur fixe noire ; possibilité d’ajouter une couleur par altitude (cf. remarque ci-dessous)
-    contour_layer = pdk.Layer(
-        "PathLayer",
-        data=path_data,
-        get_path="path",
-        get_color="[0, 0, 0, 100]",  # ou map dynamique : 'd.altitude > 1000 ? [0,0,0,255] : [150,150,150,150]'
-        width_scale=1,
-        width_min_pixels=0.5,
-        pickable=False
-    )
-
-    deck = plot_map([layer, scatter_layer, contour_layer], view_state, tooltip)
+    deck = plot_map([layer, scatter_layer], view_state, tooltip)
     deck_path = f"{assets_dir}/deck_map_{name}.html"
     deck.to_html(deck_path, notebook_display=False)
 

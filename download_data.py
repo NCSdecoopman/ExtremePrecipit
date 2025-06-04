@@ -14,26 +14,37 @@ try:
         cache_dir=cache_path,
         allow_patterns=["metadonnees/*"]
     )
-    
-    print("Téléchargement des statistiques AROMES (mod)...")
-    snapshot_download(
-        repo_id="ncsdecoopman/ExtremePrecipit",
-        repo_type="dataset",
-        revision="main",
-        local_dir="data",
-        cache_dir=cache_path,
-        allow_patterns=["statisticals/modelised*"]
-    )
 
-    print("Téléchargement des statistiques STATIONS observées...")
+    print("Téléchargement des reliefs...")
     snapshot_download(
         repo_id="ncsdecoopman/ExtremePrecipit",
         repo_type="dataset",
         revision="main",
         local_dir="data",
         cache_dir=cache_path,
-        allow_patterns=["statisticals/observed*"]
-    )   
+        allow_patterns=["external/*"]
+    )
+     
+    for echelle in ["quotidien", "horaire", "w3", "w6", "w9", "w12", "w24"]:
+        print(f"Téléchargement des statistiques AROMES (mod)... - Echelle {echelle}")
+        snapshot_download(
+            repo_id="ncsdecoopman/ExtremePrecipit",
+            repo_type="dataset",
+            revision="main",
+            local_dir="data",
+            cache_dir=cache_path,
+            allow_patterns=["statisticals/modelised*"]
+        )
+
+        print(f"Téléchargement des statistiques STATIONS observées... - Echelle {echelle}")
+        snapshot_download(
+            repo_id="ncsdecoopman/ExtremePrecipit",
+            repo_type="dataset",
+            revision="main",
+            local_dir="data",
+            cache_dir=cache_path,
+            allow_patterns=["statisticals/observed*"]
+        )   
 
     print("Téléchargement des GEVs AROME...")
     snapshot_download(

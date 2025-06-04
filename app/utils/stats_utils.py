@@ -126,12 +126,22 @@ def generate_metrics(df: pl.DataFrame, x_label: str = "AROME", y_label: str = "S
 
     if len(x) != len(y):
         st.error("Longueur x et y différente")
+        return np.nan, np.nan, np.nan, np.nan
 
-    rmse = np.sqrt(mean_squared_error(y, x))
-    mae = mean_absolute_error(y, x)
-    me = np.mean(x - y)
+    # Filtrage des NaNs sur les deux colonnes
+    mask = ~np.isnan(x) & ~np.isnan(y)
+    x_valid = x[mask]
+    y_valid = y[mask]
 
-    corr = np.corrcoef(x, y)[0, 1]  # coefficient de corrélation de Pearson
-    r2_corr = corr**2  # son carré est toujours >= 0
+    if len(x_valid) == 0:
+        st.warning("Aucune donnée valide après suppression des NaN.")
+        return np.nan, np.nan, np.nan, np.nan
+
+    rmse = np.sqrt(mean_squared_error(y_valid, x_valid))
+    mae = mean_absolute_error(y_valid, x_valid)
+    me = np.mean(x_valid - y_valid)
+
+    corr = np.corrcoef(x_valid, y_valid)[0, 1] if len(x_valid) > 1 else np.nan
+    r2_corr = corr**2 if not np.isnan(corr) else np.nan
 
     return me, mae, rmse, r2_corr
