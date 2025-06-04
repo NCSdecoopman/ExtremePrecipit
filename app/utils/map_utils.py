@@ -199,7 +199,7 @@ def relief():
         pickable=False
     )
 
-def plot_map(layers, view_state, tooltip, activate_relief: bool=True):
+def plot_map(layers, view_state, tooltip, activate_relief: bool=False):
     if not isinstance(layers, list):
         layers = [layers]
     
