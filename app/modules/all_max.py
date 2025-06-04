@@ -87,13 +87,13 @@ def show(config_path, min_year: int, max_year: int, middle_year: int):
 
     for nom_saison, saison_key in saisons.items():
         for nom_echelle, echelle_key in echelles.items():
-
-            if nom_echelle == "Journalière" and len(periodes["mm_j"]) > 1:
-                echelle_affiche = f"{echelle_labels[nom_echelle]} ({min_year}-{max_year})"
-            else:
-                echelle_affiche = echelle_labels[nom_echelle]
-
             for min_year, max_year in periodes[echelle_key]:
+
+                if nom_echelle == "Journalière" and len(periodes["mm_j"]) > 1:
+                    echelle_affiche = f"{echelle_labels[nom_echelle]} ({min_year}-{max_year})"
+                else:
+                    echelle_affiche = echelle_labels[nom_echelle]
+
                 config = params_config["config"]
                 stat_choice_key = "mean-max"
                 quantile_choice = 1
