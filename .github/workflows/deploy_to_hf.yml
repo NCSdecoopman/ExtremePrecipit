@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      # 2. (Optionnel) Installer Git LFS
+      # 2. (Optionnel) Installer Git  LFS
       - name: Installer Git LFS
         run: |
           sudo apt-get update
