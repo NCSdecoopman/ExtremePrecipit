@@ -66,7 +66,8 @@ try:
     #     allow_patterns=["gev/observed*"]
     # )
 
+
 except Exception as e:
-    print("Erreur pendant le téléchargement :")
+    print("Erreur pendant le téléchargement des données :")
     traceback.print_exc()
     raise SystemExit(1)
