@@ -1,5 +1,5 @@
 import streamlit as st
-from app.modules import statisticals, gev, suppr_sauv_gev_precedent
+from app.modules import statisticals #, gev, suppr_sauv_gev_precedent
 
 st.set_page_config(layout="wide", page_title="Visualisation des précipitations", page_icon="🌧️")
 
@@ -60,24 +60,31 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-option = st.sidebar.selectbox(
-    "Navigation",
-    ("Choisir un visuel", "Statistiques descriptives", "Variation décennale"),
-    index=0  # affiche la première valeur (chaîne vide) par défaut
-)
+# option = st.sidebar.selectbox(
+#     "Navigation",
+#     ("Choisir un visuel", "Statistiques descriptives", "Variation décennale"),
+#     index=0  # affiche la première valeur (chaîne vide) par défaut
+# )
 
 config_path = "app/config/config.yaml"
 
-if option == "Statistiques descriptives":
-    statisticals.show(config_path)
+# if option == "Statistiques descriptives":
+#     statisticals.show(config_path)
 
-elif option == "Variation décennale":
-    gev.show(config_path)
+# elif option == "Variation décennale":
+#     gev.show(config_path)
 
-elif option == "temp":
-    suppr_sauv_gev_precedent.show(config_path)
+# elif option == "temp":
+#     suppr_sauv_gev_precedent.show(config_path)
 
-else:
+
+# Initialiser l'état de navigation si nécessaire
+if "page" not in st.session_state:
+    st.session_state.page = "home"
+
+
+# Si bouton cliqué, on change la page dans le session_state
+if st.session_state.page == "home":
     st.markdown("""
     <div style="text-align: center; font-size: 28px; font-weight: bold; margin-bottom: 20px;">
     Analyse interactive des précipitations en France (1959–2022)
@@ -109,3 +116,10 @@ else:
     Plongez au cœur des données, explorez les cartes et laissez-vous guider par l’évolution des précipitations extrêmes !
     </p>
     """, unsafe_allow_html=True)
+
+    if st.button("📊 Accéder aux statistiques descriptives"):
+        st.session_state.page = "statistiques"
+
+# Page statistiques
+elif st.session_state.page == "statistiques":
+    statisticals.show(config_path)

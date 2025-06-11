@@ -36,7 +36,7 @@ def pipeline_config(config_path: dict):
     }
 
 
-def show(config_path, min_year: int, max_year: int, middle_year: int):
+def show(config_path, min_year: int, max_year: int, middle_year: int, aggregate: bool=False):
     st.title("Tableau scientifique des performances")
     st.markdown(
         """
@@ -104,6 +104,9 @@ def show(config_path, min_year: int, max_year: int, middle_year: int):
                     scale_choice = "quotidien"
                 else:
                     scale_choice = nom_echelle.lower()
+
+                if aggregate:
+                    scale_choice = f"{scale_choice}_aggregate"
 
                 params_load = (
                     stat_choice_key,

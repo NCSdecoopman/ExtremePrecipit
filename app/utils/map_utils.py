@@ -2,6 +2,7 @@ from pathlib import Path
 import pydeck as pdk
 import streamlit as st
 import polars as pl
+import geopandas as gpd
 
 def prepare_layer(df: pl.DataFrame) -> pl.DataFrame:
     cols = ["lat", "lon", "lat_fmt", "lon_fmt", "altitude", "val_fmt", "fill_color"]
@@ -128,7 +129,7 @@ def create_scatter_layer(df: pl.DataFrame, radius=1500) -> list[pdk.Layer]:
                 radius_scale=3,
                 radius_min_pixels=2,
                 pickable=True,
-                stroked=True
+                stroked=False
             )
         )
         
@@ -147,7 +148,7 @@ def create_scatter_layer(df: pl.DataFrame, radius=1500) -> list[pdk.Layer]:
                 radius_scale=1,
                 radius_min_pixels=2,
                 pickable=True,
-                stroked=True
+                stroked=False
             )
         )
 
@@ -171,8 +172,6 @@ def create_tooltip(label: str) -> dict:
 
 
 def relief():
-    import geopandas as gpd
-
     # Lire et reprojeter le shapefile
     gdf = gpd.read_file(Path("data/external/niveaux/selection_courbes_niveau_france.shp").resolve()).to_crs(epsg=4326)
 
@@ -199,7 +198,7 @@ def relief():
         pickable=False
     )
 
-def plot_map(layers, view_state, tooltip, activate_relief: bool=True):
+def plot_map(layers, view_state, tooltip, activate_relief: bool=False):
     if not isinstance(layers, list):
         layers = [layers]
     
@@ -216,7 +215,7 @@ def plot_map(layers, view_state, tooltip, activate_relief: bool=True):
             layers=layers,
             initial_view_state=view_state,
             tooltip=tooltip,
-            map_style="light"
+            map_style=None
         )
     except Exception as e:
         st.error(f"Erreur lors de la création de la carte : {e}")

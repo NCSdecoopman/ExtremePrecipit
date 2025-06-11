@@ -21,11 +21,6 @@ def menu_config_statisticals():
 
     SCALE = {
         "Horaire": "mm_h",
-        "w3": "mm_h",
-        "w6": "mm_h",
-        "w9": "mm_h",
-        "w12": "mm_h",
-        "w24": "mm_h",
         "Journalière": "mm_j"
     }
 

@@ -128,7 +128,7 @@ def match_and_compare(
     column_to_show: str,
     obs_vs_mod: pl.DataFrame = None
 ) -> pl.DataFrame:
-    
+
     if obs_vs_mod is None:
         raise ValueError("obs_vs_mod must be provided with NUM_POSTE_obs and NUM_POSTE_mod columns")
     

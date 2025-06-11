@@ -13,21 +13,25 @@ def show(
     config_path: dict, 
     height: int=600
 ):
-    st.markdown("<h3>Visualisation des précipitations</h3>", unsafe_allow_html=True)
-    
-    # Chargement des config
-    params_config = pipeline_config(config_path, type="stat")
-    config = params_config["config"]
-    stat_choice = params_config["stat_choice"]
-    season_choice = params_config["season_choice"]
-    stat_choice_key = params_config["stat_choice_key"]
-    scale_choice_key = params_config["scale_choice_key"]
-    min_year_choice = params_config["min_year_choice"]
-    max_year_choice = params_config["max_year_choice"]
-    season_choice_key = params_config["season_choice_key"]
-    missing_rate = params_config["missing_rate"]
-    quantile_choice = params_config["quantile_choice"]
-    scale_choice = params_config["scale_choice"]
+    col1, col2, col3 = st.columns([0.9, 0.05, 0.05])
+    with col1:
+        # Chargement des config
+        params_config = pipeline_config(config_path, type="stat")
+        config = params_config["config"]
+        stat_choice = params_config["stat_choice"]
+        season_choice = params_config["season_choice"]
+        stat_choice_key = params_config["stat_choice_key"]
+        scale_choice_key = params_config["scale_choice_key"]
+        min_year_choice = params_config["min_year_choice"]
+        max_year_choice = params_config["max_year_choice"]
+        season_choice_key = params_config["season_choice_key"]
+        missing_rate = params_config["missing_rate"]
+        quantile_choice = params_config["quantile_choice"]
+        scale_choice = params_config["scale_choice"]
+    with col2:
+        show_relief = st.checkbox("Afficher les courbes de niveaux", value=False) # Case à cocher 
+    with col3:
+        show_stations = st.checkbox("Afficher les stations", value=False) # Case à cocher 
     
     # Préparation des paramètres pour pipeline_data
     params_load = (
@@ -57,7 +61,8 @@ def show(
     col1, col2, col3 = st.columns([1, 0.15, 1])
 
     with col1:
-        deck = plot_map([layer, scatter_layer], view_state, tooltip)
+        scatter_layer = None if not show_stations else scatter_layer
+        deck = plot_map([layer, scatter_layer], view_state, tooltip, activate_relief=show_relief)
         st.markdown(
             f"""
             <div style='text-align: left; margin-bottom: 10px;'>
