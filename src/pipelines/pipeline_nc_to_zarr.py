@@ -9,7 +9,6 @@ from dask import delayed
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-from tqdm.dask import TqdmCallback
 from typing import Dict, Union, Optional
 from shapely.geometry import Polygon, MultiPolygon
 from shapely import vectorized
@@ -18,6 +17,7 @@ from tqdm import tqdm
 
 from src.utils.config_tools import load_config
 from src.utils.logger import get_logger
+
 
 # ---------------------------------------------------------------------------
 # 1) Liste des fichiers .nc
@@ -165,7 +165,7 @@ def filter_ds_to_france(ds: xr.Dataset, geom_france) -> xr.Dataset:
     if not isinstance(geom_france, (Polygon, MultiPolygon)):
         raise TypeError("La géométrie France n’est pas un objet Polygon/MultiPolygon Shapely.")
     
-    # 🔍 Gestion de la grille lat/lon
+    # Gestion de la grille lat/lon
     lat = ds["lat"]
     lon = ds["lon"]
 
@@ -422,19 +422,17 @@ def pipeline_nc_to_zarr(config):
 
         # Ne pas charger inutilement
         if horaire_exists and not overwrite: # and quotidien_exists
-            logger.info(f"Les fichiers Zarr horaire et quotidien existent déjà pour {year} et overwrite=False : skipping.")
-            continue
+            logger.info(f"[{year}] HORAIRE déjà existant, skip sauvegarde.")
+            # Charger depuis Zarr pour permettre agrégation
+            ds = xr.open_zarr(output_path_horaire)
 
-        # Chargement initial
-        ds = load_nc_file(nc_file, variables_config, chunk_config, geom_france)
-        ds = add_num_poste_to_dataset(ds, postes_df)
-
-        # Horaire
-        if not horaire_exists or overwrite:
+        else:
+            # Chargement initial
+            ds = load_nc_file(nc_file, variables_config, chunk_config, geom_france)
+            ds = add_num_poste_to_dataset(ds, postes_df)
             save_to_zarr(ds, output_path_horaire, chunk_config, compressor_config)
             logger.info(f"[{year}] HORAIRE sauvegardé")
-        else:
-            logger.info(f"Zarr HORAIRE déjà existant pour {year}, skip.")
+
 
         # # Quotidien
         # if not quotidien_exists or overwrite:

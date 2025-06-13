@@ -3,23 +3,13 @@ __pycache__/
 *.py[cod]
 *.parquet
 *.zarr
-
-# Ajouter les config streamlit au git
-!/.streamlit/*
-# Ignorer tous les fichiers lourds et géospatiaux
 *.nc
-*.zarr
-*.shp
-*.shx
-*.dbf
-*.prj
-*.cpg
-*.parquet
 *.csv
-*.gz
 
 # On garde les .keep
 !data/**/.keep
+# Ajouter les config streamlit au git
+!/.streamlit/*
 
 # Ignore aussi d'éventuels fichiers temporaires et artefacts
 *.tmp
@@ -29,3 +19,8 @@ __pycache__/
 *.pyc
 *.cache
 *.log
+
+# Ignorer les caches Jupyter
+.jupyter_cache/
+presentation_files/
+assets/
