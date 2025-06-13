@@ -1,6 +1,7 @@
 import gzip
 import argparse
 from pathlib import Path
+import os
 import requests
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
@@ -11,6 +12,7 @@ import polars as pl
 import xarray as xr
 import zarr
 import numcodecs
+from typing import Dict, List
 
 from src.utils.config_tools import load_config
 from src.utils.logger import get_logger
@@ -480,6 +482,7 @@ def fill_zarr_for_year(year: int,
     logger.info(f"[REMPLISSAGE] Année {year} — {len(values)} valeurs insérées sur {len(df_year)} lignes")
 
 
+
 # ================================================================
 # Fonctions principales
 # ================================================================
@@ -517,6 +520,7 @@ def pipeline_csv_to_zarr(config, max_workers: int = 48):
         logger.info(f"[CONCATENATION] Téléversement des datasets de {input_dir}")
         df_all = concat_csv_temp(input_dir, all_cols, val_col, date_col, max_workers)
         logger.info(df_all)
+        df_all_years = group_df_by_year(df_all)
 
         # Vérification des doublons
         dupes = (
@@ -533,32 +537,36 @@ def pipeline_csv_to_zarr(config, max_workers: int = 48):
         else:
             logger.warning(f"Nombre de stations avec plusieurs LAT/LON : {n_stations_diff_latlon}")
 
-        # Étape 2 : Génération des zarr vides
-        logger.info("[GENERATION] Générations des métadonnées associées")
-        postes_df = generate_metadata(meta_dir, echelle, df_all)
 
-        logger.info(f"[GENERATION] Génération des zarr vides")
-        generate_zarr_structure(zarr_dir, echelle, postes_df, config)
+        overwrite = config["zarr"].get("overwrite", False)
+        if overwrite:
+            # Étape 2 : Génération des zarr vides
+            logger.info("[GENERATION] Générations des métadonnées associées")
+            postes_df = generate_metadata(meta_dir, echelle, df_all)
 
-        n_missing_alt = postes_df.filter(pl.col("altitude").is_null()).height
-        if n_missing_alt > 0:
-                logger.warning(f"{n_missing_alt} stations sans altitude renseignée.")
 
-        # Étape 3 : Remplissage des fichiers Zarr
-        logger.info("[REMPLISSAGE] Début du remplissage des Zarr")
-        zarr_base_path = zarr_dir / echelle
-        df_all_years = group_df_by_year(df_all)
+            logger.info(f"[GENERATION] Génération des zarr vides")
+            generate_zarr_structure(zarr_dir, echelle, postes_df, config)
 
-        with ProcessPoolExecutor(max_workers=max_workers) as executor:
-            futures = {
-                executor.submit(fill_zarr_task, item, zarr_base_path, postes_df, val_col, config): item[0]
-                for item in df_all_years.items()
-            }
-            for future in as_completed(futures):
-                msg = future.result()
-                if msg is not None:
-                    logger.info(msg)
+            n_missing_alt = postes_df.filter(pl.col("altitude").is_null()).height
+            if n_missing_alt > 0:
+                    logger.warning(f"{n_missing_alt} stations sans altitude renseignée.")
 
+            # Étape 3 : Remplissage des fichiers Zarr
+            logger.info("[REMPLISSAGE] Début du remplissage des Zarr")
+            zarr_base_path = zarr_dir / echelle
+
+            with ProcessPoolExecutor(max_workers=max_workers) as executor:
+                futures = {
+                    executor.submit(fill_zarr_task, item, zarr_base_path, postes_df, val_col, config): item[0]
+                    for item in df_all_years.items()
+                }
+                for future in as_completed(futures):
+                    msg = future.result()
+                    if msg is not None:
+                        logger.info(msg)
+        else:
+            logger.info(["[SKIP] Pas de réécriture des zarr"])
 
 
 

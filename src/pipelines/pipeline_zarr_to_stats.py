@@ -52,7 +52,8 @@ def compute_statistics_for_period(
     n_points = pr.sizes["NUM_POSTE"]
     n_time = pr.time.size
 
-    if echelle_choice.startswith("w"):  # Si l'échelle est en fenêtre glissante c'est une horaire
+    # Si l'échelle est en fenêtre glissante ou une agrégation spatiale c'est une horaire
+    if echelle_choice.startswith("w") or echelle_choice.startswith("horaire_aggregate"):  
         echelle = "horaire"
     else:                               # Sinon on la laisse 
         echelle = echelle_choice
@@ -341,7 +342,7 @@ def pipeline_statistics_from_zarr_seasonal(config, max_workers: int = 48):
     echelles = config.get("echelles")
 
     for echelle in echelles:
-        logger.info(f"--- Traitement pour l’échelle : {echelle.upper()} ---")
+        logger.info(f"--- Traitement pour l’échelle : {echelle.upper()}---")
 
         if echelle.startswith("w"):
             echelle_trait = "horaire"
@@ -405,7 +406,7 @@ def pipeline_statistics_from_zarr_seasonal(config, max_workers: int = 48):
             for future in as_completed(futures):
                 zarr_file, log_status, error = future.result()
                 if error:
-                    print(f"[ERROR] Error processing {zarr_file}: {error}")
+                    logger.error(f"[ERROR] Error processing {zarr_file}: {error}")
                 else:
                     year = int(os.path.basename(zarr_file).split(".")[0])
                     status_log[year] = log_status.get(year, {})
@@ -422,7 +423,7 @@ def pipeline_statistics_from_zarr_seasonal(config, max_workers: int = 48):
                 try:
                     future.result()
                 except Exception as e:
-                    print(f"[ERROR] Error processing lors du traitement de l'année {year}: {e}")
+                    logger.error(f"[ERROR] Error processing lors du traitement de l'année {year}: {e}")
 
         log_df = pd.DataFrame.from_dict(status_log, orient="index").sort_index()
         logger.info(f"[{echelle.upper()}] Résumé final :\n" + log_df.to_string())
@@ -430,8 +431,15 @@ def pipeline_statistics_from_zarr_seasonal(config, max_workers: int = 48):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pipeline statistiques saisonnières à partir de fichiers Zarr.")
-    parser.add_argument("--config", type=str, default="config/observed_settings.yaml")
-    parser.add_argument("--echelle", type=str, choices=["horaire", "quotidien", "w3", "w6", "w9", "w12", "w24"], nargs="+", default=["horaire"])
+    parser.add_argument("--config", type=str, default="config/modelised_settings.yaml")
+    parser.add_argument("--echelle", 
+                        type=str, 
+                        choices=[
+                            "horaire", "quotidien", "w3", "w6", "w9", "w12", "w24",
+                            "horaire_aggregate_n3"
+                                 ], 
+                        nargs="+", 
+                        default=["horaire"])
     args = parser.parse_args()
 
     config = load_config(args.config)

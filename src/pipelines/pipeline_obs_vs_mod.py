@@ -217,8 +217,8 @@ def pipeline_obs_vs_mod(config_obs, config_mod):
 
         logger.info(f"Traitement {echelle} de {min(ANNEES)} à {max(ANNEES)}")
 
-        output_path_echelle = OUTPUT_PATH / echelle
-        output_path_echelle.mkdir(parents=True, exist_ok=True)
+        # output_path_echelle = OUTPUT_PATH / echelle
+        # output_path_echelle.mkdir(parents=True, exist_ok=True)
 
         # === CHARGEMENT DES DONNÉES OBS & MOD (CENTRALISÉ) ===
         # métadonnées
@@ -232,47 +232,51 @@ def pipeline_obs_vs_mod(config_obs, config_mod):
         print(df_match.shape[0])
         logger.info(f"Fichier de correspondances coordonnées observées - modélisées enregistré sous {PATH_METADATA_OBS_VS_MOD}/obs_vs_mod_{echelle}.csv")
 
-        # Liste des stations
-        rows = list(df_match["NUM_POSTE_obs"].values)
-        logger.info(f"{len(rows)} stations à traiter")
+        # # Liste des stations
+        # rows = list(df_match["NUM_POSTE_obs"].values)
+        # logger.info(f"{len(rows)} stations à traiter")
 
-        tasks = [
-            process_one_point(
-                num_poste_obs=row,
-                df_match=df_match,
-                path_obs_zarr=PATH_ZARR_OBS / echelle,
-                path_mod_zarr=PATH_ZARR_MOD / "horaire",
-                years=ANNEES,
-                scale_factor_obs=scale_factor_obs,
-                scale_factor_mod=scale_factor_mod,
-                fill_value=-9999,
-                output_path=output_path_echelle
-            ) for row in rows
-        ]
+        # tasks = [
+        #     process_one_point(
+        #         num_poste_obs=row,
+        #         df_match=df_match,
+        #         path_obs_zarr=PATH_ZARR_OBS / echelle,
+        #         path_mod_zarr=PATH_ZARR_MOD / "horaire",
+        #         years=ANNEES,
+        #         scale_factor_obs=scale_factor_obs,
+        #         scale_factor_mod=scale_factor_mod,
+        #         fill_value=-9999,
+        #         output_path=output_path_echelle
+        #     ) for row in rows
+        # ]
 
-        BATCH_SIZE = 100
-        for i, chunk in enumerate(chunked(tasks, BATCH_SIZE)):
-            logger.info(f"Traitement batch {i+1}/{len(tasks)//BATCH_SIZE+1}")
-            futures = client.compute(chunk) # Calcul en parallèle
-            #progress(futures) # Affiche une barre de progression en console
-            results = client.gather(futures)
+        # BATCH_SIZE = 100
+        # for i, chunk in enumerate(chunked(tasks, BATCH_SIZE)):
+        #     logger.info(f"Traitement batch {i+1}/{len(tasks)//BATCH_SIZE+1}")
+        #     futures = client.compute(chunk) # Calcul en parallèle
+        #     #progress(futures) # Affiche une barre de progression en console
+        #     results = client.gather(futures)
 
-        # Compter les succès et les échecs de manière robuste
-        n_success = sum(1 for r in results if r is True)
-        n_fail = sum(1 for r in results if r is not True)
+        # # Compter les succès et les échecs de manière robuste
+        # n_success = sum(1 for r in results if r is True)
+        # n_fail = sum(1 for r in results if r is not True)
 
-        logger.info("Résumé du traitement :")
-        logger.info(f"  - {n_success} stations traitées avec succès")
-        logger.info(f"  - {n_fail} stations en échec")
+        # logger.info("Résumé du traitement :")
+        # logger.info(f"  - {n_success} stations traitées avec succès")
+        # logger.info(f"  - {n_fail} stations en échec")
 
 
 if __name__ == "__main__":
-    client, cluster = start_dask_cluster()
+    #client, cluster = start_dask_cluster()
 
     parser = argparse.ArgumentParser(description="Pipeline obs vs mod")
     parser.add_argument("--config_obs", type=str, default="config/observed_settings.yaml")
     parser.add_argument("--config_mod", type=str, default="config/modelised_settings.yaml")
-    parser.add_argument("--echelle", type=str, choices=["horaire", "quotidien"], nargs="+", default=["horaire", "quotidien"])
+    parser.add_argument("--echelle", 
+                        type=str, 
+                        choices=["horaire", "quotidien", "horaire_aggregate"], 
+                        nargs="+", 
+                        default=["horaire", "quotidien", "horaire_aggregate"])
     args = parser.parse_args()
 
     config_obs = load_config(args.config_obs)

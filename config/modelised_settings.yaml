@@ -34,6 +34,9 @@ zarr:
       scale_factor: 10          # pour enregistrer pr * 10 en int16 (un chiffre après la virgule) : 1.25 deviendra 1.3
       fill_value: -9999
 
+aggregate:
+  enable: true
+
 statistics:
   path:
     outputdir: "data/statisticals/modelised"
