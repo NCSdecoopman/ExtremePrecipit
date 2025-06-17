@@ -5,11 +5,19 @@ __pycache__/
 *.zarr
 *.nc
 *.csv
+*.db
+*.sqlite
+airflow/
 
 # On garde les .keep
 !data/**/.keep
 # Ajouter les config streamlit au git
 !/.streamlit/*
+
+# Garder le fichier de config principal airflow
+!airflow.cfg
+!webserver_config.py
+!dags/*.py
 
 # Ignore aussi d'éventuels fichiers temporaires et artefacts
 *.tmp
