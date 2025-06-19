@@ -23,7 +23,7 @@ log = logging.getLogger(__name__).info
 #     check=True
 # )
 
-# for echelle in ["horaire, "quotidien""]: # 
+# for echelle in ["horaire, "quotidien""]: 
 #     log(f"Lancement du traitement obs (.csv) to .zarr pour l’échelle : {echelle}")
 #     subprocess.run(
 #         ["python",
@@ -38,61 +38,53 @@ log = logging.getLogger(__name__).info
 # ------------------------- METADONNES ---------------------
 ############################################################
 
-log(f"Lancement des metadonnées obs vs mod")
-for echelle in ["horaire", "quotidien"]:
-    subprocess.run(
-        ["python", 
-        "-m", 
-        "src.pipelines.pipeline_obs_vs_mod",
-        "--echelle", echelle],
-        check=True
-    )
+# log(f"Lancement des metadonnées obs vs mod")
+# for echelle in ["horaire", "quotidien"]:
+#     subprocess.run(
+#         ["python", 
+#         "-m", 
+#         "src.pipelines.pipeline_obs_vs_mod",
+#         "--echelle", echelle],
+#         check=True
+#     )
 
 
 ############################################################
 # ------------------------- AGGREGATION SPATIALE -----------
 ############################################################
 
-log(f"Lancement des aggrégations spatiales")
-for n_aggregate in [3, 4, 5]:
-    subprocess.run(
-        ["python", 
-        "-m", 
-        "src.pipelines.pipeline_aggregate_to_zarr",
-        "--n_aggregate", n_aggregate],
-        check=True
-    )
+# log("Lancement des aggrégations spatiales")
+# for n_aggregate in [3, 5]: # nombre impair
+#     subprocess.run(
+#         ["python", 
+#          "-m", 
+#          "src.pipelines.pipeline_aggregate_to_zarr",
+#          "--n_aggregate", str(n_aggregate)],
+#         check=True
+#     )
 
 ############################################################
 # ------------------------- STATS -------------------------
 ############################################################
 
-for config in ["config/modelised_settings.yaml"]: #, "config/observed_settings.yaml"
+# for config in ["config/modelised_settings.yaml", "config/observed_settings.yaml"]:
     
-    ECHELLES = ["horaire", "w3", "w6", "w9", "w12", "w24"]
+#     ECHELLES = ["horaire_aggregate_n5"] # "horaire", "w3", "w6", "w9", "w12", "w24"]
     
-    if config == "config/observed_settings.yaml": # Pas de temps horaire uniquement pour AROME
-        ECHELLES.append("quotidien")
+#     # if config == "config/observed_settings.yaml": # Pas de temps horaire uniquement pour AROME
+#     #     ECHELLES.append("quotidien")
 
-    for echelle in ECHELLES:
-        AGGREGATE = [False]
-        # if echelle == "quotidien":
-        #     AGGREGATE = [False]
-        # else:
-        #     AGGREGATE = [True, False]
+#     for echelle in ECHELLES:
+#         log(f"Lancement du traitement .zarr to stats {config} - {echelle}")
+#         subprocess.run(
+#             ["python",
+#             "-m",
+#             "src.pipelines.pipeline_zarr_to_stats",
+#             "--config", config,
+#             "--echelle", echelle],
+#         check=True
+#     )
 
-        for aggregate in AGGREGATE:
-            log(f"Lancement du traitement .zarr to stats {config} - {echelle}")
-            cmd = [
-                "python",
-                "-m",
-                "src.pipelines.pipeline_zarr_to_stats",
-                "--config", config,
-                "--echelle", echelle,
-                ]
-            if aggregate:
-                cmd.append("--aggregate")
-            subprocess.run(cmd, check=True)
 
 
 # ############################################################
@@ -101,36 +93,49 @@ for config in ["config/modelised_settings.yaml"]: #, "config/observed_settings.y
 
 # Pipeline GEV
 log(f"Lancement du traitement stats to gev")
-for setting in ["config/modelised_settings.yaml"]: # , "config/observed_settings.yaml"
+for setting in ["config/modelised_settings.yaml", "config/observed_settings.yaml"]:
 
-    for echelle in ["quotidien", "horaire"]: # 
+    for echelle in ["quotidien"]: # , "horaire"
 
-        for season in ["hydro", "djf", "mam", "jja", "son"]: # 
+        for season in ["son"]: # "hydro", "djf", "mam", "jja",
 
-            for model in [
-                "s_gev", # Stationnaire
-                "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
-                "ns_gev_m1_break_year", "ns_gev_m2_break_year", "ns_gev_m3_break_year" # Non stationnaire avec point de rupture
-                ]:
+            # for model in [
+            #     "s_gev", # Stationnaire
+            #     "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
+            #     "ns_gev_m1_break_year", "ns_gev_m2_break_year", "ns_gev_m3_break_year" # Non stationnaire avec point de rupture
+            #     ]:
             
-                subprocess.run(
-                    [
-                        "python",
-                        "-m",
-                        "src.pipelines.pipeline_stats_to_gev",
-                        "--config", setting,
-                        "--echelle", echelle,
-                        "--season", season,
-                        "--model", model
-                    ],
-                    check=True
-                )
+            #     subprocess.run(
+            #         [
+            #             "python",
+            #             "-m",
+            #             "src.pipelines.pipeline_stats_to_gev",
+            #             "--config", setting,
+            #             "--echelle", echelle,
+            #             "--season", season,
+            #             "--model", model
+            #         ],
+            #         check=True
+            #     )
+
+            # subprocess.run(
+            #     [
+            #         "python",
+            #         "-m",
+            #         "src.pipelines.pipeline_best_model",
+            #         "--config", setting,
+            #         "--echelle", echelle,
+            #         "--season", season
+            #     ],
+            #     check=True
+            # )
+
 
             subprocess.run(
                 [
                     "python",
                     "-m",
-                    "src.pipelines.pipeline_best_model",
+                    "src.pipelines.pipeline_best_to_niveau_retour",
                     "--config", setting,
                     "--echelle", echelle,
                     "--season", season

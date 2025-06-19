@@ -7,17 +7,17 @@ __pycache__/
 *.csv
 *.db
 *.sqlite
-airflow/
+
+# Ignore tout dans airflow sauf certains fichiers
+airflow/*
+!airflow/airflow.cfg
+!airflow/webserver_config.py
+!airflow/dags/*.py
 
 # On garde les .keep
 !data/**/.keep
 # Ajouter les config streamlit au git
 !/.streamlit/*
-
-# Garder le fichier de config principal airflow
-!airflow.cfg
-!webserver_config.py
-!dags/*.py
 
 # Ignore aussi d'éventuels fichiers temporaires et artefacts
 *.tmp

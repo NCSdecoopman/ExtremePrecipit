@@ -3,48 +3,73 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from concurrent.futures import as_completed
-import dask
 from dask import delayed
-from dask import compute
-from dask.distributed import progress
 from tqdm import tqdm
+
+from pyproj import Transformer
 
 from sklearn.metrics import r2_score
 
 from src.utils.config_tools import load_config
 from src.utils.logger import get_logger
 
-from dask.distributed import Client, LocalCluster
-import time
-from more_itertools import chunked
+# ────────────────────────────────────────────────────
+# Initialiser une seule fois le transformeur
+# EPSG:4326  = lat/lon WGS-84
+# EPSG:2154  = Lambert-93 (mètres)
+# ────────────────────────────────────────────────────
+_TRANSFORMER = Transformer.from_crs(
+    "EPSG:4326",          # src
+    "EPSG:2154",          # dst (métrique)
+    always_xy=True        # (lon, lat) → (x, y)
+)
 
-def start_dask_cluster(n_workers=28, threads_per_worker=2, memory_limit='10GB', retries=5):
-    for attempt in range(retries):
-        try:
-            cluster = LocalCluster(
-                n_workers=n_workers,
-                threads_per_worker=threads_per_worker,
-                memory_limit=memory_limit,
-                processes=True
-            )
-            client = Client(cluster)
-            return client, cluster
-        except Exception as e:
-            print(f"[Tentative {attempt+1}] Échec de démarrage du cluster : {e}")
-            time.sleep(5)
-    raise RuntimeError("Impossible de démarrer le cluster Dask.")
+def find_matching_point(
+    df: pd.DataFrame,
+    lat_obs: float,
+    lon_obs: float,
+    col_mod_lat: str = "lat_mod",
+    col_mod_lon: str = "lon_mod",
+    transformer: Transformer = _TRANSFORMER   # injectable pour tests
+):
+    """
+    Retourne les coordonnées (lat_mod, lon_mod) du point AROME dont le
+    centre est le plus proche de la station (lat_obs, lon_obs), en vraie
+    distance plane :
+        1. Reprojection WGS-84 ➜ Lambert-93
+        2. Distance euclidienne ⟺ ~distance au sol en mètres
+    """
+    # 1) Projection de la station
+    x_obs, y_obs = transformer.transform(lon_obs, lat_obs)
 
+    # 2) Projection des centres de maille (vectorisée)
+    x_mod, y_mod = transformer.transform(
+        df[col_mod_lon].to_numpy(),   # lons
+        df[col_mod_lat].to_numpy()    # lats
+    )
 
-def find_matching_point(df, lat_obs, lon_obs, col_mod_lat: str="lat_mod", col_mod_lon: str="lon_mod"):
-    # Calcul de la distance euclidienne
-    distances = np.sqrt((df[col_mod_lat] - lat_obs)**2 + (df[col_mod_lon] - lon_obs)**2)
-    idx_min = distances.idxmin()
+    # 3) Distance euclidienne en mètres
+    distances = np.hypot(x_mod - x_obs, y_mod - y_obs)
 
-    lat_mod = df.loc[idx_min, col_mod_lat]
-    lon_mod = df.loc[idx_min, col_mod_lon]
+    # 4) Meilleur indice
+    idx_min = distances.argmin()
+
+    lat_mod = df.iloc[idx_min][col_mod_lat]
+    lon_mod = df.iloc[idx_min][col_mod_lon]
 
     return lat_mod, lon_mod
+
+
+# Ancienne version basée sur les coordonnées en degrés
+# def find_matching_point(df, lat_obs, lon_obs, col_mod_lat: str="lat_mod", col_mod_lon: str="lon_mod"):
+#     # Calcul de la distance euclidienne
+#     distances = np.sqrt((df[col_mod_lat] - lat_obs)**2 + (df[col_mod_lon] - lon_obs)**2)
+#     idx_min = distances.idxmin()
+
+#     lat_mod = df.loc[idx_min, col_mod_lat]
+#     lon_mod = df.loc[idx_min, col_mod_lon]
+
+#     return lat_mod, lon_mod
 
 
 def create_commun_point(df_obs: pd.DataFrame, df_mod: pd.DataFrame) -> pd.DataFrame:
@@ -267,8 +292,6 @@ def pipeline_obs_vs_mod(config_obs, config_mod):
 
 
 if __name__ == "__main__":
-    #client, cluster = start_dask_cluster()
-
     parser = argparse.ArgumentParser(description="Pipeline obs vs mod")
     parser.add_argument("--config_obs", type=str, default="config/observed_settings.yaml")
     parser.add_argument("--config_mod", type=str, default="config/modelised_settings.yaml")
