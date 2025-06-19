@@ -436,7 +436,7 @@ if __name__ == "__main__":
                         type=str, 
                         choices=[
                             "horaire", "quotidien", "w3", "w6", "w9", "w12", "w24",
-                            "horaire_aggregate_n3"
+                            "horaire_aggregate_n3", "horaire_aggregate_n5"
                                  ], 
                         nargs="+", 
                         default=["horaire"])

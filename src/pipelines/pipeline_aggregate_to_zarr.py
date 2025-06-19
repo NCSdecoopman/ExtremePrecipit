@@ -185,11 +185,11 @@ def pipeline_aggregate(config_obs, config_mod, args):
         for m in mapping
     }
 
-    # On filtre directement les centres ayant au moins 2 stations associées
+    # On filtre les centres 
     stations_lookup = {
         int(m["NUM_POSTE"]): m["stations_present"]
         for m in mapping
-        if len(m["stations_present"]) >= 2
+        # if len(m["stations_present"]) >= 2 # ayant au moins 2 stations associées si on veut filtrer pour gagner en temps
     }
 
     # Liste des centres valides

@@ -1,8 +1,12 @@
 ---
-title: "Avancement du stage"
-author: Decoopman Nicolas
+title: "Caractérisation et évolution des précipitations extrêmes horaires en France à partir d’un modèle régional de climat à convection profonde résolue"
+author: 
+  - name: "Decoopman Nicolas"
+    email: "ncsdecoopman@gmail.com"
 format:
   revealjs:
+    mermaid:
+      theme: neutral
     theme: simple
     slide-number: true
     pdf-separate-fragments: false
@@ -19,7 +23,7 @@ execute:
   message: false
   error: true
 freeze: auto  
-jupyter: stage
+jupyter: extremeprecipit
 ---
 
 ```{python}
@@ -90,26 +94,68 @@ def pipeline_total_title_map_legend_scatter_delta(
 ```
 
 
-## Précipitations extrêmes horaires en France
+# Contexte
 
-<br><br>
+::: {.columns style="display: flex; gap: 2; margin: 2;"}
+::: {.column width="60%"}
 
-### 1. Objectif
-Analyser les tendances des précipitations extrêmes horaires en France (1959–2022) à partir du modèle CP-RCM CNRM-AROME (2.5 km) forcé par ERA5
-<br>
+<br/>
+  
+- Réchauffement de la planète (plus fort sur les continents que les océans)  
+- L'air chaud contient plus d'humidité (Clausius–Clapeyron +7 % / °C)  
+- L'air chaud monte, se refroidit, l'eau se condense sous forme de pluie  
 
-### 2. Méthodes
+<br/><br/>
+**En réponse au réchauffement, augmentation théorique des précipitations extrêmes** variable suivant les changements de circulations atmosphériques
 
-- GEV stationnaire et non stationnaire
-- Comparaison avec observations Météo-France (+ EDF ?)
-<br>
+- Distinguer : tendances durables (changement climatique) *vs.* <br/>variations naturelles (variabilité climatique)
+- Utilisation de modèles de climat sur de longues périodes
 
-### 3. Enjeux
+:::
+::: {.column width="30%"}
 
-- Effet du réchauffement climatique sur les extrêmes
-- Zones à forte variabilité (Alpes, Méditerranée)
-- Contribution à la connaissance du risque hydrométéo
+![](presentation/temperature.png){width=100%}
 
+:::
+:::
+
+# AROME : modèle numérique CP-RCMs
+*Application of Research to Operations at MEsoscale*
+
+- **CP** (Convection-Permitting) : résoudre explicitement les processus de convection dans l'atmosphère (≠ approximation)
+    * Simuler plus précisément la formation des nuages convectifs et des précipitations associées
+- **RCM** (Regional Climate Model) : simuler le climat à des échelles plus petites que les modèles globaux
+    * **Résolution spatiale** : 2,5 km  
+    * **Résolution temporelle** : 1h
+- **Forcer** par réanalyse ERA5 (*ECMWF - C3S*)
+    * Données comme entrée ou condition initiale
+    * Données passées combinant des observations réelles avec des modèles
+    * Résolution 31 km, 1h, 137 niveaux d'atmosphère jusqu'à 80 km d'altitude
+
+
+
+**Permet d'étudier les pluies extrêmes infra-journalières, difficiles à voir dans les anciens modèles**
+
+# Méthodologie
+
+```{dot}
+graph G {
+  layout=neato
+  run -- intr;
+  intr -- runbl;
+  runbl -- run;
+  run -- kernel;
+  kernel -- zombie;
+  kernel -- sleep;
+  kernel -- runmem;
+  sleep -- swap;
+  swap -- runswap;
+  runswap -- new;
+  runswap -- runmem;
+  new -- runmem;
+  sleep -- runmem;
+}
+```
 
 # AROME vs. stations
 
@@ -564,7 +610,7 @@ display(HTML(f"""
 
 afficher_cat = [
     f"Journalière ({year_display_min}-{year_display_max})", f"Journalière ({year_display_middle}-{year_display_max})",
-    "1h", "3h glissante", "6h glissante", "9h glissante", "12h glissante", "24h glissante", "1h (agreg 3x3)"
+    "1h", "3h glissante", "6h glissante", "9h glissante", "12h glissante", "24h glissante", "1h (agreg 3x3)", "1h (agreg 5x5)"
     ]
 
 # Définir une palette manuelle cohérente
@@ -578,6 +624,7 @@ color_map = {
     "12h glissante": "#8c564b",     # Marron (Plotly[5])
     "24h glissante": "#e377c2",     # Rose (Plotly[6])
     "1h (agreg 3x3)": "#ff9f4e",    # Orange légèrement ajusté
+    "1h (agreg 5x5)": "#fff44f",       # jaune pastel
 }
     
 
