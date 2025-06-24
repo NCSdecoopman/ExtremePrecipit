@@ -1,0 +1,34 @@
+#contexte li, #contexte p {
+    line-height: 1.5; /* Ajustez selon vos besoins */
+}
+
+/* Style pour la section "modèle-arome" */
+#arome-modèle-numérique-cp-rcms li {
+    line-height: 1.8;
+}
+.reveal p{
+  text-align: justify;
+}
+
+.reveal h1 {
+  font-size: 1.5em;
+}
+.reveal h2 {
+  font-size: 1.2em;
+}
+.reveal h3 {
+  font-size: 1em;
+}
+
+.reveal .slides {
+  font-size: 0.6em;
+}
+
+/* Bloc des métriques sous le scatter plot */
+.metric-caption {
+    font-size: 0.6em;
+    margin-top: 4px;
+    text-align: center;
+  }
+
+

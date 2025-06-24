@@ -81,56 +81,63 @@ def compute_lrt_pvals(outputs: dict[str, pl.DataFrame]) -> pl.DataFrame:
     return pl.concat(results, how="vertical")
 
 
-# ETAPE 2 : si au moins l'un des 2 pval des modèles sur mu et sigma sont significatif (au seuil 10%),
-# considérer que le meilleur modèle est celui qui a la plus petite pval. L'idée c'est de privilégier le modèle le plus complexe
+# Pour chaque station, il regarde les p-values de tous les modèles non-stationnaires.
+# Règle 1 : Si au moins un des deux modèles complexes (ns_gev_m3, ns_gev_m3_break_year) a une p-value ≤ 0.10, il retient celui des deux qui a la plus petite p-value.
+# Règle 2 : Sinon, il retient le modèle (parmi tous) qui a la plus petite p-value.
+# Il retourne pour chaque station le nom du « meilleur » modèle selon cette logique.
 
-# ETAPE 3 : sinon le meilleur modèle non stationnaire est celui parmi les 4 restants qui a la plus petite pval
+COMPLEX_MODELS   = ["ns_gev_m3", "ns_gev_m3_break_year"]
+FALLBACK_MODELS  = [m for m in NON_STATIONARY if m not in COMPLEX_MODELS]
 
 def select_best_non_stationary(outputs: dict[str, pl.DataFrame], threshold: float = 0.10) -> pl.DataFrame:
     """
-    Sélectionne pour chaque station le meilleur modèle non-stationnaire selon:
-    1) Si la p-val de ns_gev_m3 ou ns_gev_m3_break_year ≤ threshold, on prend le modèle le plus complexe
-       (parmi tous les non stationnaires) ayant la p-val la plus faible.
-    2) Sinon, on prend le meilleur modèle parmi les 4 autres (excluant ns_gev_m3 et ns_gev_m3_break_year)
-       avec la p-val la plus faible.
-
-    Retourne un DataFrame avec colonnes: NUM_POSTE, model.
+    Pour chaque station (NUM_POSTE) choisit le « meilleur » modèle non-stationnaire :
+    1) Si au moins un des deux modèles complexes a p-value ≤ `threshold`,
+       on retient le modèle complexe ayant la plus petite p-value.
+    2) Sinon, on retient le modèle – parmi les six – ayant la plus petite p-value.
+    
+    Retourne un DataFrame Polars (colonnes : NUM_POSTE, model).
     """
-    # Calcul des p-values
+    # 1. Calcul/assemblage des p-values → un seul DataFrame
     pvals_df = compute_lrt_pvals(outputs)
 
     best_records = []
-    # modèles fallback (excluant les deux modèles les plus complexes)
-    fallback_models = [m for m in NON_STATIONARY if m not in ["ns_gev_m3", "ns_gev_m3_break_year"]]
-    # modèles complexes 
-    complex_models = [m for m in NON_STATIONARY if m in ["ns_gev_m3", "ns_gev_m3_break_year"]]
 
-    # on récupère la liste des postes
-    postes = pvals_df["NUM_POSTE"].unique().to_list()
-    # boucle avec barre de progression
-    for poste in tqdm(postes, desc="Sélection best model", unit="poste"):
-        # selection du poste
+    # 2. Parcours des stations
+    for poste in tqdm(
+        pvals_df["NUM_POSTE"].unique().to_list(),
+        desc="Sélection best model",
+        unit="poste"
+    ):
         sub = pvals_df.filter(pl.col("NUM_POSTE") == poste)
-        # p-values des modèles sur mu et sigma complexes
-        pm3  = sub.filter(pl.col("model") == "ns_gev_m3")["pval"].to_list() or [1.0]
-        pm3b = sub.filter(pl.col("model") == "ns_gev_m3_break_year")["pval"].to_list() or [1.0]
-        # condition de significativité
-        if min(pm3[0], pm3b[0]) <= threshold:
-            sub_cp = sub.filter(pl.col("model").is_in(complex_models))
-            candidats = dict(zip(sub_cp["model"], sub_cp["pval"]))
-        else:
-            sub_fb = sub.filter(pl.col("model").is_in(fallback_models))
-            candidats = dict(zip(sub_fb["model"], sub_fb["pval"]))
+        if sub.is_empty():
+            raise ValueError(f"Aucun résultat de LRT pour NUM_POSTE = {poste}")
 
-        if not candidats:
-            raise ValueError(f"Aucun modèle disponible pour NUM_POSTE = {poste}")
+        # 2a. Modèles complexes significatifs pour ce poste
+        signif_complex = (
+            sub
+            .filter(
+                pl.col("model").is_in(COMPLEX_MODELS) &
+                (pl.col("pval") <= threshold)
+            )
+            .sort("pval") # ordre croissant
+        )
 
-        # modèle avec p-val minimale
-        best = min(candidats, key=candidats.get)
-        best_records.append({"NUM_POSTE": poste, "model": best})
+        # 2b. Choix du meilleur modèle selon la règle 
+        best_row = (
+            signif_complex.head(1)                   # cas (1)
+            if signif_complex.height > 0
+            else sub.sort("pval").head(1)            # cas (2)
+        ) # donne la plus petite p-value
+
+        best_records.append(
+            {
+                "NUM_POSTE": poste,
+                "model": best_row["model"][0]        # Polars Series → scalaire
+            }
+        )
 
     return pl.DataFrame(best_records)
-
 
 
 def assemble_final_table(outputs: dict[str, pl.DataFrame], best: pl.DataFrame) -> pl.DataFrame:

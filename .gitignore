@@ -30,5 +30,4 @@ __pycache__/
 
 # Ignorer les caches Jupyter
 .jupyter_cache/
-presentation_files/
 assets/
