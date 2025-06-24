@@ -93,7 +93,7 @@ log = logging.getLogger(__name__).info
 
 # Pipeline GEV
 log(f"Lancement du traitement stats to gev")
-for setting in ["config/modelised_settings.yaml", "config/observed_settings.yaml"]:
+for setting in ["config/observed_settings.yaml", "config/modelised_settings.yaml"]: # 
 
     for echelle in ["quotidien"]: # , "horaire"
 

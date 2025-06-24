@@ -3,63 +3,114 @@ import os
 from pathlib import Path
 from tqdm.auto import tqdm
 
+from typing import Tuple
+
 from src.utils.logger import get_logger
 from src.utils.config_tools import load_config
 from src.utils.data_utils import load_data
 
 import numpy as np
 import polars as pl
+
 from numba import njit
+
 from scipy.stats import chi2
+from scipy.optimize import brentq
 
 
 def build_x_ttilde(df: pl.DataFrame, best_model: pl.DataFrame, break_year: int | None = None) -> pl.DataFrame:
-    # Renommer pour harmoniser
-    df = df.rename({"max_mm_j": "x"})
+    """Convertit les dates en covariable temporelle ``t_tilde``.
 
-    # Calcul tmin et tmax par NUM_POSTE
-    tminmax = (
-        df.group_by("NUM_POSTE")
-        .agg([
-            pl.col("year").min().alias("tmin"),
-            pl.col("year").max().alias("tmax")
-        ])
-    )
-    df = df.join(tminmax, on="NUM_POSTE", how="left")
+    - **Changement principal :** l'échelle 0 → 1 est maintenant déterminée par
+      les années *globales* ``min_year`` et ``max_year`` calculées une seule
+      fois sur l'ensemble du DataFrame, au lieu de la période d'observation de
+      chaque station.
+    - ``tmin`` / ``tmax`` par station sont conservées pour le recalcul de
+      pente plus loin dans le pipeline.
+    - Le traitement du ``break_year`` (point de rupture éventuel) reste
+      inchangé : on met ``t_tilde = 0`` avant la rupture, puis on normalise le
+      temps écoulé depuis la rupture.
+    """
 
-    # Ajoute colonne `has_break` selon le modèle
+    # ----------------------------------------------------------------------------------
+    # Harmonisation des noms de colonnes
+    # ----------------------------------------------------------------------------------
+    df = df.rename({"max_mm_j": "x"})  # les maxima journaliers s'appellent désormais « x »
+
+    # ----------------------------------------------------------------------------------
+    # Bornes temporelles *globales* (calculées une seule fois)
+    # ----------------------------------------------------------------------------------
+    min_year = df["year"].min()
+    max_year = df["year"].max()
+
+    # ----------------------------------------------------------------------------------
+    # Information « point de rupture » par station (d'après le meilleur modèle GEV)
+    # ----------------------------------------------------------------------------------
     break_info = best_model.select([
         pl.col("NUM_POSTE"),
         pl.col("model").str.contains("_break_year").alias("has_break")
     ])
-    df = df.join(break_info, on="NUM_POSTE", how="left")
 
-    # Ajoute colonne `t_plus` si rupture, sinon null
-    df = df.with_columns([
-        pl.when(pl.col("has_break"))
-          .then(pl.lit(break_year))
-          .otherwise(None)
-          .alias("t_plus")
-    ])
+    # ----------------------------------------------------------------------------------
+    # tmin / tmax par station (toujours utiles plus tard pour la pente par 10 ans)
+    # ----------------------------------------------------------------------------------
+    tminmax = (
+        df.group_by("NUM_POSTE")
+          .agg([
+              pl.col("year").min().alias("tmin"),
+              pl.col("year").max().alias("tmax")
+          ])
+    )
 
-    # Calcul de t_tilde selon présence ou non de la rupture
+    # ----------------------------------------------------------------------------------
+    # Jointures : ajoute has_break, tmin, tmax
+    # ----------------------------------------------------------------------------------
+    df = (
+        df
+        .join(break_info, on="NUM_POSTE", how="left")
+        .join(tminmax,   on="NUM_POSTE", how="left")
+        .with_columns([
+            # Colonne "t_plus" = année du point de rupture (identique pour toutes les stations)
+            pl.when(pl.col("has_break"))
+              .then(pl.lit(break_year))
+              .otherwise(None)
+              .alias("t_plus")
+        ])
+    )
+
+    # ----------------------------------------------------------------------------------
+    # Calcul de la covariable normalisée t_tilde (échelle globale)
+    # ----------------------------------------------------------------------------------
     df = df.with_columns([
         pl.when(~pl.col("has_break"))
-          .then((pl.col("year") - pl.col("tmin")) / (pl.col("tmax") - pl.col("tmin")))
+          # Pas de rupture : (t - min_year)/(max_year - min_year)
+          .then((pl.col("year") - min_year) / (max_year - min_year))
           .otherwise(
-              pl.when(pl.col("year") < pl.col("t_plus"))
+              # Avec rupture : 0 avant break_year, puis (t - break_year)/(max_year - break_year)
+              pl.when(pl.col("year") < break_year)
                 .then(0.0)
-                .otherwise((pl.col("year") - pl.col("t_plus")) / (pl.col("tmax") - pl.col("t_plus")))
+                .otherwise((pl.col("year") - break_year) / (max_year - break_year))
           )
           .alias("t_tilde")
     ])
 
+    # Applique la normalisation `norm_1delta_0centred` de hades
+    t_min = df["t_tilde"].min()
+    t_max = df["t_tilde"].max()
+    dx = t_min / (t_max - t_min) + 0.5
+
+    df = df.with_columns([
+        (pl.col("t_tilde") / (t_max - t_min) - dx).alias("t_tilde")
+    ])
+
+    # --------------------------------------------------------------------------------
     return df.select([
         "NUM_POSTE", "x", "t_tilde",
         "tmin", "tmax",
         "has_break",
         "t_plus"
     ])
+
 
 
 
@@ -103,8 +154,6 @@ def log_likelihood_M1(T, z_T1, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0):
     mu1 = mu1_zT1_func(T, z_T1, sigma1, xi0)
     z = (x - (mu0 + mu1 * t_tilde)) / sigma0
     term = 1 + xi0 * z
-    if np.any(term <= 0):
-        return -np.inf  # hors du domaine de définition
     return -np.sum(
         np.log(sigma0)
         + (1 + 1/xi0) * np.log(term)
@@ -120,8 +169,6 @@ def log_likelihood_M2(T, z_T1, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0):
     sigma = sigma0 + sigma1 * t_tilde
     z = (x - mu0) / sigma
     term = 1 + xi0 * z
-    if np.any(sigma <= 0) or np.any(term <= 0):
-        return -np.inf
     return -np.sum(
         np.log(sigma)
         + (1 + 1/xi0) * np.log(term)
@@ -138,8 +185,6 @@ def log_likelihood_M3(T, z_T1, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0):
     mu = mu0 + mu1 * t_tilde
     z = (x - mu) / sigma
     term = 1 + xi0 * z
-    if np.any(sigma <= 0) or np.any(term <= 0):
-        return -np.inf
     return -np.sum(
         np.log(sigma)
         + (1 + 1/xi0) * np.log(term)
@@ -159,77 +204,171 @@ def select_log_likelihood(model: str):
         raise ValueError(f"Modèle non reconnu : {model}")
 
 
+# Fonction pour trouver l'intervalle de confiance
+from scipy.optimize import root_scalar
+
+def find_confidence_interval(
+    z_hat: float,
+    ll_func,
+    model_params: dict,
+    alpha: float = 0.10,
+    tol: float = 1e-2,          # <-- résolution souhaitée des bornes
+    max_doublings: int = 1000,
+    R:int = 1.0
+) -> tuple[float, float]:
+    """
+    Intervalle de confiance (1-alpha) pour z_hat par profil de vraisemblance,
+    sans hyperparamètres de pas/expansion/bracketing exposés.
+    
+    On part d'un rayon initial R=1 et on double R tant que dev(z_hat±R)
+    n'encadre pas la racine. Si, après max_doublings, toujours rien,
+    on renvoie ±inf.
+    """
+    # seuil critique
+    chi2_thr = chi2.ppf(1 - alpha, df=1)
+
+    # accès rapide
+    T = model_params["T"]
+    x = model_params["x"]
+    t_tilde = model_params["t_tilde"]
+    mu0, sigma0 = model_params["mu0"], model_params["sigma0"]
+    mu1, sigma1 = model_params["mu1"], model_params["sigma1"]
+    xi0 = model_params["xi0"]
+
+    # log-vraisemblance au max
+    ll_hat = ll_func(T, z_hat, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0)
+
+    # fonction de déviance D(z)
+    def D(z):
+        llz = ll_func(T, z, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0)
+        if np.isnan(llz):
+            return np.inf
+        return 2*(ll_hat - llz) - chi2_thr
+
+    def _find_side(sign: int) -> float:
+        """
+        sign = -1 pour chercher la borne gauche, +1 pour la droite.
+        """
+        R_local = R  
+        a = z_hat
+        fa = D(a)
+        # on cherche b = z_hat + sign*R tel que D(b) a un signe opposé
+        for _ in range(max_doublings):
+            b = z_hat + sign * R_local
+            fb = D(b)
+            if np.sign(fb) != np.sign(fa):
+                lo, hi = (b, z_hat) if sign<0 else (z_hat, b)
+                try:
+                    sol = root_scalar(
+                        D, bracket=[lo, hi],
+                        method='brentq',
+                        xtol=tol, rtol=tol
+                    )
+                    return sol.root
+                except ValueError:
+                    return -np.inf if sign<0 else np.inf
+            R_local *= 2.0
+        # pas trouvé après trop de doublements
+        logger.warning(f"Pas d'encadrement trouvé après {max_doublings} expansions")
+        return -np.inf if sign<0 else np.inf
+
+    z_left  = _find_side(-1)
+    z_right = _find_side(+1)
+    return z_left, z_right
 
 
+
+# ------------------------------------------------------------------
+# FONCTION PRINCIPALE
+# ------------------------------------------------------------------
 def profile_loglikelihood_per_station(
     T: int,
     df_series: pl.DataFrame,
     df_zT1: pl.DataFrame,
-    threshold: float = 0.10,
-    span: float = 100,           # intervalle autour de z_T1   
-    precision: float = 0.05     # résolution désirée
+    threshold: float = 0.10
 ) -> pl.DataFrame:
     """
-    Calcule la log-vraisemblance profilée pour chaque station autour de z_T1.
-    
-    Returns un DataFrame Polars avec :
-    NUM_POSTE | ic_lower | ic_upper | significant
-    """
-    n_points = int(2 * span / precision) + 1 # Nombre de points nécessaire
-    # longueur = 2*span et nb_intervalle = longueur/précision
+    Calcule l’IC profilé de z_T1 pour chaque station sans
+    fenêtre fixée, via une recherche de racine robuste.
 
-    # Merge des deux tables
+    Retour :
+        NUM_POSTE | ic_lower | ic_upper | significant
+    """
     merged = df_series.join(df_zT1, on="NUM_POSTE", how="inner")
+    chi2_thr = chi2.ppf(1 - threshold, df=1)
     rows = []
 
-    for group_key, group in tqdm(list(merged.group_by("NUM_POSTE")), desc="Profiling stations"):
-        # Forcer clé de groupe en string
-        num_poste = str(group_key) if isinstance(group_key, str) else str(group_key[0])
+    for gkey, grp in tqdm(list(merged.group_by("NUM_POSTE")), desc="Profiling stations"):
+        num_poste = str(gkey) if isinstance(gkey, str) else str(gkey[0]) 
 
-        # Données
-        x = group["x"].to_numpy()
-        t_tilde = group["t_tilde"].to_numpy()
+        x, t_tilde = grp["x"].to_numpy(), grp["t_tilde"].to_numpy()
+        model, mu0, mu1, sigma0, sigma1, xi0, z_hat = (
+            grp[["model", "mu0", "mu1", "sigma0", "sigma1", "xi", "z_T1"]]
+            .unique()
+            .row(0)
+        )
 
-        # Paramètres du modèle
-        params = group[["model", "mu0", "mu1", "sigma0", "sigma1", "xi", "z_T1"]].unique().row(0)
-        model, mu0, mu1, sigma0, sigma1, xi0, z_T1_hat = params
-        
-        # Grille autour de z_T1_hat
-        z_grid = np.linspace(z_T1_hat - span, z_T1_hat + span, n_points)
+        model_params = {
+            "T": T,
+            "z_T1": z_hat, 
+            "x": x,                   
+            "t_tilde": t_tilde,       
+            "mu0": mu0,              
+            "sigma0": sigma0,          
+            "mu1": mu1,                 
+            "sigma1": sigma1,          
+            "xi0": xi0                  
+        }
 
-        # Fonction de vraisemblance
+        # Sélection de la fonction de log-vraisemblance
         loglik_func = select_log_likelihood(model)
-        loglik_values = np.array([
-            loglik_func(T, z, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0)
-            for z in z_grid
-        ])
+        # fonction de log-vraisemblance en z_hat
+        loglik_hat  = loglik_func(T, z_hat, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0)
 
-        # Vraisemblance exacte au point z_T1
-        loglik_hat = loglik_func(T, z_T1_hat, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0)
+        # Calcul de l'intervalle de confiance
+        z_left, z_right = find_confidence_interval(z_hat, loglik_func, model_params, threshold)
 
-        # Déviance
-        deviance = 2 * (loglik_hat - loglik_values)
-        chi2_threshold = chi2.ppf(1 - threshold, df=1)
 
-        # IC
-        valid = deviance <= chi2_threshold
-        if np.any(valid):
-            z_valid = z_grid[valid]
-            ic_lower, ic_upper = z_valid[0], z_valid[-1]
-        else:
-            ic_lower = ic_upper = np.nan
+        # Tracé de la log-vraisemblance autour de z_hat
+        # delta = max(abs(z_hat - z_left), abs(z_right - z_hat), 1.0)
+        # z_grid = np.linspace(z_hat - delta, z_hat + delta, 300)
+        # ll_vals = [loglik_func(T, z, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0) for z in z_grid]
 
-        # Significativité
-        significant = False if np.isnan(ic_lower) or np.isnan(ic_upper) else not (ic_lower <= 0 <= ic_upper)
+
+        # plot_dir = "log-vrais"
+        # os.makedirs(plot_dir, exist_ok=True)
+        # import matplotlib.pyplot as plt
+        # plt.figure()
+        # plt.plot(z_grid, ll_vals, label='Log-vraisemblance')
+        # # Ligne verticale pour z_hat
+        # plt.axvline(z_hat, color='red', linestyle='--', label=f'ẑ={z_hat:.3f}')
+        # # Lignes pour bornes IC
+        # plt.axvline(z_left, color='green', linestyle=':', label=f'IC lower={z_left:.3f}')
+        # plt.axvline(z_right, color='green', linestyle=':', label=f'IC upper={z_right:.3f}')
+        # plt.xlabel('z_T1')
+        # plt.ylabel('Log-vraisemblance')
+        # plt.title(f'Station {num_poste} : profil de log-vraisemblance')
+        # plt.legend(loc='best')
+        # plt.tight_layout()
+        # plt.savefig(os.path.join(plot_dir, f"loglik_profile_{num_poste}.png"))
+        # plt.close()
 
         rows.append({
-            "NUM_POSTE": num_poste,
-            "ic_lower": ic_lower,
-            "ic_upper": ic_upper,
-            "significant": significant
+            "NUM_POSTE":    num_poste,
+            "ic_lower":     z_left,
+            "ic_upper":     z_right,
+            "significant":  not (z_left <= 0 <= z_right)
         })
 
-    return pl.DataFrame(rows).with_columns(pl.col("NUM_POSTE").cast(pl.Utf8))
+    return (
+        pl.DataFrame(rows)
+          .with_columns(pl.col("NUM_POSTE").cast(pl.Utf8))
+    )
+
+
+
+
+
 
 
 
@@ -292,13 +431,13 @@ def main(config, args, T: int = 10):
         logger.info(f"Chargement des données de {min_year} à {max_year} : {input_dir}")
         df = load_data(input_dir, season, echelle, cols, min_year, max_year)
 
+        # Gestion des NaN
+        df = df.drop_nulls(subset=["max_mm_j"])
+
         # Filtrer les stations avec un résultat de GEV
         df = df.filter(pl.col("NUM_POSTE").is_in(best_model["NUM_POSTE"].to_list()))
         assert df["NUM_POSTE"].n_unique() == best_model["NUM_POSTE"].n_unique(), \
             "Les deux DataFrames n'ont pas le même nombre de NUM_POSTE uniques"
-
-        # Filtrer les lignes avec des valeurs non NaN
-        df = df.drop_nulls()
 
         # Normaliser t en t_tilde ou t_tilde* suivant la présence ou non d'un break_point
         df_series = build_x_ttilde(df, best_model, break_year)

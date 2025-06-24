@@ -1,12 +1,10 @@
 ---
-title: "Caractérisation et évolution des précipitations extrêmes horaires en France à partir d’un modèle régional de climat à convection profonde résolue"
+title: "Caractérisation et évolution des précipitations extrêmes horaires en France à partir d’un modèle régional de climat à convection profonde résolue<br/>---"
 author: 
-  - name: "Decoopman Nicolas"
-    email: "ncsdecoopman@gmail.com"
+  - name: "<br/><br/>Stage M2 mathématiques et applications parcours statistique et science des données (SSD)<br/><br/>Decoopman Nicolas<br/>---<br/>Encadrement<br/>Juliette Blanchet et Antoine Blanc"
+    email: "<br/><br/>IGE"
 format:
   revealjs:
-    mermaid:
-      theme: neutral
     theme: simple
     slide-number: true
     pdf-separate-fragments: false
@@ -34,6 +32,7 @@ from pathlib import Path
 import pandas as pd
 import polars as pl
 import numpy as np
+import matplotlib.pyplot as plt
 import plotly.express as px
 from IPython.display import display, HTML, Markdown
 import plotly.io as pio
@@ -138,28 +137,76 @@ def pipeline_total_title_map_legend_scatter_delta(
 
 # Méthodologie
 
-```{dot}
-graph G {
-  layout=neato
-  run -- intr;
-  intr -- runbl;
-  runbl -- run;
-  run -- kernel;
-  kernel -- zombie;
-  kernel -- sleep;
-  kernel -- runmem;
-  sleep -- swap;
-  swap -- runswap;
-  runswap -- new;
-  runswap -- runmem;
-  new -- runmem;
-  sleep -- runmem;
-}
+![](presentation/methodologie.svg){width=100%}
+
+
+# Niveau de retour $z_T$
+<br/><br/><br/>
+
+::: {.columns style="display: flex; gap: 0px; margin: 0;"}
+::: {.column width="50%"}
+```{python}
+from sklearn.linear_model import LinearRegression
+extremes = [
+    83.05, 69.90, 88.10, 90.31, 61.69, 68.48, 83.08, 78.94,
+    82.23, 74.17, 91.79, 91.08, 84.26, 95.17, 88.88, 75.91,
+    88.49, 75.51, 94.18, 85.20, 84.15, 79.49, 98.83, 85.35,
+    82.92, 83.98, 93.12, 91.75, 92.53, 93.01,110.42, 85.24,
+    84.48
+]
+years = np.arange(1990, 2023)
+
+# Normalisation temporelle
+t_tilde = (years - years.min()) / (years.max() - years.min())
+
+# Régression linéaire
+model = LinearRegression()
+model.fit(t_tilde.reshape(-1, 1), extremes)
+zT1 = model.coef_[0]
+
+# Affichage
+plt.figure(figsize=(5, 4))
+plt.plot(years, extremes, marker="o", color="black", label="Maxima annuels")
+plt.plot(years, model.predict(t_tilde.reshape(-1, 1)), linestyle="--", color="gray", label=f"$z_{{T,1}} \\approx$ {zT1:.1f} mm soit {zT1*10/(years.max() - years.min()):.1f} mm/10 ans")
+plt.xlabel("Année")
+plt.ylabel("Précipitation maximale (mm/j)")
+plt.title("")
+plt.xticks(fontsize=8)
+plt.yticks(fontsize=8)
+plt.grid(False)
+plt.box(False)
+plt.tight_layout(pad=0.5)
+plt.legend(fontsize=7)
+plt.show()
 ```
+:::
 
-# AROME vs. stations
+::: {.column width="50%"}
+Pour $T = 10$ ans, $z_T$ le seuil que l’on ne dépasse<br/>**qu’une fois tous les 10 ans en moyenne**
+$$
+z_T(t) = z_{T,0} + \mathbf{z_{T,1}} \cdot t
+$$
 
-Nombre de jours de pluie
+$$
+\begin{cases}
+z_{T,1} > 0 & \text{les épisodes deviennent plus intenses} \\
+z_{T,1} = 0 & \text{aucune tendance détectable} \\
+z_{T,1} < 0 & \text{les épisodes deviennent moins intenses}
+\end{cases}
+$$
+
+On peut obtenir :
+
+$$
+z^{/10 \, ans}_{T,1} = \mathbf{z_{T,1}} \frac{10}{t_{max} - t_{min}}
+$$
+:::
+
+:::
+
+# Résultats
+
+![](presentation/resultats-1.svg){width=100%}
 
 ---
 
@@ -205,58 +252,50 @@ pipeline_total_title_map_legend_scatter_delta(
 )
 ```
 
-- tendance à déclencher des jours de pluie plus fréquemment que ce qui est observé  
-- trop sensible au seuil de 1 mm/j qui serait à augmenter ?
-
----
-
+<br/>**Tendance à déclencher des jours de pluie plus fréquemment que ce qui est observé**
 
 
 ```{python}
-#| label: jours_pluie_2000_MAX
-year_display_min = 2000
-year_display_max = config["years"]["max"]
-echelle="quotidien"
+# #| label: jours_pluie_2000_MAX
+# year_display_min = 1990
+# year_display_max = config["years"]["max"]
+# echelle="quotidien"
 
-# Étape 1 : récupérer les résultats avec pipeline_data_quarto
-result = pipeline_data_quarto(
-    config=config,
-    stat_choice="numday",
-    echelle=echelle,
-    min_year=year_display_min,
-    max_year=year_display_max,
-    season_choice="hydro",
-    unit_choice="jours",
-    missing_choice=0.15,
-    quantile_choice=0.995
-)
+# # Étape 1 : récupérer les résultats avec pipeline_data_quarto
+# result = pipeline_data_quarto(
+#     config=config,
+#     stat_choice="numday",
+#     echelle=echelle,
+#     min_year=year_display_min,
+#     max_year=year_display_max,
+#     season_choice="hydro",
+#     unit_choice="jours",
+#     missing_choice=0.15,
+#     quantile_choice=0.995
+# )
 
-# Étape 2 : affichage carte + scatter
-html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
-    name="jour_pluie_2000",
-    result=result,
-    echelle=echelle,
-    stat_choice_label="Jour de pluie",
-    unit_choice="jours"
-)
+# # Étape 2 : affichage carte + scatter
+# html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
+#     name="jour_pluie_2000",
+#     result=result,
+#     echelle=echelle,
+#     stat_choice_label="Jour de pluie",
+#     unit_choice="jours"
+# )
 
-pipeline_total_title_map_legend_scatter_delta(
-    title=title,
-    year_min=year_display_min,
-    year_max=year_display_max,
-    echelle=echelle,
-    html_map_legend=html_map_legend,
-    html_scatter=html_scatter,
-    me=me,
-    percent=percent,
-    unit="jours"
-)
+# pipeline_total_title_map_legend_scatter_delta(
+#     title=title,
+#     year_min=year_display_min,
+#     year_max=year_display_max,
+#     echelle=echelle,
+#     html_map_legend=html_map_legend,
+#     html_scatter=html_scatter,
+#     me=me,
+#     percent=percent,
+#     unit="jours"
+# )
 ```
 
-
-# AROME vs. stations
-
-Cumul des précipitations
 
 ---
 
@@ -302,7 +341,7 @@ pipeline_total_title_map_legend_scatter_delta(
 
 ```{python}
 #| label: moy_precipit_jour_2000_MAX_only_metric
-year_display_min = 2000
+year_display_min = 1990
 year_display_max = config["years"]["max"]
 echelle="quotidien"
 
@@ -328,14 +367,13 @@ _, _, _, me, _, percent = pipeline_map_legend_scatter(
 display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me:+.3f} mm/j ({percent*100:+.1f}%)"))
 ```
 
-
-- Répartition correcte de la quantité totale d’eau 
+**Répartition correcte de la quantité totale d’eau**
 
 ---
 
 ```{python}
 #| label: moy_precipit_horaire_2000_MAX
-year_display_min = 2000
+year_display_min = 1990
 year_display_max = config["years"]["max"]
 echelle="horaire"
 
@@ -372,19 +410,77 @@ pipeline_total_title_map_legend_scatter_delta(
 )
 ```
 
-- Résultat semblable
+<br/>**Résultat semblable**
 
-# Conclusion : avec AROME il y a des pluies...
+# Pluies plus fréquentes en plus faibles quantités
 
+![](presentation/bilan-1.svg){width=100%}
 
-- **plus fréquentes**... surestime le nombre de jours de pluie  
-- **en plus faible quantité**... mais pas le cumul
+# Evaluation des maxima
+<br/><br/><br/>
+- La moyenne des maxima (- - -) : évaluation *spatiale*  
+- Les maxima annuels (●) : évaluation *temporelle* 
 
-# Précipitations extrêmes
+::: {.columns style="display: flex; gap: 0px; margin: 0;"}
+::: {.column width="50%"}
 
-Evaluation des structures spatiales via les valeurs moyennées sur la période
+```{python}
+# Premier graphique
+rng = np.random.default_rng(12345)
+years = np.arange(1990, 2023)
+extremes1 = rng.normal(70, 25, years.size) + 0.6 * (years - 1959)
+mean1 = extremes1.mean()
+
+# Second graphique (différent tirage aléatoire, pour illustrer)
+rng = np.random.default_rng(54321)
+extremes2 = rng.normal(70, 25, years.size) + 0.6 * (years - 1959)
+mean2 = extremes2.mean()
+
+# Définir des bornes communes pour l’axe y
+y_min = min(extremes1.min(), extremes2.min()) - 5
+y_max = max(extremes1.max(), extremes2.max()) + 5
+
+# Premier graphique
+plt.figure(figsize=(5, 4))
+plt.plot(years, extremes1, marker="o", color="black")
+plt.axhline(mean1, linestyle="--", linewidth=1, color="black")
+plt.ylim(y_min, y_max)
+plt.xlabel("Année")
+plt.ylabel("Précipitation maximale (mm/j)")
+plt.title("AROME")
+plt.xticks(fontsize=8)
+plt.yticks(fontsize=8)
+plt.grid(False)           # pas de grille (sauf si utile)
+plt.box(False)             # encadré style scientifique
+plt.tight_layout(pad=0.5) # marges serrées
+plt.show()
+```
+:::
+
+::: {.column width="50%"}
+```{python}
+# Second graphique
+plt.figure(figsize=(5, 4))
+plt.plot(years, extremes2, marker="o", color="black")
+plt.axhline(mean2, linestyle="--", linewidth=1, color="black")
+plt.ylim(y_min, y_max)
+plt.xlabel("Année")
+plt.ylabel("Précipitation maximale (mm/j)")
+plt.title("Stations")
+plt.xticks(fontsize=8)
+plt.yticks(fontsize=8)
+plt.grid(False)           # pas de grille (sauf si utile)
+plt.box(False)             # encadré style scientifique
+plt.tight_layout(pad=0.5) # marges serrées
+plt.show()
+```
+:::
+
+:::
 
 ---
+
+<!--
 
 ```{python}
 #| label: moy_max_precipit_jour_total
@@ -428,7 +524,7 @@ pipeline_total_title_map_legend_scatter_delta(
 
 ```{python}
 #| label: moy_max_precipit_jour_2000_MAX
-year_display_min = 2000
+year_display_min = 1990
 year_display_max = config["years"]["max"]
 echelle="quotidien"
 
@@ -455,13 +551,11 @@ _, _, _, me, _, percent = pipeline_map_legend_scatter(
 display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me:+.3f} mm/j ({percent*100:+.1f}%)"))
 ```
 
-- Estimation bruitée sur une période restreinte ?
-
 ---
 
 ```{python}
 #| label: moy_max_precipit_horaire_2000_MAX
-year_display_min = 2000
+year_display_min = 1990
 year_display_max = config["years"]["max"]
 echelle="horaire"
 
@@ -498,16 +592,11 @@ pipeline_total_title_map_legend_scatter_delta(
 )
 ```
 
-- Rappel : le cumul était bon donc les orages horaires les plus forts ont une faible emprise spatiale ?
-- Oui : le regroupement de stations sur une même grille réduit le Δ
+Rappel : le cumul était bon donc les orages horaires les plus forts ont une faible emprise spatiale ? 
 
-
-
-# Précipitations extrêmes
-
-Evaluation temporelle via la comparaison aux séries annuelles
 
 ---
+-->
 
 ```{python}
 # | label: moyenne-max_vs_series-max
@@ -517,7 +606,6 @@ year_display_max = config["years"]["max"]
 echelle="quotidien"
 title="Comparaison de la moyenne des maxima aux maxima annuels des précipitations"
 title_show = pipeline_title(title, year_display_min, year_display_max, echelle)
-display(HTML(title_show))
 
 # --------------- VALEURS MOYENNES
 result = pipeline_data_quarto(
@@ -537,14 +625,19 @@ _, html_scatter_mean, r2_mean, me_mean, n_mean, _ = pipeline_map_legend_scatter(
     echelle=echelle,
     stat_choice_label="Moyenne des maxima"
 )
+```
 
 
+
+```{python}
 #  --------------- MAX ANNNUELS
 from app.modules import all_max
 from app.utils.scatter_plot_utils import generate_scatter_plot_interactive
 from app.utils.stats_utils import generate_metrics
 
-year_display_middle, height, unit_choice = 1990, 600, "mm/j"
+year_display_min = config["years"]["min"]
+year_display_max = config["years"]["max"]
+year_display_middle, height, unit_choice = 1990, 500, "mm/j"
 df_all, df_r2_all_max = all_max.show(config_path, year_display_min, year_display_max, year_display_middle)
 df_all = df_all.rename({"lat_obs": "lat", "lon_obs": "lon"})
 
@@ -568,9 +661,10 @@ scatter_path = "assets/fig_r2_all_max_hydro_jour.html"
 pio.write_html(fig_r2_all_max_hydro_jour, file=scatter_path, include_plotlyjs="cdn", full_html=False)
 ```
 
-::: {.columns style="display: flex; gap: 0px; margin: 0;"}
+<!-- ::: {.columns style="display: flex; gap: 0px; margin: 0;"}
 ::: {.column width="50%"}
 ```{python}
+display(HTML(title_show))
 display(HTML('<div style="text-align: center; font-weight: bold;">Moyenne des maxima</div>'))
 display(HTML(html_scatter_mean))
 ```
@@ -579,19 +673,18 @@ display(HTML(html_scatter_mean))
 ```{python}
 display(HTML('<div style="text-align: center; font-weight: bold;">Maxima annuels</div>'))
 display(HTML(f"""
-    <div style="height: {height-10}px; border: 1px solid #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px;">
-        <iframe loading="lazy" src="{scatter_path}" width="100%" height="100%" frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
-    </div>
+     <div style="height: {height-10}px; border: 1px solid #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px;">
+         <iframe loading="lazy" src="{scatter_path}" width="100%" height="100%" frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
+     </div>
 
-    <div class="metric-caption">
-        <strong>r²</strong> = {r2_all:.3f} &nbsp;|&nbsp; <strong>ME</strong> = {me_all:.3f} &nbsp;|&nbsp; <strong>n</strong> = {df_all.shape[0]:.0f}
-    </div>
-"""))
+     <div class="metric-caption">
+         <strong>r²</strong> = {r2_all:.3f} &nbsp;|&nbsp; <strong>ME</strong> = {me_all:.3f} &nbsp;|&nbsp; <strong>n</strong> = {df_all.shape[0]:.0f}
+     </div>
+ """))
 ```
 :::
 :::
-
----
+-->
 
 ```{python}
 #| label: moyenne-max_vs_series-max_ALL
@@ -648,19 +741,18 @@ fig_r2_all_max = px.bar(
     x="Saison",
     y="r²",
     color="Echelle",
-    text="r2_txt",
     custom_data=["Stations"],            
     barmode="group",
     facet_col="Type",
     category_orders={"Echelle": afficher_cat},
     title="",
     facet_col_spacing=0.01,
-    height=450
+    height=440
 )
 
 # Positionner le texte à l'extérieur des barres
 fig_r2_all_max.update_traces(
-    textfont=dict(size=6),  # réduit la taille du texte à 10 px
+    textfont=dict(size=10),  # réduit la taille du texte à 10 px
     texttemplate="%{text}<br>%{customdata[0]}",  # Afficher uniquement la partie décimale comme .93, .41, etc.
     textposition="outside",  # Positionner le texte à l'extérieur de la barre
     insidetextanchor="start"  # Assure que le texte est bien visible à l'extérieur
@@ -697,12 +789,12 @@ fig_me_all_max = px.bar(
     category_orders={"Echelle": afficher_cat},
     title="",
     facet_col_spacing=0.01,
-    height=500
+    height=450
 )
 
 # Positionner le texte à l'extérieur des barres
 fig_me_all_max.update_traces(
-    textfont=dict(size=6),  # réduit la taille du texte à 10 px
+    textfont=dict(size=7),  # réduit la taille du texte à 10 px
     texttemplate="%{text}",  # Afficher uniquement la partie décimale comme .93, .41, etc.
     textposition="outside",  # Positionner le texte à l'extérieur de la barre
     insidetextanchor="start"  # Assure que le texte est bien visible à l'extérieur
@@ -723,8 +815,9 @@ pio.write_html(fig_me_all_max, file=fig_me_path, include_plotlyjs="cdn", full_ht
 
 ```
 
-- Bonne distribution
-- Mais difficulté de la modélisation évènementielle ?
+<br/><br/>**Bonne distribution mais difficulté de la modélisation évènementielle**
+
+<!--
 
 # Application GEV (μ, σ, ξ)
 
@@ -953,128 +1046,6 @@ display(HTML(html_scatter))
 
 ---
 
-```{python}
-#| label: minimize_gev_pval_map
-echelle = "quotidien"
-season = "son"
-title = f"Modèle minimisant la p-value"
-mod_dir = Path(config["gev"]["modelised"]) / echelle / season
-obs_dir = Path(config["gev"]["observed"]) / echelle / season
-
-df_model_pval = pl.read_parquet(mod_dir / "gev_param_best_model_lrt.parquet")
-df_obs_pval = pl.read_parquet(obs_dir / "gev_param_best_model_lrt.parquet")
-
-df_model_pval = add_metadata(df_model_pval, "mm_h" if echelle == "horaire" else "mm_j", type="modelised")
-df_obs_pval = add_metadata(df_obs_pval, "mm_h" if echelle == "horaire" else "mm_j", type="observed")
-
-df_model_pval = filter_nan(df_model_pval, "xi") # xi est toujours valable
-df_obs_pval = filter_nan(df_obs_pval, "xi") # xi est toujours valable
-
-df_model_pval = df_model_pval.with_columns(
-    pl.col("model").replace(model_labels)  # remplace par noms lisibles
-)
-df_obs_pval = df_obs_pval.with_columns(
-    pl.col("model").replace(model_labels)
-)
-
-result = {
-    "modelised": df_model_pval,
-    "modelised_show": df_model_pval,
-    "observed": df_obs_pval,
-    "observed_show": df_obs_pval,
-    "column": "model",
-    "echelle": "diverging_zero_white",
-    "continu": False,
-    "categories": list(model_labels.values())  # ["M₁(μ₀, σ₀)", "M₂(μ, σ₀)", ...]
-}
-
-html_map_legend = pipeline_map_quarto(
-    name="model_minim_pval",
-    result=result,
-    echelle=echelle,
-    stat_choice_label=None,
-    unit_choice=""
-)
-
-title_show = pipeline_title(title, config["years"]["min"], config["years"]["max"], echelle, season)
-display(HTML(title_show))
-```
-
-::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="50%"}
-```{python}
-display(HTML(html_map_legend))
-```
-:::
-
-```{python}
-#| label: minimize_gev_pval_hist
-import plotly.graph_objects as go
-
-# Mapping des noms vers leur affichage en unicode/math
-param_display = {
-    "mu0": "μ₀",
-    "mu1": "μ₁",
-    "sigma0": "σ₀",
-    "sigma1": "σ₁",
-    "xi": "ξ"
-}
-
-df_model_pval = df_model_pval.with_columns(pl.col("NUM_POSTE").cast(pl.Int32))
-df_obs_pval = df_obs_pval.with_columns(pl.col("NUM_POSTE").cast(pl.Int32))
-df_obs_vs_mod_full = pl.read_csv(f"data/metadonnees/obs_vs_mod/obs_vs_mod_{echelle}.csv")
-
-r2_values = {}
-params = ["mu0", "mu1", "sigma0", "sigma1", "xi"]
-
-for param in params:
-    obs_vs_mod = match_and_compare(df_obs_pval, df_model_pval, param, df_obs_vs_mod_full)
-
-    if obs_vs_mod is not None and obs_vs_mod.height > 0:
-        _, _, _, r2 = generate_metrics(obs_vs_mod)
-        r2_values[param_display[param]] = r2
-    else:
-        r2_values[param_display[param]] = None  # ou np.nan si tu préfères
-
-# Préparation des données pour l'histogramme
-labels = list(r2_values.keys())
-values = [r2_values[label] if r2_values[label] is not None else 0 for label in labels]
-colors = ["grey" if r2_values[label] is not None else "white" for label in labels]
-
-# Création de la figure Plotly
-fig_r2_all_max = go.Figure(data=[
-    go.Bar(x=labels, y=values, marker_color=colors, text=[f"{v:.3f}" if r2_values[l] is not None else "NA" for l, v in zip(labels, values)],
-           textposition="outside")
-])
-
-fig_r2_all_max.update_layout(
-    title="",
-    xaxis_title="Paramètre",
-    yaxis_title="r² (AROME - Stations)",
-    yaxis=dict(range=[0, 1])
-)
-
-# Appliquer le template
-fig_r2_all_max.update_layout(template="simple_white")
-
-# Sauvegarde et affichage dans un iframe
-scatter_path = f"assets/hist_r2_jour_model_min_pval.html"
-pio.write_html(fig_r2_all_max, file=scatter_path, include_plotlyjs="cdn", full_html=False)
-
-html_scatter = f"""
-<div style="height: 500px; border: 1px solid #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px;">
-    <iframe loading="lazy" src="{scatter_path}" width="100%" height="100%" frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
-</div>
-"""
-```
-
-::: {.column width="50%"}
-```{python}
-display(HTML(html_scatter))
-```
-:::
-:::
-
 
 # Changement du niveau de retour
 
@@ -1100,6 +1071,9 @@ z_T =
 $$
 
 
+-->
+
+
 ```{python}
 T_choice=10 # Période de retour
 par_X_annees=10
@@ -1113,7 +1087,7 @@ def carte_retour(model_name, echelle, season_choice, half):
 
     model_title = MODEL_TITLE.get(model_name, model_name)
 
-    title = f"Changement du niveau de retour {T_choice} ans par {par_X_annees} ans du modèle {model_title}"
+    title = f"Changement du niveau de retour {T_choice} ans par {par_X_annees} ans" #du modèle {model_title}
     result_gev = pipeline_data_gev_quarto(
         config=config,
         model_name=model_name,
@@ -1148,131 +1122,11 @@ def carte_retour(model_name, echelle, season_choice, half):
 ---
 
 ```{python}
-model_name="best_model"
-echelle="quotidien"
-season_choice = "djf"
-model_title="minimisant l'AIC"
-half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, half)
-```
-
----
-
-```{python}
-model_name="ns_gev_m3_break_year"
-echelle="quotidien"
-season_choice = "djf"
-model_title="M₃⋆(μ, σ)" # M ₀, ₁,₂, ₃, ⋆
-half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, half)
-```
-
----
-
-```{python}
-model_name="ns_gev_m3_break_year_bootstrap"
-echelle="quotidien"
-season_choice = "djf"
-model_title="M₃⋆ᵇ(μ, σ)" # M ₀, ₁,₂, ₃, ⋆
-half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, half)
-```
-
----
-
-```{python}
-model_name="best_model"
-echelle="quotidien"
-season_choice = "mam"
-model_title="minimisant l'AIC"
-half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, half)
-```
-
----
-
-```{python}
-model_name="ns_gev_m3_break_year"
-echelle="quotidien"
-season_choice = "mam"
-model_title="M₃⋆(μ, σ)" # M ₀, ₁,₂, ₃, ⋆
-half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, half)
-```
-
----
-
-```{python}
-model_name="ns_gev_m3_break_year_bootstrap"
-echelle="quotidien"
-season_choice = "mam"
-model_title="M₃⋆ᵇ(μ, σ)" # M ₀, ₁,₂, ₃, ⋆
-half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, half)
-```
-
----
-
-```{python}
-model_name="best_model"
-echelle="quotidien"
-season_choice = "jja"
-model_title="minimisant l'AIC"
-half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, half)
-```
-
----
-
-```{python}
-model_name="ns_gev_m3_break_year"
-echelle="quotidien"
-season_choice = "jja"
-model_title="M₃⋆(μ, σ)" # M ₀, ₁,₂, ₃, ⋆
-half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, half)
-```
-
----
-
-```{python}
-model_name="ns_gev_m3_break_year_bootstrap"
-echelle="quotidien"
-season_choice = "jja"
-model_title="M₃⋆ᵇ(μ, σ)" # M ₀, ₁,₂, ₃, ⋆
-half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, half)
-```
-
----
-
-```{python}
-model_name="best_model"
+model_name="niveau_retour"
 echelle="quotidien"
 season_choice = "son"
-model_title="minimisant l'AIC"
 half = "sud"  # ou "nord"
 carte_retour(model_name, echelle, season_choice, half)
 ```
 
 ---
-
-```{python}
-model_name="ns_gev_m3_break_year"
-echelle="quotidien"
-season_choice = "son"
-model_title="M₃⋆(μ, σ)" # M ₀, ₁,₂, ₃, ⋆
-half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, half)
-```
-
----
-
-```{python}
-model_name="ns_gev_m3_break_year_bootstrap"
-echelle="quotidien"
-season_choice = "son"
-model_title="M₃⋆ᵇ(μ, σ)" # M ₀, ₁,₂, ₃, ⋆
-half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, half)
-```

@@ -322,6 +322,13 @@ def fit_gev_par_point(
         df["year_norm"] = (df["year"] - min_year) / (max_year - min_year) # t_norm = (t - min_year) / (max_year - min_year)
 
 
+    def norm_1delta_0centred_pandas(series):
+        res0 = series.astype(float) / (series.max() - series.min())
+        dx = res0.min() + 0.5
+        return res0 - dx
+
+    df["year_norm"] = norm_1delta_0centred_pandas(df["year_norm"])
+
     logger.debug(f"[DEBUG] Années normalisées : min={df['year_norm'].min()}, max={df['year_norm'].max()}")
     grouped = list(df.groupby('NUM_POSTE'))
    
