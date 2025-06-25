@@ -7,6 +7,7 @@ from src.utils.config_tools import load_config
 
 import polars as pl
 from scipy.stats import chi2
+import numpy as np
 
 
 # Liste des modèles disponibles et leurs paramètres
@@ -174,6 +175,65 @@ def assemble_final_table(outputs: dict[str, pl.DataFrame], best: pl.DataFrame) -
             }
         records.append(rec)
     return pl.DataFrame(records)[target_cols]
+
+
+def norm_1delta_0centred_pandas(series):
+    res0 = series.astype(float) / (series.max() - series.min())
+    dx = res0.min() + 0.5
+    return res0 - dx
+
+def build_x_ttilde(
+    df: pl.DataFrame,
+    best_model: pl.DataFrame,
+    break_year: int | None = None,
+    mesure: str | None = None,
+) -> pl.DataFrame:
+    """
+    Applique la normalisation de l'année comme dans pipeline_stats_to_gev.py et construit les colonnes demandées.
+    """
+    # Conversion en pandas pour la normalisation
+    df_pd = df.to_pandas()
+    min_year = df_pd["year"].min()
+    max_year = df_pd["year"].max()
+
+    if break_year is not None:
+        if max_year == break_year:
+            raise ValueError("`break_year` ne peut pas être égal à `max_year` (division par zéro).")
+        df_pd["year_norm"] = np.where(
+            df_pd["year"] < break_year,
+            0,
+            (df_pd["year"] - break_year) / (max_year - break_year)
+        )
+        has_break = True
+        t_plus = np.where(df_pd["year"] < break_year, 0, df_pd["year"] - break_year)
+    else:
+        df_pd["year_norm"] = (df_pd["year"] - min_year) / (max_year - min_year)
+        has_break = False
+        t_plus = df_pd["year"] - min_year
+
+    # Normalisation finale comme dans pipeline_stats_to_gev.py
+    df_pd["year_norm"] = norm_1delta_0centred_pandas(df_pd["year_norm"])
+
+    # x = year_norm
+    df_pd["x"] = df_pd["year_norm"]
+    # t_tilde = x (pour compatibilité)
+    df_pd["t_tilde"] = df_pd["x"]
+    # tmin, tmax
+    tmin = df_pd["year"].min()
+    tmax = df_pd["year"].max()
+    df_pd["tmin"] = tmin
+    df_pd["tmax"] = tmax
+    df_pd["has_break"] = has_break
+    df_pd["t_plus"] = t_plus
+
+    # Conversion en polars et sélection des colonnes demandées
+    df_pl = pl.from_pandas(df_pd)
+    return df_pl.select([
+        "NUM_POSTE", "x", "t_tilde",
+        "tmin", "tmax",
+        "has_break",
+        "t_plus"
+    ])
 
 
 def main(config, args):
