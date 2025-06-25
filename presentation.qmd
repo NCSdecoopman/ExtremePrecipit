@@ -1,8 +1,7 @@
 ---
-title: "Caractérisation et évolution des précipitations extrêmes horaires en France à partir d’un modèle régional de climat à convection profonde résolue<br/>---"
+title: "Caractérisation et évolution<br/>des précipitations extrêmes horaires<br/>en France<br/>à partir d’un modèle régional de climat<br/>à convection profonde résolue<br/>---"
 author: 
-  - name: "<br/><br/>Stage M2 mathématiques et applications parcours statistique et science des données (SSD)<br/><br/>Decoopman Nicolas<br/>---<br/>Encadrement<br/>Juliette Blanchet et Antoine Blanc"
-    email: "<br/><br/>IGE"
+  - name: "<br/><br/>Decoopman Nicolas<br/>M2 mathématiques et applications parcours statistique et science des données<br/><br/>---<br/>Encadrement<br/>Juliette Blanchet (CNRS, IGE) et Antoine Blanc (RTM)"
 format:
   revealjs:
     theme: simple
@@ -26,7 +25,13 @@ jupyter: extremeprecipit
 
 ```{python}
 #| label: import
-# Imports
+%config InlineBackend.figure_format = 'svg'
+%config InlineBackend.figure_formats = {'svg'}
+%config InlineBackend.figure_dpi = 500
+%config InlineBackend.rc = {'figure.dpi': 150}
+```
+
+```{python}
 import yaml
 from pathlib import Path
 import pandas as pd
@@ -118,8 +123,10 @@ def pipeline_total_title_map_legend_scatter_delta(
 :::
 :::
 
-# AROME : modèle numérique CP-RCMs
-*Application of Research to Operations at MEsoscale*
+# Modèle numérique
+
+<h2>**A**pplication of **R**esearch to **O**perations at **ME**soscale</h2>
+<br/><br/>
 
 - **CP** (Convection-Permitting) : résoudre explicitement les processus de convection dans l'atmosphère (≠ approximation)
     * Simuler plus précisément la formation des nuages convectifs et des précipitations associées
@@ -139,9 +146,67 @@ def pipeline_total_title_map_legend_scatter_delta(
 
 ![](presentation/methodologie.svg){width=100%}
 
+# Evaluation des maxima
 
-# Niveau de retour $z_T$
-<br/><br/><br/>
+::: {.columns style="display: flex; gap: 0px; margin: 0;"}
+::: {.column width="50%"}
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Premier graphique (tirage aléatoire pour illustrer)
+rng = np.random.default_rng(12345)
+years = np.arange(1990, 2023)
+extremes1 = rng.normal(70, 25, years.size) + 0.6 * (years - 1959)
+mean1 = extremes1.mean()
+
+# Second graphique (différent tirage aléatoire, pour illustrer)
+rng = np.random.default_rng(54321)
+extremes2 = rng.normal(70, 25, years.size) + 0.6 * (years - 1959)
+mean2 = extremes2.mean()
+
+# Définir des bornes communes pour l’axe y
+y_min = min(extremes1.min(), extremes2.min()) - 5
+y_max = max(extremes1.max(), extremes2.max()) + 5
+
+# Création du graphique
+plt.rcParams.update({
+    "figure.dpi": 110,                        # meilleure définition écran
+})
+fig, ax = plt.subplots(figsize=(8, 6))
+ax.plot(years, extremes1, marker="o", color="#97a6c4", label="AROME")  # Premier jeu de données
+ax.plot(years, extremes2, marker="s", color="#284860", label="Station")   # Deuxième jeu de données
+ax.axhline(mean1, linestyle="--", linewidth=1, color="#97a6c4")  # Ligne en pointillés pour la moyenne AROME 1
+ax.axhline(mean2, linestyle="--", linewidth=1, color="#284860")   # Ligne en pointillés pour la moyenne AROME 2
+# ——— Masquer les 2 spines inutiles ———
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+ax.set_ylim(y_min, y_max)
+plt.xlabel("Année")  # Étiquette axe x
+plt.ylabel("Précipitation maximale (mm/j)")  # Étiquette axe y
+plt.xticks(fontsize=10)  # Taille des ticks de l'axe x
+plt.yticks(fontsize=10)  # Taille des ticks de l'axe y
+plt.legend()  # Légende
+plt.grid(False)  # Grille
+plt.tight_layout()  # Ajustement du layout
+plt.show()  # Affichage du graphique
+
+```
+:::
+
+::: {.column width="50%"}
+- La moyenne des maxima (- - -) : évaluation *spatiale*  
+- Les maxima annuels (---) : évaluation *temporelle* 
+:::
+
+:::
+
+<!--
+# Niveau de retour $z_T$ 
+
+Le seuil que l’on ne dépasse **en moyenne** qu’une fois tous les $T$ années
+<br/><br/>
 
 ::: {.columns style="display: flex; gap: 0px; margin: 0;"}
 ::: {.column width="50%"}
@@ -165,24 +230,24 @@ model.fit(t_tilde.reshape(-1, 1), extremes)
 zT1 = model.coef_[0]
 
 # Affichage
-plt.figure(figsize=(5, 4))
-plt.plot(years, extremes, marker="o", color="black", label="Maxima annuels")
-plt.plot(years, model.predict(t_tilde.reshape(-1, 1)), linestyle="--", color="gray", label=f"$z_{{T,1}} \\approx$ {zT1:.1f} mm soit {zT1*10/(years.max() - years.min()):.1f} mm/10 ans")
+fig, ax = plt.subplots(figsize=(8, 6))
+ax.plot(years, extremes, marker="o", color="#97a6c4", label="Maxima annuels")  # Premier jeu de données
+ax.plot(years, model.predict(t_tilde.reshape(-1, 1)), linestyle="--",color="#284860", label=f"$z_{{T,1}} \\approx$ {zT1:.1f} mm soit {zT1*10/(years.max() - years.min()):.1f} mm/10 ans")   # Deuxième jeu de données
+# ——— Masquer les 2 spines inutiles ———
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
 plt.xlabel("Année")
 plt.ylabel("Précipitation maximale (mm/j)")
-plt.title("")
-plt.xticks(fontsize=8)
-plt.yticks(fontsize=8)
-plt.grid(False)
-plt.box(False)
-plt.tight_layout(pad=0.5)
-plt.legend(fontsize=7)
-plt.show()
+plt.xticks(fontsize=10)  # Taille des ticks de l'axe x
+plt.yticks(fontsize=10)  # Taille des ticks de l'axe y
+plt.legend()  # Légende
+plt.grid(False)  # Grille
+plt.tight_layout()  # Ajustement du layout
+plt.show()  # Affichage du graphique
 ```
 :::
 
 ::: {.column width="50%"}
-Pour $T = 10$ ans, $z_T$ le seuil que l’on ne dépasse<br/>**qu’une fois tous les 10 ans en moyenne**
 $$
 z_T(t) = z_{T,0} + \mathbf{z_{T,1}} \cdot t
 $$
@@ -204,7 +269,11 @@ $$
 
 :::
 
-# Résultats
+**Depuis 1990, le seuil correspondant à un épisode de pluie extrême qu’on ne voit qu’une fois tous les 10 ans<br/>a augmenté de 4,7 mm tous les 10 ans.**
+
+-->
+
+# Résultats statistiques descriptives
 
 ![](presentation/resultats-1.svg){width=100%}
 
@@ -416,67 +485,6 @@ pipeline_total_title_map_legend_scatter_delta(
 
 ![](presentation/bilan-1.svg){width=100%}
 
-# Evaluation des maxima
-<br/><br/><br/>
-- La moyenne des maxima (- - -) : évaluation *spatiale*  
-- Les maxima annuels (●) : évaluation *temporelle* 
-
-::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="50%"}
-
-```{python}
-# Premier graphique
-rng = np.random.default_rng(12345)
-years = np.arange(1990, 2023)
-extremes1 = rng.normal(70, 25, years.size) + 0.6 * (years - 1959)
-mean1 = extremes1.mean()
-
-# Second graphique (différent tirage aléatoire, pour illustrer)
-rng = np.random.default_rng(54321)
-extremes2 = rng.normal(70, 25, years.size) + 0.6 * (years - 1959)
-mean2 = extremes2.mean()
-
-# Définir des bornes communes pour l’axe y
-y_min = min(extremes1.min(), extremes2.min()) - 5
-y_max = max(extremes1.max(), extremes2.max()) + 5
-
-# Premier graphique
-plt.figure(figsize=(5, 4))
-plt.plot(years, extremes1, marker="o", color="black")
-plt.axhline(mean1, linestyle="--", linewidth=1, color="black")
-plt.ylim(y_min, y_max)
-plt.xlabel("Année")
-plt.ylabel("Précipitation maximale (mm/j)")
-plt.title("AROME")
-plt.xticks(fontsize=8)
-plt.yticks(fontsize=8)
-plt.grid(False)           # pas de grille (sauf si utile)
-plt.box(False)             # encadré style scientifique
-plt.tight_layout(pad=0.5) # marges serrées
-plt.show()
-```
-:::
-
-::: {.column width="50%"}
-```{python}
-# Second graphique
-plt.figure(figsize=(5, 4))
-plt.plot(years, extremes2, marker="o", color="black")
-plt.axhline(mean2, linestyle="--", linewidth=1, color="black")
-plt.ylim(y_min, y_max)
-plt.xlabel("Année")
-plt.ylabel("Précipitation maximale (mm/j)")
-plt.title("Stations")
-plt.xticks(fontsize=8)
-plt.yticks(fontsize=8)
-plt.grid(False)           # pas de grille (sauf si utile)
-plt.box(False)             # encadré style scientifique
-plt.tight_layout(pad=0.5) # marges serrées
-plt.show()
-```
-:::
-
-:::
 
 ---
 
@@ -740,6 +748,7 @@ fig_r2_all_max = px.bar(
     df_r2_all_max,
     x="Saison",
     y="r²",
+    text="r2_txt",
     color="Echelle",
     custom_data=["Stations"],            
     barmode="group",
@@ -778,44 +787,52 @@ display(HTML(f"""
 """))
 
 # Création de la figure avec px.bar
-fig_me_all_max = px.bar(
-    df_r2_all_max,
-    x="Saison",
-    y="ME",
-    color="Echelle",  # Utiliser "Echelle" pour la couleur
-    text="ME_txt",
-    barmode="group",
-    facet_col="Type",  # Facet par "Type" (Moyenne des maxima, Maxima annuels)
-    category_orders={"Echelle": afficher_cat},
-    title="",
-    facet_col_spacing=0.01,
-    height=450
-)
+# fig_me_all_max = px.bar(
+#     df_r2_all_max,
+#     x="Saison",
+#     y="ME",
+#     color="Echelle",  # Utiliser "Echelle" pour la couleur
+#     text="ME_txt",
+#     barmode="group",
+#     facet_col="Type",  # Facet par "Type" (Moyenne des maxima, Maxima annuels)
+#     category_orders={"Echelle": afficher_cat},
+#     title="",
+#     facet_col_spacing=0.01,
+#     height=450
+# )
 
-# Positionner le texte à l'extérieur des barres
-fig_me_all_max.update_traces(
-    textfont=dict(size=7),  # réduit la taille du texte à 10 px
-    texttemplate="%{text}",  # Afficher uniquement la partie décimale comme .93, .41, etc.
-    textposition="outside",  # Positionner le texte à l'extérieur de la barre
-    insidetextanchor="start"  # Assure que le texte est bien visible à l'extérieur
-)
+# # Positionner le texte à l'extérieur des barres
+# fig_me_all_max.update_traces(
+#     textfont=dict(size=7),  # réduit la taille du texte à 10 px
+#     texttemplate="%{text}",  # Afficher uniquement la partie décimale comme .93, .41, etc.
+#     textposition="outside",  # Positionner le texte à l'extérieur de la barre
+#     insidetextanchor="start"  # Assure que le texte est bien visible à l'extérieur
+# )
 
-fig_me_all_max.update_layout(
-    template="simple_white",
-    legend_title_text="Pas de temps"  # Ajout du titre à la légende
-)
-fig_me_all_max.update_xaxes(title=None, tickangle=0)
+# fig_me_all_max.update_layout(
+#     template="simple_white",
+#     legend_title_text="Pas de temps"  # Ajout du titre à la légende
+# )
+# fig_me_all_max.update_xaxes(title=None, tickangle=0)
 
-# Appliquer la couleur à chaque trace selon son nom de légende
-for trace in fig_me_all_max.data:
-    trace.marker.color = color_map.get(trace.name, "#888888")
+# # Appliquer la couleur à chaque trace selon son nom de légende
+# for trace in fig_me_all_max.data:
+#     trace.marker.color = color_map.get(trace.name, "#888888")
 
-fig_me_path = f"assets/fig_me_all_max.html"
-pio.write_html(fig_me_all_max, file=fig_me_path, include_plotlyjs="cdn", full_html=False)
+# fig_me_path = f"assets/fig_me_all_max.html"
+# pio.write_html(fig_me_all_max, file=fig_me_path, include_plotlyjs="cdn", full_html=False)
 
 ```
 
-<br/><br/>**Bonne distribution mais difficulté de la modélisation évènementielle**
+# Bonne distribution et difficulté évènementielle
+
+![](presentation/bilan-2.svg){width=100%}
+
+# Résultats modélisation
+
+![](presentation/resultats-2.svg){width=100%}
+
+---
 
 <!--
 
@@ -1071,9 +1088,6 @@ z_T =
 $$
 
 
--->
-
-
 ```{python}
 T_choice=10 # Période de retour
 par_X_annees=10
@@ -1117,6 +1131,7 @@ def carte_retour(model_name, echelle, season_choice, half):
         html_map_legend=html_map,
         html_scatter=None
     )
+    return result_gev
 ```
 
 ---
@@ -1130,3 +1145,441 @@ carte_retour(model_name, echelle, season_choice, half)
 ```
 
 ---
+
+-->
+
+```{python}
+from typing import Sequence, Mapping, Tuple
+from pathlib import Path
+
+import polars as pl
+import geopandas as gpd
+from shapely.geometry import box
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap, BoundaryNorm, TwoSlopeNorm, Normalize, LinearSegmentedColormap
+
+def plot_four_polars_grids(
+    datasets: Sequence[Mapping[str, pl.DataFrame]],
+    *,
+    lat_col: str = "lat",
+    lon_col: str = "lon",
+    val_col: str = "z_T1",
+    # --- Observations --------------------------------------------------
+    obs_key: str = "observed_show",
+    show_obs: bool = True,
+    obs_marker_size: float = 30,
+    obs_edgecolor: str = "#000000",
+    obs_facecolor: str | None = None,
+    # -------------------------------------------------------------------
+    side_km: float = 2.5,
+    cmap_num: str = "bwr",
+    cmap_bool: Tuple[str, str] = ("#f0f0f0", "#d73027"),
+    titles: Sequence[str] | None = None,
+    figsize: Tuple[int, int] = (14, 6),
+    relief_path: str | Path = "data/external/niveaux/selection_courbes_niveau_france.shp",
+    relief_linewidth: float = 0.4,
+    relief_color: str = "#666666",
+):
+    """Affiche quatre cartes alignées (France métropolitaine, Corse exclue).
+
+    Chaque dictionnaire d'``datasets`` doit contenir au moins une clé
+    ``"modelised_show"`` (grille à colorer). Il *peut* également contenir une
+    clé ``obs_key`` (par défaut ``"observed_show"``) décrivant des stations
+    météo ponctuelles. Leur présence est optionnelle ; si elles existent et que
+    ``show_obs`` est ``True``, elles sont représentées par des cercles.
+
+    Paramètres principaux (identiques à la version précédente)
+    -------------------------------------------------------------------
+    datasets   : sequence de **4** dictionnaires.
+    lat_col, lon_col, val_col, side_km, cmap_num, cmap_bool, titles, figsize
+                : voir version précédente.
+
+    Options pour les stations
+    -------------------------------------------------------------------
+    obs_key          : nom de la clé contenant le ``pl.DataFrame`` de stations.
+    show_obs         : affiche ou non les stations si elles existent.
+    obs_marker_size  : diamètre (points) du symbole.
+    obs_edgecolor    : couleur du bord du symbole.
+    obs_facecolor    : couleur de remplissage fixée. Si ``None`` (défaut), la
+                       couleur est déduite de ``val_col`` avec le même cmap.
+
+    Style du relief
+    -------------------------------------------------------------------
+    relief_path, relief_linewidth, relief_color
+    """
+
+    # --- 0) Extraction et contrôles ---------------------------------
+    if len(datasets) != 4:
+        raise ValueError("Il faut exactement 4 dictionnaires.")
+
+    model_dfs: list[pl.DataFrame] = []
+    obs_dfs: list[pl.DataFrame | None] = []
+
+    for i, d in enumerate(datasets):
+        # ---- grille --------------------------------------------------
+        if "modelised_show" not in d:
+            raise KeyError(
+                f"datasets[{i}] ne contient pas la clé 'modelised_show'.")
+        df_model = d["modelised_show"]
+        if not isinstance(df_model, pl.DataFrame):
+            raise TypeError(
+                "'modelised_show' doit être un pl.DataFrame "
+                f"(datasets[{i}]).")
+        model_dfs.append(df_model)
+
+        # ---- observations -------------------------------------------
+        if show_obs and obs_key in d:
+            df_obs = d[obs_key]
+            if not isinstance(df_obs, pl.DataFrame):
+                raise TypeError(
+                    f"La valeur associée à '{obs_key}' dans datasets[{i}] "
+                    "doit être un pl.DataFrame.")
+
+            # >>> NE GARDER QUE LES OBSERVATIONS "significatives"
+            if "significant" in df_obs.columns:
+                df_obs = df_obs.filter(pl.col("significant") == True)
+            # <<<
+
+            # S’il n’en reste plus, on mettra None pour éviter un plot vide
+            obs_dfs.append(df_obs if df_obs.height > 0 else None)
+
+        else:
+            obs_dfs.append(None)
+
+    if titles is None:
+        titles = [f"" for i in range(4)]
+
+    # --- 1) Conversion Polars → GeoDataFrame (proj. WGS-84) ----------
+    model_gdfs = []
+    obs_gdfs = []
+
+    for df_model, df_obs in zip(model_dfs, obs_dfs):
+        # Grille
+        gdf_m = gpd.GeoDataFrame(
+            df_model.to_pandas(),
+            geometry=gpd.points_from_xy(
+                df_model.to_pandas()[lon_col], df_model.to_pandas()[lat_col]
+            ),
+            crs="EPSG:4326",
+        ).to_crs("EPSG:2154")
+        model_gdfs.append(gdf_m)
+
+        # Observations (optionnel)
+        if df_obs is not None:
+            gdf_o = gpd.GeoDataFrame(
+                df_obs.to_pandas(),
+                geometry=gpd.points_from_xy(
+                    df_obs.to_pandas()[lon_col], df_obs.to_pandas()[lat_col]
+                ),
+                crs="EPSG:4326",
+            ).to_crs("EPSG:2154")
+            obs_gdfs.append(gdf_o)
+        else:
+            obs_gdfs.append(None)
+
+    # --- 2) Création des carrés --------------------------------------
+    half = (side_km * 1_000) / 2  # m
+    for gdf in model_gdfs:
+        gdf["geometry"] = gdf.geometry.apply(
+            lambda p: box(p.x - half, p.y - half, p.x + half, p.y + half)
+        )
+
+    # --- 3) France métropolitaine ------------------------------------
+    URL = "https://france-geojson.gregoiredavid.fr/repo/departements.geojson"
+    deps = gpd.read_file(URL).to_crs("EPSG:2154")
+    deps_metro = deps[~deps["code"].isin(["2A", "2B"])]
+
+    # Exemple : simplifier les contours admin. (tolérance 100 m)
+    deps_metro["geometry"] = deps_metro.simplify(100)
+
+    model_gdfs = [
+        gpd.overlay(gdf, deps_metro[["geometry"]], how="intersection")
+        for gdf in model_gdfs
+    ]
+
+    # Observations : simple clip (évite de perdre les valeurs pour la couleur)
+    for i, gdf in enumerate(obs_gdfs):
+        if gdf is not None:
+            obs_gdfs[i] = gdf.clip(deps_metro.union_all())
+
+    # --- 4) Lecture des courbes de niveau ----------------------------
+    relief_gdf = (
+        gpd.read_file(Path(relief_path).resolve())
+        .to_crs("EPSG:2154")
+        .clip(deps_metro.union_all())
+    )
+
+    # --- 5) Détection du type de val_col -----------------------------
+    sample_dtype = model_dfs[0][val_col].dtype
+    is_bool = sample_dtype == pl.Boolean
+
+    # --- 6) Configuration des couleurs ------------------------------
+    if is_bool:
+        cmap = ListedColormap(list(cmap_bool))
+        norm = BoundaryNorm([-0.5, 0.5, 1.5], ncolors=2)
+        for gdf in model_gdfs:
+            gdf["_val_int"] = gdf[val_col].astype(int)
+        if show_obs:
+            for gdf in obs_gdfs:
+                if gdf is not None:
+                    gdf["_val_int"] = gdf[val_col].astype(int)
+        plot_col = "_val_int"
+    else:
+        global_min = min(gdf[val_col].min() for gdf in model_gdfs)
+        global_max = max(gdf[val_col].max() for gdf in model_gdfs)
+        norm = (
+            TwoSlopeNorm(vmin=global_min, vcenter=0, vmax=global_max)
+            if global_min < 0 < global_max
+            else Normalize(vmin=global_min, vmax=global_max)
+        )
+        cmap = LinearSegmentedColormap.from_list(
+                "white0",
+                ["#1f78b4", "#ffffff", "#e31a1c"],   # bleu – blanc – rouge
+                N=100,
+            ) #cmap_num
+
+        plot_col = val_col
+
+    # --- 7) Tracé ----------------------------------------------------
+    fig, axes = plt.subplots(1, 4, figsize=figsize, constrained_layout=True)
+
+    for ax, gdf_m, gdf_o, title in zip(axes, model_gdfs, obs_gdfs, titles):
+        # Limites dépts (très léger, en arrière-plan)
+        deps_metro.boundary.plot(
+            ax=ax, edgecolor="#AAAAAA", linewidth=0.2, zorder=0
+        )
+
+        # Maillage coloré
+        gdf_m.plot(
+            ax=ax,
+            column=plot_col,
+            cmap=cmap,
+            norm=norm,
+            linewidth=0,
+            zorder=1,
+        )
+
+        # Stations météo (optionnel)
+        if show_obs and gdf_o is not None and not gdf_o.empty:
+            if obs_facecolor is None:
+                # couleur selon valeur
+                gdf_o.plot(
+                    ax=ax,
+                    column=plot_col if plot_col in gdf_o.columns else val_col,
+                    cmap=cmap,
+                    norm=norm,
+                    markersize=obs_marker_size,
+                    marker="o",
+                    edgecolor=obs_edgecolor,
+                    linewidth=0.1,
+                    zorder=3,
+                )
+            else:
+                # couleur figée
+                gdf_o.plot(
+                    ax=ax,
+                    markersize=obs_marker_size,
+                    marker="o",
+                    facecolor=obs_facecolor,
+                    edgecolor=obs_edgecolor,
+                    linewidth=0.1,
+                    zorder=3,
+                )
+
+        # Relief (au-dessus mais trait fin)
+        relief_gdf.plot(
+            ax=ax,
+            color=relief_color,
+            linewidth=relief_linewidth,
+            alpha=0.8,
+            zorder=2,
+        )
+
+        ax.set_title(title, fontsize=12, pad=1)
+        ax.set_axis_off()
+        ax.set_rasterization_zorder(1) # tous les artistes dont zorder < 1 en bitmap dans le SVG/PDF
+
+    # --- 8) Barre de couleurs commune --------------------------------
+    import matplotlib as mpl
+
+    sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    cbar = fig.colorbar(sm, ax=axes.ravel().tolist(), shrink=0.5, aspect=25)
+
+    if is_bool:
+        cbar.set_ticks([0, 1])
+        cbar.set_ticklabels(["Non", "Oui"])
+
+    plt.show()
+```
+
+
+```{python}
+model_name="niveau_retour"
+echelle="quotidien"
+result_gev_son = pipeline_data_gev_quarto(
+    config=config,
+    model_name=model_name,
+    echelle=echelle,
+    season_choice="son",
+    T_choice=T_choice,
+    par_X_annees=par_X_annees,
+    min_year=year_display_min,
+    max_year=year_display_max
+)
+result_gev_djf = pipeline_data_gev_quarto(
+    config=config,
+    model_name=model_name,
+    echelle=echelle,
+    season_choice="djf",
+    T_choice=T_choice,
+    par_X_annees=par_X_annees,
+    min_year=year_display_min,
+    max_year=year_display_max
+)
+result_gev_mam = pipeline_data_gev_quarto(
+    config=config,
+    model_name=model_name,
+    echelle=echelle,
+    season_choice="mam",
+    T_choice=T_choice,
+    par_X_annees=par_X_annees,
+    min_year=year_display_min,
+    max_year=year_display_max
+)
+result_gev_jja = pipeline_data_gev_quarto(
+    config=config,
+    model_name=model_name,
+    echelle=echelle,
+    season_choice="jja",
+    T_choice=T_choice,
+    par_X_annees=par_X_annees,
+    min_year=year_display_min,
+    max_year=year_display_max
+)
+
+datasets = [
+    result_gev_son,
+    result_gev_djf,
+    result_gev_mam,
+    result_gev_jja,
+]
+```
+
+
+```{python}
+#| layout-nrow: 2
+#| layout-ncol: 1
+title_show = pipeline_title("Niveau de retour 10 ans par 10 ans (en mm/j par 10 ans) et significativité", 1959, 2022, echelle, None)
+display(HTML(title_show))
+
+plot_four_polars_grids(
+    datasets,
+    val_col="z_T1",          # nom de la colonne à colorer / symboliser
+    side_km=2.5,             # taille du carré en km
+    titles=["SON", "DJF", "MAM", "JJA"],  # titres des 4 sous-cartes
+    
+    # --- options pour les points de station ------------------------
+    obs_marker_size=5,
+    obs_edgecolor="#000000",
+    obs_facecolor=None,      # None ⇒ couleur déduite de la valeur
+)
+
+plot_four_polars_grids(
+    datasets,
+    val_col="significant",          # nom de la colonne à colorer / symboliser
+    side_km=2.5,             # taille du carré en km
+    titles=None,  # titres des 4 sous-cartes
+    
+    # --- options pour les points de station ------------------------
+    obs_marker_size=5,
+    obs_edgecolor="#000000",
+    obs_facecolor=None,      # None ⇒ couleur déduite de la valeur
+)
+```
+
+---
+
+```{python}
+model_name="niveau_retour"
+echelle="horaire"
+result_gev_son = pipeline_data_gev_quarto(
+    config=config,
+    model_name=model_name,
+    echelle=echelle,
+    season_choice="son",
+    T_choice=T_choice,
+    par_X_annees=par_X_annees,
+    min_year=year_display_min,
+    max_year=year_display_max
+)
+result_gev_djf = pipeline_data_gev_quarto(
+    config=config,
+    model_name=model_name,
+    echelle=echelle,
+    season_choice="djf",
+    T_choice=T_choice,
+    par_X_annees=par_X_annees,
+    min_year=year_display_min,
+    max_year=year_display_max
+)
+result_gev_mam = pipeline_data_gev_quarto(
+    config=config,
+    model_name=model_name,
+    echelle=echelle,
+    season_choice="mam",
+    T_choice=T_choice,
+    par_X_annees=par_X_annees,
+    min_year=year_display_min,
+    max_year=year_display_max
+)
+result_gev_jja = pipeline_data_gev_quarto(
+    config=config,
+    model_name=model_name,
+    echelle=echelle,
+    season_choice="jja",
+    T_choice=T_choice,
+    par_X_annees=par_X_annees,
+    min_year=year_display_min,
+    max_year=year_display_max
+)
+
+datasets = [
+    result_gev_son,
+    result_gev_djf,
+    result_gev_mam,
+    result_gev_jja,
+]
+```
+
+
+```{python}
+#| layout-nrow: 2
+#| layout-ncol: 1
+title_show = pipeline_title("Niveau de retour 10 ans par 10 ans (en mm/h par 10 ans) et significativité", 1990, 2022, echelle, None)
+display(HTML(title_show))
+
+plot_four_polars_grids(
+    datasets,
+    val_col="z_T1",          # nom de la colonne à colorer / symboliser
+    side_km=2.5,             # taille du carré en km
+    titles=["SON", "DJF", "MAM", "JJA"],  # titres des 4 sous-cartes
+    
+    # --- options pour les points de station ------------------------
+    obs_marker_size=5,
+    obs_edgecolor="#000000",
+    obs_facecolor=None,      # None ⇒ couleur déduite de la valeur
+)
+
+plot_four_polars_grids(
+    datasets,
+    val_col="significant",          # nom de la colonne à colorer / symboliser
+    side_km=2.5,             # taille du carré en km
+    titles=None,  # titres des 4 sous-cartes
+    
+    # --- options pour les points de station ------------------------
+    obs_marker_size=5,
+    obs_edgecolor="#000000",
+    obs_facecolor=None,      # None ⇒ couleur déduite de la valeur
+)
+```
