@@ -1175,9 +1175,9 @@ def plot_four_polars_grids(
     cmap_num: str = "bwr",
     cmap_bool: Tuple[str, str] = ("#f0f0f0", "#d73027"),
     titles: Sequence[str] | None = None,
-    figsize: Tuple[int, int] = (14, 6),
+    figsize: Tuple[int, int] = (14, 7),
     relief_path: str | Path = "data/external/niveaux/selection_courbes_niveau_france.shp",
-    relief_linewidth: float = 0.4,
+    relief_linewidth: float = 0.3,
     relief_color: str = "#666666",
 ):
     """Affiche quatre cartes alignées (France métropolitaine, Corse exclue).
@@ -1395,7 +1395,7 @@ def plot_four_polars_grids(
             zorder=2,
         )
 
-        ax.set_title(title, fontsize=12, pad=1)
+        ax.set_title(title, fontsize=11, pad=1)
         ax.set_axis_off()
         ax.set_rasterization_zorder(1) # tous les artistes dont zorder < 1 en bitmap dans le SVG/PDF
 
@@ -1404,7 +1404,7 @@ def plot_four_polars_grids(
 
     sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
-    cbar = fig.colorbar(sm, ax=axes.ravel().tolist(), shrink=0.5, aspect=25)
+    cbar = fig.colorbar(sm, ax=axes.ravel().tolist(), shrink=0.4, aspect=25)
 
     if is_bool:
         cbar.set_ticks([0, 1])

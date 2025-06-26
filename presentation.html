@@ -131,7 +131,7 @@
     <div class="slides">
 
 <section id="title-slide" class="quarto-title-block center">
-  <h1 class="title">Caractérisation et évolution des précipitations extrêmes horaires en France à partir d’un modèle régional de climat à convection profonde résolue<br>—</h1>
+  <h1 class="title">Caractérisation et évolution<br>des précipitations extrêmes horaires<br>en France<br>à partir d’un modèle régional de climat<br>à convection profonde résolue<br>—</h1>
 
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
@@ -141,6 +141,44 @@
 </div>
 </div>
 
+</section>
+<section class="slide level2">
+
+<div id="import" class="cell" data-execution_count="1">
+<div class="cell-output cell-output-error">
+<div class="ansi-escaped-output">
+<pre><span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[6]</span><span class="ansi-green-fg">, line 2</span>
+<span class="ansi-green-fg">      1</span> get_ipython().run_line_magic(<span class="ansi-yellow-fg">'</span><span class="ansi-yellow-fg">config</span><span class="ansi-yellow-fg">'</span>, <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">InlineBackend.figure_format = </span><span class="ansi-yellow-fg">'</span><span class="ansi-yellow-fg">svg</span><span class="ansi-yellow-fg">'</span><span class="ansi-yellow-fg">"</span>)
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">2</span> <span class="ansi-yellow-bg">get_ipython</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">run_line_magic</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-fg ansi-yellow-bg">'</span><span class="ansi-yellow-fg ansi-yellow-bg">config</span><span class="ansi-yellow-fg ansi-yellow-bg">'</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-fg ansi-yellow-bg">InlineBackend.figure_formats = </span><span class="ansi-yellow-fg ansi-yellow-bg">{</span><span class="ansi-yellow-fg ansi-yellow-bg">'</span><span class="ansi-yellow-fg ansi-yellow-bg">svg</span><span class="ansi-yellow-fg ansi-yellow-bg">'</span><span class="ansi-yellow-fg ansi-yellow-bg">}</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">      3</span> get_ipython().run_line_magic(<span class="ansi-yellow-fg">'</span><span class="ansi-yellow-fg">config</span><span class="ansi-yellow-fg">'</span>, <span class="ansi-yellow-fg">'</span><span class="ansi-yellow-fg">InlineBackend.figure_dpi = 500</span><span class="ansi-yellow-fg">'</span>)
+<span class="ansi-green-fg">      4</span> get_ipython().run_line_magic(<span class="ansi-yellow-fg">'</span><span class="ansi-yellow-fg">config</span><span class="ansi-yellow-fg">'</span>, <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">InlineBackend.rc = </span><span class="ansi-yellow-fg">{</span><span class="ansi-yellow-fg">'</span><span class="ansi-yellow-fg">figure.dpi</span><span class="ansi-yellow-fg">'</span><span class="ansi-yellow-fg">: 150}</span><span class="ansi-yellow-fg">"</span>)
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/miniconda3/envs/extremeprecipit/lib/python3.12/site-packages/IPython/core/interactiveshell.py:2486</span>, in <span class="ansi-cyan-fg">InteractiveShell.run_line_magic</span><span class="ansi-blue-fg">(self, magic_name, line, _stack_depth)</span>
+<span class="ansi-green-fg">   2484</span>     kwargs[<span class="ansi-yellow-fg">'</span><span class="ansi-yellow-fg">local_ns</span><span class="ansi-yellow-fg">'</span>] = <span style="color:rgb(0,135,0)">self</span>.get_local_scope(stack_depth)
+<span class="ansi-green-fg">   2485</span> <span style="font-weight:bold;color:rgb(0,135,0)">with</span> <span style="color:rgb(0,135,0)">self</span>.builtin_trap:
+<span class="ansi-green-fg">-&gt; </span><span class="ansi-green-fg">2486</span>     result = <span class="ansi-yellow-bg">fn</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">   2488</span> <span style="font-style:italic;color:rgb(95,135,135)"># The code below prevents the output from being displayed</span>
+<span class="ansi-green-fg">   2489</span> <span style="font-style:italic;color:rgb(95,135,135)"># when using magics with decorator @output_can_be_silenced</span>
+<span class="ansi-green-fg">   2490</span> <span style="font-style:italic;color:rgb(95,135,135)"># when the last Python token in the expression is a ';'.</span>
+<span class="ansi-green-fg">   2491</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="color:rgb(0,135,0)">getattr</span>(fn, magic.MAGIC_OUTPUT_CAN_BE_SILENCED, <span style="font-weight:bold;color:rgb(0,135,0)">False</span>):
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/miniconda3/envs/extremeprecipit/lib/python3.12/site-packages/IPython/core/magics/config.py:134</span>, in <span class="ansi-cyan-fg">ConfigMagics.config</span><span class="ansi-blue-fg">(self, s)</span>
+<span class="ansi-green-fg">    130</span> <span style="font-style:italic;color:rgb(95,135,135)"># otherwise, assume we are setting configurables.</span>
+<span class="ansi-green-fg">    131</span> <span style="font-style:italic;color:rgb(95,135,135)"># leave quotes on args when splitting, because we want</span>
+<span class="ansi-green-fg">    132</span> <span style="font-style:italic;color:rgb(95,135,135)"># unquoted args to eval in user_ns</span>
+<span class="ansi-green-fg">    133</span> cfg = Config()
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">134</span> <span class="ansi-yellow-bg">exec</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-fg ansi-yellow-bg">cfg.</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-bg">+</span><span class="ansi-yellow-bg">line</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">shell</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">user_ns</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(0,135,0)" class="ansi-yellow-bg">locals</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">    136</span> <span style="font-weight:bold;color:rgb(0,135,0)">for</span> configurable <span style="font-weight:bold;color:rgb(175,0,255)">in</span> configurables:
+<span class="ansi-green-fg">    137</span>     <span style="font-weight:bold;color:rgb(0,135,0)">try</span>:
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">&lt;string&gt;:1</span>
+
+<span class="ansi-red-fg">NameError</span>: name 'svg' is not defined</pre>
+</div>
+</div>
+</div>
 </section>
 <section id="contexte" class="title-slide slide level1 center">
 <h1>Contexte</h1>
@@ -200,11 +238,11 @@
 <h1>Evaluation des maxima</h1>
 <div class="columns" style="display: flex; gap: 0px; margin: 0;">
 <div class="column" style="width:50%;">
-<div id="1919b184" class="cell" data-execution_count="2">
+<div id="cdc0f2ce" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="presentation_files/figure-revealjs/cell-3-output-1.svg"></p>
+<p><img data-src="presentation_files/figure-revealjs/cell-4-output-1.svg"></p>
 </figure>
 </div>
 </div>
@@ -216,39 +254,50 @@
 <li>Les maxima annuels (—) : évaluation <em>temporelle</em></li>
 </ul>
 </div></div>
-</section>
+<!--
+# Niveau de retour $z_T$ 
 
-<section id="niveau-de-retour-z_t" class="title-slide slide level1 center">
-<h1>Niveau de retour <span class="math inline">\(z_T\)</span></h1>
-<p>Le seuil que l’on ne dépasse <strong>en moyenne</strong> qu’une fois tous les <span class="math inline">\(T\)</span> années <br><br></p>
-<div class="columns" style="display: flex; gap: 0px; margin: 0;">
-<div class="column" style="width:50%;">
-<div id="f6308cd5" class="cell" data-execution_count="3">
-<div class="cell-output cell-output-display">
-<div>
-<figure>
-<p><img data-src="presentation_files/figure-revealjs/cell-4-output-1.svg"></p>
-</figure>
-</div>
-</div>
-</div>
-</div><div class="column" style="width:50%;">
-<p><span class="math display">\[
+Le seuil que l’on ne dépasse **en moyenne** qu’une fois tous les $T$ années
+<br/><br/>
+
+::: {.columns style="display: flex; gap: 0px; margin: 0;"}
+::: {.column width="50%"}
+
+::: {#ac2593df .cell execution_count=4}
+
+::: {.cell-output .cell-output-display}
+![](presentation_files/figure-revealjs/cell-5-output-1.svg){}
+:::
+:::
+
+
+:::
+
+::: {.column width="50%"}
+$$
 z_T(t) = z_{T,0} + \mathbf{z_{T,1}} \cdot t
-\]</span></p>
-<p><span class="math display">\[
+$$
+
+$$
 \begin{cases}
-z_{T,1} &gt; 0 &amp; \text{les épisodes deviennent plus intenses} \\
-z_{T,1} = 0 &amp; \text{aucune tendance détectable} \\
-z_{T,1} &lt; 0 &amp; \text{les épisodes deviennent moins intenses}
+z_{T,1} > 0 & \text{les épisodes deviennent plus intenses} \\
+z_{T,1} = 0 & \text{aucune tendance détectable} \\
+z_{T,1} < 0 & \text{les épisodes deviennent moins intenses}
 \end{cases}
-\]</span></p>
-<p>On peut obtenir :</p>
-<p><span class="math display">\[
+$$
+
+On peut obtenir :
+
+$$
 z^{/10 \, ans}_{T,1} = \mathbf{z_{T,1}} \frac{10}{t_{max} - t_{min}}
-\]</span></p>
-</div></div>
-<p><strong>Depuis 1990, le seuil correspondant à un épisode de pluie extrême qu’on ne voit qu’une fois tous les 10 ans<br>a augmenté de 4,7 mm tous les 10 ans.</strong></p>
+$$
+:::
+
+:::
+
+**Depuis 1990, le seuil correspondant à un épisode de pluie extrême qu’on ne voit qu’une fois tous les 10 ans<br/>a augmenté de 4,7 mm tous les 10 ans.**
+
+-->
 </section>
 
 <section>
@@ -258,7 +307,7 @@ z^{/10 \, ans}_{T,1} = \mathbf{z_{T,1}} \frac{10}{t_{max} - t_{min}}
 <img data-src="presentation/resultats-1.svg" style="width:100.0%" class="r-stretch"></section>
 <section class="slide level2">
 
-<div id="jours_pluie_total" class="cell" data-execution_count="4">
+<div id="jours_pluie_total" class="cell" data-execution_count="5">
 <div id="jours_pluie_total-1" class="cell-output cell-output-display">
 
     <div style="font-size: 18px; color: #333;">
@@ -306,7 +355,7 @@ z^{/10 \, ans}_{T,1} = \mathbf{z_{T,1}} \frac{10}{t_{max} - t_{min}}
 </section>
 <section class="slide level2">
 
-<div id="moy_precipit_jour_total" class="cell" data-execution_count="6">
+<div id="moy_precipit_jour_total" class="cell" data-execution_count="7">
 <div id="moy_precipit_jour_total-1" class="cell-output cell-output-display">
 
     <div style="font-size: 18px; color: #333;">
@@ -350,7 +399,7 @@ z^{/10 \, ans}_{T,1} = \mathbf{z_{T,1}} \frac{10}{t_{max} - t_{min}}
 Δ (AROME - Stations) : +0.033 mm/j (+1.3%)
 </div>
 </div>
-<div id="cell-moy_precipit_jour_2000_MAX_only_metric" class="cell" data-execution_count="7">
+<div id="cell-moy_precipit_jour_2000_MAX_only_metric" class="cell" data-execution_count="8">
 <div id="moy_precipit_jour_2000_max_only_metric" class="cell-output cell-output-display">
 Δ (AROME - Stations) de 1990 à 2022 : -0.065 mm/j (-2.6%)
 </div>
@@ -359,7 +408,7 @@ z^{/10 \, ans}_{T,1} = \mathbf{z_{T,1}} \frac{10}{t_{max} - t_{min}}
 </section>
 <section class="slide level2">
 
-<div id="moy_precipit_horaire_2000_max" class="cell" data-execution_count="8">
+<div id="moy_precipit_horaire_2000_max" class="cell" data-execution_count="9">
 <div id="moy_precipit_horaire_2000_max-1" class="cell-output cell-output-display">
 
     <div style="font-size: 18px; color: #333;">
@@ -414,7 +463,7 @@ z^{/10 \, ans}_{T,1} = \mathbf{z_{T,1}} \frac{10}{t_{max} - t_{min}}
 
 <!--
 
-::: {#moy_max_precipit_jour_total .cell execution_count=9}
+::: {#moy_max_precipit_jour_total .cell execution_count=10}
 
 ::: {#moy_max_precipit_jour_total-1 .cell-output .cell-output-display}
 ```{=html}
@@ -472,7 +521,7 @@ z^{/10 \, ans}_{T,1} = \mathbf{z_{T,1}} \frac{10}{t_{max} - t_{min}}
 :::
 
 
-::: {#cell-moy_max_precipit_jour_2000_MAX .cell execution_count=10}
+::: {#cell-moy_max_precipit_jour_2000_MAX .cell execution_count=11}
 
 ::: {#moy_max_precipit_jour_2000_max .cell-output .cell-output-display}
 ```{=html}
@@ -484,7 +533,7 @@ z^{/10 \, ans}_{T,1} = \mathbf{z_{T,1}} \frac{10}{t_{max} - t_{min}}
 
 ---
 
-::: {#moy_max_precipit_horaire_2000_max .cell execution_count=11}
+::: {#moy_max_precipit_horaire_2000_max .cell execution_count=12}
 
 ::: {#moy_max_precipit_horaire_2000_max-1 .cell-output .cell-output-display}
 ```{=html}
@@ -551,7 +600,7 @@ Rappel : le cumul était bon donc les orages horaires les plus forts ont une fai
 <!-- ::: {.columns style="display: flex; gap: 0px; margin: 0;"}
 ::: {.column width="50%"}
 
-::: {#c5bb8da7 .cell execution_count=14}
+::: {#d6512451 .cell execution_count=15}
 
 ::: {.cell-output .cell-output-display}
 ```{=html}
@@ -592,7 +641,7 @@ Rappel : le cumul était bon donc les orages horaires les plus forts ont une fai
 :::
 ::: {.column width="50%"}
 
-::: {#28271e4d .cell execution_count=15}
+::: {#8a406cc0 .cell execution_count=16}
 
 ::: {.cell-output .cell-output-display}
 ```{=html}
@@ -619,7 +668,7 @@ Rappel : le cumul était bon donc les orages horaires les plus forts ont une fai
 :::
 :::
 -->
-<div id="moyenne-max_vs_series-max_all" class="cell" data-execution_count="16">
+<div id="moyenne-max_vs_series-max_all" class="cell" data-execution_count="17">
 <div id="moyenne-max_vs_series-max_all-1" class="cell-output cell-output-display">
 
     <div style="font-size: 18px; color: #333;">
@@ -656,7 +705,7 @@ Rappel : le cumul était bon donc les orages horaires les plus forts ont une fai
 
 # Application GEV (μ, σ, ξ)
 
-::: {#cell-define_gev .cell execution_count=17}
+::: {#cell-define_gev .cell execution_count=18}
 
 ::: {.cell-output .cell-output-display}
 ![](presentation_files/figure-revealjs/define_gev-output-1.svg){#define_gev}
@@ -692,7 +741,7 @@ on a :
 
 ---
 
-::: {#cell-minimize_gev_aic_map .cell execution_count=18}
+::: {#cell-minimize_gev_aic_map .cell execution_count=19}
 
 ::: {#minimize_gev_aic_map .cell-output .cell-output-display}
 ```{=html}
@@ -713,7 +762,7 @@ on a :
 ::: {.columns style="display: flex; gap: 0px; margin: 0;"}
 ::: {.column width="50%"}
 
-::: {#06e65937 .cell execution_count=19}
+::: {#717a453d .cell execution_count=20}
 
 ::: {.cell-output .cell-output-display}
 ```{=html}
@@ -734,7 +783,7 @@ on a :
 
 ::: {.column width="50%"}
 
-::: {#35c686ab .cell execution_count=21}
+::: {#6e8fbe14 .cell execution_count=22}
 
 ::: {.cell-output .cell-output-display}
 ```{=html}
@@ -782,7 +831,7 @@ $$
 
 ---
 
-::: {#23390d24 .cell execution_count=23}
+::: {#53c15dc2 .cell execution_count=24}
 
 ::: {.cell-output .cell-output-display}
 ```{=html}
@@ -823,7 +872,7 @@ $$
 ```
 :::
 
-::: {.cell-output .cell-output-display execution_count=55}
+::: {.cell-output .cell-output-display execution_count=29}
 ```
 {'modelised_load': shape: (87_536, 6)
  ┌───────────┬──────────────────────┬───────────┬───────────┬───────────┬─────────────┐
@@ -971,13 +1020,13 @@ $$
 ---
 
 -->
-<div id="6c926676" class="cell quarto-layout-panel" data-execution_count="26" data-layout-nrow="2" data-layout-ncol="1">
+<div id="d63f17a0" class="cell quarto-layout-panel" data-layout-nrow="2" data-layout-ncol="1" data-execution_count="27">
 <div class="quarto-layout-row">
 <div class="quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
 
         <div style="font-size: 18px; color: #333;">
             <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">Niveau de retour 10 ans par 10 ans (en mm/j par 10 ans) et significativité</p>
-            <p style="font-size: 18px; color: #3498db;">
+            <p style="font-size: 18px; color: #3498db; white-space: nowrap;">
                 de <span style="font-weight: bold; color: #e74c3c;">1959</span> à <span style="font-weight: bold; color: #e74c3c;">2022</span> 
                 pour l'echelle : <span style="font-weight: bold; color: #f39c12;">quotidien</span>
             </p> 
@@ -987,25 +1036,25 @@ $$
 </div>
 <div class="quarto-layout-row">
 <div class="quarto-layout-cell" style="flex-basis: 100.0%;justify-content: center;">
-<p><img data-src="presentation_files/figure-revealjs/cell-27-output-2.svg"></p>
+<p><img data-src="presentation_files/figure-revealjs/cell-28-output-2.svg"></p>
 </div>
 </div>
 <div class="quarto-layout-row">
 <div class="quarto-layout-cell" style="flex-basis: 100.0%;justify-content: center;">
-<p><img data-src="presentation_files/figure-revealjs/cell-27-output-3.svg"></p>
+<p><img data-src="presentation_files/figure-revealjs/cell-28-output-3.svg"></p>
 </div>
 </div>
 </div>
 </section>
 <section class="slide level2">
 
-<div id="027a4f3c" class="cell quarto-layout-panel" data-execution_count="28" data-layout-nrow="2" data-layout-ncol="1">
+<div id="045caa81" class="cell quarto-layout-panel" data-layout-nrow="2" data-layout-ncol="1" data-execution_count="29">
 <div class="quarto-layout-row">
 <div class="quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
 
         <div style="font-size: 18px; color: #333;">
             <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">Niveau de retour 10 ans par 10 ans (en mm/h par 10 ans) et significativité</p>
-            <p style="font-size: 18px; color: #3498db;">
+            <p style="font-size: 18px; color: #3498db; white-space: nowrap;">
                 de <span style="font-weight: bold; color: #e74c3c;">1990</span> à <span style="font-weight: bold; color: #e74c3c;">2022</span> 
                 pour l'echelle : <span style="font-weight: bold; color: #f39c12;">horaire</span>
             </p> 
@@ -1015,12 +1064,12 @@ $$
 </div>
 <div class="quarto-layout-row">
 <div class="quarto-layout-cell" style="flex-basis: 100.0%;justify-content: center;">
-<p><img data-src="presentation_files/figure-revealjs/cell-29-output-2.svg"></p>
+<p><img data-src="presentation_files/figure-revealjs/cell-30-output-2.svg"></p>
 </div>
 </div>
 <div class="quarto-layout-row">
 <div class="quarto-layout-cell" style="flex-basis: 100.0%;justify-content: center;">
-<p><img data-src="presentation_files/figure-revealjs/cell-29-output-3.svg"></p>
+<p><img data-src="presentation_files/figure-revealjs/cell-30-output-3.svg"></p>
 </div>
 </div>
 </div>
