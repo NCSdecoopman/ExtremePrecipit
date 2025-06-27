@@ -1,5 +1,5 @@
 ---
-title: "Caractérisation et évolution<br/>des précipitations extrêmes horaires<br/>en France<br/>à partir d’un modèle régional de climat<br/>à convection profonde résolue<br/>---"
+title: "Caractérisation et évolution<br/>des précipitations extrêmes horaires<br/>en France<br/>à partir d’un modèle régional de climat<br/>à convection profonde résolue"
 author: 
   - name: "<br/><br/>Decoopman Nicolas<br/>M2 mathématiques et applications parcours statistique et science des données<br/><br/>---<br/>Encadrement<br/>Juliette Blanchet (CNRS, IGE) et Antoine Blanc (RTM)"
 format:
@@ -13,14 +13,13 @@ format:
     self-contained: false 
     allow-scripts: true 
     css: presentation/styles.css
-lightbox: true
 execute:
   cache: true
   echo: false
   warning: false
   message: false
   error: true
-freeze: auto  
+  freeze: auto  
 jupyter: extremeprecipit
 ---
 
@@ -108,8 +107,6 @@ def pipeline_total_title_map_legend_scatter_delta(
 
 # Contexte
 
-::: {.columns"}
-::: {.column width="70%"}
 
 <!--l'air chaud contient plus d'humidité 
 
@@ -126,8 +123,8 @@ def pipeline_total_title_map_legend_scatter_delta(
 
 <h2>Réchauffement de la planète</h2>
 
-- Plus fort sur les continents que les océans  
-- Clausius–Clapeyron +7 % / °C  
+- Plus fort sur les continents que les océans (+1°C monde, +1,7°C France, +2°C Alpes françaises)
+- Clausius–Clapeyron (+7%/°C)   
 - L'air chaud monte, se refroidit, l'eau se condense sous forme de pluie
   
 <h2>En réponse au réchauffement</h2>
@@ -135,25 +132,19 @@ def pipeline_total_title_map_legend_scatter_delta(
 - Augmentation *théorique* des précipitations extrêmes
 - Variable suivant les changements de circulations atmosphériques
 
-:::
-::: {.column width="30%"}
-
-![](presentation/temperature.png){max-height=10px}
-
-:::
-:::
-
 <h2>Utilisation de modèles de climat sur de longues périodes</h2>
 
 - Tendances durables (changement climatique) *vs.* variations naturelles (variabilité climatique)  
 - Modèle numérique **A**pplication of **R**esearch to **O**perations at **ME**soscale  
-- **C**onvection-**P**ermitting, **R**egional **C**limate **M**odel (2,5km - 1H), **forcer** par **réanalyse** ERA5  
+- **C**onvection-**P**ermitting, **R**egional **C**limate **M**odel (2,5km - 1h), **forcer** par **réanalyse** ERA5  
+
 
 
 # Méthodologie
 
 ![](presentation/methodologie.svg){width=100%}
 
+<!--
 # Evaluation des maxima
 
 ::: {.columns style="display: flex; gap: 0px; margin: 0;"}
@@ -207,7 +198,7 @@ plt.show()  # Affichage du graphique
 
 :::
 
-<!--
+
 # Niveau de retour $z_T$ 
 
 Le seuil que l’on ne dépasse **en moyenne** qu’une fois tous les $T$ années
@@ -276,13 +267,13 @@ $$
 
 **Depuis 1990, le seuil correspondant à un épisode de pluie extrême qu’on ne voit qu’une fois tous les 10 ans<br/>a augmenté de 4,7 mm tous les 10 ans.**
 
--->
+
 
 # Résultats statistiques descriptives
 
 ![](presentation/resultats-1.svg){width=100%}
 
----
+-->
 
 ```{python}
 #| label: jours_pluie_total
@@ -486,14 +477,14 @@ pipeline_total_title_map_legend_scatter_delta(
 
 <br/>**Résultat semblable**
 
-# Pluies plus fréquentes en plus faibles quantités
+---
+
+<h2>Pluies plus fréquentes en plus faibles quantités</h2>
 
 ![](presentation/bilan-1.svg){width=100%}
 
 
 ---
-
-<!--
 
 ```{python}
 #| label: moy_max_precipit_jour_total
@@ -605,11 +596,9 @@ pipeline_total_title_map_legend_scatter_delta(
 )
 ```
 
-Rappel : le cumul était bon donc les orages horaires les plus forts ont une faible emprise spatiale ? 
-
 
 ---
--->
+
 
 ```{python}
 # | label: moyenne-max_vs_series-max
@@ -700,8 +689,7 @@ display(HTML(f"""
 -->
 
 ```{python}
-#| label: moyenne-max_vs_series-max_ALL
-title = "Comparaison de la moyenne des maxima aux maxima annuels des précipitations suivant la saison et l'échelle"
+title = "Maxima annuels des précipitations suivant la saison et l'échelle temporelle"
 display(HTML(f"""
     <div style="font-size: 18px; color: #333;">
         <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
@@ -713,7 +701,57 @@ display(HTML(f"""
         </p> 
     </div>    
 """))
+```
 
+::: {.columns style="display: flex; gap: 0px; margin: 0;"}
+::: {.column width="40%"}
+
+```{python}
+# Premier graphique (tirage aléatoire pour illustrer)
+rng = np.random.default_rng(12345)
+years = np.arange(1990, 2023)
+extremes1 = rng.normal(70, 25, years.size) + 0.6 * (years - 1959)
+mean1 = extremes1.mean()
+
+# Second graphique (différent tirage aléatoire, pour illustrer)
+rng = np.random.default_rng(54321)
+extremes2 = rng.normal(70, 25, years.size) + 0.6 * (years - 1959)
+mean2 = extremes2.mean()
+
+# Définir des bornes communes pour l’axe y
+y_min = min(extremes1.min(), extremes2.min()) - 5
+y_max = max(extremes1.max(), extremes2.max()) + 5
+
+# Création du graphique
+plt.rcParams.update({
+    "figure.dpi": 110,                        # meilleure définition écran
+})
+fig, ax = plt.subplots(figsize=(6, 6))
+ax.plot(years, extremes1, marker="o", color="#97a6c4", label="AROME")  # Premier jeu de données
+ax.plot(years, extremes2, marker="s", color="#284860", label="Station")   # Deuxième jeu de données
+ax.axhline(mean1, linestyle="--", linewidth=1, color="#97a6c4")  # Ligne en pointillés pour la moyenne AROME 1
+ax.axhline(mean2, linestyle="--", linewidth=1, color="#284860")   # Ligne en pointillés pour la moyenne AROME 2
+# ——— Masquer les 2 spines inutiles ———
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+ax.set_ylim(y_min, y_max)
+plt.xlabel("")  # Étiquette axe x
+plt.ylabel("Précipitation maximale (mm/j)")  # Étiquette axe y
+plt.tick_params(axis='y', labelsize=10)
+plt.xticks(fontsize=10)  # Taille des ticks de l'axe x
+plt.yticks(fontsize=10)  # Taille des ticks de l'axe y
+plt.legend()  # Légende
+plt.grid(False)  # Grille
+plt.tight_layout()  # Ajustement du layout
+plt.show()  # Affichage du graphique
+```
+:::
+
+::: {.column width="60%"}
+
+
+```{python}
+#| label: moyenne-max_vs_series-max_ALL
 afficher_cat = [
     f"Journalière ({year_display_min}-{year_display_max})", f"Journalière ({year_display_middle}-{year_display_max})",
     "1h", "3h glissante", "6h glissante", "9h glissante", "12h glissante", "24h glissante", "1h (agreg 3x3)", "1h (agreg 5x5)"
@@ -747,6 +785,10 @@ df_r2_all_max["Echelle_lbl"] = pd.Categorical(
 df_r2_all_max["Echelle"] = pd.Categorical(df_r2_all_max["Echelle"], categories=afficher_cat, ordered=True)
 df_r2_all_max["r2_txt"] = df_r2_all_max["r²"].apply(lambda x: f"{x:.2f}".lstrip("0"))
 df_r2_all_max["ME_txt"] = df_r2_all_max["ME"].apply(lambda x: f"{x:.2f}".lstrip("0"))
+
+
+# Sélectionner uniquement les données pour "Maxima annuels"
+df_r2_all_max = df_r2_all_max[df_r2_all_max["Type"] == "Maxima annuels"]
 
 # Création de la figure avec px.bar
 fig_r2_all_max = px.bar(
@@ -829,9 +871,20 @@ display(HTML(f"""
 
 ```
 
-# Bonne distribution et difficulté évènementielle
+:::
+
+:::
+
+<br/><br/>
+**Répartition des orages dans le temps jamais très bonne**
+
+---
+
+<h2>Bonne distribution et difficulté évènementielle</h2>
 
 ![](presentation/bilan-2.svg){width=100%}
+
+<!--
 
 # Résultats modélisation
 
@@ -839,7 +892,7 @@ display(HTML(f"""
 
 ---
 
-<!--
+
 
 # Application GEV (μ, σ, ξ)
 
@@ -1204,7 +1257,7 @@ def plot_four_polars_grids(
     show_mod: bool = True,
     show_signif: bool = False,  # filtre significatif sur obs
     numero: int=1,
-    staturation_val: int=99.5
+    saturation_val: int=99.5
 ):
     """Trace quatre cartes polaires + une légende commune (SVG).
 
@@ -1296,7 +1349,7 @@ def plot_four_polars_grids(
 
     is_bool = model_gdfs[0][val_col].dtype == bool
     if all_values and not is_bool:
-        seuil = np.percentile(np.abs(all_values), staturation_val)
+        seuil = np.percentile(np.abs(all_values), saturation_val)
         for gdf in model_gdfs + [g for g in obs_gdfs if g is not None]:
             gdf[val_col] = np.where(np.abs(gdf[val_col]) > seuil,
                                     np.sign(gdf[val_col]) * seuil,
@@ -1434,11 +1487,14 @@ for show in [True, False]:
         )
 ```
 
+---
 
 ```{python}
 title_show = pipeline_title("Tendances relatives (%) du niveau de retour 10 ans estimée par le meilleur modèle", 1985, 2022, "quotidien", None)
 display(HTML(title_show))
 ```
+
+
 
 <style>
   /* Reset complet de la grille */
@@ -1531,11 +1587,12 @@ display(HTML(title_show))
   </tbody>
 </table>
 
+
 ---
 
 ```{python}
 echelles = ["quotidien"] #, "horaire"
-seasons  = ["nod", "s", "o", "n", "d"]
+seasons  = ["son_bis", "nod", "s", "o", "n", "d"]
 datasets = {e: [] for e in echelles}
 
 for e in echelles:
@@ -1544,7 +1601,7 @@ for e in echelles:
             config=config,
             model_name="niveau_retour",
             echelle=e,
-            season_choice=s,
+            season_choice=s if s != "son_bis" else "son",
             T_choice=10,
             par_X_annees=10,
             min_year=config["years"]["min"],
@@ -1581,26 +1638,25 @@ figcaption { margin-top: .3rem; font-size: .9rem; }
 <table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
   <thead>
     <tr>
+      <th></th>
       <th>SON</th>
       <th>OND</th>
-      <th></th>
-      <th></th>
       <th></th>
     </tr>
   </thead>
   <tbody>
     <tr>
         <td>
-        <a href="presentation_files/map/quotidien_SON_rast_obs.svg" target="_blank" rel="noopener">
-            <img src="presentation_files/map/quotidien_SON_norast_obs.svg" alt="SON">
+        </td>
+        <td>
+        <a href="presentation_files/map/quotidien_SON_BIS_rast_obs.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/quotidien_SON_BIS_norast_obs.svg" alt="SON">
         </a>
         </td>
         <td>
         <a href="presentation_files/map/quotidien_NOD_rast_obs.svg" target="_blank" rel="noopener">
             <img src="presentation_files/map/quotidien_NOD_norast_obs.svg" alt="DJF">
         </a>
-        </td>
-        <td>
         </td>
         <td>
         </td>
@@ -1647,76 +1703,6 @@ figcaption { margin-top: .3rem; font-size: .9rem; }
 </tbody>
 </table>
 
-
-<!--
 ---
 
-```{python}
-title_show = pipeline_title("Tendances relatives (%) du niveau de retour 10 ans estimée par le meilleur modèle", 1985, 2022, "horaire", None)
-display(HTML(title_show))
-```
-
-<table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
-  <thead>
-    <tr>
-      <th>SON</th>
-      <th>DJF</th>
-      <th>MAM</th>
-      <th>JJA</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-        <td>
-        <a href="presentation_files/map/horaire_SON_rast_mod.svg" target="_blank" rel="noopener">
-            <img src="presentation_files/map/horaire_SON_norast_mod.svg" alt="SON">
-        </a>
-        </td>
-        <td>
-        <a href="presentation_files/map/horaire_DJF_rast_mod.svg" target="_blank" rel="noopener">
-            <img src="presentation_files/map/horaire_DJF_norast_mod.svg" alt="DJF">
-        </a>
-        </td>
-        <td>
-        <a href="presentation_files/map/horaire_MAM_rast_mod.svg" target="_blank" rel="noopener">
-            <img src="presentation_files/map/horaire_MAM_norast_mod.svg" alt="MAM">
-        </a>
-        </td>
-        <td>
-        <a href="presentation_files/map/horaire_JJA_rast_mod.svg" target="_blank" rel="noopener">
-            <img src="presentation_files/map/horaire_JJA_norast_mod.svg" alt="JJA">
-        </a>
-        </td>
-    <td rowspan="2" style="vertical-align: middle; text-align: center;">
-    <object type="image/svg+xml" data="presentation_files/map/horaire_legend.svg"
-            width="40" height="600" class="legend-svg">
-    </object>
-    </td>
-    </tr>
-    <tr>
-      <td>
-        <a href="presentation_files/map/horaire_SON_rast_obs.svg" target="_blank" rel="noopener">
-          <img src="presentation_files/map/horaire_SON_norast_obs.svg" alt="SON">
-        </a>
-      </td>
-      <td>
-        <a href="presentation_files/map/horaire_DJF_rast_obs.svg" target="_blank" rel="noopener">
-          <img src="presentation_files/map/horaire_DJF_norast_obs.svg" alt="DJF">
-        </a>
-      </td>
-      <td>
-        <a href="presentation_files/map/horaire_MAM_rast_obs.svg" target="_blank" rel="noopener">
-          <img src="presentation_files/map/horaire_MAM_norast_obs.svg" alt="MAM">
-        </a>
-      </td>
-      <td>
-        <a href="presentation_files/map/horaire_JJA_rast_obs.svg" target="_blank" rel="noopener">
-          <img src="presentation_files/map/horaire_JJA_norast_obs.svg" alt="JJA">
-        </a>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
--->
+<div class="fin">Merci.</div>

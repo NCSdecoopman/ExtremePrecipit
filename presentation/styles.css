@@ -11,14 +11,35 @@
 }
 
 .reveal h1 {
-  font-size: 1.5em;
+  font-size: 2.5em; /* Taille plus grande pour les titres principaux */
+  color: #03045e; /* Couleur bleue */
+  margin-bottom: 20px; /* Espacement en bas */
+  position: relative; /* Position relative pour permettre le positionnement absolu */
 }
+
+/* Trait en dessous des titres */
+.reveal h1:not(.title)::after {
+  content: ''; /* Contenu vide, nécessaire pour le pseudo-élément */
+  position: absolute; /* Position absolue par rapport au titre */
+  left: 0; /* Début du trait aligné à gauche */
+  bottom: -5px; /* Distance du trait par rapport au titre */
+  width: 100%; /* Longueur du trait */
+  height: 1px; /* Épaisseur du trait */
+  background-color: #03045e; /* Couleur du trait, assortie au titre */
+}
+
 .reveal h2 {
-  font-size: 1.2em;
+  margin-top: 10px; /* Espacement en haut */
+  font-size: 1.6em; 
+  font-weight: bold; 
+  color: #2c3e50;
 }
 .reveal h3 {
   font-size: 1em;
 }
+
+
+
 
 .reveal .slides {
   font-size: 0.6em;
@@ -31,4 +52,12 @@
     text-align: center;
   }
 
+
+.fin {
+    text-align: center; /* Centrer horizontalement */
+    position: absolute; /* Position absolue pour le centrage vertical */
+    top: 50%; /* Déplace le haut du titre au centre */
+    left: 50%; /* Déplace la gauche du titre au centre */
+    transform: translate(-50%, -50%); /* Ajuste le titre au centre */
+}
 
