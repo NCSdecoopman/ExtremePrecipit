@@ -6,14 +6,11 @@
 <script src="presentation_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="presentation_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="presentation_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="presentation_files/libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="presentation_files/libs/quarto-contrib/glightbox/glightbox.min.js"></script>
-<link href="presentation_files/libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
-<link href="presentation_files/libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet"><meta charset="utf-8">
+<link href="presentation_files/libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
   <meta name="generator" content="quarto-1.7.32">
 
   <meta name="author" content=" Decoopman Nicolas M2 mathématiques et applications parcours statistique et science des données — Encadrement Juliette Blanchet (CNRS, IGE) et Antoine Blanc (RTM)">
-  <title>Caractérisation et évolution des précipitations extrêmes horaires en France à partir d’un modèle régional de climat à convection profonde résolue —</title>
+  <title>Caractérisation et évolution des précipitations extrêmes horaires en France à partir d’un modèle régional de climat à convection profonde résolue</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
@@ -134,7 +131,7 @@
     <div class="slides">
 
 <section id="title-slide" class="quarto-title-block center">
-  <h1 class="title">Caractérisation et évolution<br>des précipitations extrêmes horaires<br>en France<br>à partir d’un modèle régional de climat<br>à convection profonde résolue<br>—</h1>
+  <h1 class="title">Caractérisation et évolution<br>des précipitations extrêmes horaires<br>en France<br>à partir d’un modèle régional de climat<br>à convection profonde résolue</h1>
 
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
@@ -147,8 +144,6 @@
 </section>
 <section id="contexte" class="title-slide slide level1 center">
 <h1>Contexte</h1>
-<div class="{.columns&quot;}">
-<div class="column" style="width:70%;">
 <!--l'air chaud contient plus d'humidité 
 
 - **CP** (Convection-Permitting) : résoudre explicitement les processus de convection dans l'atmosphère (≠ approximation)
@@ -165,9 +160,8 @@
 Réchauffement de la planète
 </h2>
 <ul>
-<li>Plus fort sur les continents que les océans<br>
-</li>
-<li>Clausius–Clapeyron +7 % / °C<br>
+<li>Plus fort sur les continents que les océans (+1°C monde, +1,7°C France, +2°C Alpes françaises)</li>
+<li>Clausius–Clapeyron (+7%/°C)<br>
 </li>
 <li>L’air chaud monte, se refroidit, l’eau se condense sous forme de pluie</li>
 </ul>
@@ -178,9 +172,6 @@ En réponse au réchauffement
 <li>Augmentation <em>théorique</em> des précipitations extrêmes</li>
 <li>Variable suivant les changements de circulations atmosphériques</li>
 </ul>
-</div><div class="column" style="width:30%;">
-<p><a href="presentation/temperature.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img data-src="presentation/temperature.png" data-max-height="10px"></a></p>
-</div></div>
 <h2>
 Utilisation de modèles de climat sur de longues périodes
 </h2>
@@ -189,36 +180,38 @@ Utilisation de modèles de climat sur de longues périodes
 </li>
 <li>Modèle numérique <strong>A</strong>pplication of <strong>R</strong>esearch to <strong>O</strong>perations at <strong>ME</strong>soscale<br>
 </li>
-<li><strong>C</strong>onvection-<strong>P</strong>ermitting, <strong>R</strong>egional <strong>C</strong>limate <strong>M</strong>odel (2,5km - 1H), <strong>forcer</strong> par <strong>réanalyse</strong> ERA5</li>
+<li><strong>C</strong>onvection-<strong>P</strong>ermitting, <strong>R</strong>egional <strong>C</strong>limate <strong>M</strong>odel (2,5km - 1h), <strong>forcer</strong> par <strong>réanalyse</strong> ERA5</li>
 </ul>
 </section>
 
+<section>
 <section id="méthodologie" class="title-slide slide level1 center">
 <h1>Méthodologie</h1>
-<p><a href="presentation/methodologie.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img data-src="presentation/methodologie.svg" style="width:100.0%"></a></p>
-</section>
-
-<section id="evaluation-des-maxima" class="title-slide slide level1 center">
-<h1>Evaluation des maxima</h1>
-<div class="columns" style="display: flex; gap: 0px; margin: 0;">
-<div class="column" style="width:50%;">
-<div id="665b2d6f" class="cell" data-execution_count="3">
-<div class="cell-output cell-output-display">
-<div>
-<figure>
-<p><a href="presentation_files/figure-revealjs/cell-4-output-1.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img data-src="presentation_files/figure-revealjs/cell-4-output-1.svg"></a></p>
-</figure>
-</div>
-</div>
-</div>
-</div><div class="column" style="width:50%;">
-<ul>
-<li>La moyenne des maxima (- - -) : évaluation <em>spatiale</em><br>
-</li>
-<li>Les maxima annuels (—) : évaluation <em>temporelle</em></li>
-</ul>
-</div></div>
+<p><img data-src="presentation/methodologie.svg" style="width:100.0%"></p>
 <!--
+# Evaluation des maxima
+
+::: {.columns style="display: flex; gap: 0px; margin: 0;"}
+::: {.column width="50%"}
+
+::: {#d1bb51ce .cell execution_count=3}
+
+::: {.cell-output .cell-output-display}
+![](presentation_files/figure-revealjs/cell-4-output-1.svg){}
+:::
+:::
+
+
+:::
+
+::: {.column width="50%"}
+- La moyenne des maxima (- - -) : évaluation *spatiale*  
+- Les maxima annuels (---) : évaluation *temporelle* 
+:::
+
+:::
+
+
 # Niveau de retour $z_T$ 
 
 Le seuil que l’on ne dépasse **en moyenne** qu’une fois tous les $T$ années
@@ -227,7 +220,7 @@ Le seuil que l’on ne dépasse **en moyenne** qu’une fois tous les $T$ année
 ::: {.columns style="display: flex; gap: 0px; margin: 0;"}
 ::: {.column width="50%"}
 
-::: {#876e2861 .cell execution_count=4}
+::: {#30e2fd92 .cell execution_count=4}
 
 ::: {.cell-output .cell-output-display}
 ![](presentation_files/figure-revealjs/cell-5-output-1.svg){}
@@ -261,16 +254,13 @@ $$
 
 **Depuis 1990, le seuil correspondant à un épisode de pluie extrême qu’on ne voit qu’une fois tous les 10 ans<br/>a augmenté de 4,7 mm tous les 10 ans.**
 
+
+
+# Résultats statistiques descriptives
+
+![](presentation/resultats-1.svg){width=100%}
+
 -->
-</section>
-
-<section>
-<section id="résultats-statistiques-descriptives" class="title-slide slide level1 center">
-<h1>Résultats statistiques descriptives</h1>
-<p><a href="presentation/resultats-1.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img data-src="presentation/resultats-1.svg" style="width:100.0%"></a></p>
-</section>
-<section class="slide level2">
-
 <div id="jours_pluie_total" class="cell" data-execution_count="5">
 <div id="jours_pluie_total-1" class="cell-output cell-output-display">
 
@@ -417,20 +407,18 @@ $$
 </div>
 </div>
 <p><br><strong>Résultat semblable</strong></p>
-</section></section>
-<section>
-<section id="pluies-plus-fréquentes-en-plus-faibles-quantités" class="title-slide slide level1 center">
-<h1>Pluies plus fréquentes en plus faibles quantités</h1>
-<p><a href="presentation/bilan-1.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img data-src="presentation/bilan-1.svg" style="width:100.0%"></a></p>
 </section>
 <section class="slide level2">
 
-<!--
+<h2>
+Pluies plus fréquentes en plus faibles quantités
+</h2>
 
-::: {#moy_max_precipit_jour_total .cell execution_count=10}
+<img data-src="presentation/bilan-1.svg" style="width:100.0%" class="r-stretch"></section>
+<section class="slide level2">
 
-::: {#moy_max_precipit_jour_total-1 .cell-output .cell-output-display}
-```{=html}
+<div id="moy_max_precipit_jour_total" class="cell" data-execution_count="10">
+<div id="moy_max_precipit_jour_total-1" class="cell-output cell-output-display">
 
     <div style="font-size: 18px; color: #333;">
         <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">Moyenne des maxima des précipitations</p>
@@ -440,11 +428,8 @@ $$
         </p> 
     </div>
     
-```
-:::
-
-::: {#moy_max_precipit_jour_total-2 .cell-output .cell-output-display}
-```{=html}
+</div>
+<div id="moy_max_precipit_jour_total-2" class="cell-output cell-output-display">
 
         <div class="columns" style="display: flex; gap: 0px; margin: 0;">
             <div class="column" style="width: 50%;">
@@ -453,8 +438,7 @@ $$
         <div style="flex: 1; max-width: 220px; margin-left: 5px;">
         <div style="text-align: left; font-size: 13px;">mm/j</div>
         <div style="display: flex; flex-direction: row; align-items: center; height: 470px;">
-            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAABFCAYAAAChbH1cAAAAOnRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjEwLjEsIGh0dHBzOi8vbWF0cGxvdGxpYi5vcmcvc2/+5QAAAAlwSFlzAAAEnQAABJ0BfDRroQAAARZJREFUeJztmLEKwjAQhu/qVSxFdBMEFydxENSCs4ubT+O7+CI+hrubm+DkIoJUCnEqhthabf2HEw8KIWm/li+5Iw0TkSFQeCiwbriMkfDBFyBMj1Vhtz/Wwhl9Jqf9BM962AW597B12SGNAliV4M2LJLL9len37AE38t5a1J+yPHfg3cjy7rIqJ1E6kZkTfWnjCpeENRRadeGiERK+xMH1OtcLZ7MDZijy2/U6l0MAhJ/qOLhi5+cYCF9vcXC9zrGFK1j1cYXrGguKrdi50HEChO8XMLhe53rhHLYS4NbCFP15lg+9zmUY3XDwTi+BwRU7D0LYMieJ5riNi17n2AmdTXF88X0YW7PzbhN3+MfGmP/5+Q/B70/aLuCpD076AAAAAElFTkSuQmCC"
-                 style="height: 100%; width: 20px; border: 1px solid #ccc; border-radius: 5px;"/>
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAABFCAYAAAChbH1cAAAAOnRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjEwLjEsIGh0dHBzOi8vbWF0cGxvdGxpYi5vcmcvc2/+5QAAAAlwSFlzAAAEnQAABJ0BfDRroQAAARZJREFUeJztmLEKwjAQhu/qVSxFdBMEFydxENSCs4ubT+O7+CI+hrubm+DkIoJUCnEqhthabf2HEw8KIWm/li+5Iw0TkSFQeCiwbriMkfDBFyBMj1Vhtz/Wwhl9Jqf9BM962AW597B12SGNAliV4M2LJLL9len37AE38t5a1J+yPHfg3cjy7rIqJ1E6kZkTfWnjCpeENRRadeGiERK+xMH1OtcLZ7MDZijy2/U6l0MAhJ/qOLhi5+cYCF9vcXC9zrGFK1j1cYXrGguKrdi50HEChO8XMLhe53rhHLYS4NbCFP15lg+9zmUY3XDwTi+BwRU7D0LYMieJ5riNi17n2AmdTXF88X0YW7PzbhN3+MfGmP/5+Q/B70/aLuCpD076AAAAAElFTkSuQmCC" style="height: 100%; width: 20px; border: 1px solid #ccc; border-radius: 5px;">
             <div style="display: flex; flex-direction: column; justify-content: space-between; 
                         margin-left: 8px; height: 100%; font-size: 12px;">
                 <div>157.81</div><div>146.54</div><div>135.27</div><div>123.99</div><div>112.72</div><div>101.45</div><div>90.18</div><div>78.90</div><div>67.63</div><div>56.36</div><div>45.09</div><div>33.82</div><div>22.54</div><div>11.27</div><div>0.00</div>
@@ -462,8 +446,7 @@ $$
         </div>
     </div>
     </div>
-    </div>
-            <div class="column" style="width: 50%;">
+    </div><div class="column" style="width: 50%;">
     <div style="height: 490px; border: 1px solid #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px;">
         <iframe loading="lazy" src="assets/scatter_plot_jour_mean_max_total.html" width="100%" height="100%" frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
     </div>
@@ -471,36 +454,23 @@ $$
     <div class="metric-caption">
         <strong>r²</strong> = 0.929 &nbsp;|&nbsp; <strong>ME</strong> = -0.856 &nbsp;|&nbsp; <strong>n</strong> = 1353 (Tx NaN ≤ 0.15)
     </div>
-    </div>
-        </div>
+    </div></div>
         
-```
-:::
-
-::: {#moy_max_precipit_jour_total-3 .cell-output .cell-output-display}
-```{=html}
+</div>
+<div id="moy_max_precipit_jour_total-3" class="cell-output cell-output-display">
 Δ (AROME - Stations) : -0.856 mm/j (-1.7%)
-```
-:::
-:::
-
-
-::: {#cell-moy_max_precipit_jour_2000_MAX .cell execution_count=11}
-
-::: {#moy_max_precipit_jour_2000_max .cell-output .cell-output-display}
-```{=html}
+</div>
+</div>
+<div id="cell-moy_max_precipit_jour_2000_MAX" class="cell" data-execution_count="11">
+<div id="moy_max_precipit_jour_2000_max" class="cell-output cell-output-display">
 Δ (AROME - Stations) de 1990 à 2022 : -2.406 mm/j (-4.8%)
-```
-:::
-:::
+</div>
+</div>
+</section>
+<section class="slide level2">
 
-
----
-
-::: {#moy_max_precipit_horaire_2000_max .cell execution_count=12}
-
-::: {#moy_max_precipit_horaire_2000_max-1 .cell-output .cell-output-display}
-```{=html}
+<div id="moy_max_precipit_horaire_2000_max" class="cell" data-execution_count="12">
+<div id="moy_max_precipit_horaire_2000_max-1" class="cell-output cell-output-display">
 
     <div style="font-size: 18px; color: #333;">
         <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">Moyenne des maxima des précipitations</p>
@@ -510,11 +480,8 @@ $$
         </p> 
     </div>
     
-```
-:::
-
-::: {#moy_max_precipit_horaire_2000_max-2 .cell-output .cell-output-display}
-```{=html}
+</div>
+<div id="moy_max_precipit_horaire_2000_max-2" class="cell-output cell-output-display">
 
         <div class="columns" style="display: flex; gap: 0px; margin: 0;">
             <div class="column" style="width: 50%;">
@@ -523,8 +490,7 @@ $$
         <div style="flex: 1; max-width: 220px; margin-left: 5px;">
         <div style="text-align: left; font-size: 13px;">mm/h</div>
         <div style="display: flex; flex-direction: row; align-items: center; height: 470px;">
-            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAABFCAYAAAChbH1cAAAAOnRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjEwLjEsIGh0dHBzOi8vbWF0cGxvdGxpYi5vcmcvc2/+5QAAAAlwSFlzAAAEnQAABJ0BfDRroQAAARZJREFUeJztmLEKwjAQhu/qVSxFdBMEFydxENSCs4ubT+O7+CI+hrubm+DkIoJUCnEqhthabf2HEw8KIWm/li+5Iw0TkSFQeCiwbriMkfDBFyBMj1Vhtz/Wwhl9Jqf9BM962AW597B12SGNAliV4M2LJLL9len37AE38t5a1J+yPHfg3cjy7rIqJ1E6kZkTfWnjCpeENRRadeGiERK+xMH1OtcLZ7MDZijy2/U6l0MAhJ/qOLhi5+cYCF9vcXC9zrGFK1j1cYXrGguKrdi50HEChO8XMLhe53rhHLYS4NbCFP15lg+9zmUY3XDwTi+BwRU7D0LYMieJ5riNi17n2AmdTXF88X0YW7PzbhN3+MfGmP/5+Q/B70/aLuCpD076AAAAAElFTkSuQmCC"
-                 style="height: 100%; width: 20px; border: 1px solid #ccc; border-radius: 5px;"/>
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAABFCAYAAAChbH1cAAAAOnRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjEwLjEsIGh0dHBzOi8vbWF0cGxvdGxpYi5vcmcvc2/+5QAAAAlwSFlzAAAEnQAABJ0BfDRroQAAARZJREFUeJztmLEKwjAQhu/qVSxFdBMEFydxENSCs4ubT+O7+CI+hrubm+DkIoJUCnEqhthabf2HEw8KIWm/li+5Iw0TkSFQeCiwbriMkfDBFyBMj1Vhtz/Wwhl9Jqf9BM962AW597B12SGNAliV4M2LJLL9len37AE38t5a1J+yPHfg3cjy7rIqJ1E6kZkTfWnjCpeENRRadeGiERK+xMH1OtcLZ7MDZijy2/U6l0MAhJ/qOLhi5+cYCF9vcXC9zrGFK1j1cYXrGguKrdi50HEChO8XMLhe53rhHLYS4NbCFP15lg+9zmUY3XDwTi+BwRU7D0LYMieJ5riNi17n2AmdTXF88X0YW7PzbhN3+MfGmP/5+Q/B70/aLuCpD076AAAAAElFTkSuQmCC" style="height: 100%; width: 20px; border: 1px solid #ccc; border-radius: 5px;">
             <div style="display: flex; flex-direction: column; justify-content: space-between; 
                         margin-left: 8px; height: 100%; font-size: 12px;">
                 <div>39.77</div><div>36.93</div><div>34.09</div><div>31.25</div><div>28.41</div><div>25.57</div><div>22.73</div><div>19.89</div><div>17.05</div><div>14.20</div><div>11.36</div><div>8.52</div><div>5.68</div><div>2.84</div><div>0.00</div>
@@ -532,8 +498,7 @@ $$
         </div>
     </div>
     </div>
-    </div>
-            <div class="column" style="width: 50%;">
+    </div><div class="column" style="width: 50%;">
     <div style="height: 490px; border: 1px solid #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px;">
         <iframe loading="lazy" src="assets/scatter_plot_horaire_mean_max_2000.html" width="100%" height="100%" frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
     </div>
@@ -541,30 +506,20 @@ $$
     <div class="metric-caption">
         <strong>r²</strong> = 0.769 &nbsp;|&nbsp; <strong>ME</strong> = -3.395 &nbsp;|&nbsp; <strong>n</strong> = 383 (Tx NaN ≤ 0.15)
     </div>
-    </div>
-        </div>
+    </div></div>
         
-```
-:::
-
-::: {#moy_max_precipit_horaire_2000_max-3 .cell-output .cell-output-display}
-```{=html}
+</div>
+<div id="moy_max_precipit_horaire_2000_max-3" class="cell-output cell-output-display">
 Δ (AROME - Stations) : -3.395 mm/h (-18.4%)
-```
-:::
-:::
+</div>
+</div>
+</section>
+<section class="slide level2">
 
-
-Rappel : le cumul était bon donc les orages horaires les plus forts ont une faible emprise spatiale ? 
-
-
----
-
--->
 <!-- ::: {.columns style="display: flex; gap: 0px; margin: 0;"}
 ::: {.column width="50%"}
 
-::: {#62f0689f .cell execution_count=15}
+::: {#74342a75 .cell execution_count=15}
 
 ::: {.cell-output .cell-output-display}
 ```{=html}
@@ -605,7 +560,7 @@ Rappel : le cumul était bon donc les orages horaires les plus forts ont une fai
 :::
 ::: {.column width="50%"}
 
-::: {#770103bb .cell execution_count=16}
+::: {#cf893924 .cell execution_count=16}
 
 ::: {.cell-output .cell-output-display}
 ```{=html}
@@ -632,11 +587,11 @@ Rappel : le cumul était bon donc les orages horaires les plus forts ont une fai
 :::
 :::
 -->
-<div id="moyenne-max_vs_series-max_all" class="cell" data-execution_count="17">
-<div id="moyenne-max_vs_series-max_all-1" class="cell-output cell-output-display">
+<div id="87f99d82" class="cell" data-execution_count="17">
+<div class="cell-output cell-output-display">
 
     <div style="font-size: 18px; color: #333;">
-        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">Comparaison de la moyenne des maxima aux maxima annuels des précipitations suivant la saison et l'échelle</p>
+        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">Maxima annuels des précipitations suivant la saison et l'échelle temporelle</p>
         <p style="font-size: 18px; color: #3498db;">
             de <span style="font-weight: bold; color: #e74c3c;">1959</span> à <span style="font-weight: bold; color: #e74c3c;">2022</span> 
             pour l'échelle : <span style="font-weight: bold; color: #f39c12;">quotidien</span>
@@ -645,31 +600,49 @@ Rappel : le cumul était bon donc les orages horaires les plus forts ont une fai
         </p> 
     </div>    
 </div>
-<div id="moyenne-max_vs_series-max_all-2" class="cell-output cell-output-display">
+</div>
+<div class="columns" style="display: flex; gap: 0px; margin: 0;">
+<div class="column" style="width:40%;">
+<div id="d44cd0ea" class="cell" data-execution_count="18">
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="presentation_files/figure-revealjs/cell-19-output-1.svg"></p>
+</figure>
+</div>
+</div>
+</div>
+</div><div class="column" style="width:60%;">
+<div id="cell-moyenne-max_vs_series-max_ALL" class="cell" data-execution_count="19">
+<div id="moyenne-max_vs_series-max_all" class="cell-output cell-output-display">
 
     <div style="height: 490px; border: 1px solid #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px;">
         <iframe loading="lazy" src="assets/fig_r2_all_max.html" width="100%" height="100%" frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
     </div>
 </div>
 </div>
-</section></section>
-<section id="bonne-distribution-et-difficulté-évènementielle" class="title-slide slide level1 center">
-<h1>Bonne distribution et difficulté évènementielle</h1>
-<p><a href="presentation/bilan-2.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img data-src="presentation/bilan-2.svg" style="width:100.0%"></a></p>
-</section>
-
-<section>
-<section id="résultats-modélisation" class="title-slide slide level1 center">
-<h1>Résultats modélisation</h1>
-<p><a href="presentation/resultats-2.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img data-src="presentation/resultats-2.svg" style="width:100.0%"></a></p>
+</div></div>
+<p><br><br> <strong>Répartition des orages dans le temps jamais très bonne</strong></p>
 </section>
 <section class="slide level2">
 
+<h2>
+Bonne distribution et difficulté évènementielle
+</h2>
+
 <!--
+
+# Résultats modélisation
+
+![](presentation/resultats-2.svg){width=100%}
+
+---
+
+
 
 # Application GEV (μ, σ, ξ)
 
-::: {#cell-define_gev .cell execution_count=18}
+::: {#cell-define_gev .cell execution_count=20}
 
 ::: {.cell-output .cell-output-display}
 ![](presentation_files/figure-revealjs/define_gev-output-1.svg){#define_gev}
@@ -705,7 +678,7 @@ on a :
 
 ---
 
-::: {#cell-minimize_gev_aic_map .cell execution_count=19}
+::: {#cell-minimize_gev_aic_map .cell execution_count=21}
 
 ::: {#minimize_gev_aic_map .cell-output .cell-output-display}
 ```{=html}
@@ -726,7 +699,7 @@ on a :
 ::: {.columns style="display: flex; gap: 0px; margin: 0;"}
 ::: {.column width="50%"}
 
-::: {#7718efd5 .cell execution_count=20}
+::: {#9910c2d3 .cell execution_count=22}
 
 ::: {.cell-output .cell-output-display}
 ```{=html}
@@ -747,7 +720,7 @@ on a :
 
 ::: {.column width="50%"}
 
-::: {#8c271232 .cell execution_count=22}
+::: {#b17b46a6 .cell execution_count=24}
 
 ::: {.cell-output .cell-output-display}
 ```{=html}
@@ -795,7 +768,7 @@ $$
 
 ---
 
-::: {#22df23b8 .cell execution_count=24}
+::: {#7fcb247d .cell execution_count=26}
 
 ::: {.cell-output .cell-output-display}
 ```{=html}
@@ -836,7 +809,7 @@ $$
 ```
 :::
 
-::: {.cell-output .cell-output-display execution_count=54}
+::: {.cell-output .cell-output-display execution_count=26}
 ```
 {'modelised_load': shape: (87_536, 7)
  ┌───────────┬──────────────────────┬───────────┬───────────┬───────────┬─────────────┬────────────┐
@@ -978,7 +951,10 @@ $$
 ---
 
 -->
-<div id="cc3a0a1e" class="cell" data-execution_count="27">
+<img data-src="presentation/bilan-2.svg" style="width:100.0%" class="r-stretch"></section>
+<section class="slide level2">
+
+<div id="2b608d1d" class="cell" data-execution_count="29">
 <div class="cell-output cell-output-display">
 
         <div style="font-size: 18px; color: #333;">
@@ -1072,7 +1048,7 @@ JJA
 </section>
 <section class="slide level2">
 
-<div id="c95bbf7e" class="cell" data-execution_count="29">
+<div id="a0919f8e" class="cell" data-execution_count="31">
 <div class="cell-output cell-output-display">
 
         <div style="font-size: 18px; color: #333;">
@@ -1092,14 +1068,12 @@ figcaption { margin-top: .3rem; font-size: .9rem; }
 <thead>
 <tr>
 <th>
+</th>
+<th>
 SON
 </th>
 <th>
 OND
-</th>
-<th>
-</th>
-<th>
 </th>
 <th>
 </th>
@@ -1108,12 +1082,12 @@ OND
 <tbody>
 <tr>
 <td>
-<a href="presentation_files/map/quotidien_SON_rast_obs.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/quotidien_SON_norast_obs.svg" alt="SON"> </a>
+</td>
+<td>
+<a href="presentation_files/map/quotidien_SON_BIS_rast_obs.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/quotidien_SON_BIS_norast_obs.svg" alt="SON"> </a>
 </td>
 <td>
 <a href="presentation_files/map/quotidien_NOD_rast_obs.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/quotidien_NOD_norast_obs.svg" alt="DJF"> </a>
-</td>
-<td>
 </td>
 <td>
 </td>
@@ -1158,64 +1132,12 @@ Dec
 </tr>
 </tbody>
 </table>
-<!--
----
+</section>
+<section class="slide level2">
 
-::: {#aaf816e0 .cell execution_count=30}
-
-::: {.cell-output .cell-output-display}
-```{=html}
-
-        <div style="font-size: 18px; color: #333;">
-            <p><span style="font-size: 22px; font-weight: bold; color: #2c3e50;">Tendances relatives (%) du niveau de retour 10 ans estimée par le meilleur modèle</span>
-            <span style="font-size:18px;color:#3498db;white-space:nowrap;display:inline-block;margin:0;">
-            de <span style="font-weight:bold;color:#e74c3c">1985</span> à <span style="font-weight:bold;color:#e74c3c">2022</span> pour l'échelle : <span style="font-weight:bold;color:#f39c12">horaire</span>
-            </span>
-        </div>
-        
-```
-:::
-:::
-
-
-
-<table class="no-gutter caption-top" data-quarto-postprocess="true" data-border="0" data-cellspacing="0" data-cellpadding="0" style="width:100%; text-align:center;">
-<colgroup>
-<col style="width: 20%" />
-<col style="width: 20%" />
-<col style="width: 20%" />
-<col style="width: 20%" />
-<col style="width: 20%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th">SON</th>
-<th data-quarto-table-cell-role="th">DJF</th>
-<th data-quarto-table-cell-role="th">MAM</th>
-<th data-quarto-table-cell-role="th">JJA</th>
-<th style="text-align: center;" data-quarto-table-cell-role="th"></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><a href="presentation_files/map/horaire_SON_rast_mod.svg" target="_blank" rel="noopener"><img data-src="presentation_files/map/horaire_SON_norast_mod.svg" alt="SON" /></a></td>
-<td><a href="presentation_files/map/horaire_DJF_rast_mod.svg" target="_blank" rel="noopener"><img data-src="presentation_files/map/horaire_DJF_norast_mod.svg" alt="DJF" /></a></td>
-<td><a href="presentation_files/map/horaire_MAM_rast_mod.svg" target="_blank" rel="noopener"><img data-src="presentation_files/map/horaire_MAM_norast_mod.svg" alt="MAM" /></a></td>
-<td><a href="presentation_files/map/horaire_JJA_rast_mod.svg" target="_blank" rel="noopener"><img data-src="presentation_files/map/horaire_JJA_norast_mod.svg" alt="JJA" /></a></td>
-<td rowspan="2" style="text-align: center; vertical-align: middle;"><object type="image/svg+xml" data="presentation_files/map/horaire_legend.svg" width="40" height="600" class="legend-svg">
-</object></td>
-</tr>
-<tr class="even">
-<td><a href="presentation_files/map/horaire_SON_rast_obs.svg" target="_blank" rel="noopener"><img data-src="presentation_files/map/horaire_SON_norast_obs.svg" alt="SON" /></a></td>
-<td><a href="presentation_files/map/horaire_DJF_rast_obs.svg" target="_blank" rel="noopener"><img data-src="presentation_files/map/horaire_DJF_norast_obs.svg" alt="DJF" /></a></td>
-<td><a href="presentation_files/map/horaire_MAM_rast_obs.svg" target="_blank" rel="noopener"><img data-src="presentation_files/map/horaire_MAM_norast_obs.svg" alt="MAM" /></a></td>
-<td><a href="presentation_files/map/horaire_JJA_rast_obs.svg" target="_blank" rel="noopener"><img data-src="presentation_files/map/horaire_JJA_norast_obs.svg" alt="JJA" /></a></td>
-</tr>
-</tbody>
-</table>
-
-
--->
+<div class="fin">
+Merci.
+</div>
 
 </section></section>
     </div>
@@ -1600,38 +1522,6 @@ Dec
         }
       });
       </script>
-    <script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
-    (function() {
-      let previousOnload = window.onload;
-      window.onload = () => {
-        if (previousOnload) {
-          previousOnload();
-        }
-        lightboxQuarto.on('slide_before_load', (data) => {
-          const { slideIndex, slideNode, slideConfig, player, trigger } = data;
-          const href = trigger.getAttribute('href');
-          if (href !== null) {
-            const imgEl = window.document.querySelector(`a[href="${href}"] img`);
-            if (imgEl !== null) {
-              const srcAttr = imgEl.getAttribute("src");
-              if (srcAttr && srcAttr.startsWith("data:")) {
-                slideConfig.href = srcAttr;
-              }
-            }
-          } 
-        });
-      
-        lightboxQuarto.on('slide_after_load', (data) => {
-          const { slideIndex, slideNode, slideConfig, player, trigger } = data;
-          if (window.Quarto?.typesetMath) {
-            window.Quarto.typesetMath(slideNode);
-          }
-        });
-      
-      };
-      
-    })();
-              </script>
     
 
 </body></html>
