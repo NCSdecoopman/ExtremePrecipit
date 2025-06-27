@@ -6,7 +6,10 @@
 <script src="presentation_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="presentation_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="presentation_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="presentation_files/libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+<link href="presentation_files/libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="presentation_files/libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="presentation_files/libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="presentation_files/libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet"><meta charset="utf-8">
   <meta name="generator" content="quarto-1.7.32">
 
   <meta name="author" content=" Decoopman Nicolas M2 mathématiques et applications parcours statistique et science des données — Encadrement Juliette Blanchet (CNRS, IGE) et Antoine Blanc (RTM)">
@@ -144,67 +147,66 @@
 </section>
 <section id="contexte" class="title-slide slide level1 center">
 <h1>Contexte</h1>
-<div class="columns" style="display: flex; gap: 2; margin: 2;">
-<div class="column" style="width:60%;">
-<p><br></p>
+<div class="{.columns&quot;}">
+<div class="column" style="width:70%;">
+<!--l'air chaud contient plus d'humidité 
+
+- **CP** (Convection-Permitting) : résoudre explicitement les processus de convection dans l'atmosphère (≠ approximation)
+    * Simuler plus précisément la formation des nuages convectifs et des précipitations associées
+
+        * Données comme entrée ou condition initiale
+    * Données passées combinant des observations réelles avec des modèles
+    * Résolution 31 km, 1h, 137 niveaux d'atmosphère jusqu'à 80 km d'altitude
+
+    
+**Permet d'étudier les pluies extrêmes infra-journalières, difficiles à voir dans les anciens modèles**
+-->
+<h2>
+Réchauffement de la planète
+</h2>
 <ul>
-<li>Réchauffement de la planète (plus fort sur les continents que les océans)<br>
+<li>Plus fort sur les continents que les océans<br>
 </li>
-<li>L’air chaud contient plus d’humidité (Clausius–Clapeyron +7 % / °C)<br>
+<li>Clausius–Clapeyron +7 % / °C<br>
 </li>
 <li>L’air chaud monte, se refroidit, l’eau se condense sous forme de pluie</li>
 </ul>
-<p><br><br> <strong>En réponse au réchauffement, augmentation théorique des précipitations extrêmes</strong> variable suivant les changements de circulations atmosphériques</p>
+<h2>
+En réponse au réchauffement
+</h2>
 <ul>
-<li>Distinguer : tendances durables (changement climatique) <em>vs.</em> <br>variations naturelles (variabilité climatique)</li>
-<li>Utilisation de modèles de climat sur de longues périodes</li>
+<li>Augmentation <em>théorique</em> des précipitations extrêmes</li>
+<li>Variable suivant les changements de circulations atmosphériques</li>
 </ul>
 </div><div class="column" style="width:30%;">
-<p><img data-src="presentation/temperature.png" style="width:100.0%"></p>
+<p><a href="presentation/temperature.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img data-src="presentation/temperature.png" data-max-height="10px"></a></p>
 </div></div>
-</section>
-
-<section id="modèle-numérique" class="title-slide slide level1 center">
-<h1>Modèle numérique</h1>
 <h2>
-<strong>A</strong>pplication of <strong>R</strong>esearch to <strong>O</strong>perations at <strong>ME</strong>soscale
+Utilisation de modèles de climat sur de longues périodes
 </h2>
-<p><br><br></p>
 <ul>
-<li><strong>CP</strong> (Convection-Permitting) : résoudre explicitement les processus de convection dans l’atmosphère (≠ approximation)
-<ul>
-<li>Simuler plus précisément la formation des nuages convectifs et des précipitations associées</li>
-</ul></li>
-<li><strong>RCM</strong> (Regional Climate Model) : simuler le climat à des échelles plus petites que les modèles globaux
-<ul>
-<li><strong>Résolution spatiale</strong> : 2,5 km<br>
+<li>Tendances durables (changement climatique) <em>vs.</em> variations naturelles (variabilité climatique)<br>
 </li>
-<li><strong>Résolution temporelle</strong> : 1h</li>
-</ul></li>
-<li><strong>Forcer</strong> par réanalyse ERA5 (<em>ECMWF - C3S</em>)
-<ul>
-<li>Données comme entrée ou condition initiale</li>
-<li>Données passées combinant des observations réelles avec des modèles</li>
-<li>Résolution 31 km, 1h, 137 niveaux d’atmosphère jusqu’à 80 km d’altitude</li>
-</ul></li>
+<li>Modèle numérique <strong>A</strong>pplication of <strong>R</strong>esearch to <strong>O</strong>perations at <strong>ME</strong>soscale<br>
+</li>
+<li><strong>C</strong>onvection-<strong>P</strong>ermitting, <strong>R</strong>egional <strong>C</strong>limate <strong>M</strong>odel (2,5km - 1H), <strong>forcer</strong> par <strong>réanalyse</strong> ERA5</li>
 </ul>
-<p><strong>Permet d’étudier les pluies extrêmes infra-journalières, difficiles à voir dans les anciens modèles</strong></p>
 </section>
 
 <section id="méthodologie" class="title-slide slide level1 center">
 <h1>Méthodologie</h1>
-
-<img data-src="presentation/methodologie.svg" style="width:100.0%" class="r-stretch"></section>
+<p><a href="presentation/methodologie.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img data-src="presentation/methodologie.svg" style="width:100.0%"></a></p>
+</section>
 
 <section id="evaluation-des-maxima" class="title-slide slide level1 center">
 <h1>Evaluation des maxima</h1>
 <div class="columns" style="display: flex; gap: 0px; margin: 0;">
 <div class="column" style="width:50%;">
-<div id="d52bb60a" class="cell" data-execution_count="3">
+<div id="665b2d6f" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="presentation_files/figure-revealjs/cell-4-output-1.svg"></p>
+<p><a href="presentation_files/figure-revealjs/cell-4-output-1.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img data-src="presentation_files/figure-revealjs/cell-4-output-1.svg"></a></p>
 </figure>
 </div>
 </div>
@@ -225,7 +227,7 @@ Le seuil que l’on ne dépasse **en moyenne** qu’une fois tous les $T$ année
 ::: {.columns style="display: flex; gap: 0px; margin: 0;"}
 ::: {.column width="50%"}
 
-::: {#8769cdd8 .cell execution_count=4}
+::: {#876e2861 .cell execution_count=4}
 
 ::: {.cell-output .cell-output-display}
 ![](presentation_files/figure-revealjs/cell-5-output-1.svg){}
@@ -265,8 +267,8 @@ $$
 <section>
 <section id="résultats-statistiques-descriptives" class="title-slide slide level1 center">
 <h1>Résultats statistiques descriptives</h1>
-
-<img data-src="presentation/resultats-1.svg" style="width:100.0%" class="r-stretch"></section>
+<p><a href="presentation/resultats-1.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img data-src="presentation/resultats-1.svg" style="width:100.0%"></a></p>
+</section>
 <section class="slide level2">
 
 <div id="jours_pluie_total" class="cell" data-execution_count="5">
@@ -419,8 +421,8 @@ $$
 <section>
 <section id="pluies-plus-fréquentes-en-plus-faibles-quantités" class="title-slide slide level1 center">
 <h1>Pluies plus fréquentes en plus faibles quantités</h1>
-
-<img data-src="presentation/bilan-1.svg" style="width:100.0%" class="r-stretch"></section>
+<p><a href="presentation/bilan-1.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img data-src="presentation/bilan-1.svg" style="width:100.0%"></a></p>
+</section>
 <section class="slide level2">
 
 <!--
@@ -562,7 +564,7 @@ Rappel : le cumul était bon donc les orages horaires les plus forts ont une fai
 <!-- ::: {.columns style="display: flex; gap: 0px; margin: 0;"}
 ::: {.column width="50%"}
 
-::: {#04f54f1a .cell execution_count=15}
+::: {#62f0689f .cell execution_count=15}
 
 ::: {.cell-output .cell-output-display}
 ```{=html}
@@ -603,7 +605,7 @@ Rappel : le cumul était bon donc les orages horaires les plus forts ont une fai
 :::
 ::: {.column width="50%"}
 
-::: {#50a38223 .cell execution_count=16}
+::: {#770103bb .cell execution_count=16}
 
 ::: {.cell-output .cell-output-display}
 ```{=html}
@@ -653,14 +655,14 @@ Rappel : le cumul était bon donc les orages horaires les plus forts ont une fai
 </section></section>
 <section id="bonne-distribution-et-difficulté-évènementielle" class="title-slide slide level1 center">
 <h1>Bonne distribution et difficulté évènementielle</h1>
-
-<img data-src="presentation/bilan-2.svg" style="width:100.0%" class="r-stretch"></section>
+<p><a href="presentation/bilan-2.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img data-src="presentation/bilan-2.svg" style="width:100.0%"></a></p>
+</section>
 
 <section>
 <section id="résultats-modélisation" class="title-slide slide level1 center">
 <h1>Résultats modélisation</h1>
-
-<img data-src="presentation/resultats-2.svg" style="width:100.0%" class="r-stretch"></section>
+<p><a href="presentation/resultats-2.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img data-src="presentation/resultats-2.svg" style="width:100.0%"></a></p>
+</section>
 <section class="slide level2">
 
 <!--
@@ -724,7 +726,7 @@ on a :
 ::: {.columns style="display: flex; gap: 0px; margin: 0;"}
 ::: {.column width="50%"}
 
-::: {#1ba2be5e .cell execution_count=20}
+::: {#7718efd5 .cell execution_count=20}
 
 ::: {.cell-output .cell-output-display}
 ```{=html}
@@ -745,7 +747,7 @@ on a :
 
 ::: {.column width="50%"}
 
-::: {#ef1095d2 .cell execution_count=22}
+::: {#8c271232 .cell execution_count=22}
 
 ::: {.cell-output .cell-output-display}
 ```{=html}
@@ -793,7 +795,7 @@ $$
 
 ---
 
-::: {#d93eee95 .cell execution_count=24}
+::: {#22df23b8 .cell execution_count=24}
 
 ::: {.cell-output .cell-output-display}
 ```{=html}
@@ -823,7 +825,7 @@ $$
                  style="height: 100%; width: 20px; border: 1px solid #ccc; border-radius: 5px;"/>
             <div style="display: flex; flex-direction: column; justify-content: space-between; 
                         margin-left: 8px; height: 100%; font-size: 12px;">
-                <div>28.43</div><div>24.37</div><div>20.30</div><div>16.24</div><div>12.18</div><div>8.12</div><div>4.06</div><div>0.00</div><div>-4.06</div><div>-8.12</div><div>-12.18</div><div>-16.24</div><div>-20.30</div><div>-24.37</div><div>-28.43</div>
+                <div>91.34</div><div>78.29</div><div>65.24</div><div>52.19</div><div>39.15</div><div>26.10</div><div>13.05</div><div>0.00</div><div>-13.05</div><div>-26.10</div><div>-39.15</div><div>-52.19</div><div>-65.24</div><div>-78.29</div><div>-91.34</div>
             </div>
         </div>
     </div>
@@ -834,144 +836,138 @@ $$
 ```
 :::
 
-::: {.cell-output .cell-output-display execution_count=24}
+::: {.cell-output .cell-output-display execution_count=54}
 ```
-{'modelised_load': shape: (87_536, 6)
- ┌───────────┬──────────────────────┬───────────┬───────────┬───────────┬─────────────┐
- │ NUM_POSTE ┆ model                ┆ z_T1      ┆ ic_lower  ┆ ic_upper  ┆ significant │
- │ ---       ┆ ---                  ┆ ---       ┆ ---       ┆ ---       ┆ ---         │
- │ str       ┆ str                  ┆ f64       ┆ f64       ┆ f64       ┆ bool        │
- ╞═══════════╪══════════════════════╪═══════════╪═══════════╪═══════════╪═════════════╡
- │ 53484     ┆ ns_gev_m3_break_year ┆ 3.23893   ┆ 2.266359  ┆ 4.232098  ┆ true        │
- │ 76290     ┆ ns_gev_m1_break_year ┆ -1.427591 ┆ -2.612648 ┆ -0.170862 ┆ true        │
- │ 68817     ┆ ns_gev_m1_break_year ┆ 0.659319  ┆ -0.131773 ┆ 1.506179  ┆ false       │
- │ 76552     ┆ ns_gev_m2_break_year ┆ 1.733544  ┆ 0.192653  ┆ 2.897626  ┆ true        │
- │ 44043     ┆ ns_gev_m1            ┆ 0.259633  ┆ -0.497484 ┆ 1.022347  ┆ false       │
- │ …         ┆ …                    ┆ …         ┆ …         ┆ …         ┆ …           │
- │ 70913     ┆ ns_gev_m2_break_year ┆ -0.861754 ┆ -2.479779 ┆ 0.535949  ┆ false       │
- │ 77990     ┆ ns_gev_m1            ┆ -0.595606 ┆ -1.438655 ┆ 0.249486  ┆ false       │
- │ 35784     ┆ ns_gev_m2_break_year ┆ 1.980405  ┆ -0.23419  ┆ 3.656294  ┆ false       │
- │ 78907     ┆ ns_gev_m3            ┆ -1.472248 ┆ -2.016669 ┆ -0.945982 ┆ true        │
- │ 82447     ┆ ns_gev_m1_break_year ┆ -1.166412 ┆ -2.252976 ┆ -0.058794 ┆ true        │
- └───────────┴──────────────────────┴───────────┴───────────┴───────────┴─────────────┘,
- 'observed_load': shape: (1_721, 6)
- ┌───────────┬──────────────────────┬───────────┬───────────┬───────────┬─────────────┐
- │ NUM_POSTE ┆ model                ┆ z_T1      ┆ ic_lower  ┆ ic_upper  ┆ significant │
- │ ---       ┆ ---                  ┆ ---       ┆ ---       ┆ ---       ┆ ---         │
- │ str       ┆ str                  ┆ f64       ┆ f64       ┆ f64       ┆ bool        │
- ╞═══════════╪══════════════════════╪═══════════╪═══════════╪═══════════╪═════════════╡
- │ 72042001  ┆ ns_gev_m1            ┆ -0.575003 ┆ -1.387693 ┆ 0.229216  ┆ false       │
- │ 48009001  ┆ ns_gev_m1_break_year ┆ 1.516425  ┆ -0.555742 ┆ 3.696043  ┆ false       │
- │ 5110001   ┆ ns_gev_m2            ┆ 2.734193  ┆ 0.486267  ┆ 4.645252  ┆ true        │
- │ 25021001  ┆ ns_gev_m2            ┆ 2.110252  ┆ 0.346017  ┆ 3.477466  ┆ true        │
- │ 26047001  ┆ ns_gev_m1_break_year ┆ 3.373492  ┆ 1.053304  ┆ 5.758449  ┆ true        │
- │ …         ┆ …                    ┆ …         ┆ …         ┆ …         ┆ …           │
- │ 7144001   ┆ ns_gev_m3            ┆ 18.328537 ┆ 11.314617 ┆ 25.453207 ┆ true        │
- │ 21056001  ┆ ns_gev_m1            ┆ 0.954146  ┆ 0.082506  ┆ 1.857395  ┆ true        │
- │ 55117001  ┆ ns_gev_m3_break_year ┆ -7.24299  ┆ -9.288982 ┆ -4.881779 ┆ true        │
- │ 91027002  ┆ ns_gev_m3            ┆ -1.617963 ┆ -2.310449 ┆ -0.948684 ┆ true        │
- │ 81182001  ┆ ns_gev_m2            ┆ 2.963214  ┆ -0.112286 ┆ 5.693877  ┆ false       │
- └───────────┴──────────────────────┴───────────┴───────────┴───────────┴─────────────┘,
- 'modelised': shape: (87_536, 9)
- ┌───────────┬─────────────┬───────────┬───────────┬───┬────────────┬───────────┬────────┬──────────┐
- │ NUM_POSTE ┆ model       ┆ z_T1      ┆ ic_lower  ┆ … ┆ significan ┆ lat       ┆ lon    ┆ altitude │
- │ ---       ┆ ---         ┆ ---       ┆ ---       ┆   ┆ t          ┆ ---       ┆ ---    ┆ ---      │
- │ i32       ┆ str         ┆ f64       ┆ f64       ┆   ┆ ---        ┆ f32       ┆ f32    ┆ i32      │
- │           ┆             ┆           ┆           ┆   ┆ bool       ┆           ┆        ┆          │
- ╞═══════════╪═════════════╪═══════════╪═══════════╪═══╪════════════╪═══════════╪════════╪══════════╡
- │ 53484     ┆ ns_gev_m3_b ┆ 3.23893   ┆ 2.266359  ┆ … ┆ true       ┆ 47.418098 ┆ 0.3131 ┆ 87       │
- │           ┆ reak_year   ┆           ┆           ┆   ┆            ┆           ┆        ┆          │
- │ 76290     ┆ ns_gev_m1_b ┆ -1.427591 ┆ -2.612648 ┆ … ┆ true       ┆ 49.008598 ┆ 5.1766 ┆ 235      │
- │           ┆ reak_year   ┆           ┆           ┆   ┆            ┆           ┆        ┆          │
- │ 68817     ┆ ns_gev_m1_b ┆ 0.659319  ┆ -0.131773 ┆ … ┆ false      ┆ 48.522999 ┆ 2.9344 ┆ 119      │
- │           ┆ reak_year   ┆           ┆           ┆   ┆            ┆           ┆        ┆          │
- │ 76552     ┆ ns_gev_m2_b ┆ 1.733544  ┆ 0.192653  ┆ … ┆ true       ┆ 49.0275   ┆ 3.8069 ┆ 238      │
- │           ┆ reak_year   ┆           ┆           ┆   ┆            ┆           ┆        ┆          │
- │ 44043     ┆ ns_gev_m1   ┆ 0.259633  ┆ -0.497484 ┆ … ┆ false      ┆ 46.689499 ┆ 3.7184 ┆ 242      │
- │ …         ┆ …           ┆ …         ┆ …         ┆ … ┆ …          ┆ …         ┆ …      ┆ …        │
- │ 70913     ┆ ns_gev_m2_b ┆ -0.861754 ┆ -2.479779 ┆ … ┆ false      ┆ 48.593498 ┆ 0.4507 ┆ 215      │
- │           ┆ reak_year   ┆           ┆           ┆   ┆            ┆           ┆        ┆          │
- │ 77990     ┆ ns_gev_m1   ┆ -0.595606 ┆ -1.438655 ┆ … ┆ false      ┆ 49.143799 ┆ 4.6627 ┆ 165      │
- │ 35784     ┆ ns_gev_m2_b ┆ 1.980405  ┆ -0.23419  ┆ … ┆ false      ┆ 45.9002   ┆ 2.1828 ┆ 563      │
- │           ┆ reak_year   ┆           ┆           ┆   ┆            ┆           ┆        ┆          │
- │ 78907     ┆ ns_gev_m3   ┆ -1.472248 ┆ -2.016669 ┆ … ┆ true       ┆ 49.190701 ┆ 1.5699 ┆ 120      │
- │ 82447     ┆ ns_gev_m1_b ┆ -1.166412 ┆ -2.252976 ┆ … ┆ true       ┆ 49.592602 ┆ 4.5923 ┆ 208      │
- │           ┆ reak_year   ┆           ┆           ┆   ┆            ┆           ┆        ┆          │
- └───────────┴─────────────┴───────────┴───────────┴───┴────────────┴───────────┴────────┴──────────┘,
- 'observed': shape: (1_721, 9)
- ┌───────────┬────────────┬───────────┬───────────┬───┬───────────┬───────────┬──────────┬──────────┐
- │ NUM_POSTE ┆ model      ┆ z_T1      ┆ ic_lower  ┆ … ┆ significa ┆ lat       ┆ lon      ┆ altitude │
- │ ---       ┆ ---        ┆ ---       ┆ ---       ┆   ┆ nt        ┆ ---       ┆ ---      ┆ ---      │
- │ i32       ┆ str        ┆ f64       ┆ f64       ┆   ┆ ---       ┆ f32       ┆ f32      ┆ i32      │
- │           ┆            ┆           ┆           ┆   ┆ bool      ┆           ┆          ┆          │
- ╞═══════════╪════════════╪═══════════╪═══════════╪═══╪═══════════╪═══════════╪══════════╪══════════╡
- │ 72042001  ┆ ns_gev_m1  ┆ -0.575003 ┆ -1.387693 ┆ … ┆ false     ┆ 47.984333 ┆ 0.491833 ┆ 134      │
- │ 48009001  ┆ ns_gev_m1_ ┆ 1.516425  ┆ -0.555742 ┆ … ┆ false     ┆ 44.727165 ┆ 3.279833 ┆ 1018     │
- │           ┆ break_year ┆           ┆           ┆   ┆           ┆           ┆          ┆          │
- │ 5110001   ┆ ns_gev_m2  ┆ 2.734193  ┆ 0.486267  ┆ … ┆ true      ┆ 44.828835 ┆ 6.492667 ┆ 1388     │
- │ 25021001  ┆ ns_gev_m2  ┆ 2.110252  ┆ 0.346017  ┆ … ┆ true      ┆ 47.031502 ┆ 5.782    ┆ 235      │
- │ 26047001  ┆ ns_gev_m1_ ┆ 3.373492  ┆ 1.053304  ┆ … ┆ true      ┆ 44.535168 ┆ 5.454333 ┆ 1017     │
- │           ┆ break_year ┆           ┆           ┆   ┆           ┆           ┆          ┆          │
- │ …         ┆ …          ┆ …         ┆ …         ┆ … ┆ …         ┆ …         ┆ …        ┆ …        │
- │ 7144001   ┆ ns_gev_m3  ┆ 18.328537 ┆ 11.314617 ┆ … ┆ true      ┆ 44.599834 ┆ 4.049333 ┆ 1220     │
- │ 21056001  ┆ ns_gev_m1  ┆ 0.954146  ┆ 0.082506  ┆ … ┆ true      ┆ 47.413834 ┆ 5.208333 ┆ 250      │
- │ 55117001  ┆ ns_gev_m3_ ┆ -7.24299  ┆ -9.288982 ┆ … ┆ true      ┆ 49.104168 ┆ 5.079667 ┆ 230      │
- │           ┆ break_year ┆           ┆           ┆   ┆           ┆           ┆          ┆          │
- │ 91027002  ┆ ns_gev_m3  ┆ -1.617963 ┆ -2.310449 ┆ … ┆ true      ┆ 48.717999 ┆ 2.397    ┆ 86       │
- │ 81182001  ┆ ns_gev_m2  ┆ 2.963214  ┆ -0.112286 ┆ … ┆ false     ┆ 43.716167 ┆ 2.321167 ┆ 508      │
- └───────────┴────────────┴───────────┴───────────┴───┴───────────┴───────────┴──────────┴──────────┘,
- 'modelised_show': shape: (37_776, 9)
+{'modelised_load': shape: (87_536, 7)
+ ┌───────────┬──────────────────────┬───────────┬───────────┬───────────┬─────────────┬────────────┐
+ │ NUM_POSTE ┆ model                ┆ z_T1      ┆ ic_lower  ┆ ic_upper  ┆ significant ┆ z_T_p      │
+ │ ---       ┆ ---                  ┆ ---       ┆ ---       ┆ ---       ┆ ---         ┆ ---        │
+ │ str       ┆ str                  ┆ f64       ┆ f64       ┆ f64       ┆ bool        ┆ f64        │
+ ╞═══════════╪══════════════════════╪═══════════╪═══════════╪═══════════╪═════════════╪════════════╡
+ │ 31723     ┆ ns_gev_m1_break_year ┆ -0.952891 ┆ -2.449038 ┆ 0.667309  ┆ false       ┆ -6.499884  │
+ │ 1182      ┆ ns_gev_m2_break_year ┆ -4.067052 ┆ -14.08054 ┆ 3.470999  ┆ false       ┆ -12.720817 │
+ │ 4853      ┆ ns_gev_m1            ┆ -1.119587 ┆ -2.133829 ┆ -0.101161 ┆ true        ┆ -8.97155   │
+ │ 82977     ┆ ns_gev_m2            ┆ -0.894137 ┆ -2.57863  ┆ 0.92253   ┆ false       ┆ -6.675699  │
+ │ 25432     ┆ ns_gev_m1            ┆ 0.263014  ┆ -0.590342 ┆ 1.110528  ┆ false       ┆ 2.366242   │
+ │ …         ┆ …                    ┆ …         ┆ …         ┆ …         ┆ …           ┆ …          │
+ │ 76156     ┆ ns_gev_m1            ┆ -0.453737 ┆ -1.13198  ┆ 0.211598  ┆ false       ┆ -4.853518  │
+ │ 46139     ┆ ns_gev_m1_break_year ┆ 0.686316  ┆ -0.247581 ┆ 1.673456  ┆ false       ┆ 6.53331    │
+ │ 5240      ┆ ns_gev_m1            ┆ -0.942959 ┆ -1.856862 ┆ -0.014576 ┆ true        ┆ -7.938955  │
+ │ 27263     ┆ ns_gev_m2            ┆ -0.842763 ┆ -3.264424 ┆ 1.938646  ┆ false       ┆ -4.516212  │
+ │ 48104     ┆ ns_gev_m2_break_year ┆ -0.827517 ┆ -2.769237 ┆ 0.772524  ┆ false       ┆ -8.199662  │
+ └───────────┴──────────────────────┴───────────┴───────────┴───────────┴─────────────┴────────────┘,
+ 'observed_load': shape: (1_721, 7)
+ ┌───────────┬──────────────────────┬───────────┬───────────┬───────────┬─────────────┬────────────┐
+ │ NUM_POSTE ┆ model                ┆ z_T1      ┆ ic_lower  ┆ ic_upper  ┆ significant ┆ z_T_p      │
+ │ ---       ┆ ---                  ┆ ---       ┆ ---       ┆ ---       ┆ ---         ┆ ---        │
+ │ str       ┆ str                  ┆ f64       ┆ f64       ┆ f64       ┆ bool        ┆ f64        │
+ ╞═══════════╪══════════════════════╪═══════════╪═══════════╪═══════════╪═════════════╪════════════╡
+ │ 15168001  ┆ ns_gev_m2            ┆ 0.711396  ┆ -2.163263 ┆ 3.378075  ┆ false       ┆ 4.438698   │
+ │ 46160001  ┆ ns_gev_m3            ┆ -0.185039 ┆ -1.542545 ┆ 1.233415  ┆ false       ┆ -0.922525  │
+ │ 2722002   ┆ ns_gev_m1            ┆ -0.286452 ┆ -1.033251 ┆ 0.41717   ┆ false       ┆ -2.82235   │
+ │ 52529001  ┆ ns_gev_m1            ┆ 0.612526  ┆ -0.339829 ┆ 1.572858  ┆ false       ┆ 4.660483   │
+ │ 28018001  ┆ ns_gev_m1            ┆ -0.588287 ┆ -1.452842 ┆ 0.271166  ┆ false       ┆ -5.389571  │
+ │ …         ┆ …                    ┆ …         ┆ …         ┆ …         ┆ …           ┆ …          │
+ │ 89131001  ┆ ns_gev_m1            ┆ 0.445029  ┆ -0.285045 ┆ 1.196865  ┆ false       ┆ 4.306087   │
+ │ 35260001  ┆ ns_gev_m2_break_year ┆ -1.988027 ┆ -3.996092 ┆ -0.41992  ┆ true        ┆ -17.382839 │
+ │ 7012001   ┆ ns_gev_m1_break_year ┆ 7.254394  ┆ 0.334856  ┆ 14.64394  ┆ true        ┆ 15.929747  │
+ │ 83137001  ┆ ns_gev_m2_break_year ┆ 8.093542  ┆ 1.413841  ┆ 12.629878 ┆ true        ┆ 34.43337   │
+ │ 42328001  ┆ ns_gev_m2            ┆ 2.895977  ┆ -1.160215 ┆ 5.560156  ┆ false       ┆ 15.52674   │
+ └───────────┴──────────────────────┴───────────┴───────────┴───────────┴─────────────┴────────────┘,
+ 'modelised': shape: (87_536, 10)
  ┌───────────┬────────────┬───────────┬───────────┬───┬────────────┬───────────┬─────────┬──────────┐
- │ NUM_POSTE ┆ model      ┆ z_T1      ┆ ic_lower  ┆ … ┆ significan ┆ lat       ┆ lon     ┆ altitude │
- │ ---       ┆ ---        ┆ ---       ┆ ---       ┆   ┆ t          ┆ ---       ┆ ---     ┆ ---      │
- │ i32       ┆ str        ┆ f64       ┆ f64       ┆   ┆ ---        ┆ f32       ┆ f32     ┆ i32      │
- │           ┆            ┆           ┆           ┆   ┆ bool       ┆           ┆         ┆          │
+ │ NUM_POSTE ┆ model      ┆ z_T1      ┆ ic_lower  ┆ … ┆ z_T_p      ┆ lat       ┆ lon     ┆ altitude │
+ │ ---       ┆ ---        ┆ ---       ┆ ---       ┆   ┆ ---        ┆ ---       ┆ ---     ┆ ---      │
+ │ i32       ┆ str        ┆ f64       ┆ f64       ┆   ┆ f64        ┆ f32       ┆ f32     ┆ i32      │
  ╞═══════════╪════════════╪═══════════╪═══════════╪═══╪════════════╪═══════════╪═════════╪══════════╡
- │ 29758     ┆ ns_gev_m3_ ┆ -8.837349 ┆ -10.06155 ┆ … ┆ true       ┆ 45.327599 ┆ 1.0256  ┆ 169      │
+ │ 31723     ┆ ns_gev_m1_ ┆ -0.952891 ┆ -2.449038 ┆ … ┆ -6.499884  ┆ 45.533298 ┆ 6.6294  ┆ 1241     │
  │           ┆ break_year ┆           ┆           ┆   ┆            ┆           ┆         ┆          │
- │ 27659     ┆ ns_gev_m3  ┆ 2.573038  ┆ 1.556709  ┆ … ┆ true       ┆ 45.0924   ┆ -0.3617 ┆ 43       │
- │ 6818      ┆ ns_gev_m2  ┆ 0.708318  ┆ -2.348363 ┆ … ┆ false      ┆ 43.413601 ┆ 1.6769  ┆ 169      │
- │ 9179      ┆ ns_gev_m1_ ┆ 1.945374  ┆ 0.0223    ┆ … ┆ true       ┆ 43.477901 ┆ -1.5201 ┆ 44       │
+ │ 1182      ┆ ns_gev_m2_ ┆ -4.067052 ┆ -14.08054 ┆ … ┆ -12.720817 ┆ 42.482101 ┆ 2.1223  ┆ 1764     │
  │           ┆ break_year ┆           ┆           ┆   ┆            ┆           ┆         ┆          │
- │ 10882     ┆ ns_gev_m1_ ┆ 1.867002  ┆ 0.352717  ┆ … ┆ true       ┆ 43.620998 ┆ -1.3803 ┆ 10       │
- │           ┆ break_year ┆           ┆           ┆   ┆            ┆           ┆         ┆          │
+ │ 4853      ┆ ns_gev_m1  ┆ -1.119587 ┆ -2.133829 ┆ … ┆ -8.97155   ┆ 43.185799 ┆ 0.8878  ┆ 355      │
+ │ 82977     ┆ ns_gev_m2  ┆ -0.894137 ┆ -2.57863  ┆ … ┆ -6.675699  ┆ 49.509602 ┆ -1.7055 ┆ 113      │
+ │ 25432     ┆ ns_gev_m1  ┆ 0.263014  ┆ -0.590342 ┆ … ┆ 2.366242   ┆ 44.896301 ┆ -0.2165 ┆ 9        │
  │ …         ┆ …          ┆ …         ┆ …         ┆ … ┆ …          ┆ …         ┆ …       ┆ …        │
- │ 3930      ┆ ns_gev_m1  ┆ -0.895394 ┆ -2.531258 ┆ … ┆ false      ┆ 43.034    ┆ -0.0862 ┆ 638      │
- │ 5243      ┆ ns_gev_m1  ┆ -0.775898 ┆ -1.683598 ┆ … ┆ false      ┆ 43.228401 ┆ 0.8232  ┆ 356      │
- │ 31589     ┆ ns_gev_m1_ ┆ -1.273796 ┆ -2.642396 ┆ … ┆ false      ┆ 45.521099 ┆ 2.329   ┆ 647      │
+ │ 76156     ┆ ns_gev_m1  ┆ -0.453737 ┆ -1.13198  ┆ … ┆ -4.853518  ┆ 48.935902 ┆ 0.5933  ┆ 200      │
+ │ 46139     ┆ ns_gev_m1_ ┆ 0.686316  ┆ -0.247581 ┆ … ┆ 6.53331    ┆ 46.7015   ┆ -1.9282 ┆ 9        │
  │           ┆ break_year ┆           ┆           ┆   ┆            ┆           ┆         ┆          │
- │ 2227      ┆ ns_gev_m2  ┆ -3.114766 ┆ -5.594614 ┆ … ┆ true       ┆ 42.746101 ┆ 0.5502  ┆ 1656     │
- │ 35784     ┆ ns_gev_m2_ ┆ 1.980405  ┆ -0.23419  ┆ … ┆ false      ┆ 45.9002   ┆ 2.1828  ┆ 563      │
+ │ 5240      ┆ ns_gev_m1  ┆ -0.942959 ┆ -1.856862 ┆ … ┆ -7.938955  ┆ 43.224998 ┆ 0.7309  ┆ 364      │
+ │ 27263     ┆ ns_gev_m2  ┆ -0.842763 ┆ -3.264424 ┆ … ┆ -4.516212  ┆ 45.152199 ┆ 3.0468  ┆ 1006     │
+ │ 48104     ┆ ns_gev_m2_ ┆ -0.827517 ┆ -2.769237 ┆ … ┆ -8.199662  ┆ 47.034599 ┆ 2.6558  ┆ 169      │
  │           ┆ break_year ┆           ┆           ┆   ┆            ┆           ┆         ┆          │
  └───────────┴────────────┴───────────┴───────────┴───┴────────────┴───────────┴─────────┴──────────┘,
- 'observed_show': shape: (840, 9)
+ 'observed': shape: (1_721, 10)
+ ┌───────────┬───────────┬───────────┬───────────┬───┬───────────┬───────────┬───────────┬──────────┐
+ │ NUM_POSTE ┆ model     ┆ z_T1      ┆ ic_lower  ┆ … ┆ z_T_p     ┆ lat       ┆ lon       ┆ altitude │
+ │ ---       ┆ ---       ┆ ---       ┆ ---       ┆   ┆ ---       ┆ ---       ┆ ---       ┆ ---      │
+ │ i32       ┆ str       ┆ f64       ┆ f64       ┆   ┆ f64       ┆ f32       ┆ f32       ┆ i32      │
+ ╞═══════════╪═══════════╪═══════════╪═══════════╪═══╪═══════════╪═══════════╪═══════════╪══════════╡
+ │ 15168001  ┆ ns_gev_m2 ┆ 0.711396  ┆ -2.163263 ┆ … ┆ 4.438698  ┆ 45.001167 ┆ 3.221     ┆ 900      │
+ │ 46160001  ┆ ns_gev_m3 ┆ -0.185039 ┆ -1.542545 ┆ … ┆ -0.922525 ┆ 44.799999 ┆ 2.067833  ┆ 658      │
+ │ 2722002   ┆ ns_gev_m1 ┆ -0.286452 ┆ -1.033251 ┆ … ┆ -2.82235  ┆ 49.390667 ┆ 3.310667  ┆ 40       │
+ │ 52529001  ┆ ns_gev_m1 ┆ 0.612526  ┆ -0.339829 ┆ … ┆ 4.660483  ┆ 47.738499 ┆ 5.313833  ┆ 296      │
+ │ 28018001  ┆ ns_gev_m1 ┆ -0.588287 ┆ -1.452842 ┆ … ┆ -5.389571 ┆ 48.199669 ┆ 0.886667  ┆ 233      │
+ │ …         ┆ …         ┆ …         ┆ …         ┆ … ┆ …         ┆ …         ┆ …         ┆ …        │
+ │ 89131001  ┆ ns_gev_m1 ┆ 0.445029  ┆ -0.285045 ┆ … ┆ 4.306087  ┆ 47.852001 ┆ 4.2245    ┆ 291      │
+ │ 35260001  ┆ ns_gev_m2 ┆ -1.988027 ┆ -3.996092 ┆ … ┆ -17.38283 ┆ 48.227165 ┆ -1.247333 ┆ 125      │
+ │           ┆ _break_ye ┆           ┆           ┆   ┆ 9         ┆           ┆           ┆          │
+ │           ┆ ar        ┆           ┆           ┆   ┆           ┆           ┆           ┆          │
+ │ 7012001   ┆ ns_gev_m1 ┆ 7.254394  ┆ 0.334856  ┆ … ┆ 15.929747 ┆ 44.891335 ┆ 4.307167  ┆ 662      │
+ │           ┆ _break_ye ┆           ┆           ┆   ┆           ┆           ┆           ┆          │
+ │           ┆ ar        ┆           ┆           ┆   ┆           ┆           ┆           ┆          │
+ │ 83137001  ┆ ns_gev_m2 ┆ 8.093542  ┆ 1.413841  ┆ … ┆ 34.43337  ┆ 43.113998 ┆ 5.9005    ┆ 3        │
+ │           ┆ _break_ye ┆           ┆           ┆   ┆           ┆           ┆           ┆          │
+ │           ┆ ar        ┆           ┆           ┆   ┆           ┆           ┆           ┆          │
+ │ 42328001  ┆ ns_gev_m2 ┆ 2.895977  ┆ -1.160215 ┆ … ┆ 15.52674  ┆ 45.572166 ┆ 4.006333  ┆ 770      │
+ └───────────┴───────────┴───────────┴───────────┴───┴───────────┴───────────┴───────────┴──────────┘,
+ 'modelised_show': shape: (37_787, 10)
+ ┌───────────┬────────────┬───────────┬────────────┬───┬───────────┬───────────┬─────────┬──────────┐
+ │ NUM_POSTE ┆ model      ┆ z_T1      ┆ ic_lower   ┆ … ┆ z_T_p     ┆ lat       ┆ lon     ┆ altitude │
+ │ ---       ┆ ---        ┆ ---       ┆ ---        ┆   ┆ ---       ┆ ---       ┆ ---     ┆ ---      │
+ │ i32       ┆ str        ┆ f64       ┆ f64        ┆   ┆ f64       ┆ f32       ┆ f32     ┆ i32      │
+ ╞═══════════╪════════════╪═══════════╪════════════╪═══╪═══════════╪═══════════╪═════════╪══════════╡
+ │ 31723     ┆ ns_gev_m1_ ┆ -0.952891 ┆ -2.449038  ┆ … ┆ -6.499884 ┆ 45.533298 ┆ 6.6294  ┆ 1241     │
+ │           ┆ break_year ┆           ┆            ┆   ┆           ┆           ┆         ┆          │
+ │ 1182      ┆ ns_gev_m2_ ┆ -4.067052 ┆ -14.08054  ┆ … ┆ -12.72081 ┆ 42.482101 ┆ 2.1223  ┆ 1764     │
+ │           ┆ break_year ┆           ┆            ┆   ┆ 7         ┆           ┆         ┆          │
+ │ 4853      ┆ ns_gev_m1  ┆ -1.119587 ┆ -2.133829  ┆ … ┆ -8.97155  ┆ 43.185799 ┆ 0.8878  ┆ 355      │
+ │ 25432     ┆ ns_gev_m1  ┆ 0.263014  ┆ -0.590342  ┆ … ┆ 2.366242  ┆ 44.896301 ┆ -0.2165 ┆ 9        │
+ │ 19534     ┆ ns_gev_m1  ┆ -0.558614 ┆ -1.687353  ┆ … ┆ -4.626054 ┆ 44.394001 ┆ 0.143   ┆ 78       │
+ │ …         ┆ …          ┆ …         ┆ …          ┆ … ┆ …         ┆ …         ┆ …       ┆ …        │
+ │ 10355     ┆ ns_gev_m3  ┆ 3.098222  ┆ 2.471912   ┆ … ┆ 27.022703 ┆ 43.6418   ┆ -0.0758 ┆ 131      │
+ │ 5243      ┆ ns_gev_m1  ┆ -0.775898 ┆ -1.683598  ┆ … ┆ -6.321622 ┆ 43.228401 ┆ 0.8232  ┆ 356      │
+ │ 1572      ┆ ns_gev_m2_ ┆ -7.353758 ┆ -17.141955 ┆ … ┆ -19.71185 ┆ 42.610001 ┆ 2.8485  ┆ 74       │
+ │           ┆ break_year ┆           ┆            ┆   ┆ 2         ┆           ┆         ┆          │
+ │ 5240      ┆ ns_gev_m1  ┆ -0.942959 ┆ -1.856862  ┆ … ┆ -7.938955 ┆ 43.224998 ┆ 0.7309  ┆ 364      │
+ │ 27263     ┆ ns_gev_m2  ┆ -0.842763 ┆ -3.264424  ┆ … ┆ -4.516212 ┆ 45.152199 ┆ 3.0468  ┆ 1006     │
+ └───────────┴────────────┴───────────┴────────────┴───┴───────────┴───────────┴─────────┴──────────┘,
+ 'observed_show': shape: (840, 10)
  ┌───────────┬────────────┬───────────┬───────────┬───┬───────────┬───────────┬──────────┬──────────┐
- │ NUM_POSTE ┆ model      ┆ z_T1      ┆ ic_lower  ┆ … ┆ significa ┆ lat       ┆ lon      ┆ altitude │
- │ ---       ┆ ---        ┆ ---       ┆ ---       ┆   ┆ nt        ┆ ---       ┆ ---      ┆ ---      │
- │ i32       ┆ str        ┆ f64       ┆ f64       ┆   ┆ ---       ┆ f32       ┆ f32      ┆ i32      │
- │           ┆            ┆           ┆           ┆   ┆ bool      ┆           ┆          ┆          │
+ │ NUM_POSTE ┆ model      ┆ z_T1      ┆ ic_lower  ┆ … ┆ z_T_p     ┆ lat       ┆ lon      ┆ altitude │
+ │ ---       ┆ ---        ┆ ---       ┆ ---       ┆   ┆ ---       ┆ ---       ┆ ---      ┆ ---      │
+ │ i32       ┆ str        ┆ f64       ┆ f64       ┆   ┆ f64       ┆ f32       ┆ f32      ┆ i32      │
  ╞═══════════╪════════════╪═══════════╪═══════════╪═══╪═══════════╪═══════════╪══════════╪══════════╡
- │ 48009001  ┆ ns_gev_m1_ ┆ 1.516425  ┆ -0.555742 ┆ … ┆ false     ┆ 44.727165 ┆ 3.279833 ┆ 1018     │
+ │ 15168001  ┆ ns_gev_m2  ┆ 0.711396  ┆ -2.163263 ┆ … ┆ 4.438698  ┆ 45.001167 ┆ 3.221    ┆ 900      │
+ │ 46160001  ┆ ns_gev_m3  ┆ -0.185039 ┆ -1.542545 ┆ … ┆ -0.922525 ┆ 44.799999 ┆ 2.067833 ┆ 658      │
+ │ 30129001  ┆ ns_gev_m3_ ┆ 18.22721  ┆ 13.595664 ┆ … ┆ 42.275672 ┆ 44.073334 ┆ 3.977667 ┆ 139      │
  │           ┆ break_year ┆           ┆           ┆   ┆           ┆           ┆          ┆          │
- │ 5110001   ┆ ns_gev_m2  ┆ 2.734193  ┆ 0.486267  ┆ … ┆ true      ┆ 44.828835 ┆ 6.492667 ┆ 1388     │
- │ 26047001  ┆ ns_gev_m1_ ┆ 3.373492  ┆ 1.053304  ┆ … ┆ true      ┆ 44.535168 ┆ 5.454333 ┆ 1017     │
- │           ┆ break_year ┆           ┆           ┆   ┆           ┆           ┆          ┆          │
- │ 30263001  ┆ ns_gev_m1_ ┆ 7.831335  ┆ 3.532194  ┆ … ┆ true      ┆ 43.961498 ┆ 3.835167 ┆ 237      │
- │           ┆ break_year ┆           ┆           ┆   ┆           ┆           ┆          ┆          │
- │ 16292001  ┆ ns_gev_m2  ┆ -1.361863 ┆ -2.988124 ┆ … ┆ false     ┆ 46.022667 ┆ 0.178167 ┆ 121      │
+ │ 81069001  ┆ ns_gev_m1  ┆ -0.658711 ┆ -1.846186 ┆ … ┆ -3.889036 ┆ 44.074165 ┆ 1.955667 ┆ 173      │
+ │ 66206001  ┆ ns_gev_m2  ┆ -6.801331 ┆ -18.99065 ┆ … ┆ -13.60389 ┆ 42.408669 ┆ 2.541    ┆ 532      │
+ │           ┆            ┆           ┆ 6         ┆   ┆ 7         ┆           ┆          ┆          │
  │ …         ┆ …          ┆ …         ┆ …         ┆ … ┆ …         ┆ …         ┆ …        ┆ …        │
- │ 65481001  ┆ ns_gev_m3_ ┆ 14.216508 ┆ 11.0264   ┆ … ┆ true      ┆ 42.896832 ┆ 0.061667 ┆ 1215     │
+ │ 38299001  ┆ ns_gev_m2_ ┆ 2.538008  ┆ -0.478466 ┆ … ┆ 13.486224 ┆ 44.784168 ┆ 5.906167 ┆ 947      │
  │           ┆ break_year ┆           ┆           ┆   ┆           ┆           ┆          ┆          │
- │ 30065001  ┆ ns_gev_m3_ ┆ 22.889559 ┆ 19.334029 ┆ … ┆ true      ┆ 43.981834 ┆ 4.046    ┆ 101      │
+ │ 4022001   ┆ ns_gev_m3_ ┆ 11.627575 ┆ 9.399505  ┆ … ┆ 70.18334  ┆ 43.957169 ┆ 6.372333 ┆ 743      │
  │           ┆ break_year ┆           ┆           ┆   ┆           ┆           ┆          ┆          │
- │ 15050001  ┆ ns_gev_m3_ ┆ -0.386917 ┆ -2.453946 ┆ … ┆ false     ┆ 45.172501 ┆ 2.7105   ┆ 1033     │
+ │ 7012001   ┆ ns_gev_m1_ ┆ 7.254394  ┆ 0.334856  ┆ … ┆ 15.929747 ┆ 44.891335 ┆ 4.307167 ┆ 662      │
  │           ┆ break_year ┆           ┆           ┆   ┆           ┆           ┆          ┆          │
- │ 7144001   ┆ ns_gev_m3  ┆ 18.328537 ┆ 11.314617 ┆ … ┆ true      ┆ 44.599834 ┆ 4.049333 ┆ 1220     │
- │ 81182001  ┆ ns_gev_m2  ┆ 2.963214  ┆ -0.112286 ┆ … ┆ false     ┆ 43.716167 ┆ 2.321167 ┆ 508      │
+ │ 83137001  ┆ ns_gev_m2_ ┆ 8.093542  ┆ 1.413841  ┆ … ┆ 34.43337  ┆ 43.113998 ┆ 5.9005   ┆ 3        │
+ │           ┆ break_year ┆           ┆           ┆   ┆           ┆           ┆          ┆          │
+ │ 42328001  ┆ ns_gev_m2  ┆ 2.895977  ┆ -1.160215 ┆ … ┆ 15.52674  ┆ 45.572166 ┆ 4.006333 ┆ 770      │
  └───────────┴────────────┴───────────┴───────────┴───┴───────────┴───────────┴──────────┴──────────┘,
- 'column': 'z_T1',
- 'vmin': -28.426321959951117,
- 'vmax': 28.426321959951117,
+ 'column': 'z_T_p',
+ 'vmin': -91.3392642354993,
+ 'vmax': 91.3392642354993,
  'echelle': 'diverging_zero_white',
  'continu': True}
 ```
@@ -982,57 +978,244 @@ $$
 ---
 
 -->
-<div id="59cb7fff" class="cell quarto-layout-panel" data-layout-ncol="1" data-layout-nrow="2" data-execution_count="27">
-<div class="quarto-layout-row">
-<div class="quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="cc3a0a1e" class="cell" data-execution_count="27">
+<div class="cell-output cell-output-display">
 
         <div style="font-size: 18px; color: #333;">
-            <p><span style="font-size: 22px; font-weight: bold; color: #2c3e50;">Niveau de retour 10 ans par 10 ans (en mm/j par 10 ans) et significativité</span>
+            <p><span style="font-size: 22px; font-weight: bold; color: #2c3e50;">Tendances relatives (%) du niveau de retour 10 ans estimée par le meilleur modèle</span>
             <span style="font-size:18px;color:#3498db;white-space:nowrap;display:inline-block;margin:0;">
-            de <span style="font-weight:bold;color:#e74c3c">1959</span> à <span style="font-weight:bold;color:#e74c3c">2022</span> pour l'échelle : <span style="font-weight:bold;color:#f39c12">quotidien</span>
+            de <span style="font-weight:bold;color:#e74c3c">1985</span> à <span style="font-weight:bold;color:#e74c3c">2022</span> pour l'échelle : <span style="font-weight:bold;color:#f39c12">quotidien</span>
             </span>
         </p></div>
         
 </div>
 </div>
-<div class="quarto-layout-row">
-<div class="quarto-layout-cell" style="flex-basis: 100.0%;justify-content: center;">
-<p><img data-src="presentation_files/figure-revealjs/cell-28-output-2.svg"></p>
-</div>
-</div>
-<div class="quarto-layout-row">
-<div class="quarto-layout-cell" style="flex-basis: 100.0%;justify-content: center;">
-<p><img data-src="presentation_files/figure-revealjs/cell-28-output-3.svg"></p>
-</div>
-</div>
-</div>
+<style>
+  /* Reset complet de la grille */
+  table.no-gutter {
+    border-collapse: collapse;   /* fusionne bordures */
+    border-spacing: 0;           /* espacement nul */
+    margin: 0;
+    padding: 0;
+  }
+  table.no-gutter th,
+  table.no-gutter td {
+    border: none;                /* pas de lignes */
+    margin: 0;
+    padding: 0;                  /* pas de marge interne */
+  }
+  table.no-gutter th {
+    text-align: center;
+  }
+  table.no-gutter img {
+    display: block;              /* pas d’espace bas */
+    margin: 0;
+    padding: 0;
+    width: 300px;                /* ajustez selon besoin */
+    height: 300px;
+  }
+</style>
+<table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
+<thead>
+<tr>
+<th>
+SON
+</th>
+<th>
+DJF
+</th>
+<th>
+MAM
+</th>
+<th>
+JJA
+</th>
+<th>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="presentation_files/map/quotidien_SON_rast_mod.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/quotidien_SON_norast_mod.svg" alt="SON"> </a>
+</td>
+<td>
+<a href="presentation_files/map/quotidien_DJF_rast_mod.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/quotidien_DJF_norast_mod.svg" alt="DJF"> </a>
+</td>
+<td>
+<a href="presentation_files/map/quotidien_MAM_rast_mod.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/quotidien_MAM_norast_mod.svg" alt="MAM"> </a>
+</td>
+<td>
+<a href="presentation_files/map/quotidien_JJA_rast_mod.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/quotidien_JJA_norast_mod.svg" alt="JJA"> </a>
+</td>
+<td rowspan="2" style="vertical-align: middle; text-align: center;">
+<object type="image/svg+xml" data="presentation_files/map/quotidien_legend_1.svg" width="40" height="600" class="legend-svg">
+</object>
+</td>
+</tr>
+<tr>
+<td>
+<a href="presentation_files/map/quotidien_SON_rast_obs.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/quotidien_SON_norast_obs.svg" alt="SON"> </a>
+</td>
+<td>
+<a href="presentation_files/map/quotidien_DJF_rast_obs.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/quotidien_DJF_norast_obs.svg" alt="DJF"> </a>
+</td>
+<td>
+<a href="presentation_files/map/quotidien_MAM_rast_obs.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/quotidien_MAM_norast_obs.svg" alt="MAM"> </a>
+</td>
+<td>
+<a href="presentation_files/map/quotidien_JJA_rast_obs.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/quotidien_JJA_norast_obs.svg" alt="JJA"> </a>
+</td>
+</tr>
+</tbody>
+</table>
 </section>
 <section class="slide level2">
 
-<div id="1a1316d9" class="cell quarto-layout-panel" data-layout-ncol="1" data-layout-nrow="2" data-execution_count="29">
-<div class="quarto-layout-row">
-<div class="quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="c95bbf7e" class="cell" data-execution_count="29">
+<div class="cell-output cell-output-display">
 
         <div style="font-size: 18px; color: #333;">
-            <p><span style="font-size: 22px; font-weight: bold; color: #2c3e50;">Niveau de retour 10 ans par 10 ans (en mm/h par 10 ans) et significativité</span>
+            <p><span style="font-size: 22px; font-weight: bold; color: #2c3e50;">Tendances relatives (%) du niveau de retour 10 ans estimée par le meilleur modèle</span>
             <span style="font-size:18px;color:#3498db;white-space:nowrap;display:inline-block;margin:0;">
-            de <span style="font-weight:bold;color:#e74c3c">1990</span> à <span style="font-weight:bold;color:#e74c3c">2022</span> pour l'échelle : <span style="font-weight:bold;color:#f39c12">horaire</span>
+            de <span style="font-weight:bold;color:#e74c3c">1985</span> à <span style="font-weight:bold;color:#e74c3c">2022</span> pour l'échelle : <span style="font-weight:bold;color:#f39c12">quotidien</span>
             </span>
         </p></div>
         
 </div>
 </div>
-<div class="quarto-layout-row">
-<div class="quarto-layout-cell" style="flex-basis: 100.0%;justify-content: center;">
-<p><img data-src="presentation_files/figure-revealjs/cell-30-output-2.svg"></p>
-</div>
-</div>
-<div class="quarto-layout-row">
-<div class="quarto-layout-cell" style="flex-basis: 100.0%;justify-content: center;">
-<p><img data-src="presentation_files/figure-revealjs/cell-30-output-3.svg"></p>
-</div>
-</div>
-</div>
+<style>
+figure { margin: 0; text-align: center; }
+figcaption { margin-top: .3rem; font-size: .9rem; }
+</style>
+<table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
+<thead>
+<tr>
+<th>
+SON
+</th>
+<th>
+OND
+</th>
+<th>
+</th>
+<th>
+</th>
+<th>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="presentation_files/map/quotidien_SON_rast_obs.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/quotidien_SON_norast_obs.svg" alt="SON"> </a>
+</td>
+<td>
+<a href="presentation_files/map/quotidien_NOD_rast_obs.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/quotidien_NOD_norast_obs.svg" alt="DJF"> </a>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td rowspan="2" style="vertical-align: middle; text-align: center;">
+<object type="image/svg+xml" data="presentation_files/map/quotidien_legend_2.svg" width="40" height="600" class="legend-svg">
+</object>
+</td>
+</tr>
+<tr>
+<td>
+<figure>
+<a href="presentation_files/map/quotidien_S_rast_obs.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/quotidien_S_norast_obs.svg" alt="September"> </a>
+<figcaption>
+Sept
+</figcaption>
+</figure>
+</td>
+<td>
+<figure>
+<a href="presentation_files/map/quotidien_O_rast_obs.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/quotidien_O_norast_obs.svg" alt="October"> </a>
+<figcaption>
+Oct
+</figcaption>
+</figure>
+</td>
+<td>
+<figure>
+<a href="presentation_files/map/quotidien_N_rast_obs.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/quotidien_N_norast_obs.svg" alt="November"> </a>
+<figcaption>
+Nov
+</figcaption>
+</figure>
+</td>
+<td>
+<figure>
+<a href="presentation_files/map/quotidien_D_rast_obs.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/quotidien_D_norast_obs.svg" alt="December"> </a>
+<figcaption>
+Dec
+</figcaption>
+</figure>
+</td>
+</tr>
+</tbody>
+</table>
+<!--
+---
+
+::: {#aaf816e0 .cell execution_count=30}
+
+::: {.cell-output .cell-output-display}
+```{=html}
+
+        <div style="font-size: 18px; color: #333;">
+            <p><span style="font-size: 22px; font-weight: bold; color: #2c3e50;">Tendances relatives (%) du niveau de retour 10 ans estimée par le meilleur modèle</span>
+            <span style="font-size:18px;color:#3498db;white-space:nowrap;display:inline-block;margin:0;">
+            de <span style="font-weight:bold;color:#e74c3c">1985</span> à <span style="font-weight:bold;color:#e74c3c">2022</span> pour l'échelle : <span style="font-weight:bold;color:#f39c12">horaire</span>
+            </span>
+        </div>
+        
+```
+:::
+:::
+
+
+
+<table class="no-gutter caption-top" data-quarto-postprocess="true" data-border="0" data-cellspacing="0" data-cellpadding="0" style="width:100%; text-align:center;">
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">SON</th>
+<th data-quarto-table-cell-role="th">DJF</th>
+<th data-quarto-table-cell-role="th">MAM</th>
+<th data-quarto-table-cell-role="th">JJA</th>
+<th style="text-align: center;" data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="presentation_files/map/horaire_SON_rast_mod.svg" target="_blank" rel="noopener"><img data-src="presentation_files/map/horaire_SON_norast_mod.svg" alt="SON" /></a></td>
+<td><a href="presentation_files/map/horaire_DJF_rast_mod.svg" target="_blank" rel="noopener"><img data-src="presentation_files/map/horaire_DJF_norast_mod.svg" alt="DJF" /></a></td>
+<td><a href="presentation_files/map/horaire_MAM_rast_mod.svg" target="_blank" rel="noopener"><img data-src="presentation_files/map/horaire_MAM_norast_mod.svg" alt="MAM" /></a></td>
+<td><a href="presentation_files/map/horaire_JJA_rast_mod.svg" target="_blank" rel="noopener"><img data-src="presentation_files/map/horaire_JJA_norast_mod.svg" alt="JJA" /></a></td>
+<td rowspan="2" style="text-align: center; vertical-align: middle;"><object type="image/svg+xml" data="presentation_files/map/horaire_legend.svg" width="40" height="600" class="legend-svg">
+</object></td>
+</tr>
+<tr class="even">
+<td><a href="presentation_files/map/horaire_SON_rast_obs.svg" target="_blank" rel="noopener"><img data-src="presentation_files/map/horaire_SON_norast_obs.svg" alt="SON" /></a></td>
+<td><a href="presentation_files/map/horaire_DJF_rast_obs.svg" target="_blank" rel="noopener"><img data-src="presentation_files/map/horaire_DJF_norast_obs.svg" alt="DJF" /></a></td>
+<td><a href="presentation_files/map/horaire_MAM_rast_obs.svg" target="_blank" rel="noopener"><img data-src="presentation_files/map/horaire_MAM_norast_obs.svg" alt="MAM" /></a></td>
+<td><a href="presentation_files/map/horaire_JJA_rast_obs.svg" target="_blank" rel="noopener"><img data-src="presentation_files/map/horaire_JJA_norast_obs.svg" alt="JJA" /></a></td>
+</tr>
+</tbody>
+</table>
+
+
+-->
 
 </section></section>
     </div>
@@ -1417,6 +1600,38 @@ $$
         }
       });
       </script>
+    <script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+    (function() {
+      let previousOnload = window.onload;
+      window.onload = () => {
+        if (previousOnload) {
+          previousOnload();
+        }
+        lightboxQuarto.on('slide_before_load', (data) => {
+          const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+          const href = trigger.getAttribute('href');
+          if (href !== null) {
+            const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+            if (imgEl !== null) {
+              const srcAttr = imgEl.getAttribute("src");
+              if (srcAttr && srcAttr.startsWith("data:")) {
+                slideConfig.href = srcAttr;
+              }
+            }
+          } 
+        });
+      
+        lightboxQuarto.on('slide_after_load', (data) => {
+          const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(slideNode);
+          }
+        });
+      
+      };
+      
+    })();
+              </script>
     
 
 </body></html>
