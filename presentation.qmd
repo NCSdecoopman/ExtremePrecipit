@@ -13,6 +13,7 @@ format:
     self-contained: false 
     allow-scripts: true 
     css: presentation/styles.css
+lightbox: true
 execute:
   cache: true
   echo: false
@@ -23,6 +24,7 @@ freeze: auto
 jupyter: extremeprecipit
 ---
 
+
 ```{python}
 %config InlineBackend.figure_format = 'svg'
 %config InlineBackend.figure_dpi = 500
@@ -31,7 +33,7 @@ jupyter: extremeprecipit
 ```{python}
 import yaml
 from pathlib import Path
-from typing import Sequence, Mapping, Tuple
+from typing import Sequence, Mapping, Tuple, Optional
 
 import pandas as pd
 import polars as pl
@@ -106,47 +108,47 @@ def pipeline_total_title_map_legend_scatter_delta(
 
 # Contexte
 
-::: {.columns style="display: flex; gap: 2; margin: 2;"}
-::: {.column width="60%"}
+::: {.columns"}
+::: {.column width="70%"}
 
-<br/>
+<!--l'air chaud contient plus d'humidité 
+
+- **CP** (Convection-Permitting) : résoudre explicitement les processus de convection dans l'atmosphère (≠ approximation)
+    * Simuler plus précisément la formation des nuages convectifs et des précipitations associées
+
+        * Données comme entrée ou condition initiale
+    * Données passées combinant des observations réelles avec des modèles
+    * Résolution 31 km, 1h, 137 niveaux d'atmosphère jusqu'à 80 km d'altitude
+
+    
+**Permet d'étudier les pluies extrêmes infra-journalières, difficiles à voir dans les anciens modèles**
+-->
+
+<h2>Réchauffement de la planète</h2>
+
+- Plus fort sur les continents que les océans  
+- Clausius–Clapeyron +7 % / °C  
+- L'air chaud monte, se refroidit, l'eau se condense sous forme de pluie
   
-- Réchauffement de la planète (plus fort sur les continents que les océans)  
-- L'air chaud contient plus d'humidité (Clausius–Clapeyron +7 % / °C)  
-- L'air chaud monte, se refroidit, l'eau se condense sous forme de pluie  
+<h2>En réponse au réchauffement</h2>
 
-<br/><br/>
-**En réponse au réchauffement, augmentation théorique des précipitations extrêmes** variable suivant les changements de circulations atmosphériques
-
-- Distinguer : tendances durables (changement climatique) *vs.* <br/>variations naturelles (variabilité climatique)
-- Utilisation de modèles de climat sur de longues périodes
+- Augmentation *théorique* des précipitations extrêmes
+- Variable suivant les changements de circulations atmosphériques
 
 :::
 ::: {.column width="30%"}
 
-![](presentation/temperature.png){width=100%}
+![](presentation/temperature.png){max-height=10px}
 
 :::
 :::
 
-# Modèle numérique
+<h2>Utilisation de modèles de climat sur de longues périodes</h2>
 
-<h2>**A**pplication of **R**esearch to **O**perations at **ME**soscale</h2>
-<br/><br/>
+- Tendances durables (changement climatique) *vs.* variations naturelles (variabilité climatique)  
+- Modèle numérique **A**pplication of **R**esearch to **O**perations at **ME**soscale  
+- **C**onvection-**P**ermitting, **R**egional **C**limate **M**odel (2,5km - 1H), **forcer** par **réanalyse** ERA5  
 
-- **CP** (Convection-Permitting) : résoudre explicitement les processus de convection dans l'atmosphère (≠ approximation)
-    * Simuler plus précisément la formation des nuages convectifs et des précipitations associées
-- **RCM** (Regional Climate Model) : simuler le climat à des échelles plus petites que les modèles globaux
-    * **Résolution spatiale** : 2,5 km  
-    * **Résolution temporelle** : 1h
-- **Forcer** par réanalyse ERA5 (*ECMWF - C3S*)
-    * Données comme entrée ou condition initiale
-    * Données passées combinant des observations réelles avec des modèles
-    * Résolution 31 km, 1h, 137 niveaux d'atmosphère jusqu'à 80 km d'altitude
-
-
-
-**Permet d'étudier les pluies extrêmes infra-journalières, difficiles à voir dans les anciens modèles**
 
 # Méthodologie
 
@@ -1152,432 +1154,569 @@ carte_retour(model_name, echelle, season_choice, half)
 -->
 
 ```{python}
+from typing import Sequence, Mapping, Tuple
+from pathlib import Path
+
+import polars as pl
+import geopandas as gpd
+from shapely.geometry import box
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap, BoundaryNorm, TwoSlopeNorm, Normalize, LinearSegmentedColormap
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Mapping, Optional, Sequence, Tuple
+
+import geopandas as gpd
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+import polars as pl
+from matplotlib.colors import BoundaryNorm, LinearSegmentedColormap, TwoSlopeNorm
+from shapely.geometry import box
+
+
 def plot_four_polars_grids(
     datasets: Sequence[Mapping[str, pl.DataFrame]],
     *,
+    echelle: str,
+    titles: Sequence[str] | None = None,  # ex: ['SON', 'DJF', 'MAM', 'JJA']
     lat_col: str = "lat",
     lon_col: str = "lon",
-    val_col: str = "z_T1",
-    # --- Observations --------------------------------------------------
+    val_col: str = "ERROR",
+    # Observations
     obs_key: str = "observed_show",
-    show_obs: bool = True,
-    obs_marker_size: float = 30,
+    show_obs: bool = True,  # n'influence plus que l'affichage
+    min_pt: int=2,
+    max_pt: int=11,
     obs_edgecolor: str = "#000000",
-    obs_facecolor: str | None = None,
-    # -------------------------------------------------------------------
+    obs_facecolor: Optional[str] = None,
+    # Grid
     side_km: float = 2.5,
-    cmap_num: str = "bwr",
+    # Colormap
     cmap_bool: Tuple[str, str] = ("#f0f0f0", "#d73027"),
-    titles: Sequence[str] | None = None,
-    figsize: Tuple[int, int] = (14, 7),
-    relief_path: str | Path = "data/external/niveaux/selection_courbes_niveau_france.shp",
+    # Relief
+    relief_path: str = "data/external/niveaux/selection_courbes_niveau_france.shp",
     relief_linewidth: float = 0.3,
     relief_color: str = "#666666",
+    figsize: Tuple[int, int] = (6, 6),
+    show_mod: bool = True,
+    show_signif: bool = False,  # filtre significatif sur obs
+    numero: int=1,
+    staturation_val: int=99.5
 ):
-    """Affiche quatre cartes alignées (France métropolitaine, Corse exclue).
+    """Trace quatre cartes polaires + une légende commune (SVG).
 
-    Chaque dictionnaire d'``datasets`` doit contenir au moins une clé
-    ``"modelised_show"`` (grille à colorer). Il *peut* également contenir une
-    clé ``obs_key`` (par défaut ``"observed_show"``) décrivant des stations
-    météo ponctuelles. Leur présence est optionnelle ; si elles existent et que
-    ``show_obs`` est ``True``, elles sont représentées par des cercles.
-
-    Paramètres principaux (identiques à la version précédente)
-    -------------------------------------------------------------------
-    datasets   : sequence de **4** dictionnaires.
-    lat_col, lon_col, val_col, side_km, cmap_num, cmap_bool, titles, figsize
-                : voir version précédente.
-
-    Options pour les stations
-    -------------------------------------------------------------------
-    obs_key          : nom de la clé contenant le ``pl.DataFrame`` de stations.
-    show_obs         : affiche ou non les stations si elles existent.
-    obs_marker_size  : diamètre (points) du symbole.
-    obs_edgecolor    : couleur du bord du symbole.
-    obs_facecolor    : couleur de remplissage fixée. Si ``None`` (défaut), la
-                       couleur est déduite de ``val_col`` avec le même cmap.
-
-    Style du relief
-    -------------------------------------------------------------------
-    relief_path, relief_linewidth, relief_color
+    La plage de la légende est calculée sur **l'ensemble** des valeurs (modèle
+    et observations), que l'on choisisse ou non de les afficher.
     """
 
-    # --- 0) Extraction et contrôles ---------------------------------
-    if len(datasets) != 4:
-        raise ValueError("Il faut exactement 4 dictionnaires.")
+    # ------------------------------------------------------------------
+    # Préparation des GeoDataFrames
+    # ------------------------------------------------------------------
+    model_gdfs, obs_gdfs = [], []
+    for d in datasets:
+        # -- Modèle
+        df_m = d.get("modelised_show")
+        if df_m is None:
+            model_gdfs.append(None)
 
-    model_dfs: list[pl.DataFrame] = []
-    obs_dfs: list[pl.DataFrame | None] = []
-
-    for i, d in enumerate(datasets):
-        # ---- grille --------------------------------------------------
-        if "modelised_show" not in d:
-            raise KeyError(
-                f"datasets[{i}] ne contient pas la clé 'modelised_show'.")
-        df_model = d["modelised_show"]
-        if not isinstance(df_model, pl.DataFrame):
-            raise TypeError(
-                "'modelised_show' doit être un pl.DataFrame "
-                f"(datasets[{i}]).")
-        model_dfs.append(df_model)
-
-        # ---- observations -------------------------------------------
-        if show_obs and obs_key in d:
-            df_obs = d[obs_key]
-            if not isinstance(df_obs, pl.DataFrame):
-                raise TypeError(
-                    f"La valeur associée à '{obs_key}' dans datasets[{i}] "
-                    "doit être un pl.DataFrame.")
-
-            # >>> NE GARDER QUE LES OBSERVATIONS "significatives"
-            if "significant" in df_obs.columns:
-                df_obs = df_obs.filter(pl.col("significant") == True)
-            # <<<
-
-            # S’il n’en reste plus, on mettra None pour éviter un plot vide
-            obs_dfs.append(df_obs if df_obs.height > 0 else None)
 
         else:
-            obs_dfs.append(None)
-
-    if titles is None:
-        titles = [f"" for i in range(4)]
-
-    # --- 1) Conversion Polars → GeoDataFrame (proj. WGS-84) ----------
-    model_gdfs = []
-    obs_gdfs = []
-
-    for df_model, df_obs in zip(model_dfs, obs_dfs):
-        # Grille
-        gdf_m = gpd.GeoDataFrame(
-            df_model.to_pandas(),
-            geometry=gpd.points_from_xy(
-                df_model.to_pandas()[lon_col], df_model.to_pandas()[lat_col]
-            ),
-            crs="EPSG:4326",
-        ).to_crs("EPSG:2154")
-        model_gdfs.append(gdf_m)
-
-        # Observations (optionnel)
-        if df_obs is not None:
-            gdf_o = gpd.GeoDataFrame(
-                df_obs.to_pandas(),
-                geometry=gpd.points_from_xy(
-                    df_obs.to_pandas()[lon_col], df_obs.to_pandas()[lat_col]
-                ),
+            if not isinstance(df_m, pl.DataFrame):
+                raise TypeError("'modelised_show' doit être un pl.DataFrame.")
+            gdf_m = gpd.GeoDataFrame(
+                df_m.to_pandas(),  # Convertissez df_m en DataFrame pandas
+                geometry=gpd.points_from_xy(df_m[lon_col].to_list(), df_m[lat_col].to_list()),
                 crs="EPSG:4326",
             ).to_crs("EPSG:2154")
-            obs_gdfs.append(gdf_o)
+            model_gdfs.append(gdf_m)  # Ajoutez gdf_m à model_gdfs
+
+        # -- Observations (toujours chargées pour la légende)
+        if obs_key in d:
+            df_o = d[obs_key]
+            if not isinstance(df_o, pl.DataFrame):
+                raise TypeError("'observed_show' doit être un pl.DataFrame.")
+            if "significant" in df_o.columns and show_signif:
+                df_o = df_o.filter(pl.col("significant"))
+            obs_gdfs.append(
+                gpd.GeoDataFrame(
+                    df_o.to_pandas(),
+                    geometry=gpd.points_from_xy(df_o[lon_col].to_list(), df_o[lat_col].to_list()),
+                    crs="EPSG:4326",
+                ).to_crs("EPSG:2154")
+                if df_o.height > 0
+                else None
+            )
         else:
             obs_gdfs.append(None)
 
-    # --- 2) Création des carrés --------------------------------------
-    half = (side_km * 1_000) / 2  # m
+    # Titres par défaut
+    if titles is None:
+        titles = [str(i) for i in range(1, len(model_gdfs) + 1)]
+
+    # ------------------------------------------------------------------
+    # Grille carrée autour des points modélisés
+    # ------------------------------------------------------------------
+    half = side_km * 500  # m
     for gdf in model_gdfs:
         gdf["geometry"] = gdf.geometry.apply(
             lambda p: box(p.x - half, p.y - half, p.x + half, p.y + half)
         )
 
-    # --- 3) France métropolitaine ------------------------------------
-    URL = "https://france-geojson.gregoiredavid.fr/repo/departements.geojson"
-    deps = gpd.read_file(URL).to_crs("EPSG:2154")
-    deps_metro = deps[~deps["code"].isin(["2A", "2B"])]
-
-    # Exemple : simplifier les contours admin. (tolérance 100 m)
-    deps_metro["geometry"] = deps_metro.simplify(500)
-
-    model_gdfs = [
-        gpd.overlay(gdf, deps_metro[["geometry"]], how="intersection")
-        for gdf in model_gdfs
-    ]
-
-    # Observations : simple clip (évite de perdre les valeurs pour la couleur)
-    for i, gdf in enumerate(obs_gdfs):
-        if gdf is not None:
-            obs_gdfs[i] = gdf.clip(deps_metro.union_all())
-
-    # --- 4) Lecture des courbes de niveau ----------------------------
-    relief_gdf = (
-        gpd.read_file(Path(relief_path).resolve())
+    # ------------------------------------------------------------------
+    # Masque France métropolitaine
+    # ------------------------------------------------------------------
+    deps = (
+        gpd.read_file("https://france-geojson.gregoiredavid.fr/repo/departements.geojson")
         .to_crs("EPSG:2154")
-        .clip(deps_metro.union_all())
+    )
+    deps_metro = deps[~deps["code"].isin(["2A", "2B"])]
+    deps_metro["geometry"] = deps_metro.geometry.simplify(500)
+    mask = deps_metro.union_all()
+
+    model_gdfs = [gpd.overlay(g, deps_metro[["geometry"]], how="intersection") for g in model_gdfs]
+    obs_gdfs = [g.clip(mask) if isinstance(g, gpd.GeoDataFrame) else None for g in obs_gdfs]
+
+    # ------------------------------------------------------------------
+    # Relief
+    # ------------------------------------------------------------------
+    relief = gpd.read_file(Path(relief_path).resolve()).to_crs("EPSG:2154").clip(mask)
+
+    # ------------------------------------------------------------------
+    # Saturation des valeurs extrêmes (1 % sup.)
+    # ------------------------------------------------------------------
+    all_values: list[float] = []
+    for gdf in model_gdfs:
+        all_values.extend(gdf[val_col].to_numpy())
+    for gdf in obs_gdfs:
+        if gdf is not None:
+            all_values.extend(gdf[val_col].to_numpy())
+
+    is_bool = model_gdfs[0][val_col].dtype == bool
+    if all_values and not is_bool:
+        seuil = np.percentile(np.abs(all_values), staturation_val)
+        for gdf in model_gdfs + [g for g in obs_gdfs if g is not None]:
+            gdf[val_col] = np.where(np.abs(gdf[val_col]) > seuil,
+                                    np.sign(gdf[val_col]) * seuil,
+                                    gdf[val_col])
+
+    # ------------------------------------------------------------------
+    # Colormap & Norm communes
+    # ------------------------------------------------------------------
+    if is_bool:
+        cmap = mpl.colors.ListedColormap(list(cmap_bool))
+        norm = BoundaryNorm([-0.5, 0.5, 1.5], ncolors=2)
+        for g in model_gdfs + [g for g in obs_gdfs if g is not None]:
+            g["_val_int"] = g[val_col].astype(int)
+        col = "_val_int"
+    else:
+        vmin = float(min([g[val_col].min() for g in model_gdfs] + [g[val_col].min() for g in obs_gdfs if g is not None]))
+        vmax = float(max([g[val_col].max() for g in model_gdfs] + [g[val_col].max() for g in obs_gdfs if g is not None]))
+        vcenter = 0 if vmin < 0 < vmax else (vmin + vmax) / 2
+        norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
+        cmap = LinearSegmentedColormap.from_list("bwr_custom", ["red", "#ffffff", "blue"], N=100)
+        col = val_col
+
+    # ------------------------------------------------------------------
+    # 
+    # ------------------------------------------------------------------
+    # Définir (ou exposer via les paramètres) un intervalle de tailles en points²
+    min_ms, max_ms = 20, 150          # ex. diamètres ~4 pt à ~12 pt
+    abs_max = max(                    # normalisation sur l’ensemble des obs
+        g[val_col].abs().max()
+        for g in obs_gdfs
+        if g is not None and not g.empty
     )
 
-    # --- 5) Détection du type de val_col -----------------------------
-    sample_dtype = model_dfs[0][val_col].dtype
-    is_bool = sample_dtype == pl.Boolean
+    # ------------------------------------------------------------------
+    # Export cartes
+    # ------------------------------------------------------------------
+    Path("presentation_files/map").mkdir(parents=True, exist_ok=True)
+    modes = {"rast": 0, "norast": 1}
 
-    # --- 6) Configuration des couleurs ------------------------------
-    if is_bool:
-        cmap = ListedColormap(list(cmap_bool))
-        norm = BoundaryNorm([-0.5, 0.5, 1.5], ncolors=2)
-        for gdf in model_gdfs:
-            gdf["_val_int"] = gdf[val_col].astype(int)
-        if show_obs:
-            for gdf in obs_gdfs:
-                if gdf is not None:
-                    gdf["_val_int"] = gdf[val_col].astype(int)
-        plot_col = "_val_int"
-    else:
-        global_min = min(gdf[val_col].min() for gdf in model_gdfs)
-        global_max = max(gdf[val_col].max() for gdf in model_gdfs)
-        norm = (
-            TwoSlopeNorm(vmin=global_min, vcenter=0, vmax=global_max)
-            if global_min < 0 < global_max
-            else Normalize(vmin=global_min, vmax=global_max)
-        )
-        cmap = LinearSegmentedColormap.from_list(
-                "white0",
-                ["#1f78b4", "#ffffff", "#e31a1c"],   # bleu – blanc – rouge
-                N=100,
-            ) #cmap_num
+    for title, gdf_m, gdf_o in zip(titles, model_gdfs, obs_gdfs):
+        for mode, z in modes.items():
+            fig, ax = plt.subplots(figsize=figsize)
 
-        plot_col = val_col
+            deps_metro.boundary.plot(ax=ax, edgecolor="#AAAAAA", linewidth=0.2, zorder=0)
 
-    # --- 7) Tracé ----------------------------------------------------
-    fig, axes = plt.subplots(1, 4, figsize=figsize, constrained_layout=True)
+            if show_mod:
+                gdf_m.plot(ax=ax, column=col, cmap=cmap, norm=norm, linewidth=0, zorder=1)
 
-    for ax, gdf_m, gdf_o, title in zip(axes, model_gdfs, obs_gdfs, titles):
-        # Limites dépts (très léger, en arrière-plan)
-        deps_metro.boundary.plot(
-            ax=ax, edgecolor="#AAAAAA", linewidth=0.2, zorder=0
-        )
+            if show_obs and gdf_o is not None and not gdf_o.empty:
+                # Diamètre linéaire entre 4 pt et 13 pt
+                ms = (gdf_o[val_col].abs() / 50).clip(0, 1) * (max_pt - min_pt) + min_pt
+                ms_scatter = ms ** 2              # aire en points²
 
-        # Maillage coloré
-        gdf_m.plot(
-            ax=ax,
-            column=plot_col,
-            cmap=cmap,
-            norm=norm,
-            linewidth=0,
-            zorder=1,
-        )
-
-        # Stations météo (optionnel)
-        if show_obs and gdf_o is not None and not gdf_o.empty:
-            if obs_facecolor is None:
-                # couleur selon valeur
-                gdf_o.plot(
-                    ax=ax,
-                    column=plot_col if plot_col in gdf_o.columns else val_col,
-                    cmap=cmap,
-                    norm=norm,
-                    markersize=obs_marker_size,
+                kw = dict(
+                    markersize=ms_scatter,        # <-- utiliser ms_scatter ici
                     marker="o",
                     edgecolor=obs_edgecolor,
                     linewidth=0.1,
                     zorder=3,
                 )
-            else:
-                # couleur figée
-                gdf_o.plot(
-                    ax=ax,
-                    markersize=obs_marker_size,
-                    marker="o",
-                    facecolor=obs_facecolor,
-                    edgecolor=obs_edgecolor,
-                    linewidth=0.1,
-                    zorder=3,
-                )
 
-        # Relief (au-dessus mais trait fin)
-        relief_gdf.plot(
-            ax=ax,
-            color=relief_color,
-            linewidth=relief_linewidth,
-            alpha=0.8,
-            zorder=2,
-        )
-        relief_gdf.simplify(100)
+                if obs_facecolor is None:
+                    gdf_o.plot(ax=ax, column=col, cmap=cmap, norm=norm, **kw)
+                else:
+                    gdf_o.plot(ax=ax, facecolor=obs_facecolor, **kw)
 
-        ax.set_title(title, fontsize=11, pad=1)
-        ax.set_axis_off()
+            relief.plot(ax=ax, color=relief_color, linewidth=relief_linewidth, alpha=0.8, zorder=2)
 
-        # Choix de la couche à rasteriser
-        order_raster = 2 if is_bool else 1     # ← clé du comportement
-        ax.set_rasterization_zorder(order_raster)
+            ax.set_axis_off()
+            ax.set_rasterization_zorder(z)
 
-    # --- 8) Barre de couleurs commune --------------------------------
-    sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])
-    cbar = fig.colorbar(sm, ax=axes.ravel().tolist(), shrink=0.4, aspect=25)
+            if mode == "rast":
+                sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
+                sm.set_array([])
+                cbar = fig.colorbar(sm, ax=ax, shrink=0.6, aspect=20)
+                if is_bool:
+                    cbar.set_ticks([0, 1])
+                    cbar.set_ticklabels(["Non", "Oui"])
 
+            suffix_obs = "_obs" if show_obs else ""
+            suffix_mod = "_mod" if show_mod else ""
+            suffix_signif = "_signif" if show_signif else ""
+            name = f"{echelle}_{title}_{mode}{suffix_mod}{suffix_obs}{suffix_signif}"
+
+            fig.savefig(f"presentation_files/map/{name}.svg", format="svg", bbox_inches="tight", pad_inches=0)
+            plt.close(fig)
+
+    # ------------------------------------------------------------------
+    # Légende seule
+    # ------------------------------------------------------------------
+    mpl.rcParams.update({'font.size': 16})
+    fig2 = plt.figure(figsize=(1, figsize[1]*2))
+    ax2 = fig2.add_axes([0.25, 0.05, 0.5, 0.9])
+    sm2 = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm2.set_array([])
+    cb2 = fig2.colorbar(sm2, cax=ax2)
     if is_bool:
-        cbar.set_ticks([0, 1])
-        cbar.set_ticklabels(["Non", "Oui"])
+        cb2.set_ticks([0, 1])
+        cb2.set_ticklabels(["Non", "Oui"])
 
-    plt.show()
+    fig2.savefig(f"presentation_files/map/{echelle}_legend_{numero}.svg", format="svg", bbox_inches="tight", pad_inches=0)
+    plt.close(fig2)
+
 ```
 
 
 ```{python}
-model_name="niveau_retour"
-echelle="quotidien"
-result_gev_son = pipeline_data_gev_quarto(
-    config=config,
-    model_name=model_name,
-    echelle=echelle,
-    season_choice="son",
-    T_choice=T_choice,
-    par_X_annees=par_X_annees,
-    min_year=year_display_min,
-    max_year=year_display_max
-)
-result_gev_djf = pipeline_data_gev_quarto(
-    config=config,
-    model_name=model_name,
-    echelle=echelle,
-    season_choice="djf",
-    T_choice=T_choice,
-    par_X_annees=par_X_annees,
-    min_year=year_display_min,
-    max_year=year_display_max
-)
-result_gev_mam = pipeline_data_gev_quarto(
-    config=config,
-    model_name=model_name,
-    echelle=echelle,
-    season_choice="mam",
-    T_choice=T_choice,
-    par_X_annees=par_X_annees,
-    min_year=year_display_min,
-    max_year=year_display_max
-)
-result_gev_jja = pipeline_data_gev_quarto(
-    config=config,
-    model_name=model_name,
-    echelle=echelle,
-    season_choice="jja",
-    T_choice=T_choice,
-    par_X_annees=par_X_annees,
-    min_year=year_display_min,
-    max_year=year_display_max
-)
+echelles = ["quotidien"] #, "horaire"
+seasons  = ["son", "djf", "mam", "jja"]
+datasets = {e: [] for e in echelles}
 
-datasets = [
-    result_gev_son,
-    result_gev_djf,
-    result_gev_mam,
-    result_gev_jja,
-]
+for e in echelles:
+    for s in seasons:
+        res = pipeline_data_gev_quarto(
+            config=config,
+            model_name="niveau_retour",
+            echelle=e,
+            season_choice=s,
+            T_choice=10,
+            par_X_annees=10,
+            min_year=config["years"]["min"],
+            max_year=config["years"]["max"],
+        )
+        datasets[e].append(res)    # On range le résultat dans la bonne liste
+
+for show in [True, False]:
+    for e in echelles:
+        plot_four_polars_grids(
+            datasets[e],
+            echelle=e,
+            val_col="z_T_p",          # nom de la colonne à colorer / symboliser
+            titles=[s.upper() for s in seasons],  # titres des 4 sous-cartes
+            show_mod=show,
+            show_obs=not show
+        )
 ```
 
 
 ```{python}
-#| layout-nrow: 2
-#| layout-ncol: 1
-title_show = pipeline_title("Niveau de retour 10 ans par 10 ans (en mm/j par 10 ans) et significativité", 1959, 2022, echelle, None)
+title_show = pipeline_title("Tendances relatives (%) du niveau de retour 10 ans estimée par le meilleur modèle", 1985, 2022, "quotidien", None)
 display(HTML(title_show))
-
-plot_four_polars_grids(
-    datasets,
-    val_col="z_T1",          # nom de la colonne à colorer / symboliser
-    side_km=2.5,             # taille du carré en km
-    titles=["SON", "DJF", "MAM", "JJA"],  # titres des 4 sous-cartes
-    
-    # --- options pour les points de station ------------------------
-    obs_marker_size=5,
-    obs_edgecolor="#000000",
-    obs_facecolor=None,      # None ⇒ couleur déduite de la valeur
-)
-
-plot_four_polars_grids(
-    datasets,
-    val_col="significant",          # nom de la colonne à colorer / symboliser
-    side_km=2.5,             # taille du carré en km
-    titles=None,  # titres des 4 sous-cartes
-    
-    # --- options pour les points de station ------------------------
-    obs_marker_size=5,
-    obs_edgecolor="#000000",
-    obs_facecolor=None,      # None ⇒ couleur déduite de la valeur
-    show_obs = False
-)
 ```
+
+<style>
+  /* Reset complet de la grille */
+  table.no-gutter {
+    border-collapse: collapse;   /* fusionne bordures */
+    border-spacing: 0;           /* espacement nul */
+    margin: 0;
+    padding: 0;
+  }
+  table.no-gutter th,
+  table.no-gutter td {
+    border: none;                /* pas de lignes */
+    margin: 0;
+    padding: 0;                  /* pas de marge interne */
+  }
+  table.no-gutter th {
+    text-align: center;
+  }
+  table.no-gutter img {
+    display: block;              /* pas d’espace bas */
+    margin: 0;
+    padding: 0;
+    width: 300px;                /* ajustez selon besoin */
+    height: 300px;
+  }
+</style>
+
+
+
+<table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
+  <thead>
+    <tr>
+      <th>SON</th>
+      <th>DJF</th>
+      <th>MAM</th>
+      <th>JJA</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td>
+        <a href="presentation_files/map/quotidien_SON_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/quotidien_SON_norast_mod.svg" alt="SON">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/quotidien_DJF_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/quotidien_DJF_norast_mod.svg" alt="DJF">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/quotidien_MAM_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/quotidien_MAM_norast_mod.svg" alt="MAM">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/quotidien_JJA_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/quotidien_JJA_norast_mod.svg" alt="JJA">
+        </a>
+        </td>
+    <td rowspan="2" style="vertical-align: middle; text-align: center;">
+    <object type="image/svg+xml" data="presentation_files/map/quotidien_legend_1.svg"
+            width="40" height="600" class="legend-svg">
+    </object>
+    </td>
+    </tr>
+    <tr>
+      <td>
+        <a href="presentation_files/map/quotidien_SON_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_SON_norast_obs.svg" alt="SON">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/quotidien_DJF_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_DJF_norast_obs.svg" alt="DJF">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/quotidien_MAM_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_MAM_norast_obs.svg" alt="MAM">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/quotidien_JJA_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_JJA_norast_obs.svg" alt="JJA">
+        </a>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
 ```{python}
-model_name="niveau_retour"
-echelle="horaire"
-result_gev_son = pipeline_data_gev_quarto(
-    config=config,
-    model_name=model_name,
-    echelle=echelle,
-    season_choice="son",
-    T_choice=T_choice,
-    par_X_annees=par_X_annees,
-    min_year=year_display_min,
-    max_year=year_display_max
-)
-result_gev_djf = pipeline_data_gev_quarto(
-    config=config,
-    model_name=model_name,
-    echelle=echelle,
-    season_choice="djf",
-    T_choice=T_choice,
-    par_X_annees=par_X_annees,
-    min_year=year_display_min,
-    max_year=year_display_max
-)
-result_gev_mam = pipeline_data_gev_quarto(
-    config=config,
-    model_name=model_name,
-    echelle=echelle,
-    season_choice="mam",
-    T_choice=T_choice,
-    par_X_annees=par_X_annees,
-    min_year=year_display_min,
-    max_year=year_display_max
-)
-result_gev_jja = pipeline_data_gev_quarto(
-    config=config,
-    model_name=model_name,
-    echelle=echelle,
-    season_choice="jja",
-    T_choice=T_choice,
-    par_X_annees=par_X_annees,
-    min_year=year_display_min,
-    max_year=year_display_max
-)
+echelles = ["quotidien"] #, "horaire"
+seasons  = ["nod", "s", "o", "n", "d"]
+datasets = {e: [] for e in echelles}
 
-datasets = [
-    result_gev_son,
-    result_gev_djf,
-    result_gev_mam,
-    result_gev_jja,
-]
+for e in echelles:
+    for s in seasons:
+        res = pipeline_data_gev_quarto(
+            config=config,
+            model_name="niveau_retour",
+            echelle=e,
+            season_choice=s,
+            T_choice=10,
+            par_X_annees=10,
+            min_year=config["years"]["min"],
+            max_year=config["years"]["max"],
+        )
+        datasets[e].append(res)    # On range le résultat dans la bonne liste
+
+for e in echelles:
+    plot_four_polars_grids(
+        datasets[e],
+        echelle=e,
+        val_col="z_T_p",          # nom de la colonne à colorer / symboliser
+        titles=[s.upper() for s in seasons],  # titres des 4 sous-cartes
+        show_mod=False,
+        show_obs=True,
+        numero=2,
+        saturation_val=99
+    )
 ```
 
 
 ```{python}
-#| layout-nrow: 2
-#| layout-ncol: 1
-title_show = pipeline_title("Niveau de retour 10 ans par 10 ans (en mm/h par 10 ans) et significativité", 1990, 2022, echelle, None)
+title_show = pipeline_title("Tendances relatives (%) du niveau de retour 10 ans estimée par le meilleur modèle", 1985, 2022, "quotidien", None)
 display(HTML(title_show))
-
-plot_four_polars_grids(
-    datasets,
-    val_col="z_T1",          # nom de la colonne à colorer / symboliser
-    side_km=2.5,             # taille du carré en km
-    titles=["SON", "DJF", "MAM", "JJA"],  # titres des 4 sous-cartes
-    
-    # --- options pour les points de station ------------------------
-    obs_marker_size=5,
-    obs_edgecolor="#000000",
-    obs_facecolor=None,      # None ⇒ couleur déduite de la valeur
-)
-
-plot_four_polars_grids(
-    datasets,
-    val_col="significant",          # nom de la colonne à colorer / symboliser
-    side_km=2.5,             # taille du carré en km
-    titles=None,  # titres des 4 sous-cartes
-    
-    # --- options pour les points de station ------------------------
-    obs_marker_size=5,
-    obs_edgecolor="#000000",
-    obs_facecolor=None,      # None ⇒ couleur déduite de la valeur
-    show_obs = False
-)
 ```
+
+<style>
+figure { margin: 0; text-align: center; }
+figcaption { margin-top: .3rem; font-size: .9rem; }
+</style>
+
+
+
+<table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
+  <thead>
+    <tr>
+      <th>SON</th>
+      <th>OND</th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td>
+        <a href="presentation_files/map/quotidien_SON_rast_obs.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/quotidien_SON_norast_obs.svg" alt="SON">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/quotidien_NOD_rast_obs.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/quotidien_NOD_norast_obs.svg" alt="DJF">
+        </a>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+    <td rowspan="2" style="vertical-align: middle; text-align: center;">
+    <object type="image/svg+xml" data="presentation_files/map/quotidien_legend_2.svg"
+            width="40" height="600" class="legend-svg">
+    </object>
+    </td>
+    </tr>
+  <tr>
+    <td>
+      <figure>
+        <a href="presentation_files/map/quotidien_S_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_S_norast_obs.svg" alt="September">
+        </a>
+        <figcaption>Sept</figcaption>
+      </figure>
+    </td>
+    <td>
+      <figure>
+        <a href="presentation_files/map/quotidien_O_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_O_norast_obs.svg" alt="October">
+        </a>
+        <figcaption>Oct</figcaption>
+      </figure>
+    </td>
+    <td>
+      <figure>
+        <a href="presentation_files/map/quotidien_N_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_N_norast_obs.svg" alt="November">
+        </a>
+        <figcaption>Nov</figcaption>
+      </figure>
+    </td>
+    <td>
+      <figure>
+        <a href="presentation_files/map/quotidien_D_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_D_norast_obs.svg" alt="December">
+        </a>
+        <figcaption>Dec</figcaption>
+      </figure>
+    </td>
+  </tr>
+</tbody>
+</table>
+
+
+<!--
+---
+
+```{python}
+title_show = pipeline_title("Tendances relatives (%) du niveau de retour 10 ans estimée par le meilleur modèle", 1985, 2022, "horaire", None)
+display(HTML(title_show))
+```
+
+<table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
+  <thead>
+    <tr>
+      <th>SON</th>
+      <th>DJF</th>
+      <th>MAM</th>
+      <th>JJA</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td>
+        <a href="presentation_files/map/horaire_SON_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_SON_norast_mod.svg" alt="SON">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_DJF_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_DJF_norast_mod.svg" alt="DJF">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_MAM_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_MAM_norast_mod.svg" alt="MAM">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_JJA_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_JJA_norast_mod.svg" alt="JJA">
+        </a>
+        </td>
+    <td rowspan="2" style="vertical-align: middle; text-align: center;">
+    <object type="image/svg+xml" data="presentation_files/map/horaire_legend.svg"
+            width="40" height="600" class="legend-svg">
+    </object>
+    </td>
+    </tr>
+    <tr>
+      <td>
+        <a href="presentation_files/map/horaire_SON_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_SON_norast_obs.svg" alt="SON">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_DJF_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_DJF_norast_obs.svg" alt="DJF">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_MAM_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_MAM_norast_obs.svg" alt="MAM">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_JJA_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_JJA_norast_obs.svg" alt="JJA">
+        </a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+-->
