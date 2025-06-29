@@ -140,9 +140,11 @@ def pipeline_total_title_map_legend_scatter_delta(
 
 
 
-# Méthodologie
+# Méthodologie {.no-number}
 
 ![](presentation/methodologie.svg){width=100%}
+
+---
 
 <!--
 # Evaluation des maxima
