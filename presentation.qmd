@@ -1705,6 +1705,13 @@ figcaption { margin-top: .3rem; font-size: .9rem; }
 </tbody>
 </table>
 
----
+# La suite...
 
+<br/><br/><br/>
+
+<h2>Journalier (vérification modélisation statistique) *vs.* horaire (objectif initial)</h2><br/> 
+<h2>Saison *vs.* mois</h2><br/> 
+<h2>Significativité ?</h2><br/> 
+
+<br/><br/>
 <div class="fin">Merci.</div>
