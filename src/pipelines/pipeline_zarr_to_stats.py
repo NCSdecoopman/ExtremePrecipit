@@ -11,10 +11,23 @@ from src.utils.config_tools import load_config
 from src.utils.logger import get_logger
 
 SEASON_MONTHS = {
+    "dec": [12],
+    "jan": [1],
+    "fev": [2],
+    "mar": [3],
+    "avr": [4],
+    "mai": [5],
+    "jui": [6],
+    "juill": [7],
+    "aou": [8],
+    "sep": [9],
+    "oct": [10],
+    "nov": [11],
     "djf": [12, 1, 2],
     "mam": [3, 4, 5],
     "jja": [6, 7, 8],
     "son": [9, 10, 11],
+    "nod": [10, 11, 12],
     "hydro": [9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8],
 }
 
@@ -159,19 +172,38 @@ def process_zarr_file_seasonal(
     output_root: str,
     overwrite: bool,
     log_status: dict,
+    seasons: dict,
     logger
 ):
     year = int(os.path.basename(zarr_path).split(".")[0])
     var_name = list(config_zarr["variables"].keys())[0]
     var_conf = config_zarr["variables"][var_name]
 
+    # all_ds = []
+    # zarr_dir = os.path.dirname(zarr_path)
+    # for offset in [-1, 0]:
+    #     y = year + offset
+    #     p = os.path.join(zarr_dir, f"{y}.zarr")
+    #     if os.path.exists(p):
+    #         all_ds.append(xr.open_zarr(p).chunk({"time": 24 * 92}))
+
+    # 1) Détermine quelles années charger, en fonction des saisons qui
+    #    débordent dans l'année suivante (end > 31 décembre)
+    years_to_load = {year - 1, year}
+    for season in seasons:
+        _, end = get_season_bounds(year, season)
+        # si end est en Janvier (année suivante), on ajoute year+1
+        if np.datetime64(end, "ns").astype("datetime64[Y]") > np.datetime64(f"{year}-01-01", "Y"):
+            years_to_load.add(year + 1)
+    
+    # 2) Charge tous les zarr correspondants
     all_ds = []
     zarr_dir = os.path.dirname(zarr_path)
-    for offset in [-1, 0]:
-        y = year + offset
+    for y in sorted(years_to_load):
         p = os.path.join(zarr_dir, f"{y}.zarr")
         if os.path.exists(p):
             all_ds.append(xr.open_zarr(p).chunk({"time": 24 * 92}))
+
 
     if not all_ds:
         logger.warning(f"Aucun fichier Zarr trouvé pour {year}")
@@ -194,7 +226,7 @@ def process_zarr_file_seasonal(
     if log_status is not None:
         log_status[year] = {}
 
-    for season in ["djf", "mam", "jja", "son"]:
+    for season in seasons:
         out_dir = os.path.join(output_root, str(year))
         os.makedirs(out_dir, exist_ok=True)
         out_path = os.path.join(out_dir, f"{season}.parquet")
@@ -208,7 +240,12 @@ def process_zarr_file_seasonal(
         ds_start = ds["time"].values[0]
         ds_end = ds["time"].values[-1]
 
-        if start < ds_start or end > ds_end:
+        # existe-t-il un zarr pour l'année suivante ?
+        next_zarr = os.path.join(zarr_dir, f"{year+1}.zarr")
+        next_exists = os.path.exists(next_zarr)
+        
+        # on skip uniquement si on s'attendait à avoir next_zarr
+        if start < ds_start or (end > ds_end and next_exists):
             logger.info(f"[SKIP] {season.upper()} {year} hors des bornes de {zarr_path}")
             log_status[year][season] = "Hors bornes"
             continue
@@ -311,7 +348,7 @@ def compute_hydro_from_seasons(year: int, stats_dir: str, log_status: dict):
 def process_one_file(args):
     dask.config.set(scheduler="single-threaded")
     
-    zarr_file, echelle, config_zarr, stats_dir, overwrite = args
+    zarr_file, echelle, config_zarr, stats_dir, overwrite, seasons = args
     logger = get_logger(f"worker_{os.path.basename(zarr_file).split('.')[0]}", log_to_file=False)
 
     try:
@@ -323,6 +360,7 @@ def process_one_file(args):
             stats_dir,
             overwrite,
             log_status,
+            seasons,
             logger
         )
         logger.info(f"[OK] Traitement terminé pour {zarr_file}")
@@ -340,6 +378,7 @@ def pipeline_statistics_from_zarr_seasonal(config, max_workers: int = 48):
     overwrite = stats_conf.get("overwrite", False)
 
     echelles = config.get("echelles")
+    seasons = config.get("seasons")
 
     for echelle in echelles:
         logger.info(f"--- Traitement pour l’échelle : {echelle.upper()}---")
@@ -395,7 +434,7 @@ def pipeline_statistics_from_zarr_seasonal(config, max_workers: int = 48):
             continue
 
         args_list = [
-            (zf, echelle, config["zarr"], stats_dir, overwrite)
+            (zf, echelle, config["zarr"], stats_dir, overwrite, seasons)
             for zf in zarr_files
         ]
 
@@ -412,18 +451,19 @@ def pipeline_statistics_from_zarr_seasonal(config, max_workers: int = 48):
                     status_log[year] = log_status.get(year, {})
 
         # Post-traitement HYDRO pour toutes les échelles
-        with ProcessPoolExecutor(max_workers=max_workers) as executor:
-            futures = {
-                executor.submit(compute_hydro_from_seasons, year, stats_dir, status_log): year
-                for year in sorted(status_log)
-            }
+        if "hydro" in seasons:
+            with ProcessPoolExecutor(max_workers=max_workers) as executor:
+                futures = {
+                    executor.submit(compute_hydro_from_seasons, year, stats_dir, status_log): year
+                    for year in sorted(status_log)
+                }
 
-            for future in as_completed(futures):
-                year = futures[future]
-                try:
-                    future.result()
-                except Exception as e:
-                    logger.error(f"[ERROR] Error processing lors du traitement de l'année {year}: {e}")
+                for future in as_completed(futures):
+                    year = futures[future]
+                    try:
+                        future.result()
+                    except Exception as e:
+                        logger.error(f"[ERROR] Error processing lors du traitement de l'année {year}: {e}")
 
         log_df = pd.DataFrame.from_dict(status_log, orient="index").sort_index()
         logger.info(f"[{echelle.upper()}] Résumé final :\n" + log_df.to_string())
@@ -440,9 +480,14 @@ if __name__ == "__main__":
                                  ], 
                         nargs="+", 
                         default=["horaire"])
+    parser.add_argument("--seasons", 
+                        type=str, 
+                        nargs="+", 
+                        default=["hydro"])
     args = parser.parse_args()
 
     config = load_config(args.config)
     config["echelles"] = args.echelle
+    config["seasons"] = args.seasons
 
     pipeline_statistics_from_zarr_seasonal(config, max_workers=96)

@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from src.utils.config_tools import load_config
 from src.utils.logger import get_logger
-from src.utils.data_utils import load_data
+from src.utils.data_utils import load_data, cleaning_data_observed
 
 # from hades_stats import sp_dist # GEV stationnaire
 from hades_stats import ns_gev_m1, ns_gev_m2, ns_gev_m3 # GEV non stationnaire
@@ -322,12 +322,11 @@ def fit_gev_par_point(
         df["year_norm"] = (df["year"] - min_year) / (max_year - min_year) # t_norm = (t - min_year) / (max_year - min_year)
 
 
-    def norm_1delta_0centred_pandas(series):
-        res0 = series.astype(float) / (series.max() - series.min())
-        dx = res0.min() + 0.5
-        return res0 - dx
-
-    df["year_norm"] = norm_1delta_0centred_pandas(df["year_norm"])
+    # def norm_1delta_0centred_pandas(series): normalisation supplémentaire faire dans hades avec ObsWithCovar
+    #     res0 = series.astype(float) / (series.max() - series.min())
+    #     dx = res0.min() + 0.5
+    #     return res0 - dx
+    # df["year_norm"] = norm_1delta_0centred_pandas(df["year_norm"])
 
     logger.debug(f"[DEBUG] Années normalisées : min={df['year_norm'].min()}, max={df['year_norm'].max()}")
     grouped = list(df.groupby('NUM_POSTE'))
@@ -489,7 +488,7 @@ def pipeline_gev_from_statisticals(config, max_workers: int=48, n_bootstrap: int
 
         # Fixation de l'échelle pour le choix des colonnes à lire
         mesure = "max_mm_h" if echelle == "horaire" else "max_mm_j"
-        cols = ["NUM_POSTE", mesure]
+        cols = ["NUM_POSTE", mesure, "nan_ratio"]
 
         # Liste des années disponibles
         years = [
@@ -509,6 +508,9 @@ def pipeline_gev_from_statisticals(config, max_workers: int=48, n_bootstrap: int
 
         logger.info(f"Chargement des données de {min_year} à {max_year} : {input_dir}")
         df = load_data(input_dir, season, echelle, cols, min_year, max_year)
+
+        # Selection des stations suivant le NaN max
+        df = cleaning_data_observed(df, 0.15)
 
         logger.info(f"Application de la GEV pour la saison {season}")
         len_serie = 50 if echelle=="quotidien" else 20 # Longueur minimale d'une série valide

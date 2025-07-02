@@ -18,7 +18,7 @@ from scipy.stats import chi2
 from scipy.optimize import brentq
 
 
-def build_x_ttilde(df: pl.DataFrame, best_model: pl.DataFrame, break_year: int | None = None) -> pl.DataFrame:
+def build_x_ttilde(df: pl.DataFrame, best_model: pl.DataFrame, break_year: int | None = None, mesure: str = None) -> pl.DataFrame:
     """Convertit les dates en covariable temporelle ``t_tilde``.
 
     - **Changement principal :** l'échelle 0 → 1 est maintenant déterminée par
@@ -35,7 +35,7 @@ def build_x_ttilde(df: pl.DataFrame, best_model: pl.DataFrame, break_year: int |
     # ----------------------------------------------------------------------------------
     # Harmonisation des noms de colonnes
     # ----------------------------------------------------------------------------------
-    df = df.rename({"max_mm_j": "x"})  # les maxima journaliers s'appellent désormais « x »
+    df = df.rename({mesure: "x"})  # les maxima journaliers s'appellent désormais « x »
 
     # ----------------------------------------------------------------------------------
     # Bornes temporelles *globales* (calculées une seule fois)
@@ -132,6 +132,77 @@ def compute_calculate_zT1(T, df):
     ])
 
 
+
+def year_to_ttilde(year, has_break, min_year, max_year, break_year):
+    if not has_break:
+        t_raw = (year - min_year) / (max_year - min_year)
+    else:
+        t_raw = 0.0 if year < break_year else (year - break_year) / (max_year - break_year)
+    return t_raw - 0.5                          #  normalisation finale
+
+def calculate_z_T(
+    T: int,
+    t_tilde: float,         
+    mu0: float, mu1: float,
+    sigma0: float, sigma1: float,
+    xi: float
+) -> float:
+    """Niveau de retour z_T (stationnaire ou non)."""
+    mu    = mu0    + mu1    * t_tilde
+    sigma = sigma0 + sigma1 * t_tilde
+    CT    = (-np.log(1 - 1/T))**(-xi) - 1
+    return mu + (sigma / xi) * CT
+
+def compute_calculate_zT(
+    T: int,
+    year: int,
+    df_params: pl.DataFrame,
+    min_year: int,
+    max_year: int,
+    break_year: int
+) -> pl.DataFrame:
+    """
+    Calcule z_T(année) pour toutes les stations
+    et renvoie NUM_POSTE | z_T_p
+    """
+    # 1) présence d’un point de rupture ?
+    df = df_params.with_columns(
+        pl.col("model").str.contains("_break_year").alias("has_break")
+    )
+
+    # 2) t_tilde correspondant à l’année demandée
+    df = df.with_columns(
+        pl.struct(["has_break"])
+        .map_elements(
+            lambda s: year_to_ttilde(
+                year,
+                s["has_break"],
+                min_year,
+                max_year,
+                break_year
+            ),
+            return_dtype=pl.Float64
+        ).alias("t_tilde_year")
+    )
+
+    # 3) niveau de retour
+    df = df.with_columns(
+        pl.struct(["mu0", "mu1", "sigma0", "sigma1", "xi", "t_tilde_year"])
+        .map_elements(
+            lambda s: calculate_z_T(
+                T,
+                s["t_tilde_year"],
+                s["mu0"], s["mu1"],
+                s["sigma0"], s["sigma1"],
+                s["xi"]
+            ),
+            return_dtype=pl.Float64
+        ).alias("z_T_p")
+    )
+
+    return df.select(["NUM_POSTE", "z_T_p"])
+
+
 # Fonctions de mu et sigma en fonction de z
 @njit
 def mu1_zT1_func(T, z_T1, hat_sigma1, hat_xi0):
@@ -146,20 +217,41 @@ def sigma1_zT1_func(T, z_T1, hat_mu1, hat_xi0):
 
 
 # Fonctions de vraisemblance profilées
+
+# ────────────────────────── fonctions auxiliaires ──────────────────────────
+@njit(inline='always')
+def _invalid_term(term):
+    """True si au moins une valeur de `term` est <= 0."""
+    return np.any(term <= 0.0)
+
+@njit(inline='always')
+def _invalid_sigma(sigma):
+    """True si au moins une valeur de `sigma` est <= 0."""
+    return np.any(sigma <= 0.0)
+
+# ───────────────────────────── M1 : mu variable ─────────────────────────────
 @njit
 def log_likelihood_M1(T, z_T1, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0):
     """
     Effet temporel sur mu
     """
+    if sigma0 <= 0.0:
+        return -np.inf
+
     mu1 = mu1_zT1_func(T, z_T1, sigma1, xi0)
     z = (x - (mu0 + mu1 * t_tilde)) / sigma0
     term = 1 + xi0 * z
+
+    if _invalid_term(term):
+        return -np.inf
+
     return -np.sum(
         np.log(sigma0)
         + (1 + 1/xi0) * np.log(term)
         + term ** (-1 / xi0)
     )
 
+# ───────────────────────────── M2 : sigma variable ─────────────────────────
 @njit
 def log_likelihood_M2(T, z_T1, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0):
     """
@@ -167,14 +259,23 @@ def log_likelihood_M2(T, z_T1, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0):
     """
     sigma1 = sigma1_zT1_func(T, z_T1, mu1, xi0)
     sigma = sigma0 + sigma1 * t_tilde
+
+    if _invalid_sigma(sigma): 
+        return -np.inf
+
     z = (x - mu0) / sigma
     term = 1 + xi0 * z
+
+    if _invalid_term(term):
+        return -np.inf
+
     return -np.sum(
         np.log(sigma)
         + (1 + 1/xi0) * np.log(term)
         + term ** (-1 / xi0)
     )
 
+# ─────────────────────────── M3 : mu & sigma variables ─────────────────────
 @njit
 def log_likelihood_M3(T, z_T1, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0):
     """
@@ -182,9 +283,17 @@ def log_likelihood_M3(T, z_T1, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0):
     """
     mu1 = mu1_zT1_func(T, z_T1, sigma1, xi0)
     sigma = sigma0 + sigma1 * t_tilde
+
+    if _invalid_sigma(sigma):
+        return -np.inf
+
     mu = mu0 + mu1 * t_tilde
     z = (x - mu) / sigma
     term = 1 + xi0 * z
+
+    if _invalid_term(term):
+        return -np.inf
+
     return -np.sum(
         np.log(sigma)
         + (1 + 1/xi0) * np.log(term)
@@ -207,74 +316,108 @@ def select_log_likelihood(model: str):
 # Fonction pour trouver l'intervalle de confiance
 from scipy.optimize import root_scalar
 
+# ------------------------------------------------------------------------------
+# Intervalle de confiance profilé pour z_T1
+# ------------------------------------------------------------------------------
 def find_confidence_interval(
     z_hat: float,
-    ll_func,
-    model_params: dict,
-    alpha: float = 0.10,
-    tol: float = 1e-2,          # <-- résolution souhaitée des bornes
-    max_doublings: int = 1000,
-    R:int = 1.0
-) -> tuple[float, float]:
+    ll_func,                       # fonction de log-vraisemblance profilée (M1/M2/M3)
+    model_params: dict,            # T, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0
+    alpha: float = 0.10,           # 1 – alpha = niveau de confiance
+    tol: float = 1e-6,             # précision absolue & relative pour Brent
+    max_doublings: int = 1000,     # nb. max d’extensions R → 2R
+    R: float = 1.0,                # rayon initial autour de ẑ
+    min_sep: float = 1e-6          # écart minimal ẑ ↔ borne pour éviter “racine collée”
+) -> Tuple[float, float]:
     """
-    Intervalle de confiance (1-alpha) pour z_hat par profil de vraisemblance,
-    sans hyperparamètres de pas/expansion/bracketing exposés.
-    
-    On part d'un rayon initial R=1 et on double R tant que dev(z_hat±R)
-    n'encadre pas la racine. Si, après max_doublings, toujours rien,
-    on renvoie ±inf.
+    Renvoie (z_left, z_right), bornes de l’IC profilé à (1-alpha).
+
+    La fonction procède ainsi :
+      1. Calcule la déviance D(z) = 2·(ℓ̂ − ℓ(z)) − χ²_{1−α}.
+      2. Cherche, à gauche puis à droite de ẑ, le premier point où D change de signe,
+         en doublant progressivement le rayon R.
+      3. Une fois une inversion de signe trouvée, affine la racine avec Brent.
+      4. Si aucune inversion n’apparaît après `max_doublings`, renvoie −∞ ou +∞.
+
+    Retourne ±∞ lorsque la borne n’existe pas (ou n’a pas été trouvée).
     """
-    # seuil critique
-    chi2_thr = chi2.ppf(1 - alpha, df=1)
+    # ------------------------------------------------------------------ seuil χ²
+    chi2_thr = chi2.ppf(1.0 - alpha, df=1)
 
-    # accès rapide
-    T = model_params["T"]
-    x = model_params["x"]
-    t_tilde = model_params["t_tilde"]
-    mu0, sigma0 = model_params["mu0"], model_params["sigma0"]
-    mu1, sigma1 = model_params["mu1"], model_params["sigma1"]
-    xi0 = model_params["xi0"]
+    # ---------------------------------------------------------------- log-vrais au max
+    ll_hat = ll_func(
+        model_params["T"], z_hat,
+        model_params["x"], model_params["t_tilde"],
+        model_params["mu0"], model_params["sigma0"],
+        model_params["mu1"], model_params["sigma1"],
+        model_params["xi0"]
+    )
 
-    # log-vraisemblance au max
-    ll_hat = ll_func(T, z_hat, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0)
+    # ---------------------------------------------------------------- déviance
+    def D(z: float) -> float:
+        ll_z = ll_func(
+            model_params["T"], z,
+            model_params["x"], model_params["t_tilde"],
+            model_params["mu0"], model_params["sigma0"],
+            model_params["mu1"], model_params["sigma1"],
+            model_params["xi0"]
+        )
+        if np.isnan(ll_z):
+            return np.inf                    # zone invalide → pas de racine ici
+        return 2.0 * (ll_hat - ll_z) - chi2_thr
 
-    # fonction de déviance D(z)
-    def D(z):
-        llz = ll_func(T, z, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0)
-        if np.isnan(llz):
-            return np.inf
-        return 2*(ll_hat - llz) - chi2_thr
-
+    # ---------------------------------------------------------------- recherche borne
     def _find_side(sign: int) -> float:
         """
-        sign = -1 pour chercher la borne gauche, +1 pour la droite.
+        Cherche la borne du côté `sign` (−1 = gauche, +1 = droite).
+        Si la seule racine trouvée est « trop proche » de ẑ, on la
+        rejette et on conclut que la borne est infinie.
         """
-        R_local = R  
-        a = z_hat
-        fa = D(a)
-        # on cherche b = z_hat + sign*R tel que D(b) a un signe opposé
-        for _ in range(max_doublings):
-            b = z_hat + sign * R_local
-            fb = D(b)
-            if np.sign(fb) != np.sign(fa):
-                lo, hi = (b, z_hat) if sign<0 else (z_hat, b)
-                try:
-                    sol = root_scalar(
-                        D, bracket=[lo, hi],
-                        method='brentq',
-                        xtol=tol, rtol=tol
-                    )
-                    return sol.root
-                except ValueError:
-                    return -np.inf if sign<0 else np.inf
-            R_local *= 2.0
-        # pas trouvé après trop de doublements
-        logger.warning(f"Pas d'encadrement trouvé après {max_doublings} expansions")
-        return -np.inf if sign<0 else np.inf
+        R_local = R
+        f_ref   = D(z_hat)                  # D(z_hat) ≤ 0
+        found_far_enough = False
 
+        # seuil de proximité relatif (1e-4 = 0.01 %)
+        eps_rel = 1e-4 * max(1.0, abs(z_hat))
+
+        for _ in range(max_doublings):
+            z_try = z_hat + sign * R_local
+            f_try = D(z_try)
+
+            # inversion de signe ?
+            if np.sign(f_try) != np.sign(f_ref):
+                lo, hi = (z_try, z_hat - sign * min_sep) if sign < 0 else \
+                        (z_hat + sign * min_sep, z_try)
+                try:
+                    sol = root_scalar(D, bracket=[lo, hi],
+                                    method="brentq", xtol=tol, rtol=tol)
+
+                    dist = abs(sol.root - z_hat)
+                    if dist < max(min_sep, eps_rel):
+                        # racine collée : on tente une seule extension supplémentaire
+                        if found_far_enough:           # 2ᵉ fois → abandon
+                            return np.inf if sign > 0 else -np.inf
+                        found_far_enough = True
+                        R_local *= 4.0                 # élargit encore
+                        f_ref   = f_try
+                        continue
+
+                    return sol.root                    # borne valide
+
+                except ValueError:
+                    pass  # élargir encore si Brentq échoue
+
+            R_local *= 2.0
+        # aucune racine trouvée après toutes les extensions
+        return np.inf if sign > 0 else -np.inf
+
+
+    # ---------------------------------------------------------------- exécution
     z_left  = _find_side(-1)
     z_right = _find_side(+1)
+
     return z_left, z_right
+
 
 
 
@@ -300,7 +443,7 @@ def profile_loglikelihood_per_station(
 
     for gkey, grp in tqdm(list(merged.group_by("NUM_POSTE")), desc="Profiling stations"):
         num_poste = str(gkey) if isinstance(gkey, str) else str(gkey[0]) 
-
+        
         x, t_tilde = grp["x"].to_numpy(), grp["t_tilde"].to_numpy()
         model, mu0, mu1, sigma0, sigma1, xi0, z_hat = (
             grp[["model", "mu0", "mu1", "sigma0", "sigma1", "xi", "z_T1"]]
@@ -328,30 +471,44 @@ def profile_loglikelihood_per_station(
         # Calcul de l'intervalle de confiance
         z_left, z_right = find_confidence_interval(z_hat, loglik_func, model_params, threshold)
 
+        # ─── Vérifications & warnings ───────────────────────────────────────────
+        if (
+            np.isinf(z_left) or np.isinf(z_right) or np.isinf(loglik_hat)
+            or np.isclose(z_left,  z_hat)  # borne collée au point-est
+            or np.isclose(z_right, z_hat)
+        ):
+            logger.warning(f"\nStation {num_poste} : bornes z_left={z_left}, z_hat={z_hat}, z_right={z_right}")
 
-        # Tracé de la log-vraisemblance autour de z_hat
-        # delta = max(abs(z_hat - z_left), abs(z_right - z_hat), 1.0)
-        # z_grid = np.linspace(z_hat - delta, z_hat + delta, 300)
-        # ll_vals = [loglik_func(T, z, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0) for z in z_grid]
+
+        # if num_poste=="20092001":
+        #     logger.warning(f"\n\n Encadrement identique que z_hat pour {num_poste} [{z_left} , {z_right}] avec \n {model_params}")
+        #     z_grid  = np.linspace(z_hat - 50, z_hat + 50, 3000)
+        #     ll_vals = np.array([
+        #         loglik_func(T, z, x, t_tilde, mu0, sigma0, mu1, sigma1, xi0)
+        #         for z in z_grid
+        #     ])
+
+        #     mask = np.isfinite(ll_vals)      # True là où σ>0 ET 1+ξz>0
+           
 
 
-        # plot_dir = "log-vrais"
-        # os.makedirs(plot_dir, exist_ok=True)
-        # import matplotlib.pyplot as plt
-        # plt.figure()
-        # plt.plot(z_grid, ll_vals, label='Log-vraisemblance')
-        # # Ligne verticale pour z_hat
-        # plt.axvline(z_hat, color='red', linestyle='--', label=f'ẑ={z_hat:.3f}')
-        # # Lignes pour bornes IC
-        # plt.axvline(z_left, color='green', linestyle=':', label=f'IC lower={z_left:.3f}')
-        # plt.axvline(z_right, color='green', linestyle=':', label=f'IC upper={z_right:.3f}')
-        # plt.xlabel('z_T1')
-        # plt.ylabel('Log-vraisemblance')
-        # plt.title(f'Station {num_poste} : profil de log-vraisemblance')
-        # plt.legend(loc='best')
-        # plt.tight_layout()
-        # plt.savefig(os.path.join(plot_dir, f"loglik_profile_{num_poste}.png"))
-        # plt.close()
+        #     plot_dir = "log-vrais"
+        #     os.makedirs(plot_dir, exist_ok=True)
+        #     import matplotlib.pyplot as plt
+        #     plt.figure()
+        #     plt.plot(z_grid[mask], ll_vals[mask], label="Log-vraisemblance")
+        #     # Ligne verticale pour z_hat
+        #     plt.axvline(z_hat, color='red', linestyle='--', label=f'ẑ={z_hat:.3f}')
+        #     # Lignes pour bornes IC
+        #     plt.axvline(z_left, color='green', linestyle=':', label=f'IC lower={z_left:.3f}')
+        #     plt.axvline(z_right, color='green', linestyle=':', label=f'IC upper={z_right:.3f}')
+        #     plt.xlabel('z_T1')
+        #     plt.ylabel('Log-vraisemblance')
+        #     plt.title(f'Station {num_poste} : profil de log-vraisemblance')
+        #     plt.legend(loc='best')
+        #     plt.tight_layout()
+        #     plt.savefig(os.path.join(plot_dir, f"loglik_profile_{num_poste}.png"))
+        #     plt.close()
 
         rows.append({
             "NUM_POSTE":    num_poste,
@@ -432,7 +589,7 @@ def main(config, args, T: int = 10):
         df = load_data(input_dir, season, echelle, cols, min_year, max_year)
 
         # Gestion des NaN
-        df = df.drop_nulls(subset=["max_mm_j"])
+        df = df.drop_nulls(subset=[mesure])
 
         # Filtrer les stations avec un résultat de GEV
         df = df.filter(pl.col("NUM_POSTE").is_in(best_model["NUM_POSTE"].to_list()))
@@ -440,10 +597,35 @@ def main(config, args, T: int = 10):
             "Les deux DataFrames n'ont pas le même nombre de NUM_POSTE uniques"
 
         # Normaliser t en t_tilde ou t_tilde* suivant la présence ou non d'un break_point
-        df_series = build_x_ttilde(df, best_model, break_year)
+        df_series = build_x_ttilde(df, best_model, break_year, mesure)
 
         # Ajoute une colonne "z_T1" au DataFrame best_model
         df_zT1 = compute_calculate_zT1(T, best_model)
+
+        # Calcul de z_T(t = 1985) et z_T(t = 2022)
+        min_year_global = df["year"].min()  
+        max_year_global = df["year"].max()
+
+        z_T_1985 = compute_calculate_zT(
+            T, break_year, best_model,
+            min_year_global, max_year_global,
+            break_year
+        )
+        z_T_2022 = compute_calculate_zT(
+            T, max_year, best_model,
+            min_year_global, max_year_global,
+            break_year
+        )
+        # Ajoute au tableau
+        z_levels = (
+            z_T_1985.join(z_T_2022, on="NUM_POSTE", suffix="_2022")
+                    .select([
+                        "NUM_POSTE",
+                        ((pl.col("z_T_p_2022") - pl.col("z_T_p")) / pl.col("z_T_p") * 100)
+                        .alias("z_T_p")
+                    ])
+        )
+        df_zT1 = df_zT1.join(z_levels, on="NUM_POSTE")
 
         # log-vraisemblance profilée pour chaque station autour de z_T1
         table_ic = profile_loglikelihood_per_station(
@@ -454,7 +636,7 @@ def main(config, args, T: int = 10):
         )
 
         # Récupère model et z_T1 depuis df_zT1
-        model_info = df_zT1.select(["NUM_POSTE", "model", "z_T1"])
+        model_info = df_zT1.select(["NUM_POSTE", "model", "z_T1", "z_T_p"])
 
         # Jointure avec les paramètres du modèle
         table_ic = table_ic.with_columns(pl.col("NUM_POSTE").cast(pl.Utf8))     # correspondance sur NUM_POSTE
@@ -462,7 +644,7 @@ def main(config, args, T: int = 10):
         final_table = table_ic.join(model_info, on="NUM_POSTE", how="left")
 
         # Réorganisation des colonnes
-        final_table = final_table.select(["NUM_POSTE", "model", "z_T1", "ic_lower", "ic_upper", "significant"])
+        final_table = final_table.select(["NUM_POSTE", "model", "z_T1", "ic_lower", "ic_upper", "significant", "z_T_p"])
 
         # DONNER LES RESULTATS AVEC UNE PENTE PAR 10 ANS
         # 1) durée par station Δtᵢ = tmaxᵢ – tminᵢ (ou t+ lors d'un break_point)
@@ -503,7 +685,7 @@ def main(config, args, T: int = 10):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pipeline de calcul du niveau de retour et son IC")
-    parser.add_argument("--config", type=str, default="config/observed_settings.yaml")
+    parser.add_argument("--config", type=str, default="config/modelised_settings.yaml")
     parser.add_argument("--echelle", choices=["horaire", "quotidien"], nargs='+', default=["quotidien"])
     parser.add_argument("--season", type=str, default="son")
     parser.add_argument("--threshold", type=float, default=0.10, help="Seuil pour IC")
