@@ -11,10 +11,10 @@ def load_data(intputdir: str, season: str, echelle: str, cols: tuple, min_year: 
     for year in range(min_year, max_year + 1):
         try:
             df = load_season(year, cols, season, intputdir)
-            # Ajouter une colonne constante 'year' = 2024
             df = df.with_columns([
                 pl.lit(year).alias("year")
             ])
+            
             dataframes.append(df)
 
         except Exception as e:
@@ -28,3 +28,19 @@ def load_data(intputdir: str, season: str, echelle: str, cols: tuple, min_year: 
         raise ValueError("Aucune donnée chargée.")
 
     return pl.concat(dataframes, how="vertical")
+
+
+def cleaning_data_observed(df: pl.DataFrame, nan_limit: float = 0.15) -> pl.DataFrame:
+    # Moyenne du ratio de NaN par station (lat, lon)
+    station_counts = (
+        df.group_by(["NUM_POSTE"])
+        .agg(pl.col("nan_ratio").mean().alias("nan_ratio"))
+    )
+
+    # Stations valides selon le seuil
+    valid = station_counts.filter(pl.col("nan_ratio") <= nan_limit)
+
+    # Jointure pour ne garder que les stations valides
+    df_filtered = df.join(valid.select(["NUM_POSTE"]), on=["NUM_POSTE"], how="inner")
+
+    return df_filtered
