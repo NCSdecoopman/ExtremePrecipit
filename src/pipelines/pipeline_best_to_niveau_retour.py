@@ -7,7 +7,7 @@ from typing import Tuple
 
 from src.utils.logger import get_logger
 from src.utils.config_tools import load_config
-from src.utils.data_utils import load_data
+from src.utils.data_utils import load_data, cleaning_data_observed
 
 import numpy as np
 import polars as pl
@@ -568,7 +568,7 @@ def main(config, args, T: int = 10):
 
         # Fixation de l'échelle pour le choix des colonnes à lire
         mesure = "max_mm_h" if echelle == "horaire" else "max_mm_j"
-        cols = ["NUM_POSTE", mesure]
+        cols = ["NUM_POSTE", mesure, "nan_ratio"]
 
         # Liste des années disponibles
         years = [
@@ -587,6 +587,9 @@ def main(config, args, T: int = 10):
 
         logger.info(f"Chargement des données de {min_year} à {max_year} : {input_dir}")
         df = load_data(input_dir, season, echelle, cols, min_year, max_year)
+
+        # Selection des stations suivant le NaN max
+        df = cleaning_data_observed(df, echelle)
 
         # Gestion des NaN
         df = df.drop_nulls(subset=[mesure])

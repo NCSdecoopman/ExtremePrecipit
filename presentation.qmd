@@ -293,7 +293,7 @@ result = pipeline_data_quarto(
     max_year=year_display_max,
     season_choice="hydro",
     unit_choice="jours",
-    missing_choice=0.15,
+    missing_choice=0.10,
     quantile_choice=0.995
 )
 
@@ -303,6 +303,7 @@ html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
     result=result,
     echelle=echelle,
     stat_choice_label=title,
+    missing_choice=0.10,
     unit_choice="jours"
 )
 
@@ -337,7 +338,7 @@ pipeline_total_title_map_legend_scatter_delta(
 #     max_year=year_display_max,
 #     season_choice="hydro",
 #     unit_choice="jours",
-#     missing_choice=0.15,
+#     missing_choice=0.10,
 #     quantile_choice=0.995
 # )
 
@@ -347,6 +348,7 @@ pipeline_total_title_map_legend_scatter_delta(
 #     result=result,
 #     echelle=echelle,
 #     stat_choice_label="Jour de pluie",
+#     missing_choice=0.10,
 #     unit_choice="jours"
 # )
 
@@ -381,7 +383,7 @@ result = pipeline_data_quarto(
     min_year=year_display_min,
     max_year=year_display_max,
     season_choice="hydro",
-    missing_choice=0.15,
+    missing_choice=0.10,
     quantile_choice=0.995
 )
 
@@ -390,6 +392,7 @@ html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
     name="jour_mean_total",
     result=result,
     echelle=echelle,
+    missing_choice=0.10,
     stat_choice_label="Moyenne des précipitations"
 )
 
@@ -408,30 +411,31 @@ pipeline_total_title_map_legend_scatter_delta(
 
 ```{python}
 #| label: moy_precipit_jour_2000_MAX_only_metric
-year_display_min = 1990
-year_display_max = config["years"]["max"]
-echelle="quotidien"
+# year_display_min = 1990
+# year_display_max = config["years"]["max"]
+# echelle="quotidien"
 
-# Étape 1 : récupérer les résultats avec pipeline_data_quarto
-result = pipeline_data_quarto(
-    config=config,
-    stat_choice="mean",
-    echelle=echelle,
-    min_year=year_display_min,
-    max_year=year_display_max,
-    season_choice="hydro",
-    missing_choice=0.15,
-    quantile_choice=0.995
-)
+# # Étape 1 : récupérer les résultats avec pipeline_data_quarto
+# result = pipeline_data_quarto(
+#     config=config,
+#     stat_choice="mean",
+#     echelle=echelle,
+#     min_year=year_display_min,
+#     max_year=year_display_max,
+#     season_choice="hydro",
+#     missing_choice=0.10,
+#     quantile_choice=0.995
+# )
 
-# Étape 2 : affichage carte + scatter
-_, _, _, me, _, percent = pipeline_map_legend_scatter(
-    name="jour_mean_2000",
-    result=result,
-    echelle=echelle,
-    stat_choice_label="Moyenne des précipitations"
-)
-display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me:+.3f} mm/j ({percent*100:+.1f}%)"))
+# # Étape 2 : affichage carte + scatter
+# _, _, _, me, _, percent = pipeline_map_legend_scatter(
+#     name="jour_mean_2000",
+#     result=result,
+#     echelle=echelle,
+#     missing_choice=0.10,
+#     stat_choice_label="Moyenne des précipitations"
+# )
+# display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me:+.3f} mm/j ({percent*100:+.1f}%)"))
 ```
 
 **Répartition correcte de la quantité totale d’eau**
@@ -452,7 +456,7 @@ result = pipeline_data_quarto(
     min_year=year_display_min,
     max_year=year_display_max,
     season_choice="hydro",
-    missing_choice=0.15,
+    missing_choice=0.10,
     quantile_choice=0.995
 )
 
@@ -461,6 +465,7 @@ html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
     name="horaire_mean_2000",
     result=result,
     echelle=echelle,
+    missing_choice=0.10,
     stat_choice_label="Moyenne des précipitations"
 )
 
@@ -503,7 +508,7 @@ result = pipeline_data_quarto(
     min_year=year_display_min,
     max_year=year_display_max,
     season_choice="hydro",
-    missing_choice=0.15,
+    missing_choice=0.10,
     quantile_choice=0.995
 )
 
@@ -512,6 +517,7 @@ html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
     name="jour_mean_max_total",
     result=result,
     echelle=echelle,
+    missing_choice=0.10,
     stat_choice_label="Moyenne des maxima"
 )
 
@@ -530,31 +536,32 @@ pipeline_total_title_map_legend_scatter_delta(
 
 ```{python}
 #| label: moy_max_precipit_jour_2000_MAX
-year_display_min = 1990
-year_display_max = config["years"]["max"]
-echelle="quotidien"
+# year_display_min = 1990
+# year_display_max = config["years"]["max"]
+# echelle="quotidien"
 
-# Étape 1 : récupérer les résultats avec pipeline_data_quarto
-result = pipeline_data_quarto(
-    config=config,
-    stat_choice="mean-max",
-    echelle=echelle,
-    min_year=year_display_min,
-    max_year=year_display_max,
-    season_choice="hydro",
-    missing_choice=0.15,
-    quantile_choice=0.995
-)
+# # Étape 1 : récupérer les résultats avec pipeline_data_quarto
+# result = pipeline_data_quarto(
+#     config=config,
+#     stat_choice="mean-max",
+#     echelle=echelle,
+#     min_year=year_display_min,
+#     max_year=year_display_max,
+#     season_choice="hydro",
+#     missing_choice=0.10,
+#     quantile_choice=0.995
+# )
 
-# Étape 2 : affichage carte + scatter
-_, _, _, me, _, percent = pipeline_map_legend_scatter(
-    name="jour_mean_max_2000",
-    result=result,
-    echelle=echelle,
-    stat_choice_label="Moyenne des maxima"
-)
+# # Étape 2 : affichage carte + scatter
+# _, _, _, me, _, percent = pipeline_map_legend_scatter(
+#     name="jour_mean_max_2000",
+#     result=result,
+#     echelle=echelle,
+#     missing_choice=0.10,
+#     stat_choice_label="Moyenne des maxima"
+# )
 
-display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me:+.3f} mm/j ({percent*100:+.1f}%)"))
+# display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me:+.3f} mm/j ({percent*100:+.1f}%)"))
 ```
 
 ---
@@ -573,7 +580,7 @@ result = pipeline_data_quarto(
     min_year=year_display_min,
     max_year=year_display_max,
     season_choice="hydro",
-    missing_choice=0.15,
+    missing_choice=0.10,
     quantile_choice=0.995
 )
 
@@ -582,6 +589,7 @@ html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
     name="horaire_mean_max_2000",
     result=result,
     echelle=echelle,
+    missing_choice=0.10,
     stat_choice_label="Moyenne des maxima"
 )
 
@@ -619,7 +627,7 @@ result = pipeline_data_quarto(
     min_year=year_display_min,
     max_year=year_display_max,
     season_choice="hydro",
-    missing_choice=0.15,
+    missing_choice=0.10,
     quantile_choice=0.995
 )
 
@@ -627,6 +635,7 @@ _, html_scatter_mean, r2_mean, me_mean, n_mean, _ = pipeline_map_legend_scatter(
     name="jour_mean_max_total",
     result=result,
     echelle=echelle,
+    missing_choice=0.10,
     stat_choice_label="Moyenne des maxima"
 )
 ```
@@ -641,8 +650,9 @@ from app.utils.stats_utils import generate_metrics
 
 year_display_min = config["years"]["min"]
 year_display_max = config["years"]["max"]
+missing_choice=0.10
 year_display_middle, height, unit_choice = 1990, 500, "mm/j"
-df_all, df_r2_all_max = all_max.show(config_path, year_display_min, year_display_max, year_display_middle)
+df_all, df_r2_all_max = all_max.show(config_path, year_display_min, year_display_max, year_display_middle, missing_choice)
 df_all = df_all.rename({"lat_obs": "lat", "lon_obs": "lon"})
 
 # Ajout du scatter plot pour AROME vs station annuels
@@ -1342,6 +1352,11 @@ def plot_four_polars_grids(
     # ------------------------------------------------------------------
     # Saturation des valeurs extrêmes (1 % sup.)
     # ------------------------------------------------------------------
+
+    # 1) Avant la saturation, mémoriser la valeur originale
+    for gdf in model_gdfs + [g for g in obs_gdfs if g is not None]:
+        gdf["_val_raw"] = gdf[val_col].copy()         # ← copie intacte
+
     all_values: list[float] = []
     for gdf in model_gdfs:
         all_values.extend(gdf[val_col].to_numpy())
@@ -1375,17 +1390,6 @@ def plot_four_polars_grids(
         col = val_col
 
     # ------------------------------------------------------------------
-    # 
-    # ------------------------------------------------------------------
-    # Définir (ou exposer via les paramètres) un intervalle de tailles en points²
-    min_ms, max_ms = 20, 150          # ex. diamètres ~4 pt à ~12 pt
-    abs_max = max(                    # normalisation sur l’ensemble des obs
-        g[val_col].abs().max()
-        for g in obs_gdfs
-        if g is not None and not g.empty
-    )
-
-    # ------------------------------------------------------------------
     # Export cartes
     # ------------------------------------------------------------------
     Path("presentation_files/map").mkdir(parents=True, exist_ok=True)
@@ -1401,12 +1405,16 @@ def plot_four_polars_grids(
                 gdf_m.plot(ax=ax, column=col, cmap=cmap, norm=norm, linewidth=0, zorder=1)
 
             if show_obs and gdf_o is not None and not gdf_o.empty:
-                # Diamètre linéaire entre 4 pt et 13 pt
-                ms = (gdf_o[val_col].abs() / 50).clip(0, 1) * (max_pt - min_pt) + min_pt
-                ms_scatter = ms ** 2              # aire en points²
+
+                # ------------------------------------------------------------------
+                # Échelle des diamètres de points
+                # ------------------------------------------------------------------
+                abs_vals = gdf_o["_val_raw"].abs()
+                abs_max  = abs_vals.max()
+                gdf_o["_size_pt2"] = ((abs_vals / abs_max) * (max_pt - min_pt) + min_pt) ** 2
 
                 kw = dict(
-                    markersize=ms_scatter,        # <-- utiliser ms_scatter ici
+                    markersize="_size_pt2",
                     marker="o",
                     edgecolor=obs_edgecolor,
                     linewidth=0.1,

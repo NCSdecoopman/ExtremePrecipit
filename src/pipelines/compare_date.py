@@ -27,7 +27,7 @@ def load_data(intputdir: str, season: str, echelle: str, cols: tuple, min_year: 
                 pl.col(cols[1]).cast(pl.Utf8),
                 pl.lit(year).alias("year")
             ])
-            df = df.filter(pl.col("nan_ratio") <= 0.15)
+            df = df.filter(pl.col("nan_ratio") <= 0.10)
             
             dataframes.append(df)
 
@@ -264,8 +264,20 @@ if __name__ == "__main__":
         color="red",         # ligne rouge
         linestyle="--",
         linewidth=1.5,
-        label=f"Moyenne = {mean_delta:.1f} (± {std_delta:.0f})"
+        label=f"Moy = {mean_delta:.1f} (± {std_delta:.0f})"
     )
+
+
+    # Ajout du texte pour indiquer le nombre de valeurs comparées (n)
+    plt.text(0.05, 0.9, f"n = {len(delta)}", transform=plt.gca().transAxes, fontsize=12)
+
+    # Ajout du texte pour indiquer les pourcentages
+    pos = 0.9
+    for i in range(0, 5):
+        pos = pos - 0.05
+        val = (np.sum(np.abs(delta) == i) / len(delta)) * 100
+        plt.text(0.05, pos, f"% maxima ± {i}j : {val:.2f}%", transform=plt.gca().transAxes, fontsize=12)
+
     # On force l'axe Y entre 0 et 10 %
     plt.ylim(0, 25) if args.echelle[0]=="horaire" else plt.ylim(0, 50)
 
@@ -273,7 +285,7 @@ if __name__ == "__main__":
     if args.season == "hydro":
         plt.ylabel(f"% de stations", fontsize=15)
     plt.title(f"")
-    plt.legend(fontsize=13)
+    plt.legend(loc='upper left', fontsize=13, frameon=False)
     plt.tight_layout()
 
     # 5) Sauvegarde dans outputs/

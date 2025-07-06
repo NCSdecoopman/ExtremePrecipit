@@ -118,11 +118,11 @@ SEASON_MONTHS = [
 
 # Pipeline GEV
 log(f"Lancement du traitement stats to gev")
-for setting in ["config/observed_settings.yaml", "config/modelised_settings.yaml"]:
+for setting in ["config/observed_settings.yaml"]: # , "config/modelised_settings.yaml"
 
     for echelle in ["horaire", "quotidien"]:
 
-        SEASONS = SEASON_MONTHS
+        SEASONS = ["son", "djf", "mam", "jja"]
         for season in SEASONS: 
 
             for model in [
