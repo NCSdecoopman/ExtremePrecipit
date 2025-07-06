@@ -510,10 +510,10 @@ def pipeline_gev_from_statisticals(config, max_workers: int=48, n_bootstrap: int
         df = load_data(input_dir, season, echelle, cols, min_year, max_year)
 
         # Selection des stations suivant le NaN max
-        df = cleaning_data_observed(df, 0.15)
+        df = cleaning_data_observed(df, echelle)
 
         logger.info(f"Application de la GEV pour la saison {season}")
-        len_serie = 50 if echelle=="quotidien" else 20 # Longueur minimale d'une série valide
+        len_serie = 50 if echelle=="quotidien" else 25 # Longueur minimale d'une série valide
 
         df_gev_param = fit_gev_par_point(
             df, 

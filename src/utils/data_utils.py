@@ -30,17 +30,42 @@ def load_data(intputdir: str, season: str, echelle: str, cols: tuple, min_year: 
     return pl.concat(dataframes, how="vertical")
 
 
-def cleaning_data_observed(df: pl.DataFrame, nan_limit: float = 0.15) -> pl.DataFrame:
-    # Moyenne du ratio de NaN par station (lat, lon)
+def cleaning_data_observed(
+    df: pl.DataFrame,
+    echelle: str | None = None,
+    nan_limit: float = 0.10    
+) -> pl.DataFrame:
+    """
+    Filtre les maxima par deux critères :
+      1) on annule les valeurs d’une année si nan_ratio > nan_limit
+      2) on ne garde que les stations ayant au moins n années valides :
+         n = 25   si echelle == "horaire"
+         n = 50   si echelle == "quotidien"
+    """
+    # ——— règles dépendant de l’échelle ———
+    if echelle.startswith("horaire") or echelle.startswith("w"):
+        min_valid_years = 25
+    elif echelle == "quotidien":
+        min_valid_years = 50
+    else:
+        raise ValueError('Paramètre "echelle" doit être "horaire" ou "quotidien"')
+    
+    # Selection des saisons avec nan_limit au maximum
+    df_filter = df.filter(pl.col("nan_ratio") <= nan_limit)
+
+    # Calcul du nombre d'années valides par station NUM_POSTE
     station_counts = (
-        df.group_by(["NUM_POSTE"])
-        .agg(pl.col("nan_ratio").mean().alias("nan_ratio"))
+        df_filter.group_by("NUM_POSTE")
+        .agg(pl.col("year").n_unique().alias("num_years"))
     )
 
-    # Stations valides selon le seuil
-    valid = station_counts.filter(pl.col("nan_ratio") <= nan_limit)
+    # Sélection des NUM_POSTE avec au moins min_valid_years d'années valides
+    valid_stations = station_counts.filter(pl.col("num_years") >= min_valid_years)
 
     # Jointure pour ne garder que les stations valides
-    df_filtered = df.join(valid.select(["NUM_POSTE"]), on=["NUM_POSTE"], how="inner")
+    df_final = df_filter.filter(
+        pl.col("NUM_POSTE").is_in(valid_stations["NUM_POSTE"])
+    )
 
-    return df_filtered
+    return df_final
+
