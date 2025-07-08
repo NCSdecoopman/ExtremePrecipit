@@ -18,7 +18,7 @@ from scipy.stats import chi2
 from scipy.optimize import brentq
 
 
-def build_x_ttilde(df: pl.DataFrame, best_model: pl.DataFrame, break_year: int | None = None, mesure: str = None) -> pl.DataFrame:
+def build_x_ttilde(df: pl.DataFrame, min_year: int, max_year:int, best_model: pl.DataFrame, break_year: int | None = None, mesure: str = None) -> pl.DataFrame:
     """Convertit les dates en covariable temporelle ``t_tilde``.
 
     - **Changement principal :** l'échelle 0 → 1 est maintenant déterminée par
@@ -36,12 +36,6 @@ def build_x_ttilde(df: pl.DataFrame, best_model: pl.DataFrame, break_year: int |
     # Harmonisation des noms de colonnes
     # ----------------------------------------------------------------------------------
     df = df.rename({mesure: "x"})  # les maxima journaliers s'appellent désormais « x »
-
-    # ----------------------------------------------------------------------------------
-    # Bornes temporelles *globales* (calculées une seule fois)
-    # ----------------------------------------------------------------------------------
-    min_year = df["year"].min()
-    max_year = df["year"].max()
 
     # ----------------------------------------------------------------------------------
     # Information « point de rupture » par station (d'après le meilleur modèle GEV)
@@ -91,25 +85,38 @@ def build_x_ttilde(df: pl.DataFrame, best_model: pl.DataFrame, break_year: int |
                 .then(0.0)
                 .otherwise((pl.col("year") - break_year) / (max_year - break_year))
           )
-          .alias("t_tilde")
+          .alias("t_tilde_raw")
     ])
 
-    # Applique la normalisation `norm_1delta_0centred` de hades
-    t_min = df["t_tilde"].min()
-    t_max = df["t_tilde"].max()
-    dx = t_min / (t_max - t_min) + 0.5
+    # Applique la normalisation `norm_1delta_0centred` de hades_stats par station
+    def norm_1delta_0centred_polars(s):
+        t = s.to_numpy()
+        t_min = t.min()
+        t_max = t.max()
+        if t_max == t_min:
+            # Cas dégénéré : tous les t identiques
+            return pl.Series([-0.5] * len(t))
+        res0 = t / (t_max - t_min)
+        dx = res0.min() + 0.5
+        return pl.Series(res0 - dx)
 
-    df = df.with_columns([
-        (pl.col("t_tilde") / (t_max - t_min) - dx).alias("t_tilde")
-    ])
+    df = (
+        df.group_by("NUM_POSTE")
+        .map_groups(                      # <- nouveau nom
+            lambda g: g.with_columns(
+                norm_1delta_0centred_polars(g["t_tilde_raw"]).alias("t_tilde")
+            )
+        )
+    )
 
     # --------------------------------------------------------------------------------
     return df.select([
         "NUM_POSTE", "x", "t_tilde",
         "tmin", "tmax",
         "has_break",
-        "t_plus"
+        "t_plus", "year"
     ])
+
 
 
 
@@ -133,74 +140,53 @@ def compute_calculate_zT1(T, df):
 
 
 
-def year_to_ttilde(year, has_break, min_year, max_year, break_year):
-    if not has_break:
-        t_raw = (year - min_year) / (max_year - min_year)
-    else:
-        t_raw = 0.0 if year < break_year else (year - break_year) / (max_year - break_year)
-    return t_raw - 0.5                          #  normalisation finale
 
-def calculate_z_T(
+def compute_zT_for_years(
     T: int,
-    t_tilde: float,         
-    mu0: float, mu1: float,
-    sigma0: float, sigma1: float,
-    xi: float
-) -> float:
-    """Niveau de retour z_T (stationnaire ou non)."""
-    mu    = mu0    + mu1    * t_tilde
-    sigma = sigma0 + sigma1 * t_tilde
-    CT    = (-np.log(1 - 1/T))**(-xi) - 1
-    return mu + (sigma / xi) * CT
-
-def compute_calculate_zT(
-    T: int,
-    year: int,
-    df_params: pl.DataFrame,
+    annees_retour: np.ndarray,  # tableau d'années souhaitées (doit contenir 2 valeurs)
     min_year: int,
     max_year: int,
-    break_year: int
+    df_params: pl.DataFrame,
+    df_series: pl.DataFrame
 ) -> pl.DataFrame:
     """
-    Calcule z_T(année) pour toutes les stations
-    et renvoie NUM_POSTE | z_T_p
+    Calcule z_T(x) pour chaque station pour deux années de retour (a et b),
+    et retourne un DataFrame avec NUM_POSTE, zTpa, zTpb, (zTpb-zTpa)/zTpa.
     """
-    # 1) présence d’un point de rupture ?
-    df = df_params.with_columns(
-        pl.col("model").str.contains("_break_year").alias("has_break")
-    )
+    if len(annees_retour) != 2:
+        raise ValueError("annees_retour doit contenir exactement deux valeurs (a et b)")
+    a, b = annees_retour[0], annees_retour[1]
+    rows = []
+    for row in df_params.to_dicts():
+        data_station = df_series.filter(pl.col("NUM_POSTE") == row["NUM_POSTE"])
+        years_obs = data_station["year"].to_numpy()
+        t_tilde_obs_raw = (years_obs - min_year) / (max_year - min_year)
+        t_min_ret = t_tilde_obs_raw.min()
+        t_max_ret = t_tilde_obs_raw.max()
+        res0_obs = t_tilde_obs_raw / (t_max_ret - t_min_ret)
+        dx = res0_obs.min() + 0.5
 
-    # 2) t_tilde correspondant à l’année demandée
-    df = df.with_columns(
-        pl.struct(["has_break"])
-        .map_elements(
-            lambda s: year_to_ttilde(
-                year,
-                s["has_break"],
-                min_year,
-                max_year,
-                break_year
-            ),
-            return_dtype=pl.Float64
-        ).alias("t_tilde_year")
-    )
+        t_tilde_retour = []
+        for y in [a, b]:
+            t_tilde_retour_raw = (y - min_year) / (max_year - min_year)
+            res0_ret = t_tilde_retour_raw / (t_max_ret - t_min_ret)
+            t_tilde = res0_ret - dx
+            t_tilde_retour.append(t_tilde)
+        t_tilde_retour = np.array(t_tilde_retour)
+        # Calcul z_T pour a et b
+        mu0, mu1, sigma0, sigma1, xi = row["mu0"], row["mu1"], row["sigma0"], row["sigma1"], row["xi"]
+        CT = ((-np.log(1-1/T))**(-xi) - 1)
+        zTpa = mu0 + mu1*t_tilde_retour[0] + (sigma0 + sigma1*t_tilde_retour[0])/xi * CT
+        zTpb = mu0 + mu1*t_tilde_retour[1] + (sigma0 + sigma1*t_tilde_retour[1])/xi * CT
+        ratio = (zTpb - zTpa) / zTpa * 100 if zTpa != 0 else np.nan
+        rows.append({
+            "NUM_POSTE": row["NUM_POSTE"],
+            "zTpa": zTpa,
+            "zTpb": zTpb,
+            "z_T_p": ratio
+        })
 
-    # 3) niveau de retour
-    df = df.with_columns(
-        pl.struct(["mu0", "mu1", "sigma0", "sigma1", "xi", "t_tilde_year"])
-        .map_elements(
-            lambda s: calculate_z_T(
-                T,
-                s["t_tilde_year"],
-                s["mu0"], s["mu1"],
-                s["sigma0"], s["sigma1"],
-                s["xi"]
-            ),
-            return_dtype=pl.Float64
-        ).alias("z_T_p")
-    )
-
-    return df.select(["NUM_POSTE", "z_T_p"])
+    return pl.DataFrame(rows)
 
 
 # Fonctions de mu et sigma en fonction de z
@@ -600,34 +586,21 @@ def main(config, args, T: int = 10):
             "Les deux DataFrames n'ont pas le même nombre de NUM_POSTE uniques"
 
         # Normaliser t en t_tilde ou t_tilde* suivant la présence ou non d'un break_point
-        df_series = build_x_ttilde(df, best_model, break_year, mesure)
+        df_series = build_x_ttilde(df, min_year, max_year, best_model, break_year, mesure)
 
         # Ajoute une colonne "z_T1" au DataFrame best_model
         df_zT1 = compute_calculate_zT1(T, best_model)
 
-        # Calcul de z_T(t = 1985) et z_T(t = 2022)
-        min_year_global = df["year"].min()  
-        max_year_global = df["year"].max()
+        # Calcul de z_T(1995) et z_T(2022) avec normalisation sur la grille [1995, 2022]
+        z_levels = compute_zT_for_years(
+            T,
+            np.array([1995, max_year]),
+            min_year,
+            max_year,
+            best_model,
+            df_series
+        )
 
-        z_T_1985 = compute_calculate_zT(
-            T, break_year, best_model,
-            min_year_global, max_year_global,
-            break_year
-        )
-        z_T_2022 = compute_calculate_zT(
-            T, max_year, best_model,
-            min_year_global, max_year_global,
-            break_year
-        )
-        # Ajoute au tableau
-        z_levels = (
-            z_T_1985.join(z_T_2022, on="NUM_POSTE", suffix="_2022")
-                    .select([
-                        "NUM_POSTE",
-                        ((pl.col("z_T_p_2022") - pl.col("z_T_p")) / pl.col("z_T_p") * 100)
-                        .alias("z_T_p")
-                    ])
-        )
         df_zT1 = df_zT1.join(z_levels, on="NUM_POSTE")
 
         # log-vraisemblance profilée pour chaque station autour de z_T1
@@ -688,8 +661,8 @@ def main(config, args, T: int = 10):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pipeline de calcul du niveau de retour et son IC")
-    parser.add_argument("--config", type=str, default="config/modelised_settings.yaml")
-    parser.add_argument("--echelle", choices=["horaire", "quotidien"], nargs='+', default=["quotidien"])
+    parser.add_argument("--config", type=str, default="config/observed_settings.yaml")
+    parser.add_argument("--echelle", choices=["horaire", "quotidien"], nargs='+', default=["horaire"])
     parser.add_argument("--season", type=str, default="son")
     parser.add_argument("--threshold", type=float, default=0.10, help="Seuil pour IC")
     args = parser.parse_args()
