@@ -87,7 +87,7 @@ SEASON_MONTHS = [
 # ------------------------- STATS -------------------------
 ############################################################
 
-# for config in ["config/modelised_settings.yaml"]: # "config/observed_settings.yaml", 
+# for config in ["config/observed_settings.yaml", "config/modelised_settings.yaml"]:
     
 #     # "horaire", "w3", "w6", "w9", "w12", "w24"]
 #     SEASONS = SEASON_MONTHS
@@ -122,27 +122,27 @@ for setting in ["config/observed_settings.yaml"]: # , "config/modelised_settings
 
     for echelle in ["horaire", "quotidien"]:
 
-        SEASONS = ["son", "djf", "mam", "jja"]
+        SEASONS = ["son", "djf", "mam", "jja"] #
         for season in SEASONS: 
 
-            for model in [
-                "s_gev", # Stationnaire
-                "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
-                "ns_gev_m1_break_year", "ns_gev_m2_break_year", "ns_gev_m3_break_year" # Non stationnaire avec point de rupture
-                ]:
+            # for model in [
+            #     "s_gev", # Stationnaire
+            #     "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
+            #     "ns_gev_m1_break_year", "ns_gev_m2_break_year", "ns_gev_m3_break_year" # Non stationnaire avec point de rupture
+            #     ]:
             
-                subprocess.run(
-                    [
-                        "python",
-                        "-m",
-                        "src.pipelines.pipeline_stats_to_gev",
-                        "--config", setting,
-                        "--echelle", echelle,
-                        "--season", season,
-                        "--model", model
-                    ],
-                    check=True
-                )
+                # subprocess.run(
+                #     [
+                #         "python",
+                #         "-m",
+                #         "src.pipelines.pipeline_stats_to_gev",
+                #         "--config", setting,
+                #         "--echelle", echelle,
+                #         "--season", season,
+                #         "--model", model
+                #     ],
+                #     check=True
+                # )
 
             subprocess.run(
                 [
