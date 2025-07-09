@@ -2,10 +2,11 @@ import polars as pl
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
+from src.utils.data_utils import cleaning_data_observed
 
-station = '63178001'
-echelle = 'horaire'
-saison = 'son'
+station = '36106001'
+echelle = 'quotidien'
+saison = 'oct'
 donnee = 'observed'
 data_dir = Path(f'data/statisticals/{donnee}/{echelle}')
 # Détermination dynamique de la période d'observation
@@ -34,6 +35,7 @@ if not dfs:
     raise ValueError("Aucune donnée trouvée pour la station")
 
 df_station = pl.concat(dfs)
+df_station = cleaning_data_observed(df_station, echelle)
 df_station = df_station.drop_nulls(subset=[mesure])
 
 years_obs = df_station['year'].to_numpy()

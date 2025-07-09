@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import random
 import os
 
+from src.utils.data_utils import cleaning_data_observed
+
 def calc_percent_trend(station, echelle, saison, donnee, save_plot=False, plot_dir=None):
     data_dir = Path(f'data/statisticals/{donnee}/{echelle}')
     available_years = [int(d.name) for d in data_dir.iterdir() if d.is_dir() and d.name.isdigit() and len(d.name) == 4]
@@ -34,6 +36,7 @@ def calc_percent_trend(station, echelle, saison, donnee, save_plot=False, plot_d
         raise ValueError("Aucune donnée trouvée pour la station")
 
     df_station = pl.concat(dfs)
+    df_station = cleaning_data_observed(df_station, echelle)
     df_station = df_station.drop_nulls(subset=[mesure])
 
     years_obs = df_station['year'].to_numpy()
@@ -198,12 +201,12 @@ if __name__ == "__main__":
                                 df_stat = df_stat.with_columns(pl.lit(year).alias('year'))
                                 dfs.append(df_stat)
                     if not dfs:
-                        print("  [DIAG] Aucune donnée trouvée pour la station")
+                        #print("  [DIAG] Aucune donnée trouvée pour la station")
                         continue
                     df_station = pl.concat(dfs)
                     df_station = df_station.drop_nulls(subset=[mesure])
                     years_obs = df_station['year'].to_numpy()
-                    print(f"  [DIAG] Années observées utilisées : {years_obs}")
+                    #print(f"  [DIAG] Années observées utilisées : {years_obs}")
                     # 2. t_min, t_max, dx
                     min_year = 1990
                     max_year = 2022
@@ -212,13 +215,13 @@ if __name__ == "__main__":
                     t_max_ret = t_tilde_obs_raw.max()
                     res0_obs = t_tilde_obs_raw / (t_max_ret - t_min_ret)
                     dx = res0_obs.min() + 0.5
-                    print(f"  [DIAG] t_min_ret: {t_min_ret}, t_max_ret: {t_max_ret}, dx: {dx}")
+                    #print(f"  [DIAG] t_min_ret: {t_min_ret}, t_max_ret: {t_max_ret}, dx: {dx}")
                     # 3. t_tilde pour 1995 et 2022
                     annees_compare = np.array([1995, 2022])
                     t_tilde_compare_raw = (annees_compare - min_year) / (max_year - min_year)
                     res0_compare = t_tilde_compare_raw / (t_max_ret - t_min_ret)
                     t_tilde_compare = res0_compare - dx
-                    print(f"  [DIAG] t_tilde 1995: {t_tilde_compare[0]}, t_tilde 2022: {t_tilde_compare[1]}")
+                    #print(f"  [DIAG] t_tilde 1995: {t_tilde_compare[0]}, t_tilde 2022: {t_tilde_compare[1]}")
                     # 4. zTpa, zTpb
                     df_gev = pl.read_parquet(f'data/gev/{donnee}/{echelle}/{saison}/gev_param_best_model.parquet')
                     params = df_gev.filter(pl.col('NUM_POSTE') == num_poste)
@@ -227,7 +230,7 @@ if __name__ == "__main__":
                     CT = ((-np.log(1-1/T))**(-xi) - 1)
                     zTpa = mu0 + mu1*t_tilde_compare[0] + (sigma0 + sigma1*t_tilde_compare[0])/xi * CT
                     zTpb = mu0 + mu1*t_tilde_compare[1] + (sigma0 + sigma1*t_tilde_compare[1])/xi * CT
-                    print(f"  [DIAG] zTpa (1995): {zTpa}, zTpb (2022): {zTpb}")
+                    #print(f"  [DIAG] zTpa (1995): {zTpa}, zTpb (2022): {zTpb}")
             except Exception as e:
                 print(f"Erreur pour {num_poste} {echelle} {saison}: {e}")
         # Optionnel : enregistrer les résultats dans un CSV
