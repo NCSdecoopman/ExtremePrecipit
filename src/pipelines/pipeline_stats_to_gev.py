@@ -176,7 +176,8 @@ def gev_non_stationnaire(
     # Covariable temporelle : l'année normalisée
     covar = pd.DataFrame({"x": df["year_norm"]}, index=df.index)
 
-    obs = ObsWithCovar(values, covar)
+    # Désactivation de la normalisation automatique d'hades
+    obs = ObsWithCovar(values, covar, norm_method=lambda x: x)
     ns_dist = NsDistribution("gev", model_struct) # model_struct peut être None (stationnaire)
     bounds = [PARAM_DEFAULTS[param]["bounds"] for param in param_names]
 

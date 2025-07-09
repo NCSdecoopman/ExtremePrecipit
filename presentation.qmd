@@ -1242,6 +1242,7 @@ from matplotlib.colors import BoundaryNorm, LinearSegmentedColormap, TwoSlopeNor
 from shapely.geometry import box
 
 
+
 def plot_four_polars_grids(
     datasets: Sequence[Mapping[str, pl.DataFrame]],
     *,
@@ -1253,7 +1254,7 @@ def plot_four_polars_grids(
     # Observations
     obs_key: str = "observed_show",
     show_obs: bool = True,  # n'influence plus que l'affichage
-    min_pt: int=2,
+    min_pt: int=6,
     max_pt: int=11,
     obs_edgecolor: str = "#000000",
     obs_facecolor: Optional[str] = None,
@@ -1269,7 +1270,8 @@ def plot_four_polars_grids(
     show_mod: bool = True,
     show_signif: bool = False,  # filtre significatif sur obs
     numero: int=1,
-    saturation_val: int=99.5
+    saturation_col: int=99,
+    saturation_size: int=99
 ):
     """Trace quatre cartes polaires + une légende commune (SVG).
 
@@ -1366,7 +1368,8 @@ def plot_four_polars_grids(
 
     is_bool = model_gdfs[0][val_col].dtype == bool
     if all_values and not is_bool:
-        seuil = np.percentile(np.abs(all_values), saturation_val)
+        # Seuil couleur pour toutes les valeurs, modèle + obs
+        seuil = np.percentile(np.abs(all_values), saturation_col)
         for gdf in model_gdfs + [g for g in obs_gdfs if g is not None]:
             gdf[val_col] = np.where(np.abs(gdf[val_col]) > seuil,
                                     np.sign(gdf[val_col]) * seuil,
@@ -1382,11 +1385,20 @@ def plot_four_polars_grids(
             g["_val_int"] = g[val_col].astype(int)
         col = "_val_int"
     else:
-        vmin = float(min([g[val_col].min() for g in model_gdfs] + [g[val_col].min() for g in obs_gdfs if g is not None]))
-        vmax = float(max([g[val_col].max() for g in model_gdfs] + [g[val_col].max() for g in obs_gdfs if g is not None]))
-        vcenter = 0 if vmin < 0 < vmax else (vmin + vmax) / 2
-        norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
-        cmap = LinearSegmentedColormap.from_list("bwr_custom", ["red", "#ffffff", "blue"], N=100)
+        all_mins = [g[val_col].min() for g in model_gdfs]
+        all_mins += [g[val_col].min() for g in obs_gdfs if g is not None]
+        all_maxs = [g[val_col].max() for g in model_gdfs]
+        all_maxs += [g[val_col].max() for g in obs_gdfs if g is not None]
+
+        vmin_raw = float(min(all_mins))
+        vmax_raw = float(max(all_maxs))
+        # rayon symétrique
+        max_abs = max(abs(vmin_raw), abs(vmax_raw))
+        vmin, vmax = -max_abs, max_abs
+
+        # centre au zéro
+        norm = TwoSlopeNorm(vmin=vmin, vcenter=0.0, vmax=vmax)
+        cmap = LinearSegmentedColormap.from_list("bwr_custom", ["red", "#ffffff", "blue"], N=150)
         col = val_col
 
     # ------------------------------------------------------------------
@@ -1409,9 +1421,19 @@ def plot_four_polars_grids(
                 # ------------------------------------------------------------------
                 # Échelle des diamètres de points
                 # ------------------------------------------------------------------
+                # valeurs brutes abs et max global (pour le mapping linéaire)
                 abs_vals = gdf_o["_val_raw"].abs()
                 abs_max  = abs_vals.max()
-                gdf_o["_size_pt2"] = ((abs_vals / abs_max) * (max_pt - min_pt) + min_pt) ** 2
+                # taille brute non-saturée
+                raw_size = ((abs_vals / abs_max) * (max_pt - min_pt) + min_pt) ** 2
+                # masque des points à saturer
+                # Seuil taille uniquement les obs
+                seuil_size = np.percentile(abs_vals, saturation_size)
+                # copie et saturation : tous les points > seuil obtiennent max_pt**2
+                sizes = raw_size.copy()
+                sizes[abs_vals > seuil_size] = max_pt ** 2
+                # on enregistre
+                gdf_o["_size_pt2"] = sizes
 
                 kw = dict(
                     markersize="_size_pt2",
@@ -1493,14 +1515,15 @@ for show in [True, False]:
             val_col="z_T_p",          # nom de la colonne à colorer / symboliser
             titles=[s.upper() for s in seasons],  # titres des 4 sous-cartes
             show_mod=show,
-            show_obs=not show
+            show_obs=not show,
+            numero=1
         )
 ```
 
 ---
 
 ```{python}
-title_show = pipeline_title("Tendances relatives (%) du niveau de retour 10 ans estimée par le meilleur modèle", 1985, 2022, "quotidien", None)
+title_show = pipeline_title("Tendances relatives (&#37; saturé à partir q99) du niveau de retour 10 ans estimée par le meilleur modèle", 1995, 2022, "quotidien", None)
 display(HTML(title_show))
 ```
 
@@ -1548,22 +1571,22 @@ display(HTML(title_show))
     <tr>
         <td>
         <a href="presentation_files/map/quotidien_SON_rast_mod.svg" target="_blank" rel="noopener">
-            <img src="presentation_files/map/quotidien_SON_norast_mod.svg" alt="SON">
+            <img src="presentation_files/map/quotidien_SON_norast_mod.svg" alt="En cours de calcul">
         </a>
         </td>
         <td>
         <a href="presentation_files/map/quotidien_DJF_rast_mod.svg" target="_blank" rel="noopener">
-            <img src="presentation_files/map/quotidien_DJF_norast_mod.svg" alt="DJF">
+            <img src="presentation_files/map/quotidien_DJF_norast_mod.svg" alt="En cours de calcul">
         </a>
         </td>
         <td>
         <a href="presentation_files/map/quotidien_MAM_rast_mod.svg" target="_blank" rel="noopener">
-            <img src="presentation_files/map/quotidien_MAM_norast_mod.svg" alt="MAM">
+            <img src="presentation_files/map/quotidien_MAM_norast_mod.svg" alt="En cours de calcul">
         </a>
         </td>
         <td>
         <a href="presentation_files/map/quotidien_JJA_rast_mod.svg" target="_blank" rel="noopener">
-            <img src="presentation_files/map/quotidien_JJA_norast_mod.svg" alt="JJA">
+            <img src="presentation_files/map/quotidien_JJA_norast_mod.svg" alt="En cours de calcul">
         </a>
         </td>
     <td rowspan="2" style="vertical-align: middle; text-align: center;">
@@ -1575,22 +1598,22 @@ display(HTML(title_show))
     <tr>
       <td>
         <a href="presentation_files/map/quotidien_SON_rast_obs.svg" target="_blank" rel="noopener">
-          <img src="presentation_files/map/quotidien_SON_norast_obs.svg" alt="SON">
+          <img src="presentation_files/map/quotidien_SON_norast_obs.svg" alt="En cours de calcul">
         </a>
       </td>
       <td>
         <a href="presentation_files/map/quotidien_DJF_rast_obs.svg" target="_blank" rel="noopener">
-          <img src="presentation_files/map/quotidien_DJF_norast_obs.svg" alt="DJF">
+          <img src="presentation_files/map/quotidien_DJF_norast_obs.svg" alt="En cours de calcul">
         </a>
       </td>
       <td>
         <a href="presentation_files/map/quotidien_MAM_rast_obs.svg" target="_blank" rel="noopener">
-          <img src="presentation_files/map/quotidien_MAM_norast_obs.svg" alt="MAM">
+          <img src="presentation_files/map/quotidien_MAM_norast_obs.svg" alt="En cours de calcul">
         </a>
       </td>
       <td>
         <a href="presentation_files/map/quotidien_JJA_rast_obs.svg" target="_blank" rel="noopener">
-          <img src="presentation_files/map/quotidien_JJA_norast_obs.svg" alt="JJA">
+          <img src="presentation_files/map/quotidien_JJA_norast_obs.svg" alt="En cours de calcul">
         </a>
       </td>
     </tr>
@@ -1602,7 +1625,7 @@ display(HTML(title_show))
 
 ```{python}
 echelles = ["quotidien"] #, "horaire"
-seasons  = ["son_bis", "nod", "s", "o", "n", "d"]
+seasons  = ["son_bis", "nod", "sep", "oct", "nov", "dec"]
 datasets = {e: [] for e in echelles}
 
 for e in echelles:
@@ -1627,14 +1650,13 @@ for e in echelles:
         titles=[s.upper() for s in seasons],  # titres des 4 sous-cartes
         show_mod=False,
         show_obs=True,
-        numero=2,
-        saturation_val=99
+        numero=2
     )
 ```
 
 
 ```{python}
-title_show = pipeline_title("Tendances relatives (%) du niveau de retour 10 ans estimée par le meilleur modèle", 1985, 2022, "quotidien", None)
+title_show = pipeline_title("Tendances relatives (&#37; saturé à partir q99) du niveau de retour 10 ans estimée par le meilleur modèle", 1995, 2022, "quotidien", None)
 display(HTML(title_show))
 ```
 
@@ -1660,12 +1682,12 @@ figcaption { margin-top: .3rem; font-size: .9rem; }
         </td>
         <td>
         <a href="presentation_files/map/quotidien_SON_BIS_rast_obs.svg" target="_blank" rel="noopener">
-            <img src="presentation_files/map/quotidien_SON_BIS_norast_obs.svg" alt="SON">
+            <img src="presentation_files/map/quotidien_SON_BIS_norast_obs.svg" alt="En cours de calcul">
         </a>
         </td>
         <td>
         <a href="presentation_files/map/quotidien_NOD_rast_obs.svg" target="_blank" rel="noopener">
-            <img src="presentation_files/map/quotidien_NOD_norast_obs.svg" alt="DJF">
+            <img src="presentation_files/map/quotidien_NOD_norast_obs.svg" alt="En cours de calcul">
         </a>
         </td>
         <td>
@@ -1679,32 +1701,32 @@ figcaption { margin-top: .3rem; font-size: .9rem; }
   <tr>
     <td>
       <figure>
-        <a href="presentation_files/map/quotidien_S_rast_obs.svg" target="_blank" rel="noopener">
-          <img src="presentation_files/map/quotidien_S_norast_obs.svg" alt="September">
+        <a href="presentation_files/map/quotidien_SEP_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_SEP_norast_obs.svg" alt="September">
         </a>
         <figcaption>Sept</figcaption>
       </figure>
     </td>
     <td>
       <figure>
-        <a href="presentation_files/map/quotidien_O_rast_obs.svg" target="_blank" rel="noopener">
-          <img src="presentation_files/map/quotidien_O_norast_obs.svg" alt="October">
+        <a href="presentation_files/map/quotidien_OCT_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_OCT_norast_obs.svg" alt="October">
         </a>
         <figcaption>Oct</figcaption>
       </figure>
     </td>
     <td>
       <figure>
-        <a href="presentation_files/map/quotidien_N_rast_obs.svg" target="_blank" rel="noopener">
-          <img src="presentation_files/map/quotidien_N_norast_obs.svg" alt="November">
+        <a href="presentation_files/map/quotidien_NOV_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_NOV_norast_obs.svg" alt="November">
         </a>
         <figcaption>Nov</figcaption>
       </figure>
     </td>
     <td>
       <figure>
-        <a href="presentation_files/map/quotidien_D_rast_obs.svg" target="_blank" rel="noopener">
-          <img src="presentation_files/map/quotidien_D_norast_obs.svg" alt="December">
+        <a href="presentation_files/map/quotidien_DEC_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_DEC_norast_obs.svg" alt="December">
         </a>
         <figcaption>Dec</figcaption>
       </figure>
@@ -1713,16 +1735,370 @@ figcaption { margin-top: .3rem; font-size: .9rem; }
 </tbody>
 </table>
 
-# La suite...
 
-<br/><br/><br/>
+```{python}
+echelles = ["horaire"] 
+seasons  = ["son", "djf", "mam", "jja"]
+datasets = {e: [] for e in echelles}
 
-<h2>Journalier (vérification modélisation statistique) *vs.* horaire (objectif initial)</h2><br/> 
-<h2>Saison *vs.* mois</h2><br/> 
-<h2>Significativité ?</h2><br/> 
+for e in echelles:
+    for s in seasons:
+        res = pipeline_data_gev_quarto(
+            config=config,
+            model_name="niveau_retour",
+            echelle=e,
+            season_choice=s,
+            T_choice=10,
+            par_X_annees=10,
+            min_year=config["years"]["min"],
+            max_year=config["years"]["max"],
+        )
+        datasets[e].append(res)    # On range le résultat dans la bonne liste
 
-<br/><br/>
+for show in [True, False]:
+    for e in echelles:
+        plot_four_polars_grids(
+            datasets[e],
+            echelle=e,
+            val_col="z_T_p",          # nom de la colonne à colorer / symboliser
+            titles=[s.upper() for s in seasons],  # titres des 4 sous-cartes
+            show_mod=show,
+            show_obs=not show,
+            numero=1
+        )
+```
 
---- 
+---
 
-<div class="fin">Merci.</div>
+```{python}
+title_show = pipeline_title("Tendances relatives (&#37; saturé à partir q99) du niveau de retour 10 ans estimée par le meilleur modèle", 1995, 2022, "horaire", None)
+display(HTML(title_show))
+```
+
+
+<table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
+  <thead>
+    <tr>
+      <th>SON</th>
+      <th>DJF</th>
+      <th>MAM</th>
+      <th>JJA</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td>
+        <a href="presentation_files/map/horaire_SON_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_SON_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_DJF_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_DJF_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_MAM_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_MAM_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_JJA_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_JJA_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+    <td rowspan="2" style="vertical-align: middle; text-align: center;">
+    <object type="image/svg+xml" data="presentation_files/map/horaire_legend_1.svg"
+            width="40" height="600" class="legend-svg">
+    </object>
+    </td>
+    </tr>
+    <tr>
+      <td>
+        <a href="presentation_files/map/horaire_SON_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_SON_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_DJF_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_DJF_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_MAM_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_MAM_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_JJA_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_JJA_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+
+```{python}
+echelles = ["horaire"] 
+SEASON_MONTHS = [
+    "jan",
+    "fev",
+    "mar",
+    "avr",
+    "mai",
+    "jui",
+    "juill",
+    "aou",
+    "sep",
+    "oct",
+    "nov",
+    "dec"
+]
+seasons = SEASON_MONTHS
+datasets = {e: [] for e in echelles}
+
+for e in echelles:
+    for s in seasons:
+        res = pipeline_data_gev_quarto(
+            config=config,
+            model_name="niveau_retour",
+            echelle=e,
+            season_choice=s,
+            T_choice=10,
+            par_X_annees=10,
+            min_year=config["years"]["min"],
+            max_year=config["years"]["max"],
+        )
+        datasets[e].append(res)    # On range le résultat dans la bonne liste
+
+show=False
+# for show in [True, False]:
+for e in echelles:
+    plot_four_polars_grids(
+        datasets[e],
+        echelle=e,
+        val_col="z_T_p",          # nom de la colonne à colorer / symboliser
+        titles=[s.upper() for s in seasons],  # titres des 4 sous-cartes
+        show_mod=show,
+        show_obs=not show,
+        numero=2,
+        saturation_col=95,
+        saturation_size=95
+    )
+```
+
+---
+
+```{python}
+title_show = pipeline_title("Tendances relatives (&#37; saturé à partir q95) du niveau de retour 10 ans estimée par le meilleur modèle", 1995, 2022, "horaire", None)
+display(HTML(title_show))
+```
+
+
+<table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
+  <thead>
+    <tr>
+      <th>JAN</th>
+      <th>FEV</th>
+      <th>MAR</th>
+      <th>AVR</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td>
+        <a href="presentation_files/map/horaire_JAN_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_JAN_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_FEV_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_FEV_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_MAR_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_MAR_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_AVR_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_AVR_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+    <td rowspan="2" style="vertical-align: middle; text-align: center;">
+    <object type="image/svg+xml" data="presentation_files/map/horaire_legend_2.svg"
+            width="40" height="600" class="legend-svg">
+    </object>
+    </td>
+    </tr>
+    <tr>
+      <td>
+        <a href="presentation_files/map/horaire_JAN_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_JAN_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_FEV_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_FEV_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_MAR_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_MAR_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_AVR_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_AVR_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+```{python}
+title_show = pipeline_title("Tendances relatives (&#37; saturé à partir q95) du niveau de retour 10 ans estimée par le meilleur modèle", 1995, 2022, "horaire", None)
+display(HTML(title_show))
+```
+
+
+<table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
+  <thead>
+    <tr>
+      <th>MAI</th>
+      <th>JUI</th>
+      <th>JUILL</th>
+      <th>AOU</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td>
+        <a href="presentation_files/map/horaire_MAI_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_MAI_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_JUI_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_JUI_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_JUILL_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_JUILL_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_AOU_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_AOU_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+    <td rowspan="2" style="vertical-align: middle; text-align: center;">
+    <object type="image/svg+xml" data="presentation_files/map/horaire_legend_2.svg"
+            width="40" height="600" class="legend-svg">
+    </object>
+    </td>
+    </tr>
+    <tr>
+      <td>
+        <a href="presentation_files/map/horaire_MAI_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_MAI_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_JUI_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_JUI_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_JUILL_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_JUILL_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_AOU_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_AOU_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+```{python}
+title_show = pipeline_title("Tendances relatives (&#37; saturé à partir q95) du niveau de retour 10 ans estimée par le meilleur modèle", 1995, 2022, "horaire", None)
+display(HTML(title_show))
+```
+
+
+<table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
+  <thead>
+    <tr>
+      <th>SEP</th>
+      <th>OCT</th>
+      <th>NOV</th>
+      <th>DEC</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td>
+        <a href="presentation_files/map/horaire_SEP_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_SEP_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_OCT_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_OCT_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_NOV_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_NOV_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_DEC_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_DEC_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+    <td rowspan="2" style="vertical-align: middle; text-align: center;">
+    <object type="image/svg+xml" data="presentation_files/map/horaire_legend_2.svg"
+            width="40" height="600" class="legend-svg">
+    </object>
+    </td>
+    </tr>
+    <tr>
+      <td>
+        <a href="presentation_files/map/horaire_SEP_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_SEP_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_OCT_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_OCT_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_NOV_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_NOV_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_DEC_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_DEC_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+    </tr>
+  </tbody>
+</table>

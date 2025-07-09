@@ -56,7 +56,6 @@
 .fin {
     text-align: center; /* Centrer horizontalement */
     position: absolute; /* Position absolue pour le centrage vertical */
-    top: 50%; /* Déplace le haut du titre au centre */
     left: 50%; /* Déplace la gauche du titre au centre */
     transform: translate(-50%, -50%); /* Ajuste le titre au centre */
 }

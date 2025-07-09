@@ -179,6 +179,17 @@ def compute_zT_for_years(
         zTpa = mu0 + mu1*t_tilde_retour[0] + (sigma0 + sigma1*t_tilde_retour[0])/xi * CT
         zTpb = mu0 + mu1*t_tilde_retour[1] + (sigma0 + sigma1*t_tilde_retour[1])/xi * CT
         ratio = (zTpb - zTpa) / zTpa * 100 if zTpa != 0 else np.nan
+
+        # Bloc de debug pour la station 71029001
+        if row["NUM_POSTE"] == "71029001":
+            print(f"[PIPELINE DEBUG] NUM_POSTE: {row['NUM_POSTE']}")
+            print(f"  years_obs: {years_obs}")
+            print(f"  t_tilde_obs_raw: {t_tilde_obs_raw}")
+            print(f"  t_min_ret: {t_min_ret}, t_max_ret: {t_max_ret}, dx: {dx}")
+            print(f"  t_tilde_retour_raw: {t_tilde_retour_raw}")
+            print(f"  t_tilde_retour: {t_tilde_retour}")
+            print(f"  zTpa: {zTpa}, zTpb: {zTpb}")
+
         rows.append({
             "NUM_POSTE": row["NUM_POSTE"],
             "zTpa": zTpa,
@@ -603,6 +614,9 @@ def main(config, args, T: int = 10):
 
         df_zT1 = df_zT1.join(z_levels, on="NUM_POSTE")
 
+        # Ajoutez ces colonnes dans le tableau final
+        model_info = df_zT1.select(["NUM_POSTE", "model", "z_T1", "z_T_p", "zTpa", "zTpb"])
+
         # log-vraisemblance profilée pour chaque station autour de z_T1
         table_ic = profile_loglikelihood_per_station(
             T,
@@ -612,7 +626,7 @@ def main(config, args, T: int = 10):
         )
 
         # Récupère model et z_T1 depuis df_zT1
-        model_info = df_zT1.select(["NUM_POSTE", "model", "z_T1", "z_T_p"])
+        model_info = df_zT1.select(["NUM_POSTE", "model", "z_T1", "z_T_p", "zTpa", "zTpb"])
 
         # Jointure avec les paramètres du modèle
         table_ic = table_ic.with_columns(pl.col("NUM_POSTE").cast(pl.Utf8))     # correspondance sur NUM_POSTE
@@ -620,7 +634,7 @@ def main(config, args, T: int = 10):
         final_table = table_ic.join(model_info, on="NUM_POSTE", how="left")
 
         # Réorganisation des colonnes
-        final_table = final_table.select(["NUM_POSTE", "model", "z_T1", "ic_lower", "ic_upper", "significant", "z_T_p"])
+        final_table = final_table.select(["NUM_POSTE", "model", "z_T1", "ic_lower", "ic_upper", "significant", "z_T_p" , "zTpa", "zTpb"])
 
         # DONNER LES RESULTATS AVEC UNE PENTE PAR 10 ANS
         # 1) durée par station Δtᵢ = tmaxᵢ – tminᵢ (ou t+ lors d'un break_point)
@@ -662,8 +676,8 @@ def main(config, args, T: int = 10):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pipeline de calcul du niveau de retour et son IC")
     parser.add_argument("--config", type=str, default="config/observed_settings.yaml")
-    parser.add_argument("--echelle", choices=["horaire", "quotidien"], nargs='+', default=["horaire"])
-    parser.add_argument("--season", type=str, default="son")
+    parser.add_argument("--echelle", choices=["horaire", "quotidien"], nargs='+', default=["quotidien"])
+    parser.add_argument("--season", type=str, default="nov")
     parser.add_argument("--threshold", type=float, default=0.10, help="Seuil pour IC")
     args = parser.parse_args()
 
