@@ -1,4 +1,37 @@
+import os
 import polars as pl
+
+
+def years_to_load(echelle: str, season: str, input_dir: str):
+    # Fixation de l'échelle pour le choix des colonnes à lire
+    mesure = "max_mm_h" if echelle == "horaire" else "max_mm_j"
+    
+    # Liste des années disponibles
+    years = [
+        int(name) for name in os.listdir(input_dir)
+        if os.path.isdir(os.path.join(input_dir, name)) and name.isdigit() and len(name) == 4
+    ]
+
+    if years:
+        min_year = min(years) if echelle == "quotidien" else 1990 # Année minimale
+        max_year = max(years)
+    else:
+        logger.error("Aucune année valide trouvée.")
+
+    len_serie = 50 if echelle=="quotidien" else 25 # Longueur minimale d'une série valide
+
+
+    min_year = 1990
+    max_year = 2022
+    len_serie = 25
+
+
+    if season in ["hydro", "djf"]:
+        min_year+=1 # On commence en 1960
+
+    return mesure, min_year, max_year, len_serie
+
+
 
 def load_season(year: int, cols: tuple, season_key: str, base_path: str) -> pl.DataFrame:
     filename = f"{base_path}/{year:04d}/{season_key}.parquet"
@@ -33,7 +66,8 @@ def load_data(intputdir: str, season: str, echelle: str, cols: tuple, min_year: 
 def cleaning_data_observed(
     df: pl.DataFrame,
     echelle: str | None = None,
-    nan_limit: float = 0.10    
+    len_serie: int = None,
+    nan_limit: float = 0.10
 ) -> pl.DataFrame:
     """
     Filtre les maxima par deux critères :
@@ -43,12 +77,8 @@ def cleaning_data_observed(
          n = 50   si echelle == "quotidien"
     """
     # ——— règles dépendant de l’échelle ———
-    if echelle.startswith("horaire") or echelle.startswith("w"):
-        min_valid_years = 25
-    elif echelle == "quotidien":
-        min_valid_years = 50
-    else:
-        raise ValueError('Paramètre "echelle" doit être "horaire" ou "quotidien"')
+    if len_serie is None:
+        raise ValueError('Paramètre len_serie à préciser')
     
     # Selection des saisons avec nan_limit au maximum
     df_filter = df.filter(pl.col("nan_ratio") <= nan_limit)
@@ -59,8 +89,8 @@ def cleaning_data_observed(
         .agg(pl.col("year").n_unique().alias("num_years"))
     )
 
-    # Sélection des NUM_POSTE avec au moins min_valid_years d'années valides
-    valid_stations = station_counts.filter(pl.col("num_years") >= min_valid_years)
+    # Sélection des NUM_POSTE avec au moins len_serie d'années valides
+    valid_stations = station_counts.filter(pl.col("num_years") >= len_serie)
 
     # Jointure pour ne garder que les stations valides
     df_final = df_filter.filter(

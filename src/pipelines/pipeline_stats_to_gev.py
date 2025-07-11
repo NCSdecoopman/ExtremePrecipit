@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from src.utils.config_tools import load_config
 from src.utils.logger import get_logger
-from src.utils.data_utils import load_data, cleaning_data_observed
+from src.utils.data_utils import years_to_load, load_data, cleaning_data_observed
 
 # from hades_stats import sp_dist # GEV stationnaire
 from hades_stats import ns_gev_m1, ns_gev_m2, ns_gev_m3 # GEV non stationnaire
@@ -176,8 +176,7 @@ def gev_non_stationnaire(
     # Covariable temporelle : l'année normalisée
     covar = pd.DataFrame({"x": df["year_norm"]}, index=df.index)
 
-    # Désactivation de la normalisation automatique d'hades
-    obs = ObsWithCovar(values, covar, norm_method=lambda x: x)
+    obs = ObsWithCovar(values, covar)
     ns_dist = NsDistribution("gev", model_struct) # model_struct peut être None (stationnaire)
     bounds = [PARAM_DEFAULTS[param]["bounds"] for param in param_names]
 
@@ -487,35 +486,17 @@ def pipeline_gev_from_statisticals(config, max_workers: int=48, n_bootstrap: int
         output_dir = Path(config["gev"]["path"]["outputdir"]) / echelle / season
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Fixation de l'échelle pour le choix des colonnes à lire
-        mesure = "max_mm_h" if echelle == "horaire" else "max_mm_j"
+        # Paramètre de chargement des données
+        mesure, min_year, max_year, len_serie = years_to_load(echelle, season, input_dir)
         cols = ["NUM_POSTE", mesure, "nan_ratio"]
-
-        # Liste des années disponibles
-        years = [
-            int(name) for name in os.listdir(input_dir)
-            if os.path.isdir(os.path.join(input_dir, name)) and name.isdigit() and len(name) == 4
-        ]
-
-        if years:
-            min_year = min(years) if echelle == "quotidien" else 1990 # Année minimale
-            max_year = 2022 # max(years)
-        else:
-            logger.error("Aucune année valide trouvée.")
-
-        if season in ["hydro", "djf"]:
-            min_year+=1 # On commence en 1960
-
 
         logger.info(f"Chargement des données de {min_year} à {max_year} : {input_dir}")
         df = load_data(input_dir, season, echelle, cols, min_year, max_year)
 
         # Selection des stations suivant le NaN max
-        df = cleaning_data_observed(df, echelle)
+        df = cleaning_data_observed(df, echelle, len_serie)
 
         logger.info(f"Application de la GEV pour la saison {season}")
-        len_serie = 50 if echelle=="quotidien" else 25 # Longueur minimale d'une série valide
-
         df_gev_param = fit_gev_par_point(
             df, 
             mesure, 

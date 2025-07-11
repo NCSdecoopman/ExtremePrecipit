@@ -10,11 +10,6 @@ logging.basicConfig(
 log = logging.getLogger(__name__).info
 
 SEASON_MONTHS = [
-    "hydro",
-    "son",
-    "djf",
-    "mam",
-    "jja",
     "jan",
     "fev",
     "mar",
@@ -27,6 +22,14 @@ SEASON_MONTHS = [
     "oct",
     "nov",
     "dec"
+]
+
+SEASON_SEAS = [
+    "hydro",
+    "son",
+    "djf",
+    "mam",
+    "jja"
 ]
 
 
@@ -118,31 +121,30 @@ SEASON_MONTHS = [
 
 # Pipeline GEV
 log(f"Lancement du traitement stats to gev")
-for setting in ["config/observed_settings.yaml"]: # , "config/modelised_settings.yaml"
+for setting in ["config/observed_settings.yaml"]:#, "config/modelised_settings.yaml"
 
-    for echelle in ["horaire", "quotidien"]:
+    for echelle in ["quotidien"]:
 
-        SEASONS = ["son", "djf", "mam", "jja"] #
-        for season in SEASONS: 
+        for season in ["sep", "oct", "nov", "dec"]: 
 
-            # for model in [
-            #     "s_gev", # Stationnaire
-            #     "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
-            #     "ns_gev_m1_break_year", "ns_gev_m2_break_year", "ns_gev_m3_break_year" # Non stationnaire avec point de rupture
-            #     ]:
+            for model in [
+                "s_gev", # Stationnaire
+                "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
+                "ns_gev_m1_break_year", "ns_gev_m2_break_year", "ns_gev_m3_break_year" # Non stationnaire avec point de rupture
+                ]:
             
-                # subprocess.run(
-                #     [
-                #         "python",
-                #         "-m",
-                #         "src.pipelines.pipeline_stats_to_gev",
-                #         "--config", setting,
-                #         "--echelle", echelle,
-                #         "--season", season,
-                #         "--model", model
-                #     ],
-                #     check=True
-                # )
+                subprocess.run(
+                    [
+                        "python",
+                        "-m",
+                        "src.pipelines.pipeline_stats_to_gev",
+                        "--config", setting,
+                        "--echelle", echelle,
+                        "--season", season,
+                        "--model", model
+                    ],
+                    check=True
+                )
 
             subprocess.run(
                 [
