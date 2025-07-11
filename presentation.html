@@ -142,20 +142,39 @@
 </div>
 
 </section>
+<section class="slide level2">
+
+<style>
+  /* Reset complet de la grille */
+  table.no-gutter {
+    border-collapse: collapse;   /* fusionne bordures */
+    border-spacing: 0;           /* espacement nul */
+    margin: 0;
+    padding: 0;
+  }
+  table.no-gutter th,
+  table.no-gutter td {
+    border: none;                /* pas de lignes */
+    margin: 0;
+    padding: 0;                  /* pas de marge interne */
+  }
+  table.no-gutter th {
+    text-align: center;
+  }
+  table.no-gutter img {
+    display: block;              /* pas d’espace bas */
+    margin: 0;
+    padding: 0;
+    width: 300px;                /* ajustez selon besoin */
+    height: 300px;
+  }
+
+figure { margin: 0; text-align: center; }
+figcaption { margin-top: .3rem; font-size: .9rem; }
+</style>
+</section>
 <section id="contexte" class="title-slide slide level1 center">
 <h1>Contexte</h1>
-<!--l'air chaud contient plus d'humidité 
-
-- **CP** (Convection-Permitting) : résoudre explicitement les processus de convection dans l'atmosphère (≠ approximation)
-    * Simuler plus précisément la formation des nuages convectifs et des précipitations associées
-
-        * Données comme entrée ou condition initiale
-    * Données passées combinant des observations réelles avec des modèles
-    * Résolution 31 km, 1h, 137 niveaux d'atmosphère jusqu'à 80 km d'altitude
-
-    
-**Permet d'étudier les pluies extrêmes infra-journalières, difficiles à voir dans les anciens modèles**
--->
 <h2>
 Réchauffement de la planète
 </h2>
@@ -185,86 +204,13 @@ Utilisation de modèles de climat sur de longues périodes
 </section>
 
 <section>
-<section id="méthodologie" class="title-slide slide level1 no-number center">
+<section id="méthodologie" class="title-slide slide level1 center">
 <h1>Méthodologie</h1>
 
-<img data-src="presentation/methodologie.svg" style="width:100.0%" class="r-stretch"></section>
+<img data-src="presentation/schema/methodologie.svg" class="center r-stretch"></section>
 <section class="slide level2">
 
-<!--
-# Evaluation des maxima
-
-::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="50%"}
-
-::: {#28829f4e .cell execution_count=3}
-
-::: {.cell-output .cell-output-display}
-![](presentation_files/figure-revealjs/cell-4-output-1.svg){}
-:::
-:::
-
-
-:::
-
-::: {.column width="50%"}
-- La moyenne des maxima (- - -) : évaluation *spatiale*  
-- Les maxima annuels (---) : évaluation *temporelle* 
-:::
-
-:::
-
-
-# Niveau de retour $z_T$ 
-
-Le seuil que l’on ne dépasse **en moyenne** qu’une fois tous les $T$ années
-<br/><br/>
-
-::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="50%"}
-
-::: {#173fc85d .cell execution_count=4}
-
-::: {.cell-output .cell-output-display}
-![](presentation_files/figure-revealjs/cell-5-output-1.svg){}
-:::
-:::
-
-
-:::
-
-::: {.column width="50%"}
-$$
-z_T(t) = z_{T,0} + \mathbf{z_{T,1}} \cdot t
-$$
-
-$$
-\begin{cases}
-z_{T,1} > 0 & \text{les épisodes deviennent plus intenses} \\
-z_{T,1} = 0 & \text{aucune tendance détectable} \\
-z_{T,1} < 0 & \text{les épisodes deviennent moins intenses}
-\end{cases}
-$$
-
-On peut obtenir :
-
-$$
-z^{/10 \, ans}_{T,1} = \mathbf{z_{T,1}} \frac{10}{t_{max} - t_{min}}
-$$
-:::
-
-:::
-
-**Depuis 1990, le seuil correspondant à un épisode de pluie extrême qu’on ne voit qu’une fois tous les 10 ans<br/>a augmenté de 4,7 mm tous les 10 ans.**
-
-
-
-# Résultats statistiques descriptives
-
-![](presentation/resultats-1.svg){width=100%}
-
--->
-<div id="jours_pluie_total" class="cell" data-execution_count="5">
+<div id="jours_pluie_total" class="cell" data-execution_count="4">
 <div id="jours_pluie_total-1" class="cell-output cell-output-display">
 
     <div style="font-size: 18px; color: #333;">
@@ -308,11 +254,16 @@ $$
 Δ (AROME - Stations) : +6.4 jours (+5.6%)
 </div>
 </div>
-<p><br><strong>Tendance à déclencher des jours de pluie plus fréquemment que ce qui est observé</strong></p>
+<div id="690630d7" class="cell" data-execution_count="5">
+<div class="cell-output cell-output-display">
+Δ (AROME - Stations) de 1990 à 2022 : +2.8 jours (+2.5%)
+</div>
+</div>
+<p><strong>Tendance à déclencher des jours de pluie plus fréquemment que ce qui est observé</strong></p>
 </section>
 <section class="slide level2">
 
-<div id="moy_precipit_jour_total" class="cell" data-execution_count="7">
+<div id="moy_precipit_jour_total" class="cell" data-execution_count="6">
 <div id="moy_precipit_jour_total-1" class="cell-output cell-output-display">
 
     <div style="font-size: 18px; color: #333;">
@@ -356,11 +307,16 @@ $$
 Δ (AROME - Stations) : +0.032 mm/j (+1.3%)
 </div>
 </div>
+<div id="cell-moy_precipit_jour_1990_MAX_only_metric" class="cell" data-execution_count="7">
+<div id="moy_precipit_jour_1990_max_only_metric" class="cell-output cell-output-display">
+Δ (AROME - Stations) de 1990 à 2022 : -0.063 mm/j (-2.5%)
+</div>
+</div>
 <p><strong>Répartition correcte de la quantité totale d’eau</strong></p>
 </section>
 <section class="slide level2">
 
-<div id="moy_precipit_horaire_2000_max" class="cell" data-execution_count="9">
+<div id="moy_precipit_horaire_2000_max" class="cell" data-execution_count="8">
 <div id="moy_precipit_horaire_2000_max-1" class="cell-output cell-output-display">
 
     <div style="font-size: 18px; color: #333;">
@@ -412,10 +368,10 @@ $$
 Pluies plus fréquentes en plus faibles quantités
 </h2>
 
-<img data-src="presentation/bilan-1.svg" style="width:100.0%" class="r-stretch"></section>
+<img data-src="presentation/schema/bilan-1.svg" class="center r-stretch"></section>
 <section class="slide level2">
 
-<div id="moy_max_precipit_jour_total" class="cell" data-execution_count="10">
+<div id="moy_max_precipit_jour_total" class="cell" data-execution_count="9">
 <div id="moy_max_precipit_jour_total-1" class="cell-output cell-output-display">
 
     <div style="font-size: 18px; color: #333;">
@@ -459,10 +415,15 @@ Pluies plus fréquentes en plus faibles quantités
 Δ (AROME - Stations) : -1.175 mm/j (-2.3%)
 </div>
 </div>
+<div id="cell-moy_max_precipit_jour_1990_MAX" class="cell" data-execution_count="10">
+<div id="moy_max_precipit_jour_1990_max" class="cell-output cell-output-display">
+Δ (AROME - Stations) de 1990 à 2022 : -2.539 mm/j (-5.1%)
+</div>
+</div>
 </section>
 <section class="slide level2">
 
-<div id="moy_max_precipit_horaire_2000_max" class="cell" data-execution_count="12">
+<div id="moy_max_precipit_horaire_2000_max" class="cell" data-execution_count="11">
 <div id="moy_max_precipit_horaire_2000_max-1" class="cell-output cell-output-display">
 
     <div style="font-size: 18px; color: #333;">
@@ -509,104 +470,15 @@ Pluies plus fréquentes en plus faibles quantités
 </section>
 <section class="slide level2">
 
-<!-- ::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="50%"}
-
-::: {#91c1eeab .cell execution_count=15}
-
-::: {.cell-output .cell-output-display}
-```{=html}
-
-    <div style="font-size: 18px; color: #333;">
-        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">Comparaison de la moyenne des maxima aux maxima annuels des précipitations</p>
-        <p style="font-size: 18px; color: #3498db;">
-            de <span style="font-weight: bold; color: #e74c3c;">1959</span> à <span style="font-weight: bold; color: #e74c3c;">2022</span> 
-            (Saison : <span style="font-weight: bold; color: #f39c12;">année hydrologique</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">quotidien</span>)
-        </p> 
-    </div>
-    
-```
-:::
-
-::: {.cell-output .cell-output-display}
-```{=html}
-<div style="text-align: center; font-weight: bold;">Moyenne des maxima</div>
-```
-:::
-
-::: {.cell-output .cell-output-display}
-```{=html}
-
-    <div style="height: 490px; border: 1px solid #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px;">
-        <iframe loading="lazy" src="assets/scatter_plot_jour_mean_max_total.html" width="100%" height="100%" frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
-    </div>
-
-    <div class="metric-caption">
-        <strong>r²</strong> = 0.929 &nbsp;|&nbsp; <strong>ME</strong> = -1.175 &nbsp;|&nbsp; <strong>n</strong> = 1583 (Tx NaN ≤ 0.1)
-    </div>
-    
-```
-:::
-:::
-
-
-:::
-::: {.column width="50%"}
-
-::: {#161d9d86 .cell execution_count=16}
-
-::: {.cell-output .cell-output-display}
-```{=html}
-<div style="text-align: center; font-weight: bold;">Maxima annuels</div>
-```
-:::
-
-::: {.cell-output .cell-output-display}
-```{=html}
-
-     <div style="height: 490px; border: 1px solid #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px;">
-         <iframe loading="lazy" src="assets/fig_r2_all_max_hydro_jour.html" width="100%" height="100%" frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
-     </div>
-
-     <div class="metric-caption">
-         <strong>r²</strong> = 0.431 &nbsp;|&nbsp; <strong>ME</strong> = -1.209 &nbsp;|&nbsp; <strong>n</strong> = 92875
-     </div>
- 
-```
-:::
-:::
-
-
-:::
-:::
--->
-<div id="ea2d53a7" class="cell" data-execution_count="17">
+<div id="5a28e788" class="cell" data-execution_count="14">
 <div class="cell-output cell-output-display">
 
     <div style="font-size: 18px; color: #333;">
-        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">Maxima annuels des précipitations suivant la saison et l'échelle temporelle</p>
-        <p style="font-size: 18px; color: #3498db;">
-            de <span style="font-weight: bold; color: #e74c3c;">1959</span> à <span style="font-weight: bold; color: #e74c3c;">2022</span> 
-            pour l'échelle : <span style="font-weight: bold; color: #f39c12;">quotidien</span>
-            et de <span style="font-weight: bold; color: #e74c3c;">1990</span> à <span style="font-weight: bold; color: #e74c3c;">2022</span> 
-            pour l'échelle : <span style="font-weight: bold; color: #f39c12;">horaire</span>
-        </p> 
+        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">Moyenne des maximas des précipitations suivant la saison et l'échelle temporelle</p>
     </div>    
 </div>
 </div>
-<div class="columns" style="display: flex; gap: 0px; margin: 0;">
-<div class="column" style="width:40%;">
-<div id="de27f83d" class="cell" data-execution_count="18">
-<div class="cell-output cell-output-display">
-<div>
-<figure>
-<p><img data-src="presentation_files/figure-revealjs/cell-19-output-1.svg"></p>
-</figure>
-</div>
-</div>
-</div>
-</div><div class="column" style="width:60%;">
-<div id="cell-moyenne-max_vs_series-max_ALL" class="cell" data-execution_count="19">
+<div id="cell-moyenne-max_vs_series-max_ALL" class="cell" data-execution_count="15">
 <div id="moyenne-max_vs_series-max_all" class="cell-output cell-output-display">
 
     <div style="height: 490px; border: 1px solid #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px;">
@@ -614,8 +486,6 @@ Pluies plus fréquentes en plus faibles quantités
     </div>
 </div>
 </div>
-</div></div>
-<p><br><br> <strong>Répartition des orages dans le temps jamais très bonne</strong></p>
 </section>
 <section class="slide level2">
 
@@ -623,330 +493,10 @@ Pluies plus fréquentes en plus faibles quantités
 Bonne distribution et difficulté évènementielle
 </h2>
 
-<!--
-
-# Résultats modélisation
-
-![](presentation/resultats-2.svg){width=100%}
-
----
-
-
-
-# Application GEV (μ, σ, ξ)
-
-::: {#cell-define_gev .cell execution_count=20}
-
-::: {.cell-output .cell-output-display}
-![](presentation_files/figure-revealjs/define_gev-output-1.svg){#define_gev}
-:::
-:::
-
-
----
-
-### Modèles sans rupture temporelle
-
-| Modèle | μ(t)              | σ(t)              | ξ(t) |
-|:------:|:------------------|:------------------|:-----:|
-| M₀     | μ₀                | σ₀                | ξ    |
-| M₁     | μ₀ + μ₁·t         | σ₀                | ξ    |
-| M₂     | μ₀                | σ₀ + σ₁·t         | ξ    |
-| M₃     | μ₀ + μ₁·t         | σ₀ + σ₁·t         | ξ    |
-
-
-### Modèles avec rupture en 1985
-
-<span style="font-size: 1.05em;">Soit</span>
-**t₊ = t × 𝟙{t &gt; 1985}**,
-on a :
-
-| Modèle         | μ(t)                 | σ(t)                 | ξ(t) |
-|:--------------:|:---------------------|:---------------------|:-----:|
-| M₁⋆ (rupture)  | μ₀ + μ₁·t₊           | σ₀                   | ξ    |
-| M₂⋆ (rupture)  | μ₀                   | σ₀ + σ₁·t₊           | ξ    |
-| M₃⋆ (rupture)  | μ₀ + μ₁·t₊           | σ₀ + σ₁·t₊           | ξ    |
-
-
-
----
-
-::: {#cell-minimize_gev_aic_map .cell execution_count=21}
-
-::: {#minimize_gev_aic_map .cell-output .cell-output-display}
-```{=html}
-
-    <div style="font-size: 18px; color: #333;">
-        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">Modèle minimisant l'AIC</p>
-        <p style="font-size: 18px; color: #3498db;">
-            de <span style="font-weight: bold; color: #e74c3c;">1959</span> à <span style="font-weight: bold; color: #e74c3c;">2022</span> 
-            (Saison : <span style="font-weight: bold; color: #f39c12;">automne</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">quotidien</span>)
-        </p> 
-    </div>
-    
-```
-:::
-:::
-
-
-::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="50%"}
-
-::: {#4326ff62 .cell execution_count=22}
-
-::: {.cell-output .cell-output-display}
-```{=html}
-
-    <div style="display: flex; flex-direction: row; align-items: flex-start; margin-top: 10px;">
-        <iframe loading="lazy" src="assets/deck_map_model_minim_AIC.html" height="500" frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
-        <div style="flex: 1; max-width: 220px; margin-left: 5px;"><div style="text-align: left; font-size: 13px; margin-bottom: 4px;"></div><div style="display: flex; flex-direction: column;"><div style="display: flex; align-items: center; margin-bottom: 6px;">  <div style="width: 18px; height: 18px; background-color: rgb(255, 255, 255); margin-right: 8px; border: 1px solid #ccc;"></div>  <div style="font-size: 12px;">M₀(μ₀, σ₀)</div></div><div style="display: flex; align-items: center; margin-bottom: 6px;">  <div style="width: 18px; height: 18px; background-color: rgb(0, 128, 0); margin-right: 8px; border: 1px solid #ccc;"></div>  <div style="font-size: 12px;">M₁(μ, σ₀)</div></div><div style="display: flex; align-items: center; margin-bottom: 6px;">  <div style="width: 18px; height: 18px; background-color: rgb(255, 165, 0); margin-right: 8px; border: 1px solid #ccc;"></div>  <div style="font-size: 12px;">M₂(μ₀, σ)</div></div><div style="display: flex; align-items: center; margin-bottom: 6px;">  <div style="width: 18px; height: 18px; background-color: rgb(255, 255, 0); margin-right: 8px; border: 1px solid #ccc;"></div>  <div style="font-size: 12px;">M₃(μ, σ)</div></div><div style="display: flex; align-items: center; margin-bottom: 6px;">  <div style="width: 18px; height: 18px; background-color: rgb(128, 0, 128); margin-right: 8px; border: 1px solid #ccc;"></div>  <div style="font-size: 12px;">M₁⋆(μ, σ₀)</div></div><div style="display: flex; align-items: center; margin-bottom: 6px;">  <div style="width: 18px; height: 18px; background-color: rgb(0, 0, 139); margin-right: 8px; border: 1px solid #ccc;"></div>  <div style="font-size: 12px;">M₂⋆(μ₀, σ)</div></div><div style="display: flex; align-items: center; margin-bottom: 6px;">  <div style="width: 18px; height: 18px; background-color: rgb(0, 0, 0); margin-right: 8px; border: 1px solid #ccc;"></div>  <div style="font-size: 12px;">M₃⋆(μ, σ)</div></div></div></div>
-    </div>
-    
-```
-:::
-:::
-
-
-:::
-
-
-
-::: {.column width="50%"}
-
-::: {#7bbdf6d3 .cell execution_count=24}
-
-::: {.cell-output .cell-output-display}
-```{=html}
-
-<div style="height: 500px; border: 1px solid #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px;">
-    <iframe loading="lazy" src="assets/hist_r2_jour_model_min_AIC.html" width="100%" height="100%" frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
-</div>
-```
-:::
-:::
-
-
-:::
-:::
-
-
-
----
-
-
-# Changement du niveau de retour
-
-$$
-\Delta q^{T}_{X\,\text{ans}} = \frac{X}{\Delta a} \left[\, \mu_1 + \frac{\sigma_1}{\xi}\,z_T \,\right]
-$$
-
-où :
-
-* $\Delta a$ = durée totale du modèle (en années), par exemple 40 si de 1980 à 2020
-* $X$ = nombre d'années considérées pour la variation (ex : 10 pour un changement par 10 ans)
-* $\mu_1$, $\sigma_1$, $\xi$ = paramètres du modèle GEV non stationnaire (issus de l’ajustement)
-* $z_T$ = terme dépendant de la période de retour $T$
-
-$$
-z_T = 
-\begin{cases}
-\displaystyle
-\left[ -\log\left(1 - \frac{1}{T}\right) \right]^{-\xi} - 1 & \text{si } \xi \neq 0 \\\\
-\displaystyle
-\log \left( -\log\left(1 - \frac{1}{T}\right) \right) & \text{si } \xi = 0 \ (\text{cas Gumbel})
-\end{cases}
-$$
-
-
-
----
-
-::: {#68e9e239 .cell execution_count=26}
-
-::: {.cell-output .cell-output-display}
-```{=html}
-
-    <div style="font-size: 18px; color: #333;">
-        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">Changement du niveau de retour 10 ans par 10 ans</p>
-        <p style="font-size: 18px; color: #3498db;">
-            de <span style="font-weight: bold; color: #e74c3c;">1959</span> à <span style="font-weight: bold; color: #e74c3c;">2022</span> 
-            (Saison : <span style="font-weight: bold; color: #f39c12;">automne</span> | Echelle : <span style="font-weight: bold; color: #f39c12;">quotidien</span>)
-        </p> 
-    </div>
-    
-```
-:::
-
-::: {.cell-output .cell-output-display}
-```{=html}
-
-        <div class="columns" style="display: flex; gap: 0; margin: 0; width: 100%; max-width: 100%; padding: 0;">
-            <div class="column" style="flex: 1; width: 100%; padding: 0;">
-    <div style="display: flex; flex-direction: row; align-items: flex-start; margin-top: 10px;">
-        <iframe loading="lazy" src="assets/deck_map_gev_niveau_retour_son_sud.html" height="600" frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
-        <div style="flex: 1; max-width: 220px; margin-left: 5px;">
-        <div style="text-align: left; font-size: 13px;">mm/j/10 ans</div>
-        <div style="display: flex; flex-direction: row; align-items: center; height: 570px;">
-            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAABFCAYAAAChbH1cAAAAOnRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjEwLjEsIGh0dHBzOi8vbWF0cGxvdGxpYi5vcmcvc2/+5QAAAAlwSFlzAAAEnQAABJ0BfDRroQAAAXZJREFUeJzdmU9Lw0AQxWeW9U8PIjUgnryIHsWDX98vIYingohgoYgeIo2lyXhIana3m3QT+g7juyTsTn6ZvAnZZMIPdCM0QEJEnDhu6uF0xcD+eMsz7fCwk6Sc3uzOyZeQJKdhs/NyQFbDZKdZ1WRU595VsI3C+b74P1s42HYpnO+LNz1zvUrx3fJBWiFDpRxls9vJKHiKRtvyv+H26O4MB+djXPKKPacp7j63dHkKg+v1XC/c8vU9Dk487nmeIsWe08kVDs6TCxhcs+d0CIOzSLmv19st6fUcW9DPb+D7eSWwemr2fLmqcPC8WMPgej3XC7evXwUOvrd+QkSKPX9a5Dj4e/4Dgyv2vFgBV6LH2QcMrtdzbEFnzy84eLnG3S2KPS8Wcxx8OX8bEL5ZWdrOdd1ujXzLSqct4u+LAxUHJNyAI51pJjISstzMpNlnp8fOfpgQkcRzJ8MOa6eEty6K3cODJOMLtNeSdprfHAS5Pw04jCf6BQiBWDRCINn8AAAAAElFTkSuQmCC"
-                 style="height: 100%; width: 20px; border: 1px solid #ccc; border-radius: 5px;"/>
-            <div style="display: flex; flex-direction: column; justify-content: space-between; 
-                        margin-left: 8px; height: 100%; font-size: 12px;">
-                <div>74.89</div><div>64.19</div><div>53.49</div><div>42.79</div><div>32.09</div><div>21.40</div><div>10.70</div><div>0.00</div><div>-10.70</div><div>-21.40</div><div>-32.09</div><div>-42.79</div><div>-53.49</div><div>-64.19</div><div>-74.89</div>
-            </div>
-        </div>
-    </div>
-    </div>
-    </div>
-        </div>
-        
-```
-:::
-
-::: {.cell-output .cell-output-display execution_count=26}
-```
-{'modelised_load': shape: (87_536, 7)
- ┌───────────┬──────────────────────┬───────────┬───────────┬───────────┬─────────────┬────────────┐
- │ NUM_POSTE ┆ model                ┆ z_T1      ┆ ic_lower  ┆ ic_upper  ┆ significant ┆ z_T_p      │
- │ ---       ┆ ---                  ┆ ---       ┆ ---       ┆ ---       ┆ ---         ┆ ---        │
- │ str       ┆ str                  ┆ f64       ┆ f64       ┆ f64       ┆ bool        ┆ f64        │
- ╞═══════════╪══════════════════════╪═══════════╪═══════════╪═══════════╪═════════════╪════════════╡
- │ 31723     ┆ ns_gev_m1_break_year ┆ -0.952891 ┆ -2.449038 ┆ 0.667309  ┆ false       ┆ -6.499884  │
- │ 1182      ┆ ns_gev_m2_break_year ┆ -4.067052 ┆ -14.08054 ┆ 3.470999  ┆ false       ┆ -12.720817 │
- │ 4853      ┆ ns_gev_m1            ┆ -1.119587 ┆ -2.133829 ┆ -0.101161 ┆ true        ┆ -8.97155   │
- │ 82977     ┆ ns_gev_m2            ┆ -0.894137 ┆ -2.57863  ┆ 0.92253   ┆ false       ┆ -6.675699  │
- │ 25432     ┆ ns_gev_m1            ┆ 0.263014  ┆ -0.590342 ┆ 1.110528  ┆ false       ┆ 2.366242   │
- │ …         ┆ …                    ┆ …         ┆ …         ┆ …         ┆ …           ┆ …          │
- │ 76156     ┆ ns_gev_m1            ┆ -0.453737 ┆ -1.13198  ┆ 0.211598  ┆ false       ┆ -4.853518  │
- │ 46139     ┆ ns_gev_m1_break_year ┆ 0.686316  ┆ -0.247581 ┆ 1.673456  ┆ false       ┆ 6.53331    │
- │ 5240      ┆ ns_gev_m1            ┆ -0.942959 ┆ -1.856862 ┆ -0.014576 ┆ true        ┆ -7.938955  │
- │ 27263     ┆ ns_gev_m2            ┆ -0.842763 ┆ -3.264424 ┆ 1.938646  ┆ false       ┆ -4.516212  │
- │ 48104     ┆ ns_gev_m2_break_year ┆ -0.827517 ┆ -2.769237 ┆ 0.772524  ┆ false       ┆ -8.199662  │
- └───────────┴──────────────────────┴───────────┴───────────┴───────────┴─────────────┴────────────┘,
- 'observed_load': shape: (1_664, 7)
- ┌───────────┬──────────────────────┬───────────┬───────────┬───────────┬─────────────┬────────────┐
- │ NUM_POSTE ┆ model                ┆ z_T1      ┆ ic_lower  ┆ ic_upper  ┆ significant ┆ z_T_p      │
- │ ---       ┆ ---                  ┆ ---       ┆ ---       ┆ ---       ┆ ---         ┆ ---        │
- │ str       ┆ str                  ┆ f64       ┆ f64       ┆ f64       ┆ bool        ┆ f64        │
- ╞═══════════╪══════════════════════╪═══════════╪═══════════╪═══════════╪═════════════╪════════════╡
- │ 31144001  ┆ ns_gev_m3            ┆ 2.511484  ┆ 1.016444  ┆ 4.272792  ┆ true        ┆ 10.435252  │
- │ 2471001   ┆ ns_gev_m1            ┆ -0.748472 ┆ -1.323858 ┆ -0.172195 ┆ true        ┆ -6.523238  │
- │ 3161001   ┆ ns_gev_m2_break_year ┆ -1.695478 ┆ -4.496884 ┆ 0.695735  ┆ false       ┆ -5.078758  │
- │ 59161001  ┆ ns_gev_m2_break_year ┆ 1.367716  ┆ -1.096934 ┆ 3.033967  ┆ false       ┆ 6.481463   │
- │ 12014001  ┆ ns_gev_m3_break_year ┆ -6.107063 ┆ -8.622228 ┆ -3.538641 ┆ true        ┆ -14.923196 │
- │ …         ┆ …                    ┆ …         ┆ …         ┆ …         ┆ …           ┆ …          │
- │ 93048001  ┆ ns_gev_m2            ┆ -1.026617 ┆ -2.161323 ┆ 0.357175  ┆ false       ┆ -8.435322  │
- │ 5064001   ┆ ns_gev_m2            ┆ 2.522814  ┆ -1.208123 ┆ 5.733014  ┆ false       ┆ 6.374454   │
- │ 81163001  ┆ ns_gev_m1_break_year ┆ 1.065237  ┆ -0.876625 ┆ 3.231518  ┆ false       ┆ 1.890949   │
- │ 41242001  ┆ ns_gev_m1            ┆ -0.368007 ┆ -1.635191 ┆ 0.870916  ┆ false       ┆ -2.471524  │
- │ 63129001  ┆ ns_gev_m3_break_year ┆ -2.992509 ┆ -4.276272 ┆ -1.620421 ┆ true        ┆ -9.198938  │
- └───────────┴──────────────────────┴───────────┴───────────┴───────────┴─────────────┴────────────┘,
- 'modelised': shape: (87_536, 10)
- ┌───────────┬────────────┬───────────┬───────────┬───┬────────────┬───────────┬─────────┬──────────┐
- │ NUM_POSTE ┆ model      ┆ z_T1      ┆ ic_lower  ┆ … ┆ z_T_p      ┆ lat       ┆ lon     ┆ altitude │
- │ ---       ┆ ---        ┆ ---       ┆ ---       ┆   ┆ ---        ┆ ---       ┆ ---     ┆ ---      │
- │ i32       ┆ str        ┆ f64       ┆ f64       ┆   ┆ f64        ┆ f32       ┆ f32     ┆ i32      │
- ╞═══════════╪════════════╪═══════════╪═══════════╪═══╪════════════╪═══════════╪═════════╪══════════╡
- │ 31723     ┆ ns_gev_m1_ ┆ -0.952891 ┆ -2.449038 ┆ … ┆ -6.499884  ┆ 45.533298 ┆ 6.6294  ┆ 1241     │
- │           ┆ break_year ┆           ┆           ┆   ┆            ┆           ┆         ┆          │
- │ 1182      ┆ ns_gev_m2_ ┆ -4.067052 ┆ -14.08054 ┆ … ┆ -12.720817 ┆ 42.482101 ┆ 2.1223  ┆ 1764     │
- │           ┆ break_year ┆           ┆           ┆   ┆            ┆           ┆         ┆          │
- │ 4853      ┆ ns_gev_m1  ┆ -1.119587 ┆ -2.133829 ┆ … ┆ -8.97155   ┆ 43.185799 ┆ 0.8878  ┆ 355      │
- │ 82977     ┆ ns_gev_m2  ┆ -0.894137 ┆ -2.57863  ┆ … ┆ -6.675699  ┆ 49.509602 ┆ -1.7055 ┆ 113      │
- │ 25432     ┆ ns_gev_m1  ┆ 0.263014  ┆ -0.590342 ┆ … ┆ 2.366242   ┆ 44.896301 ┆ -0.2165 ┆ 9        │
- │ …         ┆ …          ┆ …         ┆ …         ┆ … ┆ …          ┆ …         ┆ …       ┆ …        │
- │ 76156     ┆ ns_gev_m1  ┆ -0.453737 ┆ -1.13198  ┆ … ┆ -4.853518  ┆ 48.935902 ┆ 0.5933  ┆ 200      │
- │ 46139     ┆ ns_gev_m1_ ┆ 0.686316  ┆ -0.247581 ┆ … ┆ 6.53331    ┆ 46.7015   ┆ -1.9282 ┆ 9        │
- │           ┆ break_year ┆           ┆           ┆   ┆            ┆           ┆         ┆          │
- │ 5240      ┆ ns_gev_m1  ┆ -0.942959 ┆ -1.856862 ┆ … ┆ -7.938955  ┆ 43.224998 ┆ 0.7309  ┆ 364      │
- │ 27263     ┆ ns_gev_m2  ┆ -0.842763 ┆ -3.264424 ┆ … ┆ -4.516212  ┆ 45.152199 ┆ 3.0468  ┆ 1006     │
- │ 48104     ┆ ns_gev_m2_ ┆ -0.827517 ┆ -2.769237 ┆ … ┆ -8.199662  ┆ 47.034599 ┆ 2.6558  ┆ 169      │
- │           ┆ break_year ┆           ┆           ┆   ┆            ┆           ┆         ┆          │
- └───────────┴────────────┴───────────┴───────────┴───┴────────────┴───────────┴─────────┴──────────┘,
- 'observed': shape: (1_664, 10)
- ┌───────────┬────────────┬───────────┬───────────┬───┬───────────┬───────────┬──────────┬──────────┐
- │ NUM_POSTE ┆ model      ┆ z_T1      ┆ ic_lower  ┆ … ┆ z_T_p     ┆ lat       ┆ lon      ┆ altitude │
- │ ---       ┆ ---        ┆ ---       ┆ ---       ┆   ┆ ---       ┆ ---       ┆ ---      ┆ ---      │
- │ i32       ┆ str        ┆ f64       ┆ f64       ┆   ┆ f64       ┆ f32       ┆ f32      ┆ i32      │
- ╞═══════════╪════════════╪═══════════╪═══════════╪═══╪═══════════╪═══════════╪══════════╪══════════╡
- │ 31144001  ┆ ns_gev_m3  ┆ 2.511484  ┆ 1.016444  ┆ … ┆ 10.435252 ┆ 42.911667 ┆ 0.6375   ┆ 500      │
- │ 2471001   ┆ ns_gev_m1  ┆ -0.748472 ┆ -1.323858 ┆ … ┆ -6.523238 ┆ 49.485668 ┆ 3.693167 ┆ 95       │
- │ 3161001   ┆ ns_gev_m2_ ┆ -1.695478 ┆ -4.496884 ┆ … ┆ -5.078758 ┆ 46.166    ┆ 2.638333 ┆ 494      │
- │           ┆ break_year ┆           ┆           ┆   ┆           ┆           ┆          ┆          │
- │ 59161001  ┆ ns_gev_m2_ ┆ 1.367716  ┆ -1.096934 ┆ … ┆ 6.481463  ┆ 50.080833 ┆ 3.2575   ┆ 125      │
- │           ┆ break_year ┆           ┆           ┆   ┆           ┆           ┆          ┆          │
- │ 12014001  ┆ ns_gev_m3_ ┆ -6.107063 ┆ -8.622228 ┆ … ┆ -14.92319 ┆ 44.533501 ┆ 3.007667 ┆ 1076     │
- │           ┆ break_year ┆           ┆           ┆   ┆ 6         ┆           ┆          ┆          │
- │ …         ┆ …          ┆ …         ┆ …         ┆ … ┆ …         ┆ …         ┆ …        ┆ …        │
- │ 93048001  ┆ ns_gev_m2  ┆ -1.026617 ┆ -2.161323 ┆ … ┆ -8.435322 ┆ 48.857498 ┆ 2.4595   ┆ 110      │
- │ 5064001   ┆ ns_gev_m2  ┆ 2.522814  ┆ -1.208123 ┆ … ┆ 6.374454  ┆ 44.810001 ┆ 6.195333 ┆ 1270     │
- │ 81163001  ┆ ns_gev_m1_ ┆ 1.065237  ┆ -0.876625 ┆ … ┆ 1.890949  ┆ 43.463333 ┆ 2.346333 ┆ 682      │
- │           ┆ break_year ┆           ┆           ┆   ┆           ┆           ┆          ┆          │
- │ 41242001  ┆ ns_gev_m1  ┆ -0.368007 ┆ -1.635191 ┆ … ┆ -2.471524 ┆ 47.279835 ┆ 1.597667 ┆ 83       │
- │ 63129001  ┆ ns_gev_m3_ ┆ -2.992509 ┆ -4.276272 ┆ … ┆ -9.198938 ┆ 45.472    ┆ 2.595    ┆ 790      │
- │           ┆ break_year ┆           ┆           ┆   ┆           ┆           ┆          ┆          │
- └───────────┴────────────┴───────────┴───────────┴───┴───────────┴───────────┴──────────┴──────────┘,
- 'modelised_show': shape: (37_787, 10)
- ┌───────────┬────────────┬───────────┬────────────┬───┬───────────┬───────────┬─────────┬──────────┐
- │ NUM_POSTE ┆ model      ┆ z_T1      ┆ ic_lower   ┆ … ┆ z_T_p     ┆ lat       ┆ lon     ┆ altitude │
- │ ---       ┆ ---        ┆ ---       ┆ ---        ┆   ┆ ---       ┆ ---       ┆ ---     ┆ ---      │
- │ i32       ┆ str        ┆ f64       ┆ f64        ┆   ┆ f64       ┆ f32       ┆ f32     ┆ i32      │
- ╞═══════════╪════════════╪═══════════╪════════════╪═══╪═══════════╪═══════════╪═════════╪══════════╡
- │ 31723     ┆ ns_gev_m1_ ┆ -0.952891 ┆ -2.449038  ┆ … ┆ -6.499884 ┆ 45.533298 ┆ 6.6294  ┆ 1241     │
- │           ┆ break_year ┆           ┆            ┆   ┆           ┆           ┆         ┆          │
- │ 1182      ┆ ns_gev_m2_ ┆ -4.067052 ┆ -14.08054  ┆ … ┆ -12.72081 ┆ 42.482101 ┆ 2.1223  ┆ 1764     │
- │           ┆ break_year ┆           ┆            ┆   ┆ 7         ┆           ┆         ┆          │
- │ 4853      ┆ ns_gev_m1  ┆ -1.119587 ┆ -2.133829  ┆ … ┆ -8.97155  ┆ 43.185799 ┆ 0.8878  ┆ 355      │
- │ 25432     ┆ ns_gev_m1  ┆ 0.263014  ┆ -0.590342  ┆ … ┆ 2.366242  ┆ 44.896301 ┆ -0.2165 ┆ 9        │
- │ 19534     ┆ ns_gev_m1  ┆ -0.558614 ┆ -1.687353  ┆ … ┆ -4.626054 ┆ 44.394001 ┆ 0.143   ┆ 78       │
- │ …         ┆ …          ┆ …         ┆ …          ┆ … ┆ …         ┆ …         ┆ …       ┆ …        │
- │ 10355     ┆ ns_gev_m3  ┆ 3.098222  ┆ 2.471912   ┆ … ┆ 27.022703 ┆ 43.6418   ┆ -0.0758 ┆ 131      │
- │ 5243      ┆ ns_gev_m1  ┆ -0.775898 ┆ -1.683598  ┆ … ┆ -6.321622 ┆ 43.228401 ┆ 0.8232  ┆ 356      │
- │ 1572      ┆ ns_gev_m2_ ┆ -7.353758 ┆ -17.141955 ┆ … ┆ -19.71185 ┆ 42.610001 ┆ 2.8485  ┆ 74       │
- │           ┆ break_year ┆           ┆            ┆   ┆ 2         ┆           ┆         ┆          │
- │ 5240      ┆ ns_gev_m1  ┆ -0.942959 ┆ -1.856862  ┆ … ┆ -7.938955 ┆ 43.224998 ┆ 0.7309  ┆ 364      │
- │ 27263     ┆ ns_gev_m2  ┆ -0.842763 ┆ -3.264424  ┆ … ┆ -4.516212 ┆ 45.152199 ┆ 3.0468  ┆ 1006     │
- └───────────┴────────────┴───────────┴────────────┴───┴───────────┴───────────┴─────────┴──────────┘,
- 'observed_show': shape: (818, 10)
- ┌───────────┬────────────┬───────────┬───────────┬───┬───────────┬───────────┬──────────┬──────────┐
- │ NUM_POSTE ┆ model      ┆ z_T1      ┆ ic_lower  ┆ … ┆ z_T_p     ┆ lat       ┆ lon      ┆ altitude │
- │ ---       ┆ ---        ┆ ---       ┆ ---       ┆   ┆ ---       ┆ ---       ┆ ---      ┆ ---      │
- │ i32       ┆ str        ┆ f64       ┆ f64       ┆   ┆ f64       ┆ f32       ┆ f32      ┆ i32      │
- ╞═══════════╪════════════╪═══════════╪═══════════╪═══╪═══════════╪═══════════╪══════════╪══════════╡
- │ 31144001  ┆ ns_gev_m3  ┆ 2.511484  ┆ 1.016444  ┆ … ┆ 10.435252 ┆ 42.911667 ┆ 0.6375   ┆ 500      │
- │ 3161001   ┆ ns_gev_m2_ ┆ -1.695478 ┆ -4.496884 ┆ … ┆ -5.078758 ┆ 46.166    ┆ 2.638333 ┆ 494      │
- │           ┆ break_year ┆           ┆           ┆   ┆           ┆           ┆          ┆          │
- │ 12014001  ┆ ns_gev_m3_ ┆ -6.107063 ┆ -8.622228 ┆ … ┆ -14.92319 ┆ 44.533501 ┆ 3.007667 ┆ 1076     │
- │           ┆ break_year ┆           ┆           ┆   ┆ 6         ┆           ┆          ┆          │
- │ 73004001  ┆ ns_gev_m3_ ┆ -4.03126  ┆ -5.995841 ┆ … ┆ -7.998689 ┆ 45.617832 ┆ 6.080167 ┆ 900      │
- │           ┆ break_year ┆           ┆           ┆   ┆           ┆           ┆          ┆          │
- │ 19016001  ┆ ns_gev_m3_ ┆ -6.290823 ┆ -7.75227  ┆ … ┆ -17.00840 ┆ 45.344501 ┆ 1.823833 ┆ 269      │
- │           ┆ break_year ┆           ┆           ┆   ┆ 9         ┆           ┆          ┆          │
- │ …         ┆ …          ┆ …         ┆ …         ┆ … ┆ …         ┆ …         ┆ …        ┆ …        │
- │ 31069001  ┆ ns_gev_m1  ┆ -0.667609 ┆ -1.712123 ┆ … ┆ -4.354621 ┆ 43.620998 ┆ 1.378833 ┆ 151      │
- │ 42145003  ┆ ns_gev_m2  ┆ 1.619677  ┆ -0.802793 ┆ … ┆ 7.340299  ┆ 46.015667 ┆ 4.222333 ┆ 460      │
- │ 5064001   ┆ ns_gev_m2  ┆ 2.522814  ┆ -1.208123 ┆ … ┆ 6.374454  ┆ 44.810001 ┆ 6.195333 ┆ 1270     │
- │ 81163001  ┆ ns_gev_m1_ ┆ 1.065237  ┆ -0.876625 ┆ … ┆ 1.890949  ┆ 43.463333 ┆ 2.346333 ┆ 682      │
- │           ┆ break_year ┆           ┆           ┆   ┆           ┆           ┆          ┆          │
- │ 63129001  ┆ ns_gev_m3_ ┆ -2.992509 ┆ -4.276272 ┆ … ┆ -9.198938 ┆ 45.472    ┆ 2.595    ┆ 790      │
- │           ┆ break_year ┆           ┆           ┆   ┆           ┆           ┆          ┆          │
- └───────────┴────────────┴───────────┴───────────┴───┴───────────┴───────────┴──────────┴──────────┘,
- 'column': 'z_T_p',
- 'vmin': -74.886206005218,
- 'vmax': 74.886206005218,
- 'echelle': 'diverging_zero_white',
- 'continu': True}
-```
-:::
-:::
-
-
----
-
--->
-<img data-src="presentation/bilan-2.svg" style="width:100.0%" class="r-stretch"></section>
+<img data-src="presentation/schema/bilan-2.svg" class="center r-stretch"></section>
 <section class="slide level2">
 
-<div id="ae00c8cf" class="cell" data-execution_count="29">
+<div id="b88ff899" class="cell" data-execution_count="16">
 <div class="cell-output cell-output-display">
 
         <div style="font-size: 18px; color: #333;">
@@ -958,31 +508,6 @@ $$
         
 </div>
 </div>
-<style>
-  /* Reset complet de la grille */
-  table.no-gutter {
-    border-collapse: collapse;   /* fusionne bordures */
-    border-spacing: 0;           /* espacement nul */
-    margin: 0;
-    padding: 0;
-  }
-  table.no-gutter th,
-  table.no-gutter td {
-    border: none;                /* pas de lignes */
-    margin: 0;
-    padding: 0;                  /* pas de marge interne */
-  }
-  table.no-gutter th {
-    text-align: center;
-  }
-  table.no-gutter img {
-    display: block;              /* pas d’espace bas */
-    margin: 0;
-    padding: 0;
-    width: 300px;                /* ajustez selon besoin */
-    height: 300px;
-  }
-</style>
 <table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
 <thead>
 <tr>
@@ -1040,7 +565,7 @@ JJA
 </section>
 <section class="slide level2">
 
-<div id="e39ead01" class="cell" data-execution_count="31">
+<div id="25486fa1" class="cell" data-execution_count="17">
 <div class="cell-output cell-output-display">
 
         <div style="font-size: 18px; color: #333;">
@@ -1052,10 +577,6 @@ JJA
         
 </div>
 </div>
-<style>
-figure { margin: 0; text-align: center; }
-figcaption { margin-top: .3rem; font-size: .9rem; }
-</style>
 <table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
 <thead>
 <tr>
@@ -1127,7 +648,7 @@ Dec
 </section>
 <section class="slide level2">
 
-<div id="5c2d92c7" class="cell" data-execution_count="33">
+<div id="b4eeaa3c" class="cell" data-execution_count="18">
 <div class="cell-output cell-output-display">
 
         <div style="font-size: 18px; color: #333;">
@@ -1196,7 +717,7 @@ JJA
 </section>
 <section class="slide level2">
 
-<div id="227fd428" class="cell" data-execution_count="35">
+<div id="3e07895d" class="cell" data-execution_count="19">
 <div class="cell-output cell-output-display">
 
         <div style="font-size: 18px; color: #333;">
@@ -1242,7 +763,7 @@ AVR
 <a href="presentation_files/map/horaire_AVR_rast_mod.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/horaire_AVR_norast_mod.svg" alt="En cours de calcul"> </a>
 </td>
 <td rowspan="2" style="vertical-align: middle; text-align: center;">
-<object type="image/svg+xml" data="presentation_files/map/horaire_legend_2.svg" width="40" height="600" class="legend-svg">
+<object type="image/svg+xml" data="presentation_files/map/horaire_legend_1.svg" width="40" height="600" class="legend-svg">
 </object>
 </td>
 </tr>
@@ -1265,7 +786,7 @@ AVR
 </section>
 <section class="slide level2">
 
-<div id="f8181f95" class="cell" data-execution_count="36">
+<div id="420d5143" class="cell" data-execution_count="20">
 <div class="cell-output cell-output-display">
 
         <div style="font-size: 18px; color: #333;">
@@ -1311,7 +832,7 @@ AOU
 <a href="presentation_files/map/horaire_AOU_rast_mod.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/horaire_AOU_norast_mod.svg" alt="En cours de calcul"> </a>
 </td>
 <td rowspan="2" style="vertical-align: middle; text-align: center;">
-<object type="image/svg+xml" data="presentation_files/map/horaire_legend_2.svg" width="40" height="600" class="legend-svg">
+<object type="image/svg+xml" data="presentation_files/map/horaire_legend_1.svg" width="40" height="600" class="legend-svg">
 </object>
 </td>
 </tr>
@@ -1334,7 +855,7 @@ AOU
 </section>
 <section class="slide level2">
 
-<div id="afc592fb" class="cell" data-execution_count="37">
+<div id="dec743c0" class="cell" data-execution_count="21">
 <div class="cell-output cell-output-display">
 
         <div style="font-size: 18px; color: #333;">
@@ -1380,7 +901,7 @@ DEC
 <a href="presentation_files/map/horaire_DEC_rast_mod.svg" target="_blank" rel="noopener"> <img src="presentation_files/map/horaire_DEC_norast_mod.svg" alt="En cours de calcul"> </a>
 </td>
 <td rowspan="2" style="vertical-align: middle; text-align: center;">
-<object type="image/svg+xml" data="presentation_files/map/horaire_legend_2.svg" width="40" height="600" class="legend-svg">
+<object type="image/svg+xml" data="presentation_files/map/horaire_legend_1.svg" width="40" height="600" class="legend-svg">
 </object>
 </td>
 </tr>
@@ -1400,8 +921,19 @@ DEC
 </tr>
 </tbody>
 </table>
-
 </section></section>
+<section id="la-suite" class="title-slide slide level1 center">
+<h1>La suite</h1>
+<p><br><br><br><br></p>
+<h2>
+Evaluer la correspondance des tendances
+</h2>
+<p><br><br></p>
+<h2>
+Evaluer la significativité des tendances
+</h2>
+
+</section>
     </div>
   <div class="quarto-auto-generated-content" style="display: none;">
 <div class="footer footer-default">

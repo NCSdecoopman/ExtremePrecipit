@@ -195,7 +195,7 @@ def process_zarr_file_seasonal(
         # si end est en Janvier (année suivante), on ajoute year+1
         if np.datetime64(end, "ns").astype("datetime64[Y]") > np.datetime64(f"{year}-01-01", "Y"):
             years_to_load.add(year + 1)
-    
+
     # 2) Charge tous les zarr correspondants
     all_ds = []
     zarr_dir = os.path.dirname(zarr_path)
@@ -244,11 +244,24 @@ def process_zarr_file_seasonal(
         next_zarr = os.path.join(zarr_dir, f"{year+1}.zarr")
         next_exists = os.path.exists(next_zarr)
         
-        # on skip uniquement si on s'attendait à avoir next_zarr
-        if start < ds_start or (end > ds_end and next_exists):
-            logger.info(f"[SKIP] {season.upper()} {year} hors des bornes de {zarr_path}")
-            log_status[year][season] = "Hors bornes"
-            continue
+        # # on skip uniquement si on s'attendait à avoir next_zarr
+        # if start < ds_start or (end > ds_end and next_exists):
+        #     logger.info(f"[SKIP] {season.upper()} {year} hors des bornes de {zarr_path}")
+        #     log_status[year][season] = f"Hors bornes {start}-{end}"
+        #     continue
+
+        # pour les saisons “cross-year” (djf, hydro) : il faut start et end
+        if season in ("djf", "hydro"):
+            if start < ds_start or (end > ds_end and next_exists):
+                logger.info(f"[SKIP] {season.upper()} {year} hors des bornes de {zarr_path}")
+                log_status[year][season] = f"Hors bornes {start}-{end}"
+                continue
+        # pour les autres saisons, on ne vérifie que la fin
+        else:
+            if end > ds_end and next_exists:
+                logger.info(f"[SKIP] {season.upper()} {year} hors des bornes de {zarr_path}")
+                log_status[year][season] = f"Hors bornes {start}-{end}"
+                continue
 
         # Si échelle glissante : appliquer le rolling immédiatement après la concaténation et AVANT la sélection temporelle
         if echelle.startswith("w"):

@@ -24,6 +24,36 @@ jupyter: extremeprecipit
 ---
 
 
+<style>
+  /* Reset complet de la grille */
+  table.no-gutter {
+    border-collapse: collapse;   /* fusionne bordures */
+    border-spacing: 0;           /* espacement nul */
+    margin: 0;
+    padding: 0;
+  }
+  table.no-gutter th,
+  table.no-gutter td {
+    border: none;                /* pas de lignes */
+    margin: 0;
+    padding: 0;                  /* pas de marge interne */
+  }
+  table.no-gutter th {
+    text-align: center;
+  }
+  table.no-gutter img {
+    display: block;              /* pas d’espace bas */
+    margin: 0;
+    padding: 0;
+    width: 300px;                /* ajustez selon besoin */
+    height: 300px;
+  }
+
+figure { margin: 0; text-align: center; }
+figcaption { margin-top: .3rem; font-size: .9rem; }
+</style>
+
+
 ```{python}
 %config InlineBackend.figure_format = 'svg'
 %config InlineBackend.figure_dpi = 500
@@ -102,24 +132,12 @@ def pipeline_total_title_map_legend_scatter_delta(
             display(HTML(f"Δ (AROME - Stations) : {me:+.{nb_after_comma}f} {unit} ({percent*100:+.1f}%)"))
         else:
             display(HTML(f"Δ (AROME - Stations) : {me:+.{nb_after_comma}f} {unit}"))
+
 ```
 
 
 # Contexte
 
-
-<!--l'air chaud contient plus d'humidité 
-
-- **CP** (Convection-Permitting) : résoudre explicitement les processus de convection dans l'atmosphère (≠ approximation)
-    * Simuler plus précisément la formation des nuages convectifs et des précipitations associées
-
-        * Données comme entrée ou condition initiale
-    * Données passées combinant des observations réelles avec des modèles
-    * Résolution 31 km, 1h, 137 niveaux d'atmosphère jusqu'à 80 km d'altitude
-
-    
-**Permet d'étudier les pluies extrêmes infra-journalières, difficiles à voir dans les anciens modèles**
--->
 
 <h2>Réchauffement de la planète</h2>
 
@@ -140,142 +158,11 @@ def pipeline_total_title_map_legend_scatter_delta(
 
 
 
-# Méthodologie {.no-number}
+# Méthodologie
 
-![](presentation/methodologie.svg){width=100%}
+![](presentation/schema/methodologie.svg){.center}
 
 ---
-
-<!--
-# Evaluation des maxima
-
-::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="50%"}
-
-```{python}
-# Premier graphique (tirage aléatoire pour illustrer)
-rng = np.random.default_rng(12345)
-years = np.arange(1990, 2023)
-extremes1 = rng.normal(70, 25, years.size) + 0.6 * (years - 1959)
-mean1 = extremes1.mean()
-
-# Second graphique (différent tirage aléatoire, pour illustrer)
-rng = np.random.default_rng(54321)
-extremes2 = rng.normal(70, 25, years.size) + 0.6 * (years - 1959)
-mean2 = extremes2.mean()
-
-# Définir des bornes communes pour l’axe y
-y_min = min(extremes1.min(), extremes2.min()) - 5
-y_max = max(extremes1.max(), extremes2.max()) + 5
-
-# Création du graphique
-plt.rcParams.update({
-    "figure.dpi": 110,                        # meilleure définition écran
-})
-fig, ax = plt.subplots(figsize=(8, 6))
-ax.plot(years, extremes1, marker="o", color="#97a6c4", label="AROME")  # Premier jeu de données
-ax.plot(years, extremes2, marker="s", color="#284860", label="Station")   # Deuxième jeu de données
-ax.axhline(mean1, linestyle="--", linewidth=1, color="#97a6c4")  # Ligne en pointillés pour la moyenne AROME 1
-ax.axhline(mean2, linestyle="--", linewidth=1, color="#284860")   # Ligne en pointillés pour la moyenne AROME 2
-# ——— Masquer les 2 spines inutiles ———
-ax.spines["top"].set_visible(False)
-ax.spines["right"].set_visible(False)
-ax.set_ylim(y_min, y_max)
-plt.xlabel("Année")  # Étiquette axe x
-plt.ylabel("Précipitation maximale (mm/j)")  # Étiquette axe y
-plt.xticks(fontsize=10)  # Taille des ticks de l'axe x
-plt.yticks(fontsize=10)  # Taille des ticks de l'axe y
-plt.legend()  # Légende
-plt.grid(False)  # Grille
-plt.tight_layout()  # Ajustement du layout
-plt.show()  # Affichage du graphique
-
-```
-:::
-
-::: {.column width="50%"}
-- La moyenne des maxima (- - -) : évaluation *spatiale*  
-- Les maxima annuels (---) : évaluation *temporelle* 
-:::
-
-:::
-
-
-# Niveau de retour $z_T$ 
-
-Le seuil que l’on ne dépasse **en moyenne** qu’une fois tous les $T$ années
-<br/><br/>
-
-::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="50%"}
-```{python}
-from sklearn.linear_model import LinearRegression
-extremes = [
-    83.05, 69.90, 88.10, 90.31, 61.69, 68.48, 83.08, 78.94,
-    82.23, 74.17, 91.79, 91.08, 84.26, 95.17, 88.88, 75.91,
-    88.49, 75.51, 94.18, 85.20, 84.15, 79.49, 98.83, 85.35,
-    82.92, 83.98, 93.12, 91.75, 92.53, 93.01,110.42, 85.24,
-    84.48
-]
-years = np.arange(1990, 2023)
-
-# Normalisation temporelle
-t_tilde = (years - years.min()) / (years.max() - years.min())
-
-# Régression linéaire
-model = LinearRegression()
-model.fit(t_tilde.reshape(-1, 1), extremes)
-zT1 = model.coef_[0]
-
-# Affichage
-fig, ax = plt.subplots(figsize=(8, 6))
-ax.plot(years, extremes, marker="o", color="#97a6c4", label="Maxima annuels")  # Premier jeu de données
-ax.plot(years, model.predict(t_tilde.reshape(-1, 1)), linestyle="--",color="#284860", label=f"$z_{{T,1}} \\approx$ {zT1:.1f} mm soit {zT1*10/(years.max() - years.min()):.1f} mm/10 ans")   # Deuxième jeu de données
-# ——— Masquer les 2 spines inutiles ———
-ax.spines["top"].set_visible(False)
-ax.spines["right"].set_visible(False)
-plt.xlabel("Année")
-plt.ylabel("Précipitation maximale (mm/j)")
-plt.xticks(fontsize=10)  # Taille des ticks de l'axe x
-plt.yticks(fontsize=10)  # Taille des ticks de l'axe y
-plt.legend()  # Légende
-plt.grid(False)  # Grille
-plt.tight_layout()  # Ajustement du layout
-plt.show()  # Affichage du graphique
-```
-:::
-
-::: {.column width="50%"}
-$$
-z_T(t) = z_{T,0} + \mathbf{z_{T,1}} \cdot t
-$$
-
-$$
-\begin{cases}
-z_{T,1} > 0 & \text{les épisodes deviennent plus intenses} \\
-z_{T,1} = 0 & \text{aucune tendance détectable} \\
-z_{T,1} < 0 & \text{les épisodes deviennent moins intenses}
-\end{cases}
-$$
-
-On peut obtenir :
-
-$$
-z^{/10 \, ans}_{T,1} = \mathbf{z_{T,1}} \frac{10}{t_{max} - t_{min}}
-$$
-:::
-
-:::
-
-**Depuis 1990, le seuil correspondant à un épisode de pluie extrême qu’on ne voit qu’une fois tous les 10 ans<br/>a augmenté de 4,7 mm tous les 10 ans.**
-
-
-
-# Résultats statistiques descriptives
-
-![](presentation/resultats-1.svg){width=100%}
-
--->
 
 ```{python}
 #| label: jours_pluie_total
@@ -320,50 +207,37 @@ pipeline_total_title_map_legend_scatter_delta(
 )
 ```
 
-<br/>**Tendance à déclencher des jours de pluie plus fréquemment que ce qui est observé**
-
-
 ```{python}
-# #| label: jours_pluie_2000_MAX
-# year_display_min = 1990
-# year_display_max = config["years"]["max"]
-# echelle="quotidien"
+year_display_min = 1990
+year_display_max = config["years"]["max"]
+echelle="quotidien"
 
-# # Étape 1 : récupérer les résultats avec pipeline_data_quarto
-# result = pipeline_data_quarto(
-#     config=config,
-#     stat_choice="numday",
-#     echelle=echelle,
-#     min_year=year_display_min,
-#     max_year=year_display_max,
-#     season_choice="hydro",
-#     unit_choice="jours",
-#     missing_choice=0.10,
-#     quantile_choice=0.995
-# )
+# Étape 1 : récupérer les résultats avec pipeline_data_quarto
+result = pipeline_data_quarto(
+    config=config,
+    stat_choice="numday",
+    echelle=echelle,
+    min_year=year_display_min,
+    max_year=year_display_max,
+    season_choice="hydro",
+    unit_choice="jours",
+    missing_choice=0.10,
+    quantile_choice=0.995
+)
 
-# # Étape 2 : affichage carte + scatter
-# html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
-#     name="jour_pluie_2000",
-#     result=result,
-#     echelle=echelle,
-#     stat_choice_label="Jour de pluie",
-#     missing_choice=0.10,
-#     unit_choice="jours"
-# )
-
-# pipeline_total_title_map_legend_scatter_delta(
-#     title=title,
-#     year_min=year_display_min,
-#     year_max=year_display_max,
-#     echelle=echelle,
-#     html_map_legend=html_map_legend,
-#     html_scatter=html_scatter,
-#     me=me,
-#     percent=percent,
-#     unit="jours"
-# )
+# Étape 2 : affichage carte + scatter
+_, _, _, me, _, percent = pipeline_map_legend_scatter(
+    name="jour_pluie_total_1990",
+    result=result,
+    echelle=echelle,
+    stat_choice_label=title,
+    missing_choice=0.10,
+    unit_choice="jours"
+)
+display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me:+.1f} jours ({percent*100:+.1f}%)"))
 ```
+
+**Tendance à déclencher des jours de pluie plus fréquemment que ce qui est observé**
 
 
 ---
@@ -410,32 +284,32 @@ pipeline_total_title_map_legend_scatter_delta(
 ```
 
 ```{python}
-#| label: moy_precipit_jour_2000_MAX_only_metric
-# year_display_min = 1990
-# year_display_max = config["years"]["max"]
-# echelle="quotidien"
+#| label: moy_precipit_jour_1990_MAX_only_metric
+year_display_min = 1990
+year_display_max = config["years"]["max"]
+echelle="quotidien"
 
-# # Étape 1 : récupérer les résultats avec pipeline_data_quarto
-# result = pipeline_data_quarto(
-#     config=config,
-#     stat_choice="mean",
-#     echelle=echelle,
-#     min_year=year_display_min,
-#     max_year=year_display_max,
-#     season_choice="hydro",
-#     missing_choice=0.10,
-#     quantile_choice=0.995
-# )
+# Étape 1 : récupérer les résultats avec pipeline_data_quarto
+result = pipeline_data_quarto(
+    config=config,
+    stat_choice="mean",
+    echelle=echelle,
+    min_year=year_display_min,
+    max_year=year_display_max,
+    season_choice="hydro",
+    missing_choice=0.10,
+    quantile_choice=0.995
+)
 
-# # Étape 2 : affichage carte + scatter
-# _, _, _, me, _, percent = pipeline_map_legend_scatter(
-#     name="jour_mean_2000",
-#     result=result,
-#     echelle=echelle,
-#     missing_choice=0.10,
-#     stat_choice_label="Moyenne des précipitations"
-# )
-# display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me:+.3f} mm/j ({percent*100:+.1f}%)"))
+# Étape 2 : affichage carte + scatter
+_, _, _, me, _, percent = pipeline_map_legend_scatter(
+    name="jour_mean_1990",
+    result=result,
+    echelle=echelle,
+    missing_choice=0.10,
+    stat_choice_label="Moyenne des précipitations"
+)
+display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me:+.3f} mm/j ({percent*100:+.1f}%)"))
 ```
 
 **Répartition correcte de la quantité totale d’eau**
@@ -488,7 +362,7 @@ pipeline_total_title_map_legend_scatter_delta(
 
 <h2>Pluies plus fréquentes en plus faibles quantités</h2>
 
-![](presentation/bilan-1.svg){width=100%}
+![](presentation/schema/bilan-1.svg){.center}
 
 
 ---
@@ -535,33 +409,33 @@ pipeline_total_title_map_legend_scatter_delta(
 ```
 
 ```{python}
-#| label: moy_max_precipit_jour_2000_MAX
-# year_display_min = 1990
-# year_display_max = config["years"]["max"]
-# echelle="quotidien"
+#| label: moy_max_precipit_jour_1990_MAX
+year_display_min = 1990
+year_display_max = config["years"]["max"]
+echelle="quotidien"
 
-# # Étape 1 : récupérer les résultats avec pipeline_data_quarto
-# result = pipeline_data_quarto(
-#     config=config,
-#     stat_choice="mean-max",
-#     echelle=echelle,
-#     min_year=year_display_min,
-#     max_year=year_display_max,
-#     season_choice="hydro",
-#     missing_choice=0.10,
-#     quantile_choice=0.995
-# )
+# Étape 1 : récupérer les résultats avec pipeline_data_quarto
+result = pipeline_data_quarto(
+    config=config,
+    stat_choice="mean-max",
+    echelle=echelle,
+    min_year=year_display_min,
+    max_year=year_display_max,
+    season_choice="hydro",
+    missing_choice=0.10,
+    quantile_choice=0.995
+)
 
-# # Étape 2 : affichage carte + scatter
-# _, _, _, me, _, percent = pipeline_map_legend_scatter(
-#     name="jour_mean_max_2000",
-#     result=result,
-#     echelle=echelle,
-#     missing_choice=0.10,
-#     stat_choice_label="Moyenne des maxima"
-# )
+# Étape 2 : affichage carte + scatter
+_, _, _, me, _, percent = pipeline_map_legend_scatter(
+    name="jour_mean_max_1900",
+    result=result,
+    echelle=echelle,
+    missing_choice=0.10,
+    stat_choice_label="Moyenne des maxima"
+)
 
-# display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me:+.3f} mm/j ({percent*100:+.1f}%)"))
+display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me:+.3f} mm/j ({percent*100:+.1f}%)"))
 ```
 
 ---
@@ -675,92 +549,14 @@ scatter_path = "assets/fig_r2_all_max_hydro_jour.html"
 pio.write_html(fig_r2_all_max_hydro_jour, file=scatter_path, include_plotlyjs="cdn", full_html=False)
 ```
 
-<!-- ::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="50%"}
 ```{python}
-display(HTML(title_show))
-display(HTML('<div style="text-align: center; font-weight: bold;">Moyenne des maxima</div>'))
-display(HTML(html_scatter_mean))
-```
-:::
-::: {.column width="50%"}
-```{python}
-display(HTML('<div style="text-align: center; font-weight: bold;">Maxima annuels</div>'))
-display(HTML(f"""
-     <div style="height: {height-10}px; border: 1px solid #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px;">
-         <iframe loading="lazy" src="{scatter_path}" width="100%" height="100%" frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
-     </div>
-
-     <div class="metric-caption">
-         <strong>r²</strong> = {r2_all:.3f} &nbsp;|&nbsp; <strong>ME</strong> = {me_all:.3f} &nbsp;|&nbsp; <strong>n</strong> = {df_all.shape[0]:.0f}
-     </div>
- """))
-```
-:::
-:::
--->
-
-```{python}
-title = "Maxima annuels des précipitations suivant la saison et l'échelle temporelle"
+title = "Moyenne des maximas des précipitations suivant la saison et l'échelle temporelle"
 display(HTML(f"""
     <div style="font-size: 18px; color: #333;">
         <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
-        <p style="font-size: 18px; color: #3498db;">
-            de <span style="font-weight: bold; color: #e74c3c;">{year_display_min}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
-            pour l'échelle : <span style="font-weight: bold; color: #f39c12;">quotidien</span>
-            et de <span style="font-weight: bold; color: #e74c3c;">{year_display_middle}</span> à <span style="font-weight: bold; color: #e74c3c;">{year_display_max}</span> 
-            pour l'échelle : <span style="font-weight: bold; color: #f39c12;">horaire</span>
-        </p> 
     </div>    
 """))
 ```
-
-::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="40%"}
-
-```{python}
-# Premier graphique (tirage aléatoire pour illustrer)
-rng = np.random.default_rng(12345)
-years = np.arange(1990, 2023)
-extremes1 = rng.normal(70, 25, years.size) + 0.6 * (years - 1959)
-mean1 = extremes1.mean()
-
-# Second graphique (différent tirage aléatoire, pour illustrer)
-rng = np.random.default_rng(54321)
-extremes2 = rng.normal(70, 25, years.size) + 0.6 * (years - 1959)
-mean2 = extremes2.mean()
-
-# Définir des bornes communes pour l’axe y
-y_min = min(extremes1.min(), extremes2.min()) - 5
-y_max = max(extremes1.max(), extremes2.max()) + 5
-
-# Création du graphique
-plt.rcParams.update({
-    "figure.dpi": 110,                        # meilleure définition écran
-})
-fig, ax = plt.subplots(figsize=(6, 6))
-ax.plot(years, extremes1, marker="o", color="#97a6c4", label="AROME")  # Premier jeu de données
-ax.plot(years, extremes2, marker="s", color="#284860", label="Station")   # Deuxième jeu de données
-ax.axhline(mean1, linestyle="--", linewidth=1, color="#97a6c4")  # Ligne en pointillés pour la moyenne AROME 1
-ax.axhline(mean2, linestyle="--", linewidth=1, color="#284860")   # Ligne en pointillés pour la moyenne AROME 2
-# ——— Masquer les 2 spines inutiles ———
-ax.spines["top"].set_visible(False)
-ax.spines["right"].set_visible(False)
-ax.set_ylim(y_min, y_max)
-plt.xlabel("")  # Étiquette axe x
-plt.ylabel("Précipitation maximale (mm/j)")  # Étiquette axe y
-plt.tick_params(axis='y', labelsize=10)
-plt.xticks(fontsize=10)  # Taille des ticks de l'axe x
-plt.yticks(fontsize=10)  # Taille des ticks de l'axe y
-plt.legend()  # Légende
-plt.grid(False)  # Grille
-plt.tight_layout()  # Ajustement du layout
-plt.show()  # Affichage du graphique
-```
-:::
-
-::: {.column width="60%"}
-
 
 ```{python}
 #| label: moyenne-max_vs_series-max_ALL
@@ -800,7 +596,7 @@ df_r2_all_max["ME_txt"] = df_r2_all_max["ME"].apply(lambda x: f"{x:.2f}".lstrip(
 
 
 # Sélectionner uniquement les données pour "Maxima annuels"
-df_r2_all_max = df_r2_all_max[df_r2_all_max["Type"] == "Maxima annuels"]
+df_r2_all_max = df_r2_all_max[df_r2_all_max["Type"] == "Moyenne des maxima"]
 
 # Création de la figure avec px.bar
 fig_r2_all_max = px.bar(
@@ -811,7 +607,6 @@ fig_r2_all_max = px.bar(
     color="Echelle",
     custom_data=["Stations"],            
     barmode="group",
-    facet_col="Type",
     category_orders={"Echelle": afficher_cat},
     title="",
     facet_col_spacing=0.01,
@@ -831,6 +626,7 @@ fig_r2_all_max.update_layout(
     legend_title_text=""  # Ajout du titre à la légende
 )
 fig_r2_all_max.update_xaxes(title=None, tickangle=0)
+fig_r2_all_max.update_yaxes(range=[0, 1.1])   # borne inf. 0, borne sup. 1
 
 # Appliquer la couleur à chaque trace selon son nom de légende
 for trace in fig_r2_all_max.data:
@@ -844,716 +640,21 @@ display(HTML(f"""
         <iframe loading="lazy" src="{fig_r2_path}" width="100%" height="100%" frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
     </div>
 """))
-
-# Création de la figure avec px.bar
-# fig_me_all_max = px.bar(
-#     df_r2_all_max,
-#     x="Saison",
-#     y="ME",
-#     color="Echelle",  # Utiliser "Echelle" pour la couleur
-#     text="ME_txt",
-#     barmode="group",
-#     facet_col="Type",  # Facet par "Type" (Moyenne des maxima, Maxima annuels)
-#     category_orders={"Echelle": afficher_cat},
-#     title="",
-#     facet_col_spacing=0.01,
-#     height=450
-# )
-
-# # Positionner le texte à l'extérieur des barres
-# fig_me_all_max.update_traces(
-#     textfont=dict(size=7),  # réduit la taille du texte à 10 px
-#     texttemplate="%{text}",  # Afficher uniquement la partie décimale comme .93, .41, etc.
-#     textposition="outside",  # Positionner le texte à l'extérieur de la barre
-#     insidetextanchor="start"  # Assure que le texte est bien visible à l'extérieur
-# )
-
-# fig_me_all_max.update_layout(
-#     template="simple_white",
-#     legend_title_text="Pas de temps"  # Ajout du titre à la légende
-# )
-# fig_me_all_max.update_xaxes(title=None, tickangle=0)
-
-# # Appliquer la couleur à chaque trace selon son nom de légende
-# for trace in fig_me_all_max.data:
-#     trace.marker.color = color_map.get(trace.name, "#888888")
-
-# fig_me_path = f"assets/fig_me_all_max.html"
-# pio.write_html(fig_me_all_max, file=fig_me_path, include_plotlyjs="cdn", full_html=False)
-
 ```
-
-:::
-
-:::
-
-<br/><br/>
-**Répartition des orages dans le temps jamais très bonne**
 
 ---
 
 <h2>Bonne distribution et difficulté évènementielle</h2>
 
-![](presentation/bilan-2.svg){width=100%}
-
-<!--
-
-# Résultats modélisation
-
-![](presentation/resultats-2.svg){width=100%}
+![](presentation/schema/bilan-2.svg){.center}
 
 ---
 
-
-
-# Application GEV (μ, σ, ξ)
-
-```{python}
-#| label: define_gev
-# Liste complète des modèles avec leurs équations explicites
-model_options = {
-    "M₀(μ₀, σ₀) : μ(t) = μ₀ ; σ(t) = σ₀ ; ξ(t) = ξ": "s_gev",
-    "M₁(μ, σ₀) : μ(t) = μ₀ + μ₁·t ; σ(t) = σ₀ ; ξ(t) = ξ": "ns_gev_m1",
-    "M₂(μ₀, σ) : μ(t) = μ₀ ; σ(t) = σ₀ + σ₁·t ; ξ(t) = ξ": "ns_gev_m2",
-    "M₃(μ, σ) : μ(t) = μ₀ + μ₁·t ; σ(t) = σ₀ + σ₁·t ; ξ(t) = ξ": "ns_gev_m3",
-    "M₁⋆(μ, σ₀) : μ(t) = μ₀ + μ₁·t₊ ; σ(t) = σ₀ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m1_break_year",
-    "M₂⋆(μ₀, σ) : μ(t) = μ₀ ; σ(t) = σ₀ + σ₁·t₊ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m2_break_year",
-    "M₃⋆(μ, σ) : μ(t) = μ₀ + μ₁·t₊ ; σ(t) = σ₀ + σ₁·t₊ ; ξ(t) = ξ en notant t₊ = t · 𝟙_{t > t₀} avec t₀ = 1985": "ns_gev_m3_break_year",
-}
-model_labels = {v: k.split(" :")[0] for k, v in model_options.items()}
-
-
-# Représentation graphique de GEV classiques
-import matplotlib.pyplot as plt
-from scipy.stats import genextreme
-
-# Définir la grille x
-x = np.linspace(-10, 20, 1000)
-
-# Paramètres à illustrer
-mu_values = [-5, 0, 5]
-sigma_values = [1, 2, 4]
-xi_values = [-0.5, 0.0, 0.5]
-
-# Création de la figure avec 3 colonnes
-fig, axes = plt.subplots(1, 3, figsize=(15, 4), constrained_layout=True)
-
-# Style épuré sans ticks numériques, mais avec axes visibles
-for ax in axes:
-    # Affiche les axes (left et bottom)
-    ax.spines['left'].set_visible(True)
-    ax.spines['bottom'].set_visible(True)
-    # Supprime top et right
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    # Supprime les ticks chiffrés
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
-
-# 1. Effet de μ
-for mu in mu_values:
-    y = genextreme.pdf(x, c=-0.1, loc=mu, scale=2)
-    axes[0].plot(x, y, label=f"$\\mu$ = {mu}")
-axes[0].set_title("Effet de $\\mu$ (position)", loc='right')
-axes[0].set_xlabel("x")
-axes[0].set_ylabel("Densité")
-axes[0].legend(frameon=False, fontsize=9)
-
-# 2. Effet de σ
-for sigma in sigma_values:
-    y = genextreme.pdf(x, c=-0.1, loc=0, scale=sigma)
-    axes[1].plot(x, y, label=f"$\\sigma$ = {sigma}")
-axes[1].set_title("Effet de $\\sigma$ (échelle)", loc='right')
-axes[1].set_xlabel("x")
-axes[1].legend(frameon=False, fontsize=9)
-
-# 3. Effet de ξ
-for xi in xi_values:
-    y = genextreme.pdf(x, c=-xi, loc=0, scale=2)
-    axes[2].plot(x, y, label=f"$\\xi$ = {xi}")
-axes[2].set_title("Effet de $\\xi$ (forme)", loc='right')
-axes[2].set_xlabel("x")
-axes[2].legend(frameon=False, fontsize=9)
-
-plt.show()
-```
-
----
-
-### Modèles sans rupture temporelle
-
-| Modèle | μ(t)              | σ(t)              | ξ(t) |
-|:------:|:------------------|:------------------|:-----:|
-| M₀     | μ₀                | σ₀                | ξ    |
-| M₁     | μ₀ + μ₁·t         | σ₀                | ξ    |
-| M₂     | μ₀                | σ₀ + σ₁·t         | ξ    |
-| M₃     | μ₀ + μ₁·t         | σ₀ + σ₁·t         | ξ    |
-
-
-### Modèles avec rupture en 1985
-
-<span style="font-size: 1.05em;">Soit</span>
-**t₊ = t × 𝟙{t &gt; 1985}**,
-on a :
-
-| Modèle         | μ(t)                 | σ(t)                 | ξ(t) |
-|:--------------:|:---------------------|:---------------------|:-----:|
-| M₁⋆ (rupture)  | μ₀ + μ₁·t₊           | σ₀                   | ξ    |
-| M₂⋆ (rupture)  | μ₀                   | σ₀ + σ₁·t₊           | ξ    |
-| M₃⋆ (rupture)  | μ₀ + μ₁·t₊           | σ₀ + σ₁·t₊           | ξ    |
-
-
-
----
-
-```{python}
-#| label: minimize_gev_aic_map
-echelle = "quotidien"
-season = "son"
-title = f"Modèle minimisant l'AIC"
-mod_dir = Path(config["gev"]["modelised"]) / echelle / season
-obs_dir = Path(config["gev"]["observed"]) / echelle / season
-
-df_model_aic = pl.read_parquet(mod_dir / "gev_param_best_model.parquet")
-df_obs_aic = pl.read_parquet(obs_dir / "gev_param_best_model.parquet")
-
-df_model_aic = add_metadata(df_model_aic, "mm_h" if echelle == "horaire" else "mm_j", type="modelised")
-df_obs_aic = add_metadata(df_obs_aic, "mm_h" if echelle == "horaire" else "mm_j", type="observed")
-
-df_model_aic = filter_nan(df_model_aic, "xi") # xi est toujours valable
-df_obs_aic = filter_nan(df_obs_aic, "xi") # xi est toujours valable
-
-df_model_aic = df_model_aic.with_columns(
-    pl.col("model").replace(model_labels)  # remplace par noms lisibles
-)
-df_obs_aic = df_obs_aic.with_columns(
-    pl.col("model").replace(model_labels)
-)
-
-result = {
-    "modelised": df_model_aic,
-    "modelised_show": df_model_aic,
-    "observed": df_obs_aic,
-    "observed_show": df_obs_aic,
-    "column": "model",
-    "echelle": "diverging_zero_white",
-    "continu": False,
-    "categories": list(model_labels.values())  # ["M₁(μ₀, σ₀)", "M₂(μ, σ₀)", ...]
-}
-
-html_map_legend = pipeline_map_quarto(
-    name="model_minim_AIC",
-    result=result,
-    echelle=echelle,
-    stat_choice_label=None,
-    unit_choice=""
-)
-
-title_show = pipeline_title(title, config["years"]["min"], config["years"]["max"], echelle, season)
-display(HTML(title_show))
-```
-
-::: {.columns style="display: flex; gap: 0px; margin: 0;"}
-::: {.column width="50%"}
-```{python}
-display(HTML(html_map_legend))
-```
-:::
-
-```{python}
-#| label: minimize_gev_aic_hist
-import plotly.graph_objects as go
-
-# Mapping des noms vers leur affichage en unicode/math
-param_display = {
-    "mu0": "μ₀",
-    "mu1": "μ₁",
-    "sigma0": "σ₀",
-    "sigma1": "σ₁",
-    "xi": "ξ"
-}
-
-df_model_aic = df_model_aic.with_columns(pl.col("NUM_POSTE").cast(pl.Int32))
-df_obs_aic = df_obs_aic.with_columns(pl.col("NUM_POSTE").cast(pl.Int32))
-df_obs_vs_mod_full = pl.read_csv(f"data/metadonnees/obs_vs_mod/obs_vs_mod_{echelle}.csv")
-
-r2_values = {}
-params = ["mu0", "mu1", "sigma0", "sigma1", "xi"]
-
-for param in params:
-    obs_vs_mod = match_and_compare(df_obs_aic, df_model_aic, param, df_obs_vs_mod_full)
-
-    if obs_vs_mod is not None and obs_vs_mod.height > 0:
-        _, _, _, r2 = generate_metrics(obs_vs_mod)
-        r2_values[param_display[param]] = r2
-    else:
-        r2_values[param_display[param]] = None  # ou np.nan si tu préfères
-
-# Préparation des données pour l'histogramme
-labels = list(r2_values.keys())
-values = [r2_values[label] if r2_values[label] is not None else 0 for label in labels]
-colors = ["grey" if r2_values[label] is not None else "white" for label in labels]
-
-# Création de la figure Plotly
-fig_r2_all_max = go.Figure(data=[
-    go.Bar(x=labels, y=values, marker_color=colors, text=[f"{v:.3f}" if r2_values[l] is not None else "NA" for l, v in zip(labels, values)],
-           textposition="outside")
-])
-
-fig_r2_all_max.update_layout(
-    title="",
-    xaxis_title="Paramètre",
-    yaxis_title="r² (AROME - Stations)",
-    yaxis=dict(range=[0, 1])
-)
-
-# Appliquer le template
-fig_r2_all_max.update_layout(template="simple_white")
-
-# Sauvegarde et affichage dans un iframe
-scatter_path = f"assets/hist_r2_jour_model_min_AIC.html"
-pio.write_html(fig_r2_all_max, file=scatter_path, include_plotlyjs="cdn", full_html=False)
-
-html_scatter = f"""
-<div style="height: 500px; border: 1px solid #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px;">
-    <iframe loading="lazy" src="{scatter_path}" width="100%" height="100%" frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
-</div>
-"""
-```
-
-::: {.column width="50%"}
-```{python}
-display(HTML(html_scatter))
-```
-:::
-:::
-
-
-
----
-
-
-# Changement du niveau de retour
-
-$$
-\Delta q^{T}_{X\,\text{ans}} = \frac{X}{\Delta a} \left[\, \mu_1 + \frac{\sigma_1}{\xi}\,z_T \,\right]
-$$
-
-où :
-
-* $\Delta a$ = durée totale du modèle (en années), par exemple 40 si de 1980 à 2020
-* $X$ = nombre d'années considérées pour la variation (ex : 10 pour un changement par 10 ans)
-* $\mu_1$, $\sigma_1$, $\xi$ = paramètres du modèle GEV non stationnaire (issus de l’ajustement)
-* $z_T$ = terme dépendant de la période de retour $T$
-
-$$
-z_T = 
-\begin{cases}
-\displaystyle
-\left[ -\log\left(1 - \frac{1}{T}\right) \right]^{-\xi} - 1 & \text{si } \xi \neq 0 \\\\
-\displaystyle
-\log \left( -\log\left(1 - \frac{1}{T}\right) \right) & \text{si } \xi = 0 \ (\text{cas Gumbel})
-\end{cases}
-$$
-
-
-```{python}
-T_choice=10 # Période de retour
-par_X_annees=10
-year_display_min = config["years"]["min"]
-year_display_max = config["years"]["max"]
-
-
-def carte_retour(model_name, echelle, season_choice, half):
-    MODEL_PARAM, MODEL_NAME = menu_config_gev()
-    MODEL_TITLE = {v: k for k, v in MODEL_NAME.items()}
-
-    model_title = MODEL_TITLE.get(model_name, model_name)
-
-    title = f"Changement du niveau de retour {T_choice} ans par {par_X_annees} ans" #du modèle {model_title}
-    result_gev = pipeline_data_gev_quarto(
-        config=config,
-        model_name=model_name,
-        echelle=echelle,
-        season_choice=season_choice,
-        T_choice=T_choice,
-        par_X_annees=par_X_annees,
-        min_year=year_display_min,
-        max_year=year_display_max
-    )
-    # Exécution pipeline pour la moitié choisie
-    html_map, _, r2, me, n, percent = pipeline_quarto_gev_half_france(
-        model_name=model_name,
-        season_choice=season_choice,
-        echelle=echelle,
-        par_X_annees=par_X_annees,
-        result=result_gev,
-        half=half,
-        height=600
-    )
-    pipeline_total_title_map_legend_scatter_delta(
-        title=title,
-        year_min=config["years"]["min"],
-        year_max=config["years"]["max"],
-        echelle=echelle,
-        season_choice=season_choice,
-        html_map_legend=html_map,
-        html_scatter=None
-    )
-    return result_gev
-```
-
----
-
-```{python}
-model_name="niveau_retour"
-echelle="quotidien"
-season_choice = "son"
-half = "sud"  # ou "nord"
-carte_retour(model_name, echelle, season_choice, half)
-```
-
----
-
--->
-
-```{python}
-from typing import Sequence, Mapping, Tuple
-from pathlib import Path
-
-import polars as pl
-import geopandas as gpd
-from shapely.geometry import box
-import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap, BoundaryNorm, TwoSlopeNorm, Normalize, LinearSegmentedColormap
-
-from __future__ import annotations
-
-from pathlib import Path
-from typing import Mapping, Optional, Sequence, Tuple
-
-import geopandas as gpd
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import numpy as np
-import polars as pl
-from matplotlib.colors import BoundaryNorm, LinearSegmentedColormap, TwoSlopeNorm
-from shapely.geometry import box
-
-
-
-def plot_four_polars_grids(
-    datasets: Sequence[Mapping[str, pl.DataFrame]],
-    *,
-    echelle: str,
-    titles: Sequence[str] | None = None,  # ex: ['SON', 'DJF', 'MAM', 'JJA']
-    lat_col: str = "lat",
-    lon_col: str = "lon",
-    val_col: str = "ERROR",
-    # Observations
-    obs_key: str = "observed_show",
-    show_obs: bool = True,  # n'influence plus que l'affichage
-    min_pt: int=6,
-    max_pt: int=11,
-    obs_edgecolor: str = "#000000",
-    obs_facecolor: Optional[str] = None,
-    # Grid
-    side_km: float = 2.5,
-    # Colormap
-    cmap_bool: Tuple[str, str] = ("#f0f0f0", "#d73027"),
-    # Relief
-    relief_path: str = "data/external/niveaux/selection_courbes_niveau_france.shp",
-    relief_linewidth: float = 0.3,
-    relief_color: str = "#666666",
-    figsize: Tuple[int, int] = (6, 6),
-    show_mod: bool = True,
-    show_signif: bool = False,  # filtre significatif sur obs
-    numero: int=1,
-    saturation_col: int=99,
-    saturation_size: int=99
-):
-    """Trace quatre cartes polaires + une légende commune (SVG).
-
-    La plage de la légende est calculée sur **l'ensemble** des valeurs (modèle
-    et observations), que l'on choisisse ou non de les afficher.
-    """
-
-    # ------------------------------------------------------------------
-    # Préparation des GeoDataFrames
-    # ------------------------------------------------------------------
-    model_gdfs, obs_gdfs = [], []
-    for d in datasets:
-        # -- Modèle
-        df_m = d.get("modelised_show")
-        if df_m is None:
-            model_gdfs.append(None)
-
-
-        else:
-            if not isinstance(df_m, pl.DataFrame):
-                raise TypeError("'modelised_show' doit être un pl.DataFrame.")
-            gdf_m = gpd.GeoDataFrame(
-                df_m.to_pandas(),  # Convertissez df_m en DataFrame pandas
-                geometry=gpd.points_from_xy(df_m[lon_col].to_list(), df_m[lat_col].to_list()),
-                crs="EPSG:4326",
-            ).to_crs("EPSG:2154")
-            model_gdfs.append(gdf_m)  # Ajoutez gdf_m à model_gdfs
-
-        # -- Observations (toujours chargées pour la légende)
-        if obs_key in d:
-            df_o = d[obs_key]
-            if not isinstance(df_o, pl.DataFrame):
-                raise TypeError("'observed_show' doit être un pl.DataFrame.")
-            if "significant" in df_o.columns and show_signif:
-                df_o = df_o.filter(pl.col("significant"))
-            obs_gdfs.append(
-                gpd.GeoDataFrame(
-                    df_o.to_pandas(),
-                    geometry=gpd.points_from_xy(df_o[lon_col].to_list(), df_o[lat_col].to_list()),
-                    crs="EPSG:4326",
-                ).to_crs("EPSG:2154")
-                if df_o.height > 0
-                else None
-            )
-        else:
-            obs_gdfs.append(None)
-
-    # Titres par défaut
-    if titles is None:
-        titles = [str(i) for i in range(1, len(model_gdfs) + 1)]
-
-    # ------------------------------------------------------------------
-    # Grille carrée autour des points modélisés
-    # ------------------------------------------------------------------
-    half = side_km * 500  # m
-    for gdf in model_gdfs:
-        gdf["geometry"] = gdf.geometry.apply(
-            lambda p: box(p.x - half, p.y - half, p.x + half, p.y + half)
-        )
-
-    # ------------------------------------------------------------------
-    # Masque France métropolitaine
-    # ------------------------------------------------------------------
-    deps = (
-        gpd.read_file("https://france-geojson.gregoiredavid.fr/repo/departements.geojson")
-        .to_crs("EPSG:2154")
-    )
-    deps_metro = deps[~deps["code"].isin(["2A", "2B"])]
-    deps_metro["geometry"] = deps_metro.geometry.simplify(500)
-    mask = deps_metro.union_all()
-
-    model_gdfs = [gpd.overlay(g, deps_metro[["geometry"]], how="intersection") for g in model_gdfs]
-    obs_gdfs = [g.clip(mask) if isinstance(g, gpd.GeoDataFrame) else None for g in obs_gdfs]
-
-    # ------------------------------------------------------------------
-    # Relief
-    # ------------------------------------------------------------------
-    relief = gpd.read_file(Path(relief_path).resolve()).to_crs("EPSG:2154").clip(mask)
-
-    # ------------------------------------------------------------------
-    # Saturation des valeurs extrêmes (1 % sup.)
-    # ------------------------------------------------------------------
-
-    # 1) Avant la saturation, mémoriser la valeur originale
-    for gdf in model_gdfs + [g for g in obs_gdfs if g is not None]:
-        gdf["_val_raw"] = gdf[val_col].copy()         # ← copie intacte
-
-    all_values: list[float] = []
-    for gdf in model_gdfs:
-        all_values.extend(gdf[val_col].to_numpy())
-    for gdf in obs_gdfs:
-        if gdf is not None:
-            all_values.extend(gdf[val_col].to_numpy())
-
-    is_bool = model_gdfs[0][val_col].dtype == bool
-    if all_values and not is_bool:
-        # Seuil couleur pour toutes les valeurs, modèle + obs
-        seuil = np.percentile(np.abs(all_values), saturation_col)
-        for gdf in model_gdfs + [g for g in obs_gdfs if g is not None]:
-            gdf[val_col] = np.where(np.abs(gdf[val_col]) > seuil,
-                                    np.sign(gdf[val_col]) * seuil,
-                                    gdf[val_col])
-
-    # ------------------------------------------------------------------
-    # Colormap & Norm communes
-    # ------------------------------------------------------------------
-    if is_bool:
-        cmap = mpl.colors.ListedColormap(list(cmap_bool))
-        norm = BoundaryNorm([-0.5, 0.5, 1.5], ncolors=2)
-        for g in model_gdfs + [g for g in obs_gdfs if g is not None]:
-            g["_val_int"] = g[val_col].astype(int)
-        col = "_val_int"
-    else:
-        all_mins = [g[val_col].min() for g in model_gdfs]
-        all_mins += [g[val_col].min() for g in obs_gdfs if g is not None]
-        all_maxs = [g[val_col].max() for g in model_gdfs]
-        all_maxs += [g[val_col].max() for g in obs_gdfs if g is not None]
-
-        vmin_raw = float(min(all_mins))
-        vmax_raw = float(max(all_maxs))
-        # rayon symétrique
-        max_abs = max(abs(vmin_raw), abs(vmax_raw))
-        vmin, vmax = -max_abs, max_abs
-
-        # centre au zéro
-        norm = TwoSlopeNorm(vmin=vmin, vcenter=0.0, vmax=vmax)
-        cmap = LinearSegmentedColormap.from_list("bwr_custom", ["red", "#ffffff", "blue"], N=150)
-        col = val_col
-
-    # ------------------------------------------------------------------
-    # Export cartes
-    # ------------------------------------------------------------------
-    Path("presentation_files/map").mkdir(parents=True, exist_ok=True)
-    modes = {"rast": 0, "norast": 1}
-
-    for title, gdf_m, gdf_o in zip(titles, model_gdfs, obs_gdfs):
-        for mode, z in modes.items():
-            fig, ax = plt.subplots(figsize=figsize)
-
-            deps_metro.boundary.plot(ax=ax, edgecolor="#AAAAAA", linewidth=0.2, zorder=0)
-
-            if show_mod:
-                gdf_m.plot(ax=ax, column=col, cmap=cmap, norm=norm, linewidth=0, zorder=1)
-
-            if show_obs and gdf_o is not None and not gdf_o.empty:
-
-                # ------------------------------------------------------------------
-                # Échelle des diamètres de points
-                # ------------------------------------------------------------------
-                # valeurs brutes abs et max global (pour le mapping linéaire)
-                abs_vals = gdf_o["_val_raw"].abs()
-                abs_max  = abs_vals.max()
-                # taille brute non-saturée
-                raw_size = ((abs_vals / abs_max) * (max_pt - min_pt) + min_pt) ** 2
-                # masque des points à saturer
-                # Seuil taille uniquement les obs
-                seuil_size = np.percentile(abs_vals, saturation_size)
-                # copie et saturation : tous les points > seuil obtiennent max_pt**2
-                sizes = raw_size.copy()
-                sizes[abs_vals > seuil_size] = max_pt ** 2
-                # on enregistre
-                gdf_o["_size_pt2"] = sizes
-
-                kw = dict(
-                    markersize="_size_pt2",
-                    marker="o",
-                    edgecolor=obs_edgecolor,
-                    linewidth=0.1,
-                    zorder=3,
-                )
-
-                if obs_facecolor is None:
-                    gdf_o.plot(ax=ax, column=col, cmap=cmap, norm=norm, **kw)
-                else:
-                    gdf_o.plot(ax=ax, facecolor=obs_facecolor, **kw)
-
-            relief.plot(ax=ax, color=relief_color, linewidth=relief_linewidth, alpha=0.8, zorder=2)
-
-            ax.set_axis_off()
-            ax.set_rasterization_zorder(z)
-
-            if mode == "rast":
-                sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
-                sm.set_array([])
-                cbar = fig.colorbar(sm, ax=ax, shrink=0.6, aspect=20)
-                if is_bool:
-                    cbar.set_ticks([0, 1])
-                    cbar.set_ticklabels(["Non", "Oui"])
-
-            suffix_obs = "_obs" if show_obs else ""
-            suffix_mod = "_mod" if show_mod else ""
-            suffix_signif = "_signif" if show_signif else ""
-            name = f"{echelle}_{title}_{mode}{suffix_mod}{suffix_obs}{suffix_signif}"
-
-            fig.savefig(f"presentation_files/map/{name}.svg", format="svg", bbox_inches="tight", pad_inches=0)
-            plt.close(fig)
-
-    # ------------------------------------------------------------------
-    # Légende seule
-    # ------------------------------------------------------------------
-    mpl.rcParams.update({'font.size': 16})
-    fig2 = plt.figure(figsize=(1, figsize[1]*2))
-    ax2 = fig2.add_axes([0.25, 0.05, 0.5, 0.9])
-    sm2 = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm2.set_array([])
-    cb2 = fig2.colorbar(sm2, cax=ax2)
-    if is_bool:
-        cb2.set_ticks([0, 1])
-        cb2.set_ticklabels(["Non", "Oui"])
-
-    fig2.savefig(f"presentation_files/map/{echelle}_legend_{numero}.svg", format="svg", bbox_inches="tight", pad_inches=0)
-    plt.close(fig2)
-
-```
-
-
-```{python}
-echelles = ["quotidien"] #, "horaire"
-seasons  = ["son", "djf", "mam", "jja"]
-datasets = {e: [] for e in echelles}
-
-for e in echelles:
-    for s in seasons:
-        res = pipeline_data_gev_quarto(
-            config=config,
-            model_name="niveau_retour",
-            echelle=e,
-            season_choice=s,
-            T_choice=10,
-            par_X_annees=10,
-            min_year=config["years"]["min"],
-            max_year=config["years"]["max"],
-        )
-        datasets[e].append(res)    # On range le résultat dans la bonne liste
-
-for show in [True, False]:
-    for e in echelles:
-        plot_four_polars_grids(
-            datasets[e],
-            echelle=e,
-            val_col="z_T_p",          # nom de la colonne à colorer / symboliser
-            titles=[s.upper() for s in seasons],  # titres des 4 sous-cartes
-            show_mod=show,
-            show_obs=not show,
-            numero=1
-        )
-```
-
----
 
 ```{python}
 title_show = pipeline_title("Tendances relatives (&#37; saturé à partir q99) du niveau de retour 10 ans estimée par le meilleur modèle", 1995, 2022, "quotidien", None)
 display(HTML(title_show))
 ```
-
-
-
-<style>
-  /* Reset complet de la grille */
-  table.no-gutter {
-    border-collapse: collapse;   /* fusionne bordures */
-    border-spacing: 0;           /* espacement nul */
-    margin: 0;
-    padding: 0;
-  }
-  table.no-gutter th,
-  table.no-gutter td {
-    border: none;                /* pas de lignes */
-    margin: 0;
-    padding: 0;                  /* pas de marge interne */
-  }
-  table.no-gutter th {
-    text-align: center;
-  }
-  table.no-gutter img {
-    display: block;              /* pas d’espace bas */
-    margin: 0;
-    padding: 0;
-    width: 300px;                /* ajustez selon besoin */
-    height: 300px;
-  }
-</style>
 
 
 
@@ -1624,46 +725,10 @@ display(HTML(title_show))
 ---
 
 ```{python}
-echelles = ["quotidien"] #, "horaire"
-seasons  = ["son_bis", "nod", "sep", "oct", "nov", "dec"]
-datasets = {e: [] for e in echelles}
-
-for e in echelles:
-    for s in seasons:
-        res = pipeline_data_gev_quarto(
-            config=config,
-            model_name="niveau_retour",
-            echelle=e,
-            season_choice=s if s != "son_bis" else "son",
-            T_choice=10,
-            par_X_annees=10,
-            min_year=config["years"]["min"],
-            max_year=config["years"]["max"],
-        )
-        datasets[e].append(res)    # On range le résultat dans la bonne liste
-
-for e in echelles:
-    plot_four_polars_grids(
-        datasets[e],
-        echelle=e,
-        val_col="z_T_p",          # nom de la colonne à colorer / symboliser
-        titles=[s.upper() for s in seasons],  # titres des 4 sous-cartes
-        show_mod=False,
-        show_obs=True,
-        numero=2
-    )
-```
-
-
-```{python}
 title_show = pipeline_title("Tendances relatives (&#37; saturé à partir q99) du niveau de retour 10 ans estimée par le meilleur modèle", 1995, 2022, "quotidien", None)
 display(HTML(title_show))
 ```
 
-<style>
-figure { margin: 0; text-align: center; }
-figcaption { margin-top: .3rem; font-size: .9rem; }
-</style>
 
 
 
@@ -1736,39 +801,10 @@ figcaption { margin-top: .3rem; font-size: .9rem; }
 </table>
 
 
-```{python}
-echelles = ["horaire"] 
-seasons  = ["son", "djf", "mam", "jja"]
-datasets = {e: [] for e in echelles}
 
-for e in echelles:
-    for s in seasons:
-        res = pipeline_data_gev_quarto(
-            config=config,
-            model_name="niveau_retour",
-            echelle=e,
-            season_choice=s,
-            T_choice=10,
-            par_X_annees=10,
-            min_year=config["years"]["min"],
-            max_year=config["years"]["max"],
-        )
-        datasets[e].append(res)    # On range le résultat dans la bonne liste
-
-for show in [True, False]:
-    for e in echelles:
-        plot_four_polars_grids(
-            datasets[e],
-            echelle=e,
-            val_col="z_T_p",          # nom de la colonne à colorer / symboliser
-            titles=[s.upper() for s in seasons],  # titres des 4 sous-cartes
-            show_mod=show,
-            show_obs=not show,
-            numero=1
-        )
-```
 
 ---
+
 
 ```{python}
 title_show = pipeline_title("Tendances relatives (&#37; saturé à partir q99) du niveau de retour 10 ans estimée par le meilleur modèle", 1995, 2022, "horaire", None)
@@ -1839,57 +875,6 @@ display(HTML(title_show))
   </tbody>
 </table>
 
-
-
-```{python}
-echelles = ["horaire"] 
-SEASON_MONTHS = [
-    "jan",
-    "fev",
-    "mar",
-    "avr",
-    "mai",
-    "jui",
-    "juill",
-    "aou",
-    "sep",
-    "oct",
-    "nov",
-    "dec"
-]
-seasons = SEASON_MONTHS
-datasets = {e: [] for e in echelles}
-
-for e in echelles:
-    for s in seasons:
-        res = pipeline_data_gev_quarto(
-            config=config,
-            model_name="niveau_retour",
-            echelle=e,
-            season_choice=s,
-            T_choice=10,
-            par_X_annees=10,
-            min_year=config["years"]["min"],
-            max_year=config["years"]["max"],
-        )
-        datasets[e].append(res)    # On range le résultat dans la bonne liste
-
-show=False
-# for show in [True, False]:
-for e in echelles:
-    plot_four_polars_grids(
-        datasets[e],
-        echelle=e,
-        val_col="z_T_p",          # nom de la colonne à colorer / symboliser
-        titles=[s.upper() for s in seasons],  # titres des 4 sous-cartes
-        show_mod=show,
-        show_obs=not show,
-        numero=2,
-        saturation_col=95,
-        saturation_size=95
-    )
-```
-
 ---
 
 ```{python}
@@ -1931,7 +916,7 @@ display(HTML(title_show))
         </a>
         </td>
     <td rowspan="2" style="vertical-align: middle; text-align: center;">
-    <object type="image/svg+xml" data="presentation_files/map/horaire_legend_2.svg"
+    <object type="image/svg+xml" data="presentation_files/map/horaire_legend_1.svg"
             width="40" height="600" class="legend-svg">
     </object>
     </td>
@@ -2002,7 +987,7 @@ display(HTML(title_show))
         </a>
         </td>
     <td rowspan="2" style="vertical-align: middle; text-align: center;">
-    <object type="image/svg+xml" data="presentation_files/map/horaire_legend_2.svg"
+    <object type="image/svg+xml" data="presentation_files/map/horaire_legend_1.svg"
             width="40" height="600" class="legend-svg">
     </object>
     </td>
@@ -2073,7 +1058,7 @@ display(HTML(title_show))
         </a>
         </td>
     <td rowspan="2" style="vertical-align: middle; text-align: center;">
-    <object type="image/svg+xml" data="presentation_files/map/horaire_legend_2.svg"
+    <object type="image/svg+xml" data="presentation_files/map/horaire_legend_1.svg"
             width="40" height="600" class="legend-svg">
     </object>
     </td>
@@ -2102,3 +1087,14 @@ display(HTML(title_show))
     </tr>
   </tbody>
 </table>
+
+# La suite
+
+<br/><br/><br/><br/>
+
+<h2>Evaluer la correspondance des tendances</h2>
+
+<br/><br/>
+  
+<h2>Evaluer la significativité des tendances</h2>
+
