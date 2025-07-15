@@ -455,6 +455,7 @@ def pipeline_gev_from_statisticals(config, max_workers: int=48, n_bootstrap: int
     season = config.get("season", "hydro")
     model_path = config.get("config", "config/observed_settings.yaml")
     model_name = config.get("model", "s_gev")
+    reduce_activate = config.get("reduce_activate", False)
 
     for echelle in echelles:
         logger.info(f"--- Traitement de {model_path} \nEchelle : {echelle.upper()} \n Modèle : {model_name} ---")
@@ -482,12 +483,18 @@ def pipeline_gev_from_statisticals(config, max_workers: int=48, n_bootstrap: int
             logger.error(f"Nom de fichier de configuration non reconnu : {model_path_name}")
             sys.exit(1)
 
+        # Paramètre de chargement des données
+        if reduce_activate:
+            mesure, min_year, max_year, len_serie = years_to_load("reduce", season, input_dir)
+            suffix_save = "_reduce"
+        else:
+            mesure, min_year, max_year, len_serie = years_to_load(echelle, season, input_dir)
+            suffix_save = ""
+
         # Création du répertoire de sortie
-        output_dir = Path(config["gev"]["path"]["outputdir"]) / echelle / season
+        output_dir = Path(config["gev"]["path"]["outputdir"]) / f"{echelle}{suffix_save}" / season
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Paramètre de chargement des données
-        mesure, min_year, max_year, len_serie = years_to_load(echelle, season, input_dir)
         cols = ["NUM_POSTE", mesure, "nan_ratio"]
 
         logger.info(f"Chargement des données de {min_year} à {max_year} : {input_dir}")
@@ -512,12 +519,20 @@ def pipeline_gev_from_statisticals(config, max_workers: int=48, n_bootstrap: int
         logger.info(f"Enregistré sous {output_dir}/gev_param_{model_name}.parquet")
         logger.info(df_gev_param)
 
+
+def str2bool(v):
+    if v == "True":
+        return True
+    else:
+        return False
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pipeline application de la GEV sur les maximas.")
     parser.add_argument("--config", type=str, default="config/observed_settings.yaml")
     parser.add_argument("--echelle", type=str, choices=["horaire", "quotidien"], nargs="+", default=["horaire", "quotidien"])
     parser.add_argument("--season", type=str, default="hydro")
     parser.add_argument("--model", type=str, choices=list(MODEL_REGISTRY.keys()), default="")
+    parser.add_argument("--reduce_activate", type=str2bool, default=False)
 
     args = parser.parse_args()
 
@@ -526,5 +541,6 @@ if __name__ == "__main__":
     config["echelles"] = args.echelle
     config["season"] = args.season
     config["model"] = args.model
+    config["reduce_activate"] = args.reduce_activate
 
     pipeline_gev_from_statisticals(config, max_workers=96)

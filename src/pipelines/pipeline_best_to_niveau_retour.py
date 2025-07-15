@@ -525,13 +525,19 @@ def main(config, args, T: int = 10):
     model_path = config.get("config", "config/observed_settings.yaml")
     gev_dir = config["gev"]["path"]["outputdir"]
     break_year = config.get("gev", {}).get("break_year", 1985)
+    reduce_activate = config.get("reduce_activate", False)
+
+    if reduce_activate:
+        suffix_save = "_reduce"
+    else:
+        suffix_save = ""
     
     for echelle in echelles:
         logger.info(f"--- Traitement échelle: {echelle.upper()} saison: {season}---")
 
         # ETAPE 1 
         # Ouverture de la table NUM_POSTE ┆ model ┆ mu0 ┆ mu1 ┆ sigma0 ┆ sigma1 ┆ xi ┆ log_likelihood
-        path_dir = Path(gev_dir) / echelle / args.season
+        path_dir = Path(gev_dir) / f"{echelle}{suffix_save}" / args.season
         best_model_path = path_dir / "gev_param_best_model.parquet"
         best_model = pl.read_parquet(best_model_path)
 
@@ -550,10 +556,12 @@ def main(config, args, T: int = 10):
 
         else:
             logger.error(f"Nom de fichier de configuration non reconnu : {model_path_name}")
-            sys.exit(1)
 
         # Paramètre de chargement des données
-        mesure, min_year, max_year, len_serie = years_to_load(echelle, season, input_dir)
+        if reduce_activate:
+            mesure, min_year, max_year, len_serie = years_to_load("reduce", season, input_dir)
+        else:
+            mesure, min_year, max_year, len_serie = years_to_load(echelle, season, input_dir)
         cols = ["NUM_POSTE", mesure, "nan_ratio"]
 
         logger.info(f"Chargement des données de {min_year} à {max_year} : {input_dir}")
@@ -638,11 +646,17 @@ def main(config, args, T: int = 10):
         )
 
         # Sauvegarde
-        out_path = path_dir / "niveau_retour.parquet"
+        out_path = f"{path_dir}/niveau_retour.parquet"
         final_table.write_parquet(out_path)
         logger.info(f"Tableau final enregistré: {out_path}")
         logger.info(final_table)
 
+
+def str2bool(v):
+    if v == "True":
+        return True
+    else:
+        return False
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pipeline de calcul du niveau de retour et son IC")
@@ -650,10 +664,14 @@ if __name__ == "__main__":
     parser.add_argument("--echelle", choices=["horaire", "quotidien"], nargs='+', default=["horaire"])
     parser.add_argument("--season", type=str, default="son")
     parser.add_argument("--threshold", type=float, default=0.10, help="Seuil pour IC")
+    parser.add_argument("--reduce_activate", type=str2bool, default=False)
+
     args = parser.parse_args()
 
     config = load_config(args.config)
     config["config"] = args.config
     config["echelles"] = args.echelle
     config["season"] = args.season
+    config["reduce_activate"] = args.reduce_activate
+    
     main(config, args)
