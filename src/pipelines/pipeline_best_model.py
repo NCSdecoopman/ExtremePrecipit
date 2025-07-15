@@ -181,7 +181,15 @@ def main(config, args):
     logger = get_logger(__name__)
 
     gev_dir = config["gev"]["path"]["outputdir"]
+    reduce_activate = config.get("reduce_activate", False)
+
+    if reduce_activate:
+        suffix_save = "_reduce"
+    else:
+        suffix_save = ""
+
     for e in args.echelle:
+        e = f"{e}{suffix_save}"
         logger.info(f"--- Traitement échelle: {e.upper()} saison: {args.season}---")
         path_dir = Path(gev_dir) / e / args.season
 
@@ -202,15 +210,24 @@ def main(config, args):
         logger.info(final_table)
 
 
+def str2bool(v):
+    if v == "True":
+        return True
+    else:
+        return False
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pipeline de sélection du meilleur modèle GEV (LRT ou AIC)")
     parser.add_argument("--config", type=str, default="config/observed_settings.yaml")
-    parser.add_argument("--echelle", choices=["horaire", "quotidien"], nargs='+', default=["quotidien"])
+    parser.add_argument("--echelle", choices=["horaire", "quotidien", "quotidien_reduce"], nargs='+', default=["quotidien"])
     parser.add_argument("--season", type=str, default="son")
     parser.add_argument("--threshold", type=float, default=0.10, help="Seuil p-value pour LRT")
+    parser.add_argument("--reduce_activate", type=str2bool, default=False)
     args = parser.parse_args()
 
     config = load_config(args.config)
     config["echelles"] = args.echelle
     config["season"] = args.season
+    config["reduce_activate"] = args.reduce_activate
+
     main(config, args)
