@@ -198,17 +198,17 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 log(f"Lancement des générations de maps")
 
 
-for data_type in ["stats", "gev"]:
+for data_type in ["stats"]: # , "gev"
                 
     if data_type == "stats":
-        COL_CALCULATE = ["numday", "mean", "mean-max"] # 
+        COL_CALCULATE = ["mean", "mean-max"] # "numday", 
     elif data_type == "gev":
         COL_CALCULATE = ["z_T_p", "significant", "model"]
 
     for col_calculate in COL_CALCULATE:
 
         if col_calculate in ["mean", "mean-max"]:
-            sat = 99.5
+            sat = 99
         elif col_calculate in ["numday"]:
             sat = 99.9
         elif col_calculate in ["z_T_p"]:
@@ -216,7 +216,7 @@ for data_type in ["stats", "gev"]:
         else:
             sat = 100
                 
-        for echelle in ["quotidien", "horaire"]:
+        for echelle in ["quotidien", "horaire"]: #
 
             if echelle == "quotidien":            
                 DIFFERENTE_PERIODE = [False, True]
@@ -226,9 +226,12 @@ for data_type in ["stats", "gev"]:
             for diffente_periode in DIFFERENTE_PERIODE:
 
                 if data_type == "stats":
-                    SEASON_GENERATE = [["hydro"], SEASON_SEAS]
+                    if col_calculate in ["numday"]:
+                        SEASON_GENERATE = [["hydro"], SEASON_SEAS] # hydro doit être calculer séparement pour l'échelle "jours"
+                    else:
+                        SEASON_GENERATE = [["hydro", *SEASON_SEAS]]
                 else:
-                    SEASON_GENERATE = [SEASON_MONTHS]
+                    SEASON_GENERATE = [["hydro", *SEASON_SEAS], SEASON_MONTHS]
 
                 for s in SEASON_GENERATE:
                 

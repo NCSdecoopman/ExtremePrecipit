@@ -103,8 +103,9 @@ import geopandas as gpd
 from shapely.geometry import box
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from matplotlib.colors import BoundaryNorm, TwoSlopeNorm, LinearSegmentedColormap, ListedColormap
+from matplotlib.colors import BoundaryNorm, TwoSlopeNorm, LinearSegmentedColormap, ListedColormap, to_hex
 from matplotlib.colorbar import ColorbarBase
+import matplotlib.cm as cm
 
 def calculate_data_maps(
     datasets: Sequence[Mapping[str, pl.DataFrame]],
@@ -131,9 +132,9 @@ def calculate_data_maps(
     name_dir = f"outputs/maps/{data_type}_{col_calculate}/{echelle}{suffix_reduce}/compare_{len(titles)}/sat_{saturation_col}"
     dir_path = Path(name_dir)
 
-    # Si le dossier existe, on le supprime entièrement
-    if dir_path.exists() and dir_path.is_dir():
-        shutil.rmtree(dir_path)
+    # # Si le dossier existe, on le supprime entièrement
+    # if dir_path.exists() and dir_path.is_dir():
+    #     shutil.rmtree(dir_path)
         
     dir_path.mkdir(parents=True, exist_ok=True)
 
@@ -167,8 +168,6 @@ def calculate_data_maps(
         else:
             if not isinstance(df_o, pl.DataFrame):
                 raise TypeError("'observed_show' doit être un pl.DataFrame.")
-            if "significant" in df_o.columns and show_signif:
-                df_o = df_o.filter(pl.col("significant"))
             obs_gdfs.append(
                 gpd.GeoDataFrame(
                     df_o.to_pandas(),
@@ -203,22 +202,53 @@ def calculate_data_maps(
         gdf.loc[:, "_val_raw"] = gdf[val_col]
 
     # ------------------------------------------------------------------
-    # 6. Saturation des valeurs extrêmes (1 % sup. par exemple)
+    # 6. Saturation des valeurs extrêmes :
+    #    – seuil individuel par tableau (percentile)
+    #    – saturation au‑delà du max de ces seuils
     # ------------------------------------------------------------------
-    all_values: list[float] = []
-    for gdf in (g for g in model_gdfs if g is not None):
-        all_values.extend(gdf[val_col].to_numpy())
-    for gdf in (g for g in obs_gdfs if g is not None):
-        all_values.extend(gdf[val_col].to_numpy())
+    if col_calculate not in ["significant", "model"]:
+        seuils = []
 
-    if all_values and col_calculate not in ["significant", "model"]:
-        seuil = np.percentile(np.abs(all_values), saturation_col)
+        # 1) seuil (percentile) propre à chaque tableau -----------------
         for gdf in (g for g in model_gdfs + obs_gdfs if g is not None):
-            gdf.loc[:, val_col] = np.where(
-                np.abs(gdf[val_col]) > seuil,
-                np.sign(gdf[val_col]) * seuil,
-                gdf[val_col],
+            if val_col not in gdf.columns or gdf[val_col].empty:
+                continue
+            seuil = np.percentile(
+                np.abs(gdf[val_col].dropna()),    # on ignore les NaN éventuels
+                saturation_col                    # ex. 99 pour le 99e percentile
             )
+            seuils.append(seuil)
+
+        # Rien à faire s’il n’y a pas de seuil calculé
+        if not seuils:
+            return None
+
+        # 2) seuil global = max(seuils) ---------------------------------
+        seuil_global = max(seuils)
+
+        # 3) saturation dans chaque tableau -----------------------------
+        for gdf in (g for g in model_gdfs + obs_gdfs if g is not None):
+            if val_col not in gdf.columns or gdf[val_col].empty:
+                continue
+            gdf.loc[:, val_col] = np.where(
+                np.abs(gdf[val_col]) > seuil_global,
+                np.sign(gdf[val_col]) * seuil_global,  # on garde le signe
+                gdf[val_col]
+            )
+
+    # ------------------------------------------------------------------
+    # 7. Filtrage des données significatives si demandé
+    # ------------------------------------------------------------------
+    if show_signif:
+
+        for idx, gdf in enumerate(model_gdfs):
+            if gdf is not None and "significant" in gdf.columns:
+                model_gdfs[idx] = gdf.loc[gdf["significant"] == True].copy()
+
+        for idx, gdf in enumerate(obs_gdfs):
+            if gdf is not None and "significant" in gdf.columns:
+                obs_gdfs[idx] = gdf.loc[gdf["significant"] == True].copy()     
+
 
     return dir_path, val_col, titles, model_gdfs, obs_gdfs
 
@@ -240,14 +270,15 @@ def generate_maps(
     saturation_size: int = 100,
 
     # Points obs
-    min_pt: int = 2,
-    max_pt: int = 7,
+    min_pt: int = 4,
+    max_pt: int = 10,
+    middle_pt: int = 9,
     obs_edgecolor: str = "#000000",
     obs_facecolor: Optional[str] = None,
     # Relief
     relief_path: str = "data/external/niveaux/selection_courbes_niveau_france.shp",
-    relief_linewidth: float = 0.3,
-    relief_color: str = "#666666",
+    relief_linewidth: float = 0.5,
+    relief_color: str = "#000000",
     figsize: Tuple[int, int] = (6, 6)
 ) -> None:
     
@@ -327,32 +358,60 @@ def generate_maps(
             vmin, vmax = -max_abs, max_abs
 
             norm = TwoSlopeNorm(vmin=vmin, vcenter=0.0, vmax=vmax)
-            cmap = LinearSegmentedColormap.from_list(
-                "bwr_custom", ["red", "#ffffff", "blue"], N=100
-            )
-        
+
+            n_colors = 15 # Choix du nombre de couleurs
+            # Charger tous les triplets R G B (entiers 0‑255)
+            rgb = np.loadtxt("src/colors/prec_div.txt") / 255.0               # 256 × 3 → 0‑1
+            # Choisir n_colors indices également espacés
+            idx = np.linspace(0, rgb.shape[0] - 1, n_colors, dtype=int)
+            # Les convertir en codes hexadécimaux pour from_list()
+            hex_colors = [to_hex(rgb[i]) for i in idx]
+            cmap = LinearSegmentedColormap.from_list("prec_div", hex_colors, N=n_colors)
+
     elif data_type=="stats":
         all_maxs = [g[val_col].max() for g in model_gdfs + obs_gdfs if g is not None]
         vmin = 0.0
         vmax = max(all_maxs)
 
         # --- définition échelle de couleurs ---
-        custom_colorscale = [
-            (0.0, "#ffffff"),  # blanc
-            (0.1, "lightblue"),
-            (0.3, "blue"),
-            (0.45, "green"),
-            (0.6, "yellow"),
-            (0.7, "orange"),
-            (0.8, "red"),      # rouge
-            (1.0, "black"),    # noir
-        ]
+        # custom_colorscale = [
+        #     (0.0, "#FFFFE5"),  # blanc
+        #     (0.1, "#DDEED6"),
+        #     (0.2, "#BCDDC8"),
+        #     (0.3, "#9BCCBA"),
+        #     (0.4, "#7ABBAC"),
+        #     (0.5, "#59AA9E"),
+        #     (0.6, "#389990"),
+        #     (0.7, "#29837A"),
+        #     (0.8, "#1C6D63"),
+        #     (0.9, "#0F564B"),
+        #     (1.0, "#003C30"),
+        # ]
 
-        # Extraction des couleurs (en ignorant les positions, la répartition sera uniforme)
-        colors = [c for _, c in custom_colorscale]
+        # custom_colorscale = [
+        #     (0.0, "#ffffff"),  # blanc
+        #     (0.1, "lightblue"),
+        #     (0.3, "blue"),
+        #     (0.45, "green"),
+        #     (0.6, "yellow"),
+        #     (0.7, "orange"),
+        #     (0.8, "red"),      # rouge
+        #     (1.0, "black"),    # noir
+        # ]
+        # # Extraction des couleurs (en ignorant les positions, la répartition sera uniforme)
+        # colors = [c for _, c in custom_colorscale]
 
-        # Création d'un colormap à partir de ces couleurs, avec N=15 couleurs distinctes
-        cmap = LinearSegmentedColormap.from_list("custom_discrete", colors, N=15)
+        # # Création d'un colormap à partir de ces couleurs, avec N=15 couleurs distinctes
+        # cmap = LinearSegmentedColormap.from_list("custom_discrete", colors, N=15)
+
+        n_colors = 15 # Choix du nombre de couleurs
+        # Charger tous les triplets R G B (entiers 0‑255)
+        rgb = np.loadtxt("src/colors/prec_seq.txt") / 255.0               # 256 × 3 → 0‑1
+        # Choisir n_colors indices également espacés
+        idx = np.linspace(0, rgb.shape[0] - 1, n_colors, dtype=int)
+        # Les convertir en codes hexadécimaux pour from_list()
+        hex_colors = [to_hex(rgb[i]) for i in idx]
+        cmap = LinearSegmentedColormap.from_list("prec_seq", hex_colors, N=n_colors)
 
         # Norme pour répartir les 15 tranches entre 0 et vmax
         levels = np.linspace(vmin, vmax, 16)  # 15 intervalles → 16 niveaux de bordure
@@ -406,17 +465,31 @@ def generate_maps(
                 # Pour "significant" et "model", on force une taille fixe moyenne
                 if val_col in ["significant", "model"]:
                     # taille linéaire = moyenne de min_pt et max_pt
-                    mean_pt = (min_pt + max_pt) / 2
+                    mean_pt = middle_pt / 2
                     # markersize attend la surface (pt^2)
                     gdf_o.loc[:, "_size_pt2"] = mean_pt**2
                     
                 else:
-                    abs_vals = gdf_o["_val_raw"].abs()
-                    abs_max = abs_vals.max()
-                    raw_size = ((abs_vals / abs_max) * (max_pt - min_pt) + min_pt) ** 2
-                    seuil_size = np.percentile(abs_vals, saturation_size)
-                    sizes = raw_size.copy()
-                    sizes[abs_vals > seuil_size] = max_pt ** 2
+                    # abs_vals = gdf_o["_val_raw"].abs()
+                    # abs_max = abs_vals.max()
+                    # raw_size = ((abs_vals / abs_max) * (max_pt - min_pt) + min_pt) ** 2
+                    # seuil_size = np.percentile(abs_vals, saturation_size)
+                    # sizes = raw_size.copy()
+                    # sizes[abs_vals > seuil_size] = max_pt ** 2
+
+                    # gdf_o.loc[:, "_size_pt2"] = sizes
+
+                    # 1) valeurs ABSOLUES **après** saturation (valeurs de la palette)
+                    abs_vals = gdf_o[val_col].abs()
+
+                    # 2) mise à l’échelle linéaire [min_pt ; max_pt] puis surface (pt²)
+                    abs_max  = abs_vals.max() or 1                              # évite /0
+                    sizes = ((abs_vals / abs_max) * (max_pt - min_pt) + min_pt) ** 2
+
+                    # 3) éventuelle saturation supplémentaire sur la taille
+                    if saturation_size < 100:                                   # 100 → aucune
+                        seuil_size = np.percentile(abs_vals, saturation_size)
+                        sizes[abs_vals > seuil_size] = max_pt ** 2
 
                     gdf_o.loc[:, "_size_pt2"] = sizes
 
@@ -583,7 +656,12 @@ def generate_scatter(
             me = np.mean(x - y)
             corr = np.corrcoef(x, y)[0, 1] if len(x) > 1 else np.nan
             n = len(x)
-            metrics.append({"echelle": echelle, "col_calculate": col_calculate, "season": season, "n": n, "r": corr, "me": me})
+            
+            mean_mod = obs_vs_mod.select(pl.col("AROME").mean()).to_numpy()
+            mean_obs = obs_vs_mod.select(pl.col("Station").mean()).to_numpy()
+            delta = me / np.mean([mean_mod, mean_obs]) # écart relatif
+
+            metrics.append({"echelle": echelle, "col_calculate": col_calculate, "season": season, "n": n, "r": corr, "me": me, "delta": delta})
 
             pd.DataFrame(metrics).to_csv(dir_path/"metrics.csv", index=False)
             logger.info(f"{dir_path}/metrics.csv")
@@ -627,6 +705,7 @@ def main(args):
                     config_obs=config_obs,
                     scale=scale
                 )
+                SIGNIFICANT_SHOW = [False] # On affiche tous les points, pas d'histoire de significativité
             
             elif data_type == "gev":
                 res = import_data_gev(
@@ -638,33 +717,41 @@ def main(args):
                     config_obs=config_obs,
                     scale=scale
                 )
+                
+                if col_calculate not in ["significant"]:
+                    SIGNIFICANT_SHOW = [False, True] # On choisi d'afficher ou non les points significatifs
+                else:
+                    SIGNIFICANT_SHOW = [False]
 
             logger.info(f"Echelle {e} - Saison {s} données générées")
             datasets.append(res)    # On range le résultat dans la bonne liste
-   
-        dir_path, val_col, titles, model_gdfs, obs_gdfs = calculate_data_maps(
-            datasets,
-            echelle=e,
-            data_type=data_type,
-            col_calculate=col_calculate,
-            reduce_activate=reduce_activate,
-            titles=[s.upper() for s in season],  # titres des 4 sous-cartes
-            saturation_col=sat
-        )
-
-        for show in [True, False]:
-            generate_maps(
-                dir_path=dir_path,
-                model_gdfs=model_gdfs,
-                obs_gdfs=obs_gdfs,
+     
+        for signif in SIGNIFICANT_SHOW:
+            dir_path, val_col, titles, model_gdfs, obs_gdfs = calculate_data_maps(
+                datasets,
+                echelle=e,
                 data_type=data_type,
-                titles=titles,
-                val_col=val_col,
-                show_mod=show,
-                show_obs=not show,
                 col_calculate=col_calculate,
-                scale=scale
+                reduce_activate=reduce_activate,
+                show_signif=signif,
+                titles=[s.upper() for s in season],  # titres des 4 sous-cartes
+                saturation_col=sat
             )
+
+            for show in [True, False]:
+                generate_maps(
+                    dir_path=dir_path,
+                    model_gdfs=model_gdfs,
+                    obs_gdfs=obs_gdfs,
+                    data_type=data_type,
+                    titles=titles,
+                    val_col=val_col,
+                    show_mod=show,
+                    show_obs=not show,
+                    show_signif=signif,
+                    col_calculate=col_calculate,
+                    scale=scale
+                )
 
         generate_scatter(
             datasets=datasets,

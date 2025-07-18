@@ -1,0 +1,709 @@
+---
+title: "Annexes 2 : figures"
+
+table-of-contents: true
+toc-depth: 2         # profondeur max (#, ##) –‑ optionnel*
+toc-title: "Sommaire" 
+number-sections: true
+
+format:
+  pdf:
+    pdf-engine: xelatex          # ou pdflatex/lualatex, au choix
+    page-style: empty            # enlève en‑tête & pied de page
+    geometry:                    # règle le package geometry
+      - paperwidth=210mm         # A4 portrait
+      - paperheight=297mm
+      - margin=1mm               # 0 mm sur les 4 côtés
+      - noheadfoot               # par sûreté, retire tête/pied
+
+execute:
+    echo: false
+
+jupyter: extremeprecipit
+---
+
+<style>
+  table{
+      margin-left:auto;
+      margin-right:auto;
+      margin-top:auto;
+      margin-bottom:auto;
+  }
+</style>
+
+
+```{python}
+from pathlib import Path
+import argparse
+import sys
+from IPython.display import Markdown, display
+
+import numpy as np
+import pandas as pd
+
+def img_cell(rel_path: Path, w: int = 250, h: int = 250) -> str:
+    """
+    Retourne la cellule Markdown contenant l’image, ou une cellule vide
+    si le fichier n’existe pas.
+    """
+    return (
+        f"![]({rel_path.as_posix()})" + f"{{width={w}px height={h}px}}"
+        if rel_path.is_file()
+        else ""
+    )
+
+def csv_cell(rel_path: Path, season: str):
+    """
+    Lit metrics.csv et renvoie deux scalaires (r, me)
+    pour la saison demandée.
+    """
+    path = Path(rel_path)
+    if path.is_file():
+        df = pd.read_csv(path)
+    else:
+        return None, None, None
+
+    # sélectionne la ligne correspondant à la saison
+    sel = df[df["season"] == season]
+
+    if sel.empty:                 # aucune ligne trouvée
+        return float("nan"), float("nan")
+
+    # .iloc[0] => premier élément de la colonne, donc un scalaire
+    r  = sel["r"].iloc[0]
+    me = sel["me"].iloc[0]
+    n = sel["n"].iloc[0]
+    return r, me, n
+
+
+def build_table(stats: str,
+                col: str,
+                echelle: str,
+                sat: str,
+                seasons: list,
+                width: int = 250, height: int = 250,
+                legend_width: int = 30) -> str:
+    """
+    Construit et renvoie le tableau Markdown.
+    """
+    base = Path(f"../outputs/maps/{stats}_{col}/{echelle}")
+    lines = [
+        r"\begin{longtable}{m{2.0cm}m{7.9cm}m{7.9cm}m{1cm}}",
+        r" & \centering  & \centering  & \tabularnewline",
+    ]
+
+    for season in seasons:
+        comp = f"compare_{len(seasons)}"
+        base_season = base / comp / sat / season
+
+        mod_path = base_season / "mod_norast.pdf"
+        obs_path = base_season / "obs_norast.pdf"
+        legend_path = base / comp / sat / "legend.pdf"
+        metrics_path = base / comp / sat / "metrics.csv"
+
+        r, me, n = csv_cell(metrics_path, season)
+
+        row = (
+            rf"\centering \textbf{{{season.upper()}}} \\[0.2em] "
+            r"\begin{tabular}{r@{\hspace{0.2em}}l}"
+        )
+
+        if r is not None:
+            row += rf"$r$  & $= {r:.2f}$ \\ "
+
+        if me is not None:
+            row += rf"ME   & $= {me:.2f}$ \\ "
+
+        if n is not None:
+            row += rf"$n$  & $= {n}$ \\ "
+
+        row += (
+            r"\end{tabular} & "
+            rf"\centering \includegraphics[width=7.9cm]{{{mod_path}}} & "
+            rf"\centering \includegraphics[width=7.9cm]{{{obs_path}}} & "
+            rf"\centering \includegraphics[width=1cm]{{{legend_path}}} \tabularnewline"
+        )
+
+        lines.append(row)
+    lines.append(r"\end{longtable}")
+    display(Markdown("::: {=latex}\n" + "\n".join(lines) + "\n:::"))
+```
+
+\newpage
+
+# Nombre moyen de jour de pluie (seuil 1 mm/j) par année hydrologique issu de Données journalières (1959-2022)
+
+Saturation des 0.1% valeurs les plus extrêmes.
+
+```{python}
+build_table(
+    stats   = "stats",
+    col     = "numday",
+    echelle = "quotidien",
+    sat     = "sat_99.9",
+    seasons = ["hydro"]
+)
+```
+
+# Cumul moyen des précipitations par année hydrologique
+
+Saturation des 1% valeurs les plus extrêmes.
+
+## Données journalières (1959-2022) 
+
+```{python}
+build_table(
+    stats   = "stats",
+    col     = "mean",
+    echelle = "quotidien",
+    sat     = "sat_99.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+```
+
+## Données horaires (1990-2022)
+
+```{python}
+build_table(
+    stats   = "stats",
+    col     = "mean",
+    echelle = "horaire",
+    sat     = "sat_99.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+```
+
+# Moyenne des maxima des précipitations
+
+Saturation des 0.5% valeurs les plus extrêmes.
+
+## Données journalières (1959-2022)
+    
+```{python}
+build_table(
+    stats   = "stats",
+    col     = "mean-max",
+    echelle = "quotidien",
+    sat     = "sat_99.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+```
+
+## Données horaires (1990-2022)
+
+```{python}
+build_table(
+    stats   = "stats",
+    col     = "mean-max",
+    echelle = "horaire",
+    sat     = "sat_99.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+```
+
+
+
+
+# Tendances relatives du niveau de retour 10 ans estimée par le meilleur modèle
+
+Saturation des 1% valeurs les plus extrêmes.
+
+## Données journalières (1959-2022)
+    
+### Par année hydrologique
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "z_T_p",
+    echelle = "quotidien",
+    sat     = "sat_99.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+```
+
+### Par saison
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "z_T_p",
+    echelle = "quotidien",
+    sat     = "sat_99.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
+)
+```
+
+
+
+## Données journalières (1990-2022)
+    
+### Par année hydrologique
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "z_T_p",
+    echelle = "quotidien_reduce",
+    sat     = "sat_99.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+```
+
+### Par saison
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "z_T_p",
+    echelle = "quotidien_reduce",
+    sat     = "sat_99.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
+)
+```
+
+
+## Données horaire (1990-2022)
+    
+### Par année hydrologique
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "z_T_p",
+    echelle = "horaire",
+    sat     = "sat_99.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+```
+
+### Par saison
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "z_T_p",
+    echelle = "horaire",
+    sat     = "sat_99.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
+)
+```
+
+
+# Significativité de la tendance
+
+## Données journalières (1959-2022)
+    
+### Par année hydrologique
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "significant",
+    echelle = "quotidien",
+    sat     = "sat_100.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+```
+
+### Par saison
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "significant",
+    echelle = "quotidien",
+    sat     = "sat_100.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
+)
+```
+
+
+
+## Données journalières (1990-2022)
+    
+### Par année hydrologique
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "significant",
+    echelle = "quotidien_reduce",
+    sat     = "sat_100.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+```
+
+### Par saison
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "significant",
+    echelle = "quotidien_reduce",
+    sat     = "sat_100.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
+)
+```
+
+
+## Données horaire (1990-2022)
+    
+### Par année hydrologique
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "significant",
+    echelle = "horaire",
+    sat     = "sat_100.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+```
+
+### Par saison
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "significant",
+    echelle = "horaire",
+    sat     = "sat_100.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
+)
+```
+
+
+
+# Meilleur modèle GEV
+
+## Données journalières (1959-2022)
+    
+### Par année hydrologique
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "model",
+    echelle = "quotidien",
+    sat     = "sat_100.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+```
+
+### Par saison
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "model",
+    echelle = "quotidien",
+    sat     = "sat_100.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
+)
+```
+
+
+
+## Données journalières (1990-2022)
+    
+### Par année hydrologique
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "model",
+    echelle = "quotidien_reduce",
+    sat     = "sat_100.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+```
+
+### Par saison
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "model",
+    echelle = "quotidien_reduce",
+    sat     = "sat_100.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
+)
+```
+
+
+## Données horaire (1990-2022)
+    
+### Par année hydrologique
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "model",
+    echelle = "horaire",
+    sat     = "sat_100.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+```
+
+### Par saison
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "model",
+    echelle = "horaire",
+    sat     = "sat_100.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
+)
+```
+
+
+# Corrélation entre les données AROME et les stations
+
+```{python}
+base_dir = Path("../outputs")         # dossier racine à explorer
+csv_paths = list(base_dir.rglob("metrics.csv"))
+
+frames = []
+for path in csv_paths:
+    try:
+        df = pd.read_csv(path)
+        df["source"] = str(path.relative_to(base_dir))  # garder la provenance
+        frames.append(df)
+    except Exception as exc:                             # CSV illisible
+        print(f"⚠️  Fichier ignoré {path}: {exc}")
+
+if not frames:
+    raise SystemExit("Aucun metrics.csv trouvé !")
+
+# Concaténation puis export
+combined = pd.concat(frames, ignore_index=True)
+
+# on crée un masque pour les lignes où 'source' contient 'quotidien_reduce'
+mask = combined['source'].str.contains('quotidien_reduce', na=False)
+
+# on remplace 'quotidien' par 'quotidien_reduce' dans 'echelle' pour ces lignes
+combined.loc[mask & (combined['echelle'] == 'quotidien'), 'echelle'] = 'quotidien_reduce'
+
+import matplotlib.pyplot as plt
+
+def plot_r_by_season(df, echelles, col_value):
+    # 1) Filtrage
+    sub = df.loc[
+        (df['echelle'].isin(echelles)) &
+        (df['col_calculate'] == col_value),
+        ['season', 'echelle', 'r']
+    ]
+    if sub.empty:
+        print(f"Aucune donnée pour echelles={echelles} et {col_value}.")
+        return
+
+    sub['season'] = sub['season'].str.upper()
+
+    # 2) Ordre fixe, mais on ne garde que celles présentes
+    ordre_total = ['HYDRO', 'SON', 'DJF', 'MAM', 'JJA',
+                   'JAN', 'FEV', 'MAR', 'AVR', 'MAI',
+                   'JUI', 'JUIL', 'AOU', 'SEP', 'OCT', 'NOV', 'DEC']
+    saisons_pres = [s for s in ordre_total if s in sub['season'].unique()]
+
+    # 3) Renommage des échelles
+    rename_map = {
+        'quotidien':        'Journalière (1959-2022)',
+        'quotidien_reduce': 'Journalière (1990-2022)',
+        'horaire':          'Horaire (1990-2022)'
+    }
+
+    # 4) Pivot sans agrégation
+    pivot = (
+        sub.pivot(index='season', columns='echelle', values='r')
+        .rename(columns=rename_map)
+        .reindex(saisons_pres)                 # <= seulement les saisons présentes
+    )
+
+    # 5) Colonnes dans l’ordre demandé
+    ordre_cols = [rename_map[k] for k in ['quotidien', 'quotidien_reduce', 'horaire']
+                  if rename_map[k] in pivot.columns]
+    pivot = pivot[ordre_cols]
+
+    # 6) Couleurs
+    couleurs = ['black', 'dimgray', 'lightgray'][:pivot.shape[1]]
+
+    # 7) Bar chart groupé
+    x = np.arange(len(pivot.index))
+    largeur = 0.8 / pivot.shape[1]
+
+    plt.figure(figsize=(12, 5))
+    for i, (col, couleur) in enumerate(zip(pivot.columns, couleurs)):
+        plt.bar(
+            x + i * largeur,
+            pivot[col],
+            width=largeur,
+            color=couleur,
+            label=col
+        )
+
+    # 8) Axes, grille, légende hors du graphique
+    plt.xticks(
+        x + largeur * (pivot.shape[1] - 1) / 2,
+        pivot.index, rotation=0, ha='center'
+    )
+    plt.xlabel('')
+    plt.ylabel('r')
+    plt.grid(axis='y', linestyle='--', alpha=0.5)
+
+    plt.legend(
+        title='',
+        bbox_to_anchor=(1.02, 1),
+        loc='upper left',
+        borderaxespad=0
+    )
+
+    plt.tight_layout()
+    plt.show()
+```
+
+## Nombre de jours de pluie
+
+```{python}
+plot_r_by_season(combined,
+                 echelles=['quotidien', 'quotidien_reduce', 'horaire'],
+                 col_value='numday')
+```
+
+## Cumul des précipitations
+
+```{python}
+plot_r_by_season(combined,
+                 echelles=['quotidien', 'quotidien_reduce', 'horaire'],
+                 col_value='mean')
+```
+
+## Moyenne des maxima des précipitations
+
+```{python}
+plot_r_by_season(combined,
+                 echelles=['quotidien', 'quotidien_reduce', 'horaire'],
+                 col_value='mean-max')
+```
+
+## Tendances relatives du niveau de retour 10 ans
+
+```{python}
+plot_r_by_season(combined,
+                 echelles=['quotidien', 'quotidien_reduce', 'horaire'],
+                 col_value='z_T_p')
+```
+
+<!--
+
+# Nuage de points des tendances relatives du niveau de retour 10 ans entre les données AROME et les stations
+
+```{python}
+def build_markdown(
+        stats: str,
+        col: str,
+        echelle: str,
+        sat: str,
+        seasons: list,
+        ncol: int = 4) -> None:
+    """
+    Construit et affiche un bloc Markdown comportant :
+      – un titre (le nom de la saison) au‑dessus de chaque graphique
+      – les graphiques disposés sur ncol colonnes (par défaut 3)
+
+    Parameters
+    ----------
+    stats, col, echelle, sat : str
+        Identifiants pour la construction du chemin d'accès.
+    seasons : list[str]
+        Liste des saisons (p. ex. ["winter", "spring", ...]).
+    ncol : int, optional
+        Nombre de colonnes désiré, 3 par défaut.
+    """
+    base = Path(f"../outputs/maps/{stats}_{col}/{echelle}")
+    bloc = []                         # ← on accumule tout ici
+
+    for idx, season in enumerate(seasons, start=1):
+        comp          = f"compare_{len(seasons)}"
+        scatter_path  = base / comp / sat / season / "scatter.pdf"
+
+        # largeur de colonne en pourcentage du \linewidth
+        width_pct = 0.98/ncol
+
+        bloc.append(
+            rf"""\begin{{minipage}}{{{width_pct:.3f}\linewidth}}\centering
+\textbf{{{season.upper()}}}
+\includegraphics[width=\linewidth]{{{scatter_path}}}\\[-0.5em]
+\end{{minipage}}"""
+        )
+
+        # retour à la ligne après ncol colonnes
+        if idx % ncol == 0 and idx != len(seasons):
+            bloc.append(r"\\[1ex]")
+
+    # un seul display !
+    display(Markdown("\n".join(bloc)))
+
+
+```
+
+
+## Données journalières (1959-2022)
+
+```{python}
+build_markdown(
+    stats   = "gev",
+    col     = "z_T_p",
+    echelle = "quotidien",
+    sat     = "sat_99.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+build_markdown(
+    stats   = "gev",
+    col     = "z_T_p",
+    echelle = "quotidien",
+    sat     = "sat_99.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
+)
+```
+
+## Données journalières (1990-2022)
+
+```{python}
+build_markdown(
+    stats   = "gev",
+    col     = "z_T_p",
+    echelle = "quotidien_reduce",
+    sat     = "sat_99.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+build_markdown(
+    stats   = "gev",
+    col     = "z_T_p",
+    echelle = "quotidien_reduce",
+    sat     = "sat_99.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
+)
+```
+
+## Données horaires (1990-2022)
+
+```{python}
+build_markdown(
+    stats   = "gev",
+    col     = "z_T_p",
+    echelle = "horaire",
+    sat     = "sat_99.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+build_markdown(
+    stats   = "gev",
+    col     = "z_T_p",
+    echelle = "horaire",
+    sat     = "sat_99.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
+)
+```
+
+-->

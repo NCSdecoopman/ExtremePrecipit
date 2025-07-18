@@ -60,9 +60,9 @@
 \if@shortnames
   \usepackage[authoryear,round]{natbib}
 \else
-  \usepackage[authoryear,round,longnamesfirst]{natbib}
+  \usepackage[square,numbers]{natbib}
 \fi
-\bibpunct{(}{)}{;}{a}{}{,}
+\bibpunct{[}{]}{,}{n}{}{,}
 \bibliographystyle{jss}
 %% page layout
 \topmargin 0pt

@@ -5,7 +5,6 @@ format:
         keep-tex: true
         journal:
           suppress: [footer, headings]
-    jss-html: default
 author:
   - name: Nicolas Decoopman
     affiliations:
@@ -17,138 +16,725 @@ author:
     affiliations:
       - RTM
 abstract: |
-  Le changement climatique provoque un réchauffement global (+1,1 °C), plus marqué en France métropolitaine (+1,7 °C) et dans les Alpes françaises (+2 °C) depuis l’ère préindustrielle. L'air plus chaud contient davantage d'humidité, ce qui favorise théoriquement l'augmentation des précipitations extrêmes, bien que cette tendance varie selon les régions et les circulations atmosphériques. Les modèles climatiques classiques (GCM et RCM) sont limités pour représenter les précipitations extrêmes à résolution infra-journalière en raison de leur faible résolution et de la paramétrisation de la convection. Les modèles à résolution kilométrique (CP-RCM), comme CNRM-AROME (2,5 km), permettent désormais une meilleure représentation explicite de la convection profonde. Le stage vise à analyser les tendances des précipitations extrêmes horaires en France (1959-2022) grâce aux données CP-RCM et pluviométriques, en appliquant des modèles de valeurs extrêmes (GEV) stationnaires et non stationnaires.
+  Le changement climatique provoque un réchauffement global (+1,1°C), plus marqué en France métropolitaine (+1,7°C) et dans les Alpes françaises (+2°C) depuis l’ère préindustrielle. L'air plus chaud contient davantage d'humidité, ce qui favorise théoriquement l'augmentation des précipitations extrêmes, bien que cette tendance varie selon les régions et les circulations atmosphériques. Les modèles climatiques classiques (GCM et RCM) sont limités pour représenter les précipitations extrêmes à résolution infra-journalière en raison de leur faible résolution et de la paramétrisation de la convection. Les modèles à résolution kilométrique (CP-RCM), comme CNRM-AROME (2,5 km), permettent désormais une meilleure représentation explicite de la convection profonde. Le stage vise à analyser les tendances des précipitations extrêmes horaires en France (1959-2022) grâce aux données CP-RCM et pluviométriques, en appliquant des modèles de valeurs extrêmes (GEV) stationnaires et non stationnaires.
 
 keywords-formatted: [Changement climatique, Précipitations extrêmes, Clausius-Clapeyron, Convection profonde, Modèles climatiques régionaux (RCM), Modèles de climat à résolution kilométrique (CP-RCM), CNRM-AROME, Théorie des valeurs extrêmes (GEV), Tendances non stationnaires]
 
 bibliography: bibliography.bib  
+
+execute:
+  eval: true
+  echo: false      # pour voir la commande
+  warning: false   # pour voir les warnings
+  error: false     # pour voir les erreurs si ça plante
 ---
 
-## Introduction: Count data regression in R {#sec-intro}
+```{python}
+#!/usr/bin/env python3
+"""assemble_cartes.py – Assemble une carte AROME + stations + légende.
+
+Correctifs :
+
+* calcul fiable des dimensions (viewBox prioritaire, conversion mm/cm/pt/in → px) pour éviter
+  le rognage des SVG et garantir un canvas assez grand ;
+* refactorisation légère (_to_px, _dims) ;
+* messages d'erreur plus explicites.
+"""
+
+from __future__ import annotations
+
+import sys
+import os
+from pathlib import Path
+from typing import Tuple
+
+import pandas as pd
+
+from svgutils.transform import fromfile, SVGFigure
+import cairosvg
+
+def _to_px(value: str | None) -> float:
+    """
+    Convertit une longueur SVG (px, mm, cm, pt, in) en pixels (float).
+
+    Si `value` est None ou vide, retourne 0.
+    """
+    if not value:
+        return 0.0
+    value = value.strip()
+    num = ''
+    unit = ''
+    for ch in value:
+        if ch.isdigit() or ch in '.-':
+            num += ch
+        else:
+            unit += ch
+    if not num:
+        return 0.0
+    numf = float(num)
+    unit = unit.strip().lower()
+    if unit in ('', 'px'):
+        return numf
+    if unit == 'mm':
+        return numf * 3.779527559055  # 96 dpi
+    if unit == 'cm':
+        return numf * 37.79527559055
+    if unit == 'in':
+        return numf * 96
+    if unit == 'pt':
+        return numf * 1.3333333333333  # 1 pt = 1/72 in
+    # Fallback: assume pixels
+    return numf
 
 
-The introduction is in principle "as usual". However, it should usually embed both the implemented *methods* and the *software* into the respective relevant literature. For the latter both competing and complementary software should be discussed (within the same software environment and beyond), bringing out relative (dis)advantages. All software mentioned should be properly `@cited`'d. (See also [Using BibTeX] for more details on {{< bibtex >}}.)
+def _dims(fig) -> Tuple[float, float]:
+    """
+    Renvoie (width, height) de `fig` en pixels.
 
-For writing about software JSS requires authors to use the markup `[]{.proglang}` (programming languages and large programmable systems), `[]{.pkg}` (software packages), back ticks like \`code\` for code (functions, commands, arguments, etc.).
+    1) viewBox (les 2 derniers termes)
+    2) attributs width/height de la racine
+    3) fig.get_size()
+    """
+    root = fig.root  # Correction ici : on accède à la balise <svg>
+    viewbox = root.get('viewBox')
+    if viewbox:
+        parts = [p for p in viewbox.replace(',', ' ').split() if p]
+        if len(parts) == 4:
+            return float(parts[2]), float(parts[3])
 
-If there is such markup in (sub)section titles (as above), a plain text version has to be provided in the {{< latex >}} command as well. Below we also illustrate how abbrevations should be introduced and citation commands can be employed. See the {{< latex >}} code for more details.
+    # attributs width/height sur la balise <svg>
+    w_attr = root.get('width')
+    h_attr = root.get('height')
+    if w_attr and h_attr:
+        return _to_px(w_attr), _to_px(h_attr)
+
+    # fallback
+    w, h = fig.get_size()
+    return _to_px(w), _to_px(h)
 
 
-::: callout
-Modeling count variables is a common task in economics and the social sciences. The classical Poisson regression model for count data is often of limited use in these disciplines because empirical count data sets typically exhibit overdispersion and/or an excess number of zeros. The former issue can be addressed by extending the plain Poisson regression model in various directions: e.g., using sandwich covariances or estimating an additional dispersion parameter (in a so-called quasi-Poisson model). Another more formal way is to use a negative binomial (NB) regression. All of these models belong to the family of generalized linear models (GLMs). However, although these models typically can capture overdispersion rather well, they are in many applications not sufficient for modeling excess zeros. Since @Mullahy1986 there is increased interest in zero-augmented models that address this issue by a second model component capturing zero counts. An overview of count data models in econometrics, including hurdle and zero-inflated models, is provided in @CameronTrivedi2013.
+def assemble(arome: Path, stations: Path, legend: Path, output: Path) -> None:
+    # Charger les 3 SVG
+    fig_arome = fromfile(str(arome))
+    fig_stations = fromfile(str(stations))
+    fig_legend = fromfile(str(legend))
 
-In [R]{.proglang} @R, GLMs are provided by the model fitting functions [glm]{.fct} in the [stats]{.pkg} package and [glm.nb]{.fct} in the [MASS]{.pkg} package [@VenablesRipley2002] along with associated methods for diagnostics and inference. The manuscript that this document is based on [@ZeileisKleiberJackman2008] then introduced hurdle and zero-inflated count models in the functions [hurdle]{.fct} and [zeroinfl]{.fct} in the [pcsl]{.pkg} package @Jackman2015. Of course, much more software could be discussed here, including (but not limited to) generalized additive models for count data as available in the [R]{.proglang} packages [mgcv]{.pkg} @Wood2006, [gamlss]{.pkg} @StasinopoulosRigby2007, or [VGAM]{.pkg} @Yee2009.
-:::
+    # Dimensions
+    w_arome, h_arome = _dims(fig_arome)
+    w_stations, h_stations = _dims(fig_stations)
+    w_leg, h_leg = _dims(fig_legend)
 
-## Models and software {#sec-models}
+    # Canvas global
+    w_maps = max(w_arome, w_stations)
+    h_maps = h_arome + h_stations
+    height = h_maps  # somme des deux cartes
 
-The basic Poisson regression model for count data is a special case of the GLM framework @McCullaghNelder1989. It describes the dependence of a count response variable $y_i$ ($i = 1, \dots, n$) by assuming a Poisson distribution $y_i \sim \mathrm{Pois}(\mu_i)$. The dependence of the conditional mean $E[y_i \, | \, x_i] = \mu_i$ on the regressors $x_i$ is then specified via a log link and a linear predictor
+    # Facteur d'échelle pour que la légende fasse 1.5 fois la hauteur de la carte AROME
+    scale_leg = (1.5 * h_arome) / h_leg
+    w_leg_scaled = w_leg * scale_leg
+    h_leg_scaled = h_leg * scale_leg  # = 1.5 * h_arome
+
+    width = w_maps + w_leg_scaled  # légende à droite
+
+    canvas = SVGFigure(f"{width}px", f"{height}px")
+    canvas.root.set('viewBox', f"0 0 {width} {height}")
+
+    # Racines
+    root_arome = fig_arome.getroot()
+    root_stations = fig_stations.getroot()
+    root_legend = fig_legend.getroot()
+
+    # Redimensionnement de la légende
+    root_legend.scale(scale_leg, scale_leg)
+
+    # Positionnement
+    root_stations.moveto(0, h_arome)
+    # Centrage vertical de la légende sur la hauteur totale
+    y_leg = (h_maps - h_leg_scaled) / 2
+    root_legend.moveto(w_maps, y_leg)
+
+    canvas.append([root_arome, root_stations, root_legend])
+
+    os.makedirs(os.path.dirname(str(output)), exist_ok=True)
+    canvas.save(str(output))
+    pdf_path = str(output)[:-4] + ".pdf"
+    cairosvg.svg2pdf(url=str(output), write_to=pdf_path)
+    return str(output)
+
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+
+base_dir = Path("../outputs")         # dossier racine à explorer
+csv_paths = list(base_dir.rglob("metrics.csv"))
+
+frames = []
+for path in csv_paths:
+    try:
+        df = pd.read_csv(path)
+        df["source"] = str(path.relative_to(base_dir))  # garder la provenance
+        frames.append(df)
+    except Exception as exc:                             # CSV illisible
+        print(f"⚠️  Fichier ignoré {path}: {exc}")
+
+if not frames:
+    raise SystemExit("Aucun metrics.csv trouvé !")
+
+# Concaténation puis export
+combined = pd.concat(frames, ignore_index=True)
+
+# on crée un masque pour les lignes où 'source' contient 'quotidien_reduce'
+mask = combined['source'].str.contains('quotidien_reduce', na=False)
+
+# on remplace 'quotidien' par 'quotidien_reduce' dans 'echelle' pour ces lignes
+combined.loc[mask & (combined['echelle'] == 'quotidien'), 'echelle'] = 'quotidien_reduce'
+
+import math
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+
+
+def plot_r_by_season(
+    df,
+    echelles,
+    col_values,          # <-- plusieurs indicateurs (ex. ['numday', 'mean', 'mean-max'])
+    nom_fichier,         # préfixe du fichier (le numéro du facet est ajouté automatiquement)
+):
+    """
+    Trace un bar‑chart groupé « r » par saison, pour plusieurs indicateurs.
+    Produit un seul PNG contenant un facet‑grid (nrows × ncols).
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+    echelles : list[str]
+        Sous-ensemble d'échelles à garder (ex. ['quotidien', 'horaire'])
+    col_values : list[str]
+        Liste des valeurs cibles de la colonne 'col_calculate'
+    nom_fichier : str
+        Nom de base du fichier PNG (sans extension)
+    """
+    ncols=len(col_values)
+
+    label_map = {
+        "numday":  "Nombre de jour de pluie",
+        "mean":    "Cumul de précipitations",
+        "mean-max": "Moyenne des maxima",
+        "z_T_p":   "Tendance relative"
+    }
+
+    # ---------------------------------------------
+    # 0) Préparation de la grille de sous‑graphes
+    # ---------------------------------------------
+    n_facets = len(col_values)
+    ncols = max(1, min(ncols, n_facets))
+    nrows = math.ceil(n_facets / ncols)
+
+    fig, axes = plt.subplots(
+        nrows=nrows,
+        ncols=ncols,
+        figsize=(12, 5 * nrows),
+        sharey=True
+    )
+    # axes → tableau 1D pour itération uniforme
+    axes = np.atleast_1d(axes).flatten()
+
+    # Pour récupérer une seule fois handles/labels de la légende
+    first_handles, first_labels = None, None
+
+    # ------------------------------------------------------------------
+    # Boucle sur chaque col_value demandé → un subplot par indicateur
+    # ------------------------------------------------------------------
+    for ax, col_value in zip(axes, col_values):
+        # --- 1) Filtrage identique ---
+        sub = df.loc[
+            (df["echelle"].isin(echelles)) &
+            (df["col_calculate"] == col_value),
+            ["season", "echelle", "r"]
+        ]
+        if sub.empty:
+            ax.set_visible(False)
+            ax.set_title(f"Aucune donnée pour '{col_value}'")
+            continue
+
+        sub["season"] = sub["season"].str.upper()
+
+        # --- 2) Ordre fixe ---
+        ordre_total = [
+            "HYDRO", "SON", "DJF", "MAM", "JJA",
+            "JAN", "FEV", "MAR", "AVR", "MAI",
+            "JUI", "JUIL", "AOU", "SEP", "OCT", "NOV", "DEC"
+        ]
+        saisons_pres = [s for s in ordre_total if s in sub["season"].unique()]
+
+        # --- 3) Renommage des échelles ---
+        rename_map = {
+            "quotidien":        "Journalière (1959‑2022)",
+            "quotidien_reduce": "Journalière (1990‑2022)",
+            "horaire":          "Horaire (1990‑2022)",
+        }
+
+        # --- 4) Pivot ---
+        pivot = (
+            sub.pivot(index="season", columns="echelle", values="r")
+               .rename(columns=rename_map)
+               .reindex(saisons_pres)
+        )
+
+        # --- 5) Colonnes dans l’ordre demandé ---
+        ordre_cols = [
+            rename_map[k] for k in ["quotidien", "quotidien_reduce", "horaire"]
+            if rename_map[k] in pivot.columns
+        ]
+        pivot = pivot[ordre_cols]
+
+        # --- 6) Couleurs ---
+        couleurs = ["black", "dimgray", "lightgray"][:pivot.shape[1]]
+
+        # --- 7) Bar chart groupé ---
+        x = np.arange(len(pivot))
+        largeur = 0.8 / pivot.shape[1]
+
+        for i, (col, couleur) in enumerate(zip(pivot.columns, couleurs)):
+
+            bars = ax.bar(
+                x + i * largeur,
+                pivot[col],
+                width=largeur,
+                color=couleur,
+                label=col
+            )
+
+        # --- 8) Axes, grille, ticks ---
+        ax.set_xticks(
+            x + largeur * (pivot.shape[1] - 1) / 2,
+            pivot.index
+        )
+        ax.set_xlabel("")
+        ax.set_ylabel("r")
+        ax.set_title(label_map.get(col_value, col_value))   # titre lisible pour chaque subplot)
+
+        ax.yaxis.set_major_locator(mticker.MultipleLocator(0.1))
+        ax.yaxis.set_minor_locator(mticker.MultipleLocator(0.02))
+        ax.grid(axis="y", which="major", linestyle="--", alpha=0.8)
+        ax.grid(axis="y", which="minor", linestyle=":",  alpha=0.5)
+
+        # mémoriser les handles/labels la première fois
+        if first_handles is None:
+            first_handles, first_labels = ax.get_legend_handles_labels()
+
+        # supprimer la légende locale seulement si elle existe
+        leg = ax.get_legend()
+        if leg is not None:
+            leg.remove()
+
+
+    # ------------------------------------------------------------------
+    # 9) Légende globale (ligne en‑haut, centrée)
+    # ------------------------------------------------------------------
+    if first_handles:
+        fig.legend(
+            first_handles,
+            first_labels,
+            loc="lower center",
+            ncol=len(first_labels),
+            bbox_to_anchor=(0.5, 1.02)
+        )
+
+    fig.tight_layout()
+    fig.subplots_adjust(top=0.90)  # laisser de l’espace pour la légende globale
+
+    # ------------------------------------------------------------------
+    # 10) Sauvegarde
+    # ------------------------------------------------------------------
+    fig.savefig(f"figures/{nom_fichier}.png", dpi=500, bbox_inches="tight")
+    plt.close(fig)
+
+```
+
+\newpage
+
+## Introduction et contexte
+
+Le changement climatique entraine un réchauffement de l’air à la surface de la planète, plus marqué sur les continents que sur les océans [@IPCC2021]. L'augmentation est de +1°C à l'échelle mondiale, +1,7°C à l'échelle de la France métropolitaine et +2°C à l'échelle des Alpes françaises depuis l’ère préindustrielle. Par ailleurs, la relation de Clausius-Clapeyron montre que l'air chaud contient plus d'humidité (+7%/°C) [@clausius1850]. L'ascension de l'air chaud dans l'atmosphère entraîne son refroidissement adiabatique, provoquant la condensation de la vapeur d'eau qui se transforme en précipitations, telles que la pluie [@meteofrance]. Ainsi, en réponse au réchauffement climatique il existe une augmentation *théorique* des précipitations. Cette augmentation est variable suivant les changements de circulations atmosphériques [@blanchet2021explaining].
+
+Dans l'objectif de dégager des tendances durables (changement climatique) en opposition aux variations naturelles (variabilité climatique), il convient d'utiliser des données issues de modèles de climat sur de longues périodes. Ces dernières années, l'utilisation des modèles régionaux de climat à haute résolution (CP-RCM pour Convection-Permitting Regional Climate Models, avec une résolution de 1 à 3 km) a marqué une avancée significative. Ces modèles simulent explicitement la convection profonde, ce qui leur permet de capturer des échelles spatio-temporelles plus fines. Cette approche ouvre de nouvelles perspectives prometteuses pour l'analyse climatique [@prein2015regional].
+
+L'objectif de cette étude est de caractériser et d’étudier les tendances de précipitations extrêmes horaires en France. Les précipitations extrêmes sont généralement définies de façon statistique, non par un seuil fixe, mais par leur caractère exceptionnel au regard de la climatologie locale. Une méthode courante consiste à considérer les maxima pour une période et un pas de temps donnés mesurés par les réseaux de pluviomètres [@blanchet2022instrumental].
+
+## Méthodologie
+
+### Données utilisées
+
+Dans cette étude, le modèle numérique Application of Research to Operations at MEsoscale (AROME) a été choisi [@caillaud2021simulation]. C'est un modèle CP-RCM de résolution spatiale 2,5km et temporelle 1h, forcé par réanalyse ERA5 [@hersbach2020era5] offrant des données de précipitations de 1959 à 2022. En parallèle, l'étude utilise aussi les données de précipitations issues d'observation Météo-France [@meteofrance2024] au pas de temps journalier (1959-2022) et horaire (1990-2022). L'ensemble des analyses qui suivent se font indépendamment entre les données modélisées par AROME et les données observées par les stations.
+
+### Statistiques descriptives
+
+Par extraction, transformation et chargement, les statistiques descriptives suivantes sont générées : nombre de jour de pluie (seuil fixé à 1mm/j), cumul de précipitations, maximum de précipitations. Ceci en chaque point de grille AROME et chaque station Météo-France à partir des données journalières de 1959 à 2022 et 1990 à 2022 ; et des données horaires de 1990 à 2022, pour chaque année et chaque saison.
+
+Les saisons sont définies par **SON** pour septembre (**SEP**) octobre (**OCT**) novembre (**NOV**), **DJF** pour décembre (**DEC**) janvier (**JAN**) février (**FEV**), **MAM** pour mars (**MAR**) avril (**AVR**) mai (**MAI**), et **JJA** pour juin (**JUI**) juillet (**JUILL**) août (**AOU**). L'année hydrologique (**HYDRO**) est définie comme la période allant du 1er septembre de l'année N au 31 août de l'année N+1.
+
+### Modélisation statistique
+
+#### Définitions
+
+Si on note $x$ une réalisation de la variable aléatoire $X$, représentant le maximum annuel de précipitations en un point spatial donné, alors la loi GEV (loi des valeurs extrêmes généralisée) est une loi de probabilité continue paramétrée par le triplet $\theta = (\mu, \sigma, \xi)$ — respectivement la position, l’échelle (strictement positive) et la forme dont la fonction de répartition cumulative (CDF) de la GEV est définie comme suit :
 
 $$
-\log(\mu_i) \quad = \quad x_i^\top \beta,
-$$ {#eq-mean}
+F(x;\mu ,\sigma ,\xi ) = \exp \left\{ -\left[ 1 + \xi \left( \frac{x - \mu}{\sigma} \right) \right]^{-\frac{1}{\xi}} \right\}
+$$
 
-where the regression coefficients $\beta$ are estimated by maximum likelihood (ML) using the iterative weighted least squares (IWLS) algorithm.
+#### Covariable temporelle
 
-::: callout
-TODO: Note that around the equation above there should be no spaces (avoided in the {{< latex >}} code by `%` lines) so that "normal" spacing is used and not a new paragraph started.
-:::
+On dispose d'une série temporelle de $n$ maximas annuels indépendants de précipitations pour un point géographique. Ces observations sont notées $\{x_1, x_2, \dots, x_n\}$ où chaque $x_i$ est un maximum annuel de précipitations observé à l'année $t_i$ et qui suit une loi GEV de paramètre $\theta$. On transforme l’année $t_i$ en une covariable normalisée notée $\tilde{t}_i$. Cette transformation est simplement réalisée pour des raisons numériques mais elle ne change rien au résultat théorique.
 
-[R]{.proglang} provides a very flexible implementation of the general GLM framework in the function [glm]{.fct} @ChambersHastie1992 in the [stats]{.pkg} package. Its most important arguments are
+$$
+\tilde{t}_i = \frac{t_i - t_{\min}}{t_{\max} - t_{\min}} \quad \text{avec} \quad \begin{cases}
+t_{min} = \min_i t_i \\
+t_{max} = \max_i t_i
+\end{cases}
+$$
 
-where `formula` plus `data` is the now standard way of specifying regression relationships in [R]{.proglang}/[S]{.proglang} introduced in @ChambersHastie1992. The remaining arguments in the first line (`subset`, `na.action`, `weights`, and `offset`) are also standard for setting up formula-based regression models in [R]{.proglang}/[S]{.proglang}. The arguments in the second line control aspects specific to GLMs while the arguments in the last line specify which components are returned in the fitted model object (of class [glm]{.class} which inherits from [lm]{.class}). For further arguments to [glm]{.fct} (including alternative specifications of starting values) see `?glm`. For estimating a Poisson model `family = poisson` has to be specified.
+On crée également une covariable temporelle avec point de rupture noté $t_+$ tel que :
 
-::: callout
-As the synopsis above is a code listing that is not meant to be executed, one can use either the dedicated `{Code}` environment or a simple `{verbatim}` environment for this. Again, spaces before and after should be avoided.
+$$
+\tilde{t}_{i}^\ast =
+\begin{cases}
+0 & \text{si } t_i < t_+ \\
+\displaystyle \frac{t_i - t_+}{t_{\max} - t_+} & \text{si } t_i \ge t_+
+\end{cases}
+$$
 
-Finally, there might be a reference to a `{table}` such as @tbl-overview. Usually, these are placed at the top of the page (`[t!]`), centered (`\centering`), with a caption below the table, column headers and captions in sentence style, and if possible avoiding vertical lines.
-:::
+Ce codage permet d’appliquer une pente temporelle seulement après la date de rupture, avec une covariable encore normalisée sur $[0,1]$ dans la portion post-rupture.
 
-| Type           | Distribution | Method   | Description                                                                                                                                                                                  |
-|---------|---------|---------|-----------------------------------------------|
-| GLM            | Poisson      | ML       | Poisson regression: classical GLM, estimated by maximum likelihood (ML)                                                                                                                      |
-|                |              | Quasi    | "Quasi-Poisson regression'': same mean function, estimated by quasi-ML (QML) or equivalently generalized estimating equations (GEE), inference adjustment via estimated dispersion parameter |
-|                |              | Adjusted | "Adjusted Poisson regression'': same mean function, estimated by QML/GEE, inference adjustment via sandwich covariances                                                                      |
-|                | NB           | ML       | NB regression: extended GLM, estimated by ML including additional shape parameter                                                                                                            |
-| Zero-augmented | Poisson      | ML       | Zero-inflated Poisson (ZIP), hurdle Poisson                                                                                                                                                  |
-|                | NB           | ML       | Zero-inflated NB (ZINB), hurdle NB                                                                                                                                                           |
-: Overview of various count regression models. The table is usually placed at the top of the page (`[t!]`), centered (`centering`), has a caption below the table, column headers and captions are in sentence style, and if possible vertical lines should be avoided. {#tbl-overview}
+#### Modèles utilisés
 
-## Illustrations {#sec-illustrations}
+Soit la covariable temporelle $t \in \mathbb{N} \mid t_{\min} \leq t \leq t_{\max}$. Le **modèle stationnaire** est défini par :
 
-For a simple illustration of basic Poisson and NB count regression the
-`quine` data from the [MASS]{.pkg} package is used. This provides the number
-of `Days` that children were absent from school in Australia in a
-particular year, along with several covariates that can be employed as regressors. The data can be loaded by
+$$
+M_0(\theta_0) \quad \text{et} \quad \theta_0 = (\mu_0, \sigma_0, \xi_0) \quad
+\begin{cases}
+\mu(t) = \mu_0 \\
+\sigma(t) = \sigma_0 \\
+\xi(t) = \xi_0
+\end{cases}
+$$
 
-and a basic frequency distribution of the response variable is displayed in
-@fig-quine.
+Les **modèles non stationnaires** sont définis par :
 
-:::{.callout}
-For code input and output, the style files provide dedicated environments.
-Either the "agnostic" `{CodeInput}` and `{CodeOutput}` can be used
-or, equivalently, the environments `{Sinput}` and `{Soutput}` as
-produced by [Sweave]{.fct} or [knitr]{.pkg} when using the `render_sweave()`
-hook. Please make sure that all code is properly spaced, e.g., using
-`y = a + b * x` and _not_ `y=a+b*x`. Moreover, code input should use "the usual" command prompt in the respective software system. For
-[R]{.proglang} code, the prompt `R> ` should be used with `+  ` as
-the continuation prompt. Generally, comments within the code chunks should be
-avoided -- and made in the regular {{< latex >}} text instead. Finally, empty lines before and after code input/output should be avoided (see above).
-:::
+$$
+M_1(\theta_1) \quad \text{et} \quad \theta_1 = (\mu_0, \mu_1, \sigma_0, \xi_0) \quad
+\begin{cases}
+\mu(t) = \mu_0 + \mu_1 \cdot t \\
+\sigma(t) = \sigma_0 \\
+\xi(t) = \xi_0
+\end{cases}
+$$
 
-::: {#fig-quine}
+$$
+M_2(\theta_2) \quad \text{et} \quad \theta_2 = (\mu_0, \sigma_0, \sigma_1, \xi_0)
+\quad
+\begin{cases}
+\mu(t) = \mu_0 \\
+\sigma(t) = \sigma_0 + \sigma_1 \cdot t \\
+\xi(t) = \xi_0
+\end{cases}
+$$
 
-Frequency distribution for number of days absent from school.
-:::
+$$
+M_3(\theta_3) \quad \text{et} \quad \theta_3 = (\mu_0, \mu_1, \sigma_0, \sigma_1, \xi_0)
+\quad
+\begin{cases}
+\mu(t) = \mu_0 + \mu_1 \cdot t\\
+\sigma(t) = \sigma_0 + \sigma_1 \cdot t \\
+\xi(t) = \xi_0
+\end{cases}
+$$
 
-As a first model for the `quine` data, we fit the basic Poisson regression
-model. (Note that JSS prefers when the second line of code is indented by two
-spaces.)
+Lorsqu'un point de rupture noté $t_+$ est introduit, on note : 
 
-To account for potential overdispersion we also consider a negative binomial
-GLM.
+$$
+t^\ast = t \cdot \mathbb{1}_{t > t_+} \quad \text{avec} \quad t_+ \in \mathbb{N}
+$$
 
+Les modèles $M_1$, $M_2$ et $M_3$ deviennent respectivements $M_1^\ast$, $M_2^\ast$ et $M_3^\ast$. Sur cete même notation $\theta_i$ devient $\theta^\ast_i$ avec $i \in \{1, 2, 3\}$. Dans cette étude, on réalise les modélisations stationnaire et non-stationnaires avec pour covariable l'année et un effet temporel sur $\mu$ ou $\sigma$ ou $\mu$ et $\sigma$. $\xi$ est choisi comme constant. Sur la base bibliographique, on choisi $t_+ = 1985$ [@blanchet2022instrumental].
 
-In a comparison with the BIC the latter model is clearly preferred.
+#### Niveau de retour
 
-Hence, the full summary of that model is shown below.
-
-
-## Summary and discussion {#sec-summary}
-
-:::{.callout}
-
-As usual…
-
-:::
-
-## Computational details {.unnumbered}
-
-:::{.callout}
-
-If necessary or useful, information about certain computational details
-such as version numbers, operating systems, or compilers could be included
-in an unnumbered section. Also, auxiliary packages (say, for visualizations,
-maps, tables, …) that are not cited in the main text can be credited here.
-
-:::
-
-The results in this paper were obtained using [R]{.proglang}~3.4.1 with the
-[MASS]{.pkg}~7.3.47 package. [R]{.proglang} itself and all packages used are available from the Comprehensive [R]{.proglang} Archive Network (CRAN) at
-[https://CRAN.R-project.org/].
-
-
-## Acknowledgments {.unnumbered}
+Le niveau de retour (ou quantile d’ordre $1 - \tfrac{1}{T}$) dans une loi GEV correspond à une valeur seuil $z_T$ que l’on dépasse, en moyenne, une fois tous les $T$ ans. Soit $X \sim \mathrm{GEV}(\mu, \sigma, \xi)$, alors en notant $F^{-1}$ la fonction quantile de la GEV, on obtient :
 
 :::{.callout}
 
-All acknowledgments (note the AE spelling) should be collected in this
-unnumbered section before the references. It may contain the usual information
-about funding and feedback from colleagues/reviewers/etc. Furthermore,
-information such as relative contributions of the authors may be added here
-(if any).
+$$
+\mathbb{P}(X > z_T) = \frac{1}{T}, \quad \text{soit} \quad z_T = F^{-1}\left(1 - \frac{1}{T} \right) = 
+\begin{cases}
+\mu + \frac{\sigma}{\xi} \left[ \left( -\log\left(1 - \frac{1}{T}\right) \right)^{-\xi} - 1 \right] & \text{si } \xi \ne 0 \\
+\mu - \sigma \log \left( -\log\left(1 - \frac{1}{T} \right) \right) & \text{si } \xi = 0 \quad \text{(Gumbel)}
+\end{cases}
+$$
 
 :::
+
+#### Vraisemblance et maximum de vraisemblance
+
+Soit la fonction de vraisemblance ${\displaystyle {\mathcal {L}}(\theta ;x)} : {\displaystyle \theta \mapsto f(x;\theta )}$. La log-vraisemblance $\ell(\theta) = \log \mathcal{L}(\theta)$ s’écrit après développement (Annexes 1.1) :
+
+:::{.callout}
+
+$$
+\ell(\theta)=
+-\sum_{i=1}^n\Bigl[
+\log\sigma
++\Bigl(1+\tfrac1{\xi}\Bigr)\log z_i
++z_i^{-\frac{1}{\xi}}
+\Bigr]
+\quad \text{avec} \quad  z_i(\theta)=1+\xi\;\frac{x_i-\mu}{\sigma}
+\tag{1}
+$$
+
+:::
+
+On obtient alors :
+
+$$
+\scalebox{0.7}{
+\(
+\begin{aligned}
+\ell_{M_0}(\mu_0, \sigma_0, \xi_0) &=
+-\sum_{i=1}^n \left[
+\log \sigma_0 +
+\left(1 + \frac{1}{\xi_0} \right) \log \left(1 + \xi_0 \frac{x_i - \mu_0}{\sigma_0} \right) +
+\left(1 + \xi_0 \frac{x_i - \mu_0}{\sigma_0} \right)^{-1/\xi_0}
+\right]\\ 
+\ell_{M_1}(\mu_0, \mu_1, \sigma_0, \xi_0) &=
+-\sum_{i=1}^n \left[
+\log \sigma_0 +
+\left(1 + \frac{1}{\xi_0} \right) \log \left(1 + \xi_0 \frac{x_i - (\mu_0 + \mu_1 \cdot \tilde{t}_i)}{\sigma_0} \right) +
+\left(1 + \xi_0 \frac{x_i - (\mu_0 + \mu_1 \cdot \tilde{t}_i)}{\sigma_0} \right)^{-1/\xi_0}
+\right]\\ 
+\ell_{M_2}(\mu_0, \sigma_0, \sigma_1, \xi_0) &=
+-\sum_{i=1}^n \left[
+\log (\sigma_0 + \sigma_1 \tilde{t}_i) +
+\left(1 + \frac{1}{\xi_0} \right) \log \left(1 + \xi_0 \frac{x_i - \mu_0}{\sigma_0 + \sigma_1 \tilde{t}_i} \right) +
+\left(1 + \xi_0 \frac{x_i - \mu_0}{\sigma_0 + \sigma_1 \tilde{t}_i} \right)^{-1/\xi_0}
+\right]\\ 
+\ell_{M_3}(\mu_0, \mu_1, \sigma_0, \sigma_1, \xi_0) &=
+-\sum_{i=1}^n \left[
+\log (\sigma_0 + \sigma_1 \tilde{t}_i) +
+\left(1 + \frac{1}{\xi_0} \right) \log \left(1 + \xi_0 \frac{x_i - (\mu_0 + \mu_1 \tilde{t}_i)}{\sigma_0 + \sigma_1 \tilde{t}_i} \right) +
+\left(1 + \xi_0 \frac{x_i - (\mu_0 + \mu_1 \tilde{t}_i)}{\sigma_0 + \sigma_1 \tilde{t}_i} \right)^{-1/\xi_0}
+\right]
+\end{aligned}
+\tag{1'}
+\)
+}
+$$
+
+Les vraisemblances de $M_1^*, M_2^*, M_3^*$ sont obtenues en remplaçant $\tilde{t}_i$ par $\tilde{t}_i^\ast$ dans les expressions ci-dessus.
+
+En pratique, les paramètres $(\mu, \sigma, \xi)$ sont inconnus et estimés à partir des données par un estimateur $\hat{\theta} = (\hat{\mu}, \hat{\sigma}, \hat{\xi})$ obtenu par maximum de vraisemblance (MLE) via une optimisation numérique tel que $\hat{\theta} = \arg\max_{\theta} \, \ell(\theta)$. Il n'existe pas de formule explicite des paramètres.
+
+L’estimateur du niveau de retour $\hat{z}_T$ s’écrit alors $\hat{z}_{T}\;=\;F^{-1}_{\hat{\theta}}\!\left(1-\frac{1}{T}\right)$. Le MLE classique donne un point estimé, mais pas d’intervalle. On souhaite aussi connaître l’incertitude autour de l'estimation de $\hat{z}_T$. Pour cela, on utilise la vraisemblance profilée.
+
+#### Vraisemblance profilée et intervalle de confiance
+
+$z_T$ peut se réecrire sous la forme $\mu = z_T - \dfrac{\sigma}{\xi} \left[ \left( -\log\left(1 - \frac{1}{T} \right) \right)^{-\xi} - 1 \right]$.
+La combinaison des paramètres temporels de la loi GEV conduit à une expression linéaire en $t$ : 
+
+$$
+z_T(t) = z_{T,0} + z_{T,1} \cdot t
+$$
+
+En développant les paramètres soumis à un effet temporel et on regroupant terme à terme on peut montrer que (Annexes 1.2) :
+
+$$
+\begin{aligned}
+\mu_1(z_{T,1}) &= z_{T,1} -\dfrac{\hat{\sigma_1}}{\hat{\xi}_0}\Bigl(\bigl[-\log(1-\tfrac1T)\bigr]^{-\hat{\xi}_0}-1\Bigr)\\
+\sigma_1(z_{T,1}) &= \dfrac{\hat{\xi}_0\,\bigl(z_{T,1}-\hat{\mu_1}\bigr)}{\bigl[-\log\!\bigl(1-\tfrac1T\bigr)\bigr]^{-\hat{\xi}_0}-1}\\
+\end{aligned}
+$$
+
+On cherche l'intervalle de confiance sur $z_{T,1}$ donc pour chaque valeur candidate $z_{T,1}$ dans une grille (autour de l’estimateur $\hat{z}_{T,1}$), on maximise les log-vraisemblances **$\text{(1$'$)}$** qui deviennent des log-vraisemblances profilées $\ell^{\,p}$ :
+
+$$
+\scalebox{0.7}{
+\(
+\begin{aligned}
+\underset{\hat{\sigma}_1 = 0}{\ell_{M_1}^{\,p}(z_{T,1} \ ; \hat{\mu}_0, \hat{\sigma}_0, \hat{\xi}_0)} &= 
+-\sum_{i=1}^n \left[
+\log \hat{\sigma}_0 +
+\left(1 + \frac{1}{\hat{\xi}_0} \right) \log \left(1 + \hat{\xi}_0 \frac{x_i - (\hat{\mu}_0 + \mu_1(z_{T,1}) \cdot \tilde{t}_i)}{\hat{\sigma}_0} \right) +
+\left(1 + \hat{\xi}_0 \frac{x_i - (\hat{\mu}_0 + \mu_1(z_{T,1}) \cdot \tilde{t}_i)}{\hat{\sigma}_0} \right)^{-1/\hat{\xi}_0}
+\right]\\
+\underset{\hat{\mu}_1 = 0}{\ell_{M_2}^{\,p}(z_{T,1} \ ; \hat{\mu}_0, \hat{\sigma}_0, \hat{\xi}_0)} &= 
+-\sum_{i=1}^n \left[
+\log (\hat{\sigma}_0 + \sigma_1(z_{T,1}) \cdot \tilde{t}_i) +
+\left(1 + \frac{1}{\hat{\xi}_0} \right) \log \left(1 + \hat{\xi}_0 \frac{x_i - \hat{\mu}_0}{\hat{\sigma}_0 + \sigma_1(z_{T,1}) \cdot \tilde{t}_i} \right) +
+\left(1 + \hat{\xi}_0 \frac{x_i - \hat{\mu}_0}{\hat{\sigma}_0 + \sigma_1(z_{T,1}) \cdot \tilde{t}_i} \right)^{-1/\hat{\xi}_0}
+\right]\\
+\ell_{M_3}^{\,p}(z_{T,1} \ ; \hat{\mu}_0, \hat{\sigma}_0, \hat{\sigma}_1, \hat{\xi}_0) &= 
+-\sum_{i=1}^n \left[
+\log (\hat{\sigma}_0 + \hat{\sigma}_1 \tilde{t}_i) +
+\left(1 + \frac{1}{\hat{\xi}_0} \right) \log \left(1 + \hat{\xi}_0 \frac{x_i - (\hat{\mu}_0 + \mu_1(z_{T,1}) \tilde{t}_i)}{\hat{\sigma}_0 + \hat{\sigma}_1 \tilde{t}_i} \right) +
+\left(1 + \hat{\xi}_0 \frac{x_i - (\hat{\mu}_0 + \mu_1(z_{T,1}) \tilde{t}_i)}{\hat{\sigma}_0 + \hat{\sigma}_1 \tilde{t}_i} \right)^{-1/\hat{\xi}_0}
+\right]\\
+\end{aligned}
+\tag{2}
+\)
+}
+$$
+
+On cherche donc :
+
+$$
+\hat{z}_{T,1} = \underset{z_{T,1}}{\arg\max} \; \ell_{M_\bullet}^{\,p}(z_{T,1} \ ; \hat{\theta}_{\bullet}) \quad \text{avec} \quad
+\hat{\theta}_{\bullet} = \begin{cases}
+\hat{\theta}_{1}^{\,p} = (\hat{\mu_0}, \hat{\sigma_0}, \hat{\xi_0}) & \text{pour } M_1 \\
+\hat{\theta}_2^{\,p} = (\hat{\mu_0}, \hat{\sigma_0}, \hat{\xi_0}) & \text{pour } M_2 \\
+\hat{\theta}_3^{\,p} = (\hat{\mu_0}, \hat{\sigma_0}, \hat{\sigma_1}, \hat{\xi_0}) & \text{pour } M_3 \\
+\end{cases}
+$$
+
+On trace ainsi pour chaque modèle $M_\bullet$ la fonction ${\displaystyle \mathcal{L}_{M_\bullet} : z_{T,1} {\mapsto} \ell_{M_\bullet}^{\,p}(z_{T,1} \ ; \hat{\theta}_{\bullet})}$
+
+L’intervalle de confiance de $\hat{z}_{T,1}$ pour un modèle $M_\bullet$ au seuil $(1 - \alpha)$ basé sur le profil de vraisemblance est donné par :
+
+$$
+\operatorname{IC}_{M_\bullet}^{(1-\alpha)}\!\bigl(\hat{z}_{T,1}\bigr)
+   = \Bigl\{\, z_{T,1}\;:\;
+        2\bigl[\ell_{M_\bullet}^{\,p}(\hat{z}_{T,1} \ ; \hat{\theta}_{\bullet})-\ell_{M_\bullet}^{\,p}(z_{T,1} \ ; \hat{\theta}_{\bullet})\bigr]
+        \le \chi^{2}_{1,\,1-\alpha} \Bigr\}
+$$
+
+où $\chi^2_{1,1-\alpha}$ est le quantile d’ordre $1 - \alpha$ d’une loi du $\chi^2$ à un degré de liberté. On fixe ici $\alpha=0{,}10$.
+
+### Choix du meilleur modèle
+
+#### Test du rapport de vraisemblance (LRT)
+
+En tout point géographique on dispose de $M_0, M_1, M_2, M_3, M_1^\ast, M_2^\ast \text{ et } M_3^\ast$. Notons $k_j$ le nombre de paramètres du modèle $M_j$. Pour chaque modèle non stationnaire $j\neq 0$ et chaque point $i$ :
+
+$$
+\Lambda_{ij}=2\bigl(\ell_{ij}-\ell_{i0}\bigr)
+\overset{H_0}{\sim}\chi^{2}_{\;k_j-k_0}.
+$$
+
+La $p$-valeur est $p_{ij}= \mathbb{P}(\chi^{2}_{k_j-k_0}\ge \Lambda_{ij}\bigr)$.
+
+#### Règle hiérarchique de sélection
+
+Soit $\alpha=0{,}10$ le seuil d’intérêt. Si un des deux modèles $M_3$ ou $M_3^\ast$ vérifie $p_{ij}\le\alpha$, on retient $j=\arg\min_{j\in\{3,3^\ast\}} p_{ij}$. Sinon, on compare l’ensemble des six modèles non stationnaires et l’on sélectionne $j=\arg\min_{j\in\{1,1^\ast,2,2^\ast,3,3^\ast\}} p_{ij}$. Cette double étape privilégie les formes *simultanément* temporelles sur $\mu$ et $\sigma$ quand elles sont statistiquement justifiées. Cela assure que la complexité n’est introduite que lorsqu’elle apporte une information statistiquement crédible tout en livrant, pour chaque poste, un modèle non stationnaire.
+
+### Calcul des tendances
+
+A partir des niveaux de retour 10 ans ($T = 10$) la tendance relative (en %) est calculée via :
+
+:::{.callout}
+
+$$
+\text{Tendance} = \frac{z_T^{2022} - z_T^{1985}}{z_T^{1985}} \cdot {100}
+$$
+
+:::
+
+#### Concordance
+
+On évalue l'accord entre les statistiques descriptives et les tendances obtenues à partir des simulations du modèle AROME et celles observées dans la réalité. Pour ce faire, chaque station Météo-France est associée au point de grille AROME (2,5 km × 2,5 km) correspondant à sa localisation géographique. Cette correspondance permet de calculer la corrélation de Pearson (*r*) ainsi que l'erreur moyenne (*ME*) entre les valeurs observées et simulées.
+
+## Résultats
+
+### Évaluation de la climatologie des précipitations simulées par AROME
+
+Afin d’apprécier la capacité d’AROME à restituer le climat pluviométrique les données sont confrontées aux observations de stations suivant : le nombre de jours de pluie (seuil ≥ 1 mm/j), le cumul saisonnier des précipitations et la moyenne des maxima saisonnière des précipitations.
+
+```{python}
+jour_pluie = assemble(
+  "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/mod_norast.svg",
+  "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_norast.svg",
+  "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/legend.svg",
+  "figures/jour_pluie.svg"
+)
+df_jour_pluie = combined.loc[(combined["season"] == "hydro") & (combined["col_calculate"] == "numday"), ["n", "r"]]
+
+mean_pluie_jour = assemble(
+  "../outputs/maps/stats_mean/quotidien/compare_5/sat_99.0/hydro/mod_norast.svg",
+  "../outputs/maps/stats_mean/quotidien/compare_5/sat_99.0/hydro/obs_norast.svg",
+  "../outputs/maps/stats_mean/quotidien/compare_5/sat_99.0/legend.svg",
+  "figures/mean_pluie_jour.svg"
+)
+df_mean_pluie_jour = combined.loc[(combined["season"] == "hydro") & (combined["col_calculate"] == "mean"), ["n", "r"]]
+
+
+mean_max_pluie_jour = assemble(
+  "../outputs/maps/stats_mean-max/quotidien/compare_5/sat_99.0/hydro/mod_norast.svg",
+  "../outputs/maps/stats_mean-max/quotidien/compare_5/sat_99.0/hydro/obs_norast.svg",
+  "../outputs/maps/stats_mean-max/quotidien/compare_5/sat_99.0/legend.svg",
+  "figures/mean-max_pluie_jour.svg"
+)
+df_mean_max_pluie_jour = combined.loc[(combined["season"] == "hydro") & (combined["col_calculate"] == "mean-max"), ["n", "r"]]
+
+df_mean_max_pluie_horaire = combined.loc[(combined["season"] == "jja") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
+```
+
+#### Distribution spatiale
+
+Sur l'ensemble de ces critères pour des données journalières de 1959 à 2022, AROME restituent très bien la distribution spatiale de la réalite (Figure 1). On peut voir trois grands régimes spatiaux liés aux influences océaniques, méditerranéennes et orographiques.
+
+##### Nombre de jours de précipitations annuels
+
+Les massifs montagneux (Alpes, Pyrénées, Massif central, Vosges, Jura) affichent les plus fortes fréquences de jours pluvieux (au‑delà de 140–160 jours par an). Le grand Ouest atlantique (Bretagne, Normandie, Pays de la Loire) connaît également un nombre élevé de journées pluvieuses (80–120 jours/an). À l’inverse, la façade méditerranéenne et le pourtour de la Provence sont les plus secs en fréquence, avec souvent moins de 50–70 jours de précipitations par an.
+
+##### Cumul moyen des précipitations
+
+La bordure atlantique sud‑ouest (Pyrénées, Aquitaine) et les Alpes du Nord reçoivent les plus forts cumuls (plus de 5 mm/j). Le Massif central et les reliefs intérieurs (Vosges, Jura) présentent des cumuls intermédiaires (2,5-4 mm/j). Le pourtour méditerranéen (Languedoc, Provence) reste globalement plus sec (< 1,5 mm/j), malgré des pluies intenses ponctuelles.
+
+##### Moyenne des maxima de précipitations journalières
+
+Les plus fortes pointes quotidiennes moyennes se rencontrent dans les Cévennes et plus généralement sur la face sud-est du Massif central (environ 100–125 mm/j). Les reliefs alpins et pyrénéens montrent aussi des maxima élevés (80–100 mm/j). La façade atlantique et le bassin parisien présentent des maxima plus modérés (30–60 mm/j), tandis que la Provence et la Côte d’Azur, malgré une fréquence moindre, peuvent localement connaître de très gros orages (40–80 mm/j en moyenne).
+
+| \small Nombre de jours de précipitations | \small Cumul des précipitations moyennes | \small Moyenne des maxima des précipitations |
+| :---: | :---: | :---: |
+| ![](figures/jour_pluie.pdf) | ![](figures/mean_pluie_jour.pdf) | ![](figures/mean-max_pluie_jour.pdf) |
+| $r =$ `{python} f'{df_jour_pluie['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_jour_pluie['n'].iloc[0].item()}'`) | $r =$ `{python} f'{df_mean_pluie_jour['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_pluie_jour['n'].iloc[0].item()}'`) | $r =$ `{python} f'{df_mean_max_pluie_jour['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_max_pluie_jour['n'].iloc[0].item()}'`) |
+
+\begin{center}
+Figure 1: Climatologie et corrélation entre le modèle AROME et les stations Météo-France issues de données journalières allant de 1959 à 2022 pour une année hydrologique. Représentation en trait fin des courbes de niveaux 400 et 800m.
+\end{center}
+
+#### Corrélation entre le modèle AROME et les stations Météo-France (Figure 2)
+
+Quelle que soit la climatologie analysée, le modèle **AROME** reproduit fidèlement les observations, avec une corrélation minimale de **0,70**.
+Indépendamment de l’échelle temporelle retenue — journalière (1959‑2022 ou 1990‑2022) ou horaire (1990‑2022) — et de la saison, les champs simulés s’accordent très bien avec les données mesurées : la corrélation varie entre **0,92** et **0,98** pour le nombre de jours de pluie et le cumul des précipitations.
+
+Cette performance se maintient pour la moyenne des maxima journaliers (périodes 1959‑2022 et 1990‑2022) sur l’année hydrologique, l’automne, l’hiver et le printemps, mais elle se dégrade en été, avec une corrélation de **0,85**. À l’échelle horaire, la qualité de l’estimation des maxima se détériore encore : la corrélation baisse de 0,4 à 0,8 point selon la saison pour l’année hydrologique, l’automne et l’hiver, et chute à environ **0,70** au printemps et **0,69** en été où $ME =$ `{python} f'{df_mean_max_pluie_horaire['me'].iloc[0].item():.3f}'` mm/h (`{python} f'{df_mean_max_pluie_horaire['delta'].iloc[0].item()*100:.1f}'`%). AROME tend donc à sous-estimer les précipitations extrêmes estivales, ce qui reste vrai aux autres saisons.
+
+```{python} 
+plot_r_by_season(combined, echelles=['quotidien', 'quotidien_reduce', 'horaire'], col_values=['numday', 'mean', 'mean-max'], nom_fichier="histo_numday_mean_mean-max")
+```
+
+![](figures/histo_numday_mean_mean-max.png){width=100%}
+
+\begin{center}
+Figure 2: Corrélations des données climatologiques entre le modèle AROME et les stations Météo-France pour chacune des sources de données.
+\end{center}
+
+## Discussion
+
+#### Fidélité spatiale de la climatologie simulée
+
+Les résultats confirment qu’AROME reproduit correctement les grands régimes pluviométriques hexagonaux confirmé par la littérature [@Fumiere2020], [@caillaud2021simulation], [@hess-28-2579-2024], [@LucasPicher2024]. Il y a un excédent orographique sur les Alpes, les Pyrénées et le Massif central, un gradient atlantique‑continental marqué à l’ouest et un déficit fréquentiel sur le pourtour méditerranéen. Cette cohérence avec la réalité mesurée témoigne d’une représentation satisfaisante des forçages dynamiques (transport d’humidité par les flux d’ouest, soulèvement orographique, circulation de basse couche en Méditerranée). 
+
+
+#### Variabilité saisonnière et représentation des extrêmes
+
+La capacité d’AROME à restituer la fréquence et la quantité de précipitations se maintient tout au long de l’année, mais la performance chute pour la moyenne des maxima journaliers en été et davantage à l’échelle horaire. On retrouve le fait qu'AROME sous-estime des précipitations d'intensité élévées (> 40 mm/h [@Caillaud2021]) La convection estivale reste partiellement sous‑résolue malgré la résolution spatiale de 2,5 km. Dans cette étude, on a pu montrer (résultats non affichés) que la corrélation augmente lorsque la fenêtre temporelle s'agrandit à 6 ou 9h. Le modèle pourrait reproduire la cellule orageuse en démarrant trop tard ou trop tôt, en étalant l’intensité sur plusieurs mailles ou en sous‑estimant les précipitations maximales. Le pas de 2–3 km est une étape majeure pour représenter la convection sans paramétrage, mais il reste trop grossier pour certaines applications sensibles aux maxima intenses [@Prein2015Review]. Il aurait été intéressant d'introduire les données COMEPHORE (1 km, 15 min) de Météo-France dans cette étude mais les réanalyses ne débutent qu'en 1997.
+
+
+## Remerciements {.unnumbered}
+
+Je tiens à remercier Juliette Blanchet et Antoine Blanc pour l'encadrement rigoureux, stimulant et bienveillant tout au long de ce stage. Leurs conseils avisés, leur disponibilité constante et leurs nombreuses remarques constructives m'ont permis d’approfondir considérablement mes compétences scientifiques et méthodologiques. Leur implication a rendu ce stage particulièrement enrichissant et motivant. Je leur suis reconnaissant pour leur confiance et leur soutien tout au long de ce travail.
+
 
 ## References {.unnumbered}
 
@@ -156,188 +742,67 @@ information such as relative contributions of the authors may be added here
 
 :::
 
-{{< pagebreak >}}
+\newpage
 
-## More technical details {#sec-techdetails .unnumbered}
+## Annexes 1 : formules mathématiques {.unnumbered}
 
-:::{.callout}
-
-Appendices can be included after the bibliography (with a page break). Each
-section within the appendix should have a proper section title (rather than
-just _Appendix_).
-
-For more technical style details, please check out JSS's style FAQ at
-[https://www.jstatsoft.org/pages/view/style#frequently-asked-questions]
-which includes the following topics:
-
-- Title vs. sentence case.
-- Graphics formatting.
-- Naming conventions.
-- Turning JSS manuscripts into [R]{.proglang} package vignettes.
-- Trouble shooting.
-- Many other potentially helpful details…
-
-:::
-
-## Using BibTeX {#sec-bibtex .unnumbered}
-
-:::{.callout}
-
-References need to be provided in a {{< bibtex >}} file (`.bib`). All
-references should be made with `@cite` syntax. This commands yield different
-formats of author-year citations and allow to include additional details (e.g.,pages, chapters, \dots) in brackets. In case you are not familiar with these
-commands see the JSS style FAQ for details.
-
-Cleaning up {{< bibtex >}} files is a somewhat tedious task -- especially
-when acquiring the entries automatically from mixed online sources. However,
-it is important that informations are complete and presented in a consistent
-style to avoid confusions. JSS requires the following format.
-
-- item JSS-specific markup (`\proglang`, `\pkg`, `\code`) should be used in the references.
-- item Titles should be in title case.
-- item Journal titles should not be abbreviated and in title case.
-- item DOIs should be included where available.
-- item Software should be properly cited as well. For [R]{.proglang} packages `citation("pkgname")` typically provides a good starting point.
-
-:::
+### A.1.1. Obtention de (1)  {.unnumbered}
 
 
-## Annexes
+Soit la fonction de vraisemblance ${\displaystyle {\mathcal {L}}(\theta ;x)} : {\displaystyle \theta \mapsto f(x;\theta )}$. Alors : ${\displaystyle \log {\mathcal {L}}(\theta ;x_{1},x_{2},\dots ,x_{n})=\sum _{i=1}^{n}\log {\mathcal {L}}(\theta ;x_{i})}$.
 
-<style>
-  /* Reset complet de la grille */
-  table.no-gutter {
-    border-collapse: collapse;   /* fusionne bordures */
-    border-spacing: 0;           /* espacement nul */
-    margin: 0;
-    padding: 0;
-  }
-  table.no-gutter th,
-  table.no-gutter td {
-    border: none;                /* pas de lignes */
-    margin: 0;
-    padding: 0;                  /* pas de marge interne */
-  }
-  table.no-gutter th {
-    text-align: center;
-  }
-  table.no-gutter img {
-    display: block;              /* pas d’espace bas */
-    margin: 0;
-    padding: 0;
-    width: 300px;                /* ajustez selon besoin */
-    height: 300px;
-  }
+Pour $1 + \xi \frac{x - \mu}{\sigma} > 0$, avec $\sigma > 0$ :
 
-figure { margin: 0; text-align: center; }
-figcaption { margin-top: .3rem; font-size: .9rem; }
-</style>
+$$
+\begin{aligned}
+\log \mathcal{L}(\theta)
+&= \sum_{i=1}^n \left[
+  -\log \sigma
+  - \frac{1 + \xi}{\xi} \log\left(1 + \xi \frac{x_i - \mu}{\sigma} \right)
+  - \left(1 + \xi \frac{x_i - \mu}{\sigma} \right)^{-\frac{1}{\xi}}
+\right] \\
+\log \mathcal{L}(\theta)
+&= -n \log \sigma
+- \left(1 + \frac{1}{\xi}\right) \sum_{i=1}^n \log\left(1 + \xi \frac{x_i - \mu}{\sigma} \right)
+- \sum_{i=1}^n \left(1 + \xi \frac{x_i - \mu}{\sigma} \right)^{-\frac{1}{\xi}}
+\end{aligned}
+$$
 
-<table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
-    <thead>
-        <tr>
-            <th></th>
-            <th>AROME</th>
-            <th>STATIONS</th>
-            <th>CORRESPONDANCE</th>
-            <th>METRIQUE</th>
-            <th>LEGEND</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>HYDRO</td>
-            <td><img src="outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/mod_norast.svg"></td>
-            <td><img src="outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_norast.svg"></td>
-            <td><img src="outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/scatter.svg"></td>
-            <td></td>
-            <td><object type="image/svg+xml" data="outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/legend.svg"
-            width="40" height="600" class="legend-svg"></object></td>
-        </tr>
-        <tr>
-            <td>SON</td>
-            <td><img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/son/mod_norast.svg"></td>
-            <td><img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/son/obs_norast.svg"></td>
-            <td><img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/son/scatter.svg"></td>
-            <td></td>
-            <td rowspan="4" style="vertical-align: middle; text-align: center;">
-            <object type="image/svg+xml" data="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/legend.svg"
-            width="40" height="600" class="legend-svg"></object>
-            </td>
-        </tr>
-        <tr>
-            <td>DJF</td>
-            <td><img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/djf/mod_norast.svg"></td>
-            <td><img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/djf/obs_norast.svg"></td>
-            <td><img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/djf/scatter.svg"></td>
-            <td></td>
-        </tr>
-        <tr>
-            <td>MAM</td>
-            <td><img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/mam/mod_norast.svg"></td>
-            <td><img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/mam/obs_norast.svg"></td>
-            <td><img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/mam/scatter.svg"></td>
-            <td></td>
-        </tr>
-        <tr>
-            <td>JJA</td>
-            <td><img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/jja/mod_norast.svg"></td>
-            <td><img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/jja/obs_norast.svg"></td>
-            <td><img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/jja/scatter.svg"></td>
-            <td></td>
-        </tr>
-    </tbody>
-</table>
+La log-vraisemblance $\ell(\theta) = \log \mathcal{L}(\theta)$ s’écrit alors :
+
+$$
+\ell(\theta)=
+-\sum_{i=1}^n\Bigl[
+\log\sigma
++\Bigl(1+\tfrac1{\xi}\Bigr)\log (1+\xi\;\frac{x_i-\mu}{\sigma})
++(1+\xi\;\frac{x_i-\mu}{\sigma})^{-\frac{1}{\xi}}
+\Bigr]
+\tag{1}
+$$
+
+### A.1.2. Obtention des paramètres  {.unnumbered}
+
+$\mu_1(z_{T,1})$ et $\sigma_1(z_{T,1})$
 
 
-    <tr>
-        <td>
-        <a href="presentation_files/map/horaire_MAI_rast_mod.svg" target="_blank" rel="noopener">
-            <img src="presentation_files/map/horaire_MAI_norast_mod.svg" alt="En cours de calcul">
-        </a>
-        </td>
-        <td>
-        <a href="presentation_files/map/horaire_JUI_rast_mod.svg" target="_blank" rel="noopener">
-            <img src="presentation_files/map/horaire_JUI_norast_mod.svg" alt="En cours de calcul">
-        </a>
-        </td>
-        <td>
-        <a href="presentation_files/map/horaire_JUILL_rast_mod.svg" target="_blank" rel="noopener">
-            <img src="presentation_files/map/horaire_JUILL_norast_mod.svg" alt="En cours de calcul">
-        </a>
-        </td>
-        <td>
-        <a href="presentation_files/map/horaire_AOU_rast_mod.svg" target="_blank" rel="noopener">
-            <img src="presentation_files/map/horaire_AOU_norast_mod.svg" alt="En cours de calcul">
-        </a>
-        </td>
-    <td rowspan="2" style="vertical-align: middle; text-align: center;">
-    <object type="image/svg+xml" data="presentation_files/map/horaire_legend_1.svg"
-            width="40" height="600" class="legend-svg">
-    </object>
-    </td>
-    </tr>
-    <tr>
-      <td>
-        <a href="presentation_files/map/horaire_MAI_rast_obs.svg" target="_blank" rel="noopener">
-          <img src="presentation_files/map/horaire_MAI_norast_obs.svg" alt="En cours de calcul">
-        </a>
-      </td>
-      <td>
-        <a href="presentation_files/map/horaire_JUI_rast_obs.svg" target="_blank" rel="noopener">
-          <img src="presentation_files/map/horaire_JUI_norast_obs.svg" alt="En cours de calcul">
-        </a>
-      </td>
-      <td>
-        <a href="presentation_files/map/horaire_JUILL_rast_obs.svg" target="_blank" rel="noopener">
-          <img src="presentation_files/map/horaire_JUILL_norast_obs.svg" alt="En cours de calcul">
-        </a>
-      </td>
-      <td>
-        <a href="presentation_files/map/horaire_AOU_rast_obs.svg" target="_blank" rel="noopener">
-          <img src="presentation_files/map/horaire_AOU_norast_obs.svg" alt="En cours de calcul">
-        </a>
-      </td>
-    </tr>
-  </tbody>
-</table>
+En développant les paramètres soumis à un effet temporel, on a :
+
+$$
+\begin{aligned}
+\mu_0 + \mu_1 t &= z_{T,0} + z_{T,1} t - \dfrac{\sigma_0 + \sigma_1 t}{\xi_0} \left[ \left( -\log\left(1 - \frac{1}{T} \right) \right)^{-\xi_0} - 1 \right]\\
+\mu_0+\mu_1\,t &= \Bigl[\,z_{T,0}
+-\dfrac{\sigma_0}{\xi_0}\Bigl(\bigl[-\log(1-\tfrac1T)\bigr]^{-\xi_0}-1\Bigr)
+\Bigr]\;+\;\Bigl[\,z_{T,1}-\dfrac{\sigma_1}{\xi_0}\Bigl(\bigl[-\log(1-\tfrac1T)\bigr]^{-\xi_0}-1\Bigr)\Bigr]\,t\\
+\end{aligned}
+$$
+
+c’est-à-dire, terme à terme :
+
+$$
+\begin{aligned}
+\mu_0 &\;=\; z_{T,0}
+-\dfrac{\sigma_0}{\xi_0}\Bigl(\bigl[-\log(1-\tfrac1T)\bigr]^{-\xi_0}-1\Bigr),\\[0.8em]
+\mu_1 &\;=\; z_{T,1}
+-\dfrac{\sigma_1}{\xi_0}\Bigl(\bigl[-\log(1-\tfrac1T)\bigr]^{-\xi_0}-1\Bigr).
+\end{aligned}
+$$

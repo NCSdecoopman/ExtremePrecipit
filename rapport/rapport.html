@@ -109,7 +109,7 @@ window.Quarto = {
   <li><a href="#sec-bibtex" id="toc-sec-bibtex" class="nav-link" data-scroll-target="#sec-bibtex">Using BibTeX</a></li>
   <li><a href="#annexes" id="toc-annexes" class="nav-link" data-scroll-target="#annexes"><span class="header-section-number">5</span> Annexes</a></li>
   </ul>
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="rapport.pdf"><i class="bi bi-file-pdf"></i>PDF (jss)</a></li></ul></div></nav>
+</nav>
 </div>
 <main class="content" id="quarto-document-content">
 
@@ -431,198 +431,88 @@ Zeileis, Achim, Christian Kleiber, and Simon Jackman. 2008. <span>“Regression 
 </section>
 <section id="annexes" class="level2" data-number="5">
 <h2 data-number="5" class="anchored" data-anchor-id="annexes"><span class="header-section-number">5</span> Annexes</h2>
+<!-- Styles optionnels : ne seront appliqués que si le moteur Markdown accepte le HTML -->
 <style>
-  /* Reset complet de la grille */
-  table.no-gutter {
-    border-collapse: collapse;   /* fusionne bordures */
-    border-spacing: 0;           /* espacement nul */
-    margin: 0;
-    padding: 0;
-  }
-  table.no-gutter th,
-  table.no-gutter td {
-    border: none;                /* pas de lignes */
-    margin: 0;
-    padding: 0;                  /* pas de marge interne */
-  }
-  table.no-gutter th {
-    text-align: center;
-  }
-  table.no-gutter img {
-    display: block;              /* pas d’espace bas */
-    margin: 0;
-    padding: 0;
-    width: 300px;                /* ajustez selon besoin */
-    height: 300px;
-  }
+table.no-gutter {
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin: 0;
+  padding: 0;
+}
+table.no-gutter th,
+table.no-gutter td {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+table.no-gutter th { text-align: center; }
+table.no-gutter img { display: block; margin: 0; padding: 0; width:300px; height:300px; }
 
 figure { margin: 0; text-align: center; }
-figcaption { margin-top: .3rem; font-size: .9rem; }
+figcaption { margin-top:.3rem; font-size:.9rem; }
 </style>
-<table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 11%">
+<col style="width: 15%">
+<col style="width: 25%">
+<col style="width: 15%">
+<col style="width: 12%">
+</colgroup>
 <thead>
-<tr>
-<th>
-</th>
-<th>
-AROME
-</th>
-<th>
-STATIONS
-</th>
-<th>
-CORRESPONDANCE
-</th>
-<th>
-METRIQUE
-</th>
-<th>
-LEGEND
-</th>
+<tr class="header">
+<th></th>
+<th>AROME</th>
+<th>STATIONS</th>
+<th>CORRESPONDANCE</th>
+<th>METRIQUE</th>
+<th>LEGEND</th>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td>
-HYDRO
-</td>
-<td>
-<img src="outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/mod_norast.svg">
-</td>
-<td>
-<img src="outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_norast.svg">
-</td>
-<td>
-<img src="outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/scatter.svg">
-</td>
-<td>
-</td>
-<td>
-<object type="image/svg+xml" data="outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/legend.svg" width="40" height="600" class="legend-svg">
-</object>
-</td>
+<tr class="odd">
+<td><strong>HYDRO</strong></td>
+<td><embed src="outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/mod_norast.pdf" class="img-fluid"></td>
+<td><embed src="outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_norast.pdf" class="img-fluid"></td>
+<td><embed src="outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/scatter.pdf" class="img-fluid"></td>
+<td></td>
+<td><object type="image/svg+xml" data="outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/legend.pdf" width="40" height="600"></object></td>
 </tr>
-<tr>
-<td>
-SON
-</td>
-<td>
-<img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/son/mod_norast.svg">
-</td>
-<td>
-<img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/son/obs_norast.svg">
-</td>
-<td>
-<img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/son/scatter.svg">
-</td>
-<td>
-</td>
-<td rowspan="4" style="vertical-align: middle; text-align: center;">
-<object type="image/svg+xml" data="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/legend.svg" width="40" height="600" class="legend-svg">
-</object>
-</td>
+<tr class="even">
+<td><strong>SON</strong></td>
+<td><embed src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/son/mod_norast.pdf" class="img-fluid"></td>
+<td><embed src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/son/obs_norast.pdf" class="img-fluid"></td>
+<td><embed src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/son/scatter.pdf" class="img-fluid"></td>
+<td></td>
+<td><object type="image/svg+xml" data="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/legend.pdf" width="40" height="600"></object></td>
 </tr>
-<tr>
-<td>
-DJF
-</td>
-<td>
-<img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/djf/mod_norast.svg">
-</td>
-<td>
-<img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/djf/obs_norast.svg">
-</td>
-<td>
-<img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/djf/scatter.svg">
-</td>
-<td>
-</td>
+<tr class="odd">
+<td><strong>DJF</strong></td>
+<td><embed src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/djf/mod_norast.pdf" class="img-fluid"></td>
+<td><embed src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/djf/obs_norast.pdf" class="img-fluid"></td>
+<td><embed src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/djf/scatter.pdf" class="img-fluid"></td>
+<td></td>
+<td></td>
 </tr>
-<tr>
-<td>
-MAM
-</td>
-<td>
-<img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/mam/mod_norast.svg">
-</td>
-<td>
-<img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/mam/obs_norast.svg">
-</td>
-<td>
-<img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/mam/scatter.svg">
-</td>
-<td>
-</td>
+<tr class="even">
+<td><strong>MAM</strong></td>
+<td><embed src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/mam/mod_norast.pdf" class="img-fluid"></td>
+<td><embed src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/mam/obs_norast.pdf" class="img-fluid"></td>
+<td><embed src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/mam/scatter.pdf" class="img-fluid"></td>
+<td></td>
+<td></td>
 </tr>
-<tr>
-<td>
-JJA
-</td>
-<td>
-<img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/jja/mod_norast.svg">
-</td>
-<td>
-<img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/jja/obs_norast.svg">
-</td>
-<td>
-<img src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/jja/scatter.svg">
-</td>
-<td>
-</td>
+<tr class="odd">
+<td><strong>JJA</strong></td>
+<td><embed src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/jja/mod_norast.pdf" class="img-fluid"></td>
+<td><embed src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/jja/obs_norast.pdf" class="img-fluid"></td>
+<td><embed src="outputs/maps/stats_numday/quotidien/compare_4/sat_99.9/jja/scatter.pdf" class="img-fluid"></td>
+<td></td>
+<td></td>
 </tr>
 </tbody>
 </table>
-<pre><code>&lt;tr&gt;
-    &lt;td&gt;
-    &lt;a href="presentation_files/map/horaire_MAI_rast_mod.svg" target="_blank" rel="noopener"&gt;
-        &lt;img src="presentation_files/map/horaire_MAI_norast_mod.svg" alt="En cours de calcul"&gt;
-    &lt;/a&gt;
-    &lt;/td&gt;
-    &lt;td&gt;
-    &lt;a href="presentation_files/map/horaire_JUI_rast_mod.svg" target="_blank" rel="noopener"&gt;
-        &lt;img src="presentation_files/map/horaire_JUI_norast_mod.svg" alt="En cours de calcul"&gt;
-    &lt;/a&gt;
-    &lt;/td&gt;
-    &lt;td&gt;
-    &lt;a href="presentation_files/map/horaire_JUILL_rast_mod.svg" target="_blank" rel="noopener"&gt;
-        &lt;img src="presentation_files/map/horaire_JUILL_norast_mod.svg" alt="En cours de calcul"&gt;
-    &lt;/a&gt;
-    &lt;/td&gt;
-    &lt;td&gt;
-    &lt;a href="presentation_files/map/horaire_AOU_rast_mod.svg" target="_blank" rel="noopener"&gt;
-        &lt;img src="presentation_files/map/horaire_AOU_norast_mod.svg" alt="En cours de calcul"&gt;
-    &lt;/a&gt;
-    &lt;/td&gt;
-&lt;td rowspan="2" style="vertical-align: middle; text-align: center;"&gt;
-&lt;object type="image/svg+xml" data="presentation_files/map/horaire_legend_1.svg"
-        width="40" height="600" class="legend-svg"&gt;
-&lt;/object&gt;
-&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-  &lt;td&gt;
-    &lt;a href="presentation_files/map/horaire_MAI_rast_obs.svg" target="_blank" rel="noopener"&gt;
-      &lt;img src="presentation_files/map/horaire_MAI_norast_obs.svg" alt="En cours de calcul"&gt;
-    &lt;/a&gt;
-  &lt;/td&gt;
-  &lt;td&gt;
-    &lt;a href="presentation_files/map/horaire_JUI_rast_obs.svg" target="_blank" rel="noopener"&gt;
-      &lt;img src="presentation_files/map/horaire_JUI_norast_obs.svg" alt="En cours de calcul"&gt;
-    &lt;/a&gt;
-  &lt;/td&gt;
-  &lt;td&gt;
-    &lt;a href="presentation_files/map/horaire_JUILL_rast_obs.svg" target="_blank" rel="noopener"&gt;
-      &lt;img src="presentation_files/map/horaire_JUILL_norast_obs.svg" alt="En cours de calcul"&gt;
-    &lt;/a&gt;
-  &lt;/td&gt;
-  &lt;td&gt;
-    &lt;a href="presentation_files/map/horaire_AOU_rast_obs.svg" target="_blank" rel="noopener"&gt;
-      &lt;img src="presentation_files/map/horaire_AOU_norast_obs.svg" alt="En cours de calcul"&gt;
-    &lt;/a&gt;
-  &lt;/td&gt;
-&lt;/tr&gt;</code></pre>
-
-
 </section>
 
 </main>
