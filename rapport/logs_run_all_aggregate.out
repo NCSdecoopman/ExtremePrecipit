@@ -1,0 +1,2 @@
+nohup: ignoring input
+/home/decoopmn/miniconda3/envs/extremeprecipit/bin/python: Error while finding module specification for 'src.pipelines.run_all' (ModuleNotFoundError: No module named 'src')
