@@ -2,7 +2,7 @@
 title: "Annexes 2 : figures"
 
 table-of-contents: true
-toc-depth: 2         # profondeur max (#, ##) –‑ optionnel*
+toc-depth: 5         # profondeur max (#, ##) –‑ optionnel*
 toc-title: "Sommaire" 
 number-sections: true
 
@@ -81,8 +81,7 @@ def build_table(stats: str,
                 echelle: str,
                 sat: str,
                 seasons: list,
-                width: int = 250, height: int = 250,
-                legend_width: int = 30) -> str:
+                signif: bool = False) -> str:
     """
     Construit et renvoie le tableau Markdown.
     """
@@ -96,10 +95,12 @@ def build_table(stats: str,
         comp = f"compare_{len(seasons)}"
         base_season = base / comp / sat / season
 
-        mod_path = base_season / "mod_norast.pdf"
-        obs_path = base_season / "obs_norast.pdf"
-        legend_path = base / comp / sat / "legend.pdf"
-        metrics_path = base / comp / sat / "metrics.csv"
+        suffix = "_signif" if signif else ""
+
+        mod_path = base_season / f"mod{suffix}_norast.pdf"
+        obs_path = base_season / f"obs{suffix}_norast.pdf"
+        legend_path = base / comp / sat / f"legend{suffix}.pdf"
+        metrics_path = base / comp / sat / f"metrics{suffix}.csv"
 
         r, me, n = csv_cell(metrics_path, season)
 
@@ -131,9 +132,9 @@ def build_table(stats: str,
 
 \newpage
 
-# Nombre moyen de jour de pluie (seuil 1 mm/j) par année hydrologique issu de Données journalières (1959-2022)
+# Nombre moyen de jour de pluie (seuil 1 mm/j)
 
-Saturation des 0.1% valeurs les plus extrêmes.
+## Données journalières (1959-2022) 
 
 ```{python}
 build_table(
@@ -143,11 +144,37 @@ build_table(
     sat     = "sat_99.9",
     seasons = ["hydro"]
 )
+
+build_table(
+    stats   = "stats",
+    col     = "numday",
+    echelle = "quotidien",
+    sat     = "sat_99.9",
+    seasons = ["son", "djf", "mam", "jja"]
+)
+```
+
+## Données journalières (1990-2022) 
+
+```{python}
+build_table(
+    stats   = "stats",
+    col     = "numday",
+    echelle = "quotidien_reduce",
+    sat     = "sat_99.9",
+    seasons = ["hydro"]
+)
+
+build_table(
+    stats   = "stats",
+    col     = "numday",
+    echelle = "quotidien_reduce",
+    sat     = "sat_99.9",
+    seasons = ["son", "djf", "mam", "jja"]
+)
 ```
 
 # Cumul moyen des précipitations par année hydrologique
-
-Saturation des 1% valeurs les plus extrêmes.
 
 ## Données journalières (1959-2022) 
 
@@ -156,6 +183,18 @@ build_table(
     stats   = "stats",
     col     = "mean",
     echelle = "quotidien",
+    sat     = "sat_99.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+```
+
+## Données journalières (1990-2022) 
+
+```{python}
+build_table(
+    stats   = "stats",
+    col     = "mean",
+    echelle = "quotidien_reduce",
     sat     = "sat_99.0",
     seasons = ["hydro", "son", "djf", "mam", "jja"]
 )
@@ -175,8 +214,6 @@ build_table(
 
 # Moyenne des maxima des précipitations
 
-Saturation des 0.5% valeurs les plus extrêmes.
-
 ## Données journalières (1959-2022)
     
 ```{python}
@@ -184,6 +221,18 @@ build_table(
     stats   = "stats",
     col     = "mean-max",
     echelle = "quotidien",
+    sat     = "sat_99.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+```
+
+## Données journalières (1990-2022)
+    
+```{python}
+build_table(
+    stats   = "stats",
+    col     = "mean-max",
+    echelle = "quotidien_reduce",
     sat     = "sat_99.0",
     seasons = ["hydro", "son", "djf", "mam", "jja"]
 )
@@ -203,14 +252,13 @@ build_table(
 
 
 
-
 # Tendances relatives du niveau de retour 10 ans estimée par le meilleur modèle
 
-Saturation des 1% valeurs les plus extrêmes.
-
 ## Données journalières (1959-2022)
     
-### Par année hydrologique
+### Par saison
+
+#### Toutes tendances
 
 ```{python}
 build_table(
@@ -222,7 +270,22 @@ build_table(
 )
 ```
 
-### Par saison
+#### Tendances significatives
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "z_T_p",
+    echelle = "quotidien",
+    sat     = "sat_99.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"],
+    signif=True
+)
+```
+
+### Par mois
+
+#### Toutes tendances
 
 ```{python}
 build_table(
@@ -234,11 +297,24 @@ build_table(
 )
 ```
 
+#### Tendances significatives
 
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "z_T_p",
+    echelle = "quotidien",
+    sat     = "sat_99.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"],
+    signif=True
+)
+```
 
 ## Données journalières (1990-2022)
     
-### Par année hydrologique
+### Par saison
+
+#### Toutes tendances
 
 ```{python}
 build_table(
@@ -250,7 +326,22 @@ build_table(
 )
 ```
 
-### Par saison
+#### Tendances significatives
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "z_T_p",
+    echelle = "quotidien_reduce",
+    sat     = "sat_99.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"],
+    signif=True
+)
+```
+
+### Par mois
+
+#### Toutes tendances
 
 ```{python}
 build_table(
@@ -259,127 +350,88 @@ build_table(
     echelle = "quotidien_reduce",
     sat     = "sat_99.0",
     seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
+)
+```
+
+#### Tendances significatives
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "z_T_p",
+    echelle = "quotidien_reduce",
+    sat     = "sat_99.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"],
+    signif=True
 )
 ```
 
 
 ## Données horaire (1990-2022)
     
-### Par année hydrologique
+### Par saison
+
+#### Toutes tendances
 
 ```{python}
 build_table(
     stats   = "gev",
     col     = "z_T_p",
     echelle = "horaire",
-    sat     = "sat_99.0",
+    sat     = "sat_90.0",
     seasons = ["hydro", "son", "djf", "mam", "jja"]
 )
 ```
 
-### Par saison
+#### Tendances significatives
 
 ```{python}
 build_table(
     stats   = "gev",
     col     = "z_T_p",
     echelle = "horaire",
-    sat     = "sat_99.0",
-    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
+    sat     = "sat_90.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"],
+    signif=True
 )
 ```
 
+### Par mois
 
-# Significativité de la tendance
-
-## Données journalières (1959-2022)
-    
-### Par année hydrologique
+#### Toutes tendances
 
 ```{python}
 build_table(
     stats   = "gev",
-    col     = "significant",
-    echelle = "quotidien",
-    sat     = "sat_100.0",
-    seasons = ["hydro", "son", "djf", "mam", "jja"]
-)
-```
-
-### Par saison
-
-```{python}
-build_table(
-    stats   = "gev",
-    col     = "significant",
-    echelle = "quotidien",
-    sat     = "sat_100.0",
-    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
-)
-```
-
-
-
-## Données journalières (1990-2022)
-    
-### Par année hydrologique
-
-```{python}
-build_table(
-    stats   = "gev",
-    col     = "significant",
-    echelle = "quotidien_reduce",
-    sat     = "sat_100.0",
-    seasons = ["hydro", "son", "djf", "mam", "jja"]
-)
-```
-
-### Par saison
-
-```{python}
-build_table(
-    stats   = "gev",
-    col     = "significant",
-    echelle = "quotidien_reduce",
-    sat     = "sat_100.0",
-    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
-)
-```
-
-
-## Données horaire (1990-2022)
-    
-### Par année hydrologique
-
-```{python}
-build_table(
-    stats   = "gev",
-    col     = "significant",
+    col     = "z_T_p",
     echelle = "horaire",
-    sat     = "sat_100.0",
-    seasons = ["hydro", "son", "djf", "mam", "jja"]
-)
-```
-
-### Par saison
-
-```{python}
-build_table(
-    stats   = "gev",
-    col     = "significant",
-    echelle = "horaire",
-    sat     = "sat_100.0",
+    sat     = "sat_90.0",
     seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
 )
 ```
 
+#### Tendances significatives
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "z_T_p",
+    echelle = "horaire",
+    sat     = "sat_90.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"],
+    signif=True
+)
+```
 
 
 # Meilleur modèle GEV
 
 ## Données journalières (1959-2022)
     
-### Par année hydrologique
+
+### Par saison
+
+#### Toutes tendances
 
 ```{python}
 build_table(
@@ -391,7 +443,22 @@ build_table(
 )
 ```
 
-### Par saison
+#### Tendances significatives
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "model",
+    echelle = "quotidien",
+    sat     = "sat_100.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"],
+    signif=True
+)
+```
+
+### Par mois
+
+#### Toutes tendances
 
 ```{python}
 build_table(
@@ -403,11 +470,25 @@ build_table(
 )
 ```
 
+#### Tendances significatives
 
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "model",
+    echelle = "quotidien",
+    sat     = "sat_100.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"],
+    signif=True
+)
+```
 
 ## Données journalières (1990-2022)
     
-### Par année hydrologique
+
+### Par saison
+
+#### Toutes tendances
 
 ```{python}
 build_table(
@@ -419,7 +500,22 @@ build_table(
 )
 ```
 
-### Par saison
+#### Tendances significatives
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "model",
+    echelle = "quotidien_reduce",
+    sat     = "sat_100.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"],
+    signif=True
+)
+```
+
+### Par mois
+
+#### Toutes tendances
 
 ```{python}
 build_table(
@@ -428,13 +524,29 @@ build_table(
     echelle = "quotidien_reduce",
     sat     = "sat_100.0",
     seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
+)
+```
+
+#### Tendances significatives
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "model",
+    echelle = "quotidien_reduce",
+    sat     = "sat_100.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"],
+    signif=True
 )
 ```
 
 
 ## Données horaire (1990-2022)
     
-### Par année hydrologique
+
+### Par saison
+
+#### Toutes tendances
 
 ```{python}
 build_table(
@@ -446,7 +558,22 @@ build_table(
 )
 ```
 
-### Par saison
+#### Tendances significatives
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "model",
+    echelle = "horaire",
+    sat     = "sat_100.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"],
+    signif=True
+)
+```
+
+### Par mois
+
+#### Toutes tendances
 
 ```{python}
 build_table(
@@ -458,6 +585,28 @@ build_table(
 )
 ```
 
+#### Tendances significatives
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "model",
+    echelle = "horaire",
+    sat     = "sat_100.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"],
+    signif=True
+)
+```
+
+# Exemple de séries temporelles des précipitations maximales aux différentes échelles d'une station
+
+Station Météo-France de Saint-Marcel-lès-Valence (44°58'48.6"N 4°55'52.8"E) dans la Vallée du Rhône.
+
+![](../outputs/series/26313001_serie.png)
+
+Modèle selectionné dans l'ordre d'affichage des graphiques : $M_1^\ast$, $M_1$, $M_3$.
+
+<!--
 
 # Corrélation entre les données AROME et les stations
 
@@ -595,7 +744,7 @@ plot_r_by_season(combined,
                  col_value='z_T_p')
 ```
 
-<!--
+
 
 # Nuage de points des tendances relatives du niveau de retour 10 ans entre les données AROME et les stations
 
@@ -689,6 +838,7 @@ build_markdown(
 
 ## Données horaires (1990-2022)
 
+
 ```{python}
 build_markdown(
     stats   = "gev",
@@ -705,5 +855,90 @@ build_markdown(
     seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
 )
 ```
+
+
+# Significativité de la tendance
+
+## Données journalières (1959-2022)
+    
+### Par saison
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "significant",
+    echelle = "quotidien",
+    sat     = "sat_100.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+```
+
+### Par mois
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "significant",
+    echelle = "quotidien",
+    sat     = "sat_100.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
+)
+```
+
+
+
+## Données journalières (1990-2022)
+    
+### Par saison
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "significant",
+    echelle = "quotidien_reduce",
+    sat     = "sat_100.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+```
+
+### Par mois
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "significant",
+    echelle = "quotidien_reduce",
+    sat     = "sat_100.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
+)
+```
+
+
+## Données horaire (1990-2022)
+    
+### Par saison
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "significant",
+    echelle = "horaire",
+    sat     = "sat_100.0",
+    seasons = ["hydro", "son", "djf", "mam", "jja"]
+)
+```
+
+### Par mois
+
+```{python}
+build_table(
+    stats   = "gev",
+    col     = "significant",
+    echelle = "horaire",
+    sat     = "sat_100.0",
+    seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
+)
+```
+
 
 -->

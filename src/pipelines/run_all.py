@@ -117,17 +117,17 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 # # -------------------------- GEV --------------------------
 # ############################################################
 
-# Pipeline GEV
-# log(f"Lancement du traitement stats to gev")
+# # Pipeline GEV
+# log(f"Lancement du traitement gev")
 
-# for setting in ["config/observed_settings.yaml", "config/modelised_settings.yaml"]:#, 
+# for setting in ["config/modelised_settings.yaml"]:#, "config/observed_settings.yaml",
 
-#     for echelle in ["quotidien", "horaire"]:
+#     for echelle in ["horaire"]: #"quotidien", 
 
 #         if echelle == "quotidien":            
 #             DIFFERENTE_PERIODE = [False, True]
 #         else:            
-#             DIFFERENTE_PERIODE = [False]
+#             DIFFERENTE_PERIODE = [True] #False
             
         
 #         for diffente_periode in DIFFERENTE_PERIODE:
@@ -138,13 +138,20 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 #                     "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
 #                     "ns_gev_m1_break_year", "ns_gev_m2_break_year", "ns_gev_m3_break_year" # Non stationnaire avec point de rupture
 #                     ]
+#             elif echelle == "horaire" and diffente_periode:
+#                 MODELS = [
+#                     "s_gev", # Stationnaire
+#                     "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
+#                     "ns_gev_m1_break_year", "ns_gev_m2_break_year", "ns_gev_m3_break_year" # Non stationnaire avec point de rupture
+#                     ]
+#                 SEASONS = ["hydro", "son", "djf", "mam", "jja"]
 #             else:
 #                 MODELS = [
 #                     "s_gev", # Stationnaire
 #                     "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
 #                     ]
 
-#             for season in SEASONS: 
+#             for season in ["fev", "nov"]: #in SEASONS
 #                 for model in MODELS:
                 
 #                     subprocess.run(
@@ -194,16 +201,16 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 # # -------------------------- MAPPING -----------------------
 # ############################################################
 
-# Pipeline maps
+# # Pipeline maps
 log(f"Lancement des générations de maps")
 
 
-for data_type in ["stats"]: # , "gev"
+for data_type in ["gev"]: # "stats", 
                 
     if data_type == "stats":
-        COL_CALCULATE = ["mean", "mean-max"] # "numday", 
+        COL_CALCULATE = ["numday", "mean", "mean-max"] # 
     elif data_type == "gev":
-        COL_CALCULATE = ["z_T_p", "significant", "model"]
+        COL_CALCULATE = ["z_T_p"] # "significant", "model"
 
     for col_calculate in COL_CALCULATE:
 
@@ -213,10 +220,15 @@ for data_type in ["stats"]: # , "gev"
             sat = 99.9
         elif col_calculate in ["z_T_p"]:
             sat = 99
+
         else:
             sat = 100
                 
-        for echelle in ["quotidien", "horaire"]: #
+        for echelle in ["horaire_reduce"]: # "quotidien", "horaire"
+
+            if col_calculate in ["z_T_p"]:
+                if echelle=="horaire":
+                    sat = 90
 
             if echelle == "quotidien":            
                 DIFFERENTE_PERIODE = [False, True]
@@ -231,7 +243,7 @@ for data_type in ["stats"]: # , "gev"
                     else:
                         SEASON_GENERATE = [["hydro", *SEASON_SEAS]]
                 else:
-                    SEASON_GENERATE = [["hydro", *SEASON_SEAS], SEASON_MONTHS]
+                    SEASON_GENERATE = [["fev"]] # [["hydro", *SEASON_SEAS], SEASON_MONTHS]
 
                 for s in SEASON_GENERATE:
                 

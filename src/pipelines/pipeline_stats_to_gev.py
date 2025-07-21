@@ -484,8 +484,11 @@ def pipeline_gev_from_statisticals(config, max_workers: int=48, n_bootstrap: int
             sys.exit(1)
 
         # Paramètre de chargement des données
-        if reduce_activate:
+        if reduce_activate and echelle == "quotidien":
             mesure, min_year, max_year, len_serie = years_to_load("reduce", season, input_dir)
+            suffix_save = "_reduce"
+        elif reduce_activate and echelle == "horaire":
+            mesure, min_year, max_year, len_serie = years_to_load("horaire_reduce", season, input_dir)
             suffix_save = "_reduce"
         else:
             mesure, min_year, max_year, len_serie = years_to_load(echelle, season, input_dir)

@@ -1,5 +1,5 @@
 import argparse
-import shutil
+import os
 from pathlib import Path
 from typing import Sequence, Mapping, Tuple, Optional
 
@@ -13,6 +13,8 @@ from app.utils.data_utils import match_and_compare
 import numpy as np
 import pandas as pd
 import polars as pl
+
+import seaborn as sns
 
 def import_data_stat(
     season,
@@ -86,8 +88,12 @@ def import_data_gev(
             modelised = pl.read_parquet(path_dir)
             modelised = add_metadata(modelised, scale, type='modelised')
         elif "observed" in str(gev_dir):
-            observed = pl.read_parquet(path_dir)
-            observed = add_metadata(observed, scale, type='observed')          
+            # Vérifie d’abord que gev_dir (ou path_dir) existe
+            if os.path.exists(path_dir):
+                observed = pl.read_parquet(path_dir)
+                observed = add_metadata(observed, scale, type='observed')
+            else:
+                observed = None       
      
     return {
         "modelised": modelised,
@@ -579,7 +585,8 @@ def generate_maps(
         cb2 = fig2.colorbar(sm2, cax=ax2, spacing = "proportional")
         cb2.ax.set_ylabel(f"{legend}", rotation=90, fontsize=20)
 
-    name_legend = "legend"
+    suffix_signif = "_signif" if show_signif else ""
+    name_legend = f"legend{suffix_signif}"
     fig2.savefig(dir_path / f"{name_legend}.svg", format="svg", bbox_inches="tight", pad_inches=0)
     fig2.savefig(dir_path / f"{name_legend}.pdf", format="pdf", bbox_inches="tight", pad_inches=0)
     plt.close(fig2)
@@ -588,83 +595,173 @@ def generate_maps(
 
 def generate_scatter(
     datasets,
-    dir_path: str,
+    dir_path: Path,
     col_calculate: str,
     echelle: str,
-    scale: str
+    show_signif: bool,
+    scale: str,
+    generate_violon: bool=False
 ):
     if col_calculate not in ["significant", "model"]:
 
-        # Initialiser la liste avant la boucle (à mettre hors de la boucle, une seule fois)
-        metrics = []  
+        metrics = []
+        violin_rows = []
+
         df_obs_vs_mod = pl.read_csv(f"data/metadonnees/obs_vs_mod/obs_vs_mod_{echelle}.csv")
 
         for d in datasets:
-            mod = d.get("modelised")
-            obs = d.get("observed")
+            mod = d.get("modelised")    # pl.DataFrame
+            obs = d.get("observed")     # pl.DataFrame
             col = d.get("column")
             season = d.get("season")
 
+            if show_signif:
+                mod = mod.filter(pl.col("significant") == True)
+                obs = obs.filter(pl.col("significant") == True)
+
             obs_vs_mod = match_and_compare(obs, mod, col, df_obs_vs_mod)
 
+            if obs_vs_mod.is_empty():
+                logger.warning(f"Aucune donnée après filtrage pour {echelle} {season} - {col_calculate} - signif {show_signif}")
+                continue
+
+            # Légende unités
             if col_calculate == "numday":
                 legend = "jours"
             elif col_calculate == "z_T_p":
                 legend = "%"
             else:
                 legend = scale.replace('_', '/')
-    
-            # Chemin de sortie
+
+            # ----- SCATTER -----
             season_dir = dir_path / season
             season_dir.mkdir(parents=True, exist_ok=True)
 
             x = obs_vs_mod["AROME"].to_numpy()
             y = obs_vs_mod["Station"].to_numpy()
 
-            # Calcul de la limite maximale commune
             max_lim = np.max([x.max(), y.max()])
 
-            # Figure
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.scatter(
                 x, y,
                 label="Données",
-                alpha=0.5,    # transparence
-                s=20,         # taille des points
-                facecolor="black", # couleur de remplissage
-                edgecolor="white", # couleur du contour
-                linewidth=0.5      # épaisseur du contour
+                alpha=0.5,
+                s=20,
+                facecolor="black",
+                edgecolor="white",
+                linewidth=0.5
             )
-            ax.plot(
-                [0, max_lim], [0, max_lim],
-                linewidth=1, color="red",
-                label="y = x"
-            )
-
+            ax.plot([0, max_lim], [0, max_lim], linewidth=1, color="red", label="y = x")
             ax.set_xlabel(f"AROME ({legend})")
             ax.set_ylabel(f"Stations ({legend})")
-            ax.set_aspect("equal")           # carré pour lire la pente 1:1
-
+            ax.set_aspect("equal")
             ax.set_xlim(0, max_lim)
             ax.set_ylim(0, max_lim)
-
-            fig.savefig(season_dir / f"scatter.svg", format="svg", bbox_inches="tight", pad_inches=0)
-            fig.savefig(season_dir / f"scatter.pdf", format="pdf", bbox_inches="tight", pad_inches=0)
+            fig.savefig(season_dir / "scatter.svg", format="svg", bbox_inches="tight", pad_inches=0)
+            fig.savefig(season_dir / "scatter.pdf", format="pdf", bbox_inches="tight", pad_inches=0)
             plt.close(fig)
-            logger.info(season_dir / f"scatter.svg")
+            logger.info(season_dir / "scatter.svg")
 
+            # ----- METRICS -----
             me = np.mean(x - y)
             corr = np.corrcoef(x, y)[0, 1] if len(x) > 1 else np.nan
             n = len(x)
-            
             mean_mod = obs_vs_mod.select(pl.col("AROME").mean()).to_numpy()
             mean_obs = obs_vs_mod.select(pl.col("Station").mean()).to_numpy()
-            delta = me / np.mean([mean_mod, mean_obs]) # écart relatif
+            delta = me / np.mean([mean_mod, mean_obs])
 
-            metrics.append({"echelle": echelle, "col_calculate": col_calculate, "season": season, "n": n, "r": corr, "me": me, "delta": delta})
+            metrics.append({
+                "echelle": echelle,
+                "col_calculate": f"{col_calculate}",
+                "season": season,
+                "n": n,
+                "r": corr,
+                "me": me,
+                "delta": delta
+            })
 
-            pd.DataFrame(metrics).to_csv(dir_path/"metrics.csv", index=False)
-            logger.info(f"{dir_path}/metrics.csv")
+            # ----- COLLECTE POUR VIOLIN PLOT -----
+            arome_vals = obs_vs_mod["AROME"].to_numpy()
+            station_vals = obs_vs_mod["Station"].to_numpy()
+
+            for v in arome_vals:
+                violin_rows.append({"season": season, "source": "AROME", "value": v})
+            for v in station_vals:
+                violin_rows.append({"season": season, "source": "Stations", "value": v})
+
+        suffix = "_signif" if show_signif else ""
+        if metrics:
+            pd.DataFrame(metrics).to_csv(dir_path / f"metrics{suffix}.csv", index=False)
+            logger.info(f"{dir_path}/metrics{suffix}.csv")
+        else:
+            logger.warning(f"Aucun résultat significatif, fichier metrics{suffix}.csv non créé")
+
+    # violin + boxplot
+    if violin_rows and generate_violon:
+        df_violin = pd.DataFrame(violin_rows)
+        seasons = df_violin["season"].unique()
+        counts  = df_violin[df_violin.source == "AROME"].groupby("season").size()
+        ymin, ymax = df_violin["value"].min(), df_violin["value"].max()
+        offset = (ymax - ymin) * 0.05
+
+        fig, ax = plt.subplots(figsize=(10, 5))
+        # violin semi-transparent
+        sns.violinplot(
+            data=df_violin,
+            x="season", y="value", hue="source",
+            split=False, inner=None, cut=0,
+            scale="width", saturation=0.4, linewidth=1, ax=ax
+        )
+        # thick box inside
+        sns.boxplot(
+            data=df_violin,
+            x="season", y="value", hue="source",
+            dodge=True, width=0.25,
+            boxprops={'facecolor':'none','edgecolor':'black','linewidth':2,'zorder':3},
+            whiskerprops={'linewidth':2,'color':'black','zorder':3},
+            capprops={'linewidth':2,'color':'black','zorder':3},
+            medianprops={'linewidth':2,'color':'black','zorder':4},
+            showfliers=False, ax=ax
+        )
+
+        # --- AJOUT : ligne pointillée sur 0 ---
+        ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.8, zorder=5)
+        
+        # legend cleanup
+        handles, labels = ax.get_legend_handles_labels()
+        leg = ax.legend(
+            handles[:2], labels[:2],
+            title="",
+            loc='upper left',            # coin supérieur gauche
+            bbox_to_anchor=(0.01, 0.99), # léger padding
+            borderaxespad=0,
+            frameon=True
+        )
+
+        # s'assurer qu'elle est au-dessus
+        leg.set_zorder(20)
+        leg.set_alpha(0.9)               # fond légèrement transparent
+        leg.get_frame().set_facecolor('white')
+
+        # annotate n
+        ax.set_xticks(range(len(seasons)))
+        ax.set_xticklabels([s.upper() for s in seasons], rotation=45, ha='right')
+        for i, s in enumerate(seasons):
+            ax.text(i, ymax + offset, f"n={counts[s]}", ha='center', va='bottom', fontsize='small')
+
+        legend_texte = "Tendance relative" if "z_T_p" in col_calculate else col_calculate
+        ax.set_xlabel("")
+        ax.set_ylabel(f"{legend_texte} ({legend})")
+        fig.tight_layout()
+        fig.savefig(dir_path / f"violin{suffix}.svg", bbox_inches="tight")
+        fig.savefig(dir_path / f"violin{suffix}.pdf", bbox_inches="tight")
+        plt.close(fig)
+        logger.info(dir_path / f"violin{suffix}.svg")
+
+    else:
+        logger.warning("Pas de données pour le violin plot.")
+
 
 def main(args):
     global logger
@@ -681,6 +778,8 @@ def main(args):
     config_obs = load_config("config/observed_settings.yaml")
 
     datasets = []
+
+    SIGNIFICANT_SHOW = [False] # On affiche tous les points, pas d'histoire de significativité
 
     for e in echelle:
         
@@ -705,7 +804,7 @@ def main(args):
                     config_obs=config_obs,
                     scale=scale
                 )
-                SIGNIFICANT_SHOW = [False] # On affiche tous les points, pas d'histoire de significativité
+                
             
             elif data_type == "gev":
                 res = import_data_gev(
@@ -718,10 +817,8 @@ def main(args):
                     scale=scale
                 )
                 
-                if col_calculate not in ["significant"]:
-                    SIGNIFICANT_SHOW = [False, True] # On choisi d'afficher ou non les points significatifs
-                else:
-                    SIGNIFICANT_SHOW = [False]
+                if col_calculate in ["z_T_p", "model"]:
+                    SIGNIFICANT_SHOW = [False, True] # On choisi d'afficher ou non les points significatifs 
 
             logger.info(f"Echelle {e} - Saison {s} données générées")
             datasets.append(res)    # On range le résultat dans la bonne liste
@@ -753,13 +850,15 @@ def main(args):
                     scale=scale
                 )
 
-        generate_scatter(
-            datasets=datasets,
-            dir_path=dir_path,
-            col_calculate=col_calculate,
-            echelle=e,
-            scale=scale
-        )
+            generate_scatter(
+                datasets=datasets,
+                dir_path=dir_path,
+                col_calculate=col_calculate,
+                echelle=e,
+                show_signif=signif,
+                scale=scale,
+                generate_violon=False
+            )
 
 
 def str2bool(v):
@@ -772,7 +871,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pipeline de génération des représentation")
     parser.add_argument("--data_type", choices=["stats", "gev"])
     parser.add_argument("--col_calculate", choices=["numday", "mean", "mean-max", "z_T_p", "significant", "model"], default=None)
-    parser.add_argument("--echelle", choices=["horaire", "quotidien"], nargs='+', default=["horaire"])
+    parser.add_argument("--echelle", choices=["horaire", "quotidien", "horaire_reduce"], nargs='+', default=["horaire"])
     parser.add_argument("--season", type=str, nargs='+', default=["son"])
     parser.add_argument("--reduce_activate", type=str2bool, default=False)
     parser.add_argument("--sat", type=float, default=100)

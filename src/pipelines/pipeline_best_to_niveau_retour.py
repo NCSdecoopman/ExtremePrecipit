@@ -558,10 +558,16 @@ def main(config, args, T: int = 10):
             logger.error(f"Nom de fichier de configuration non reconnu : {model_path_name}")
 
         # Paramètre de chargement des données
-        if reduce_activate:
+        if reduce_activate and echelle == "quotidien":
             mesure, min_year, max_year, len_serie = years_to_load("reduce", season, input_dir)
+            suffix_save = "_reduce"
+        elif reduce_activate and echelle == "horaire":
+            mesure, min_year, max_year, len_serie = years_to_load("horaire_reduce", season, input_dir)
+            suffix_save = "_reduce"
         else:
             mesure, min_year, max_year, len_serie = years_to_load(echelle, season, input_dir)
+            suffix_save = ""
+            
         cols = ["NUM_POSTE", mesure, "nan_ratio"]
 
         logger.info(f"Chargement des données de {min_year} à {max_year} : {input_dir}")
