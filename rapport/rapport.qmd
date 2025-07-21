@@ -165,29 +165,38 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 
-base_dir = Path("../outputs")         # dossier racine à explorer
-csv_paths = list(base_dir.rglob("metrics.csv"))
+def combined_metrics_df(name_file: str):
+    base_dir = Path("../outputs")         # dossier racine à explorer
+    csv_paths = list(base_dir.rglob(name_file))
 
-frames = []
-for path in csv_paths:
-    try:
-        df = pd.read_csv(path)
-        df["source"] = str(path.relative_to(base_dir))  # garder la provenance
-        frames.append(df)
-    except Exception as exc:                             # CSV illisible
-        print(f"⚠️  Fichier ignoré {path}: {exc}")
+    frames = []
+    for path in csv_paths:
+        try:
+            df = pd.read_csv(path)
+            df["source"] = str(path.relative_to(base_dir))  # garder la provenance
+            frames.append(df)
+        except Exception as exc:                             # CSV illisible
+            print(f"⚠️  Fichier ignoré {path}: {exc}")
 
-if not frames:
-    raise SystemExit("Aucun metrics.csv trouvé !")
+    if not frames:
+        raise SystemExit("Aucun metrics.csv trouvé !")
 
-# Concaténation puis export
-combined = pd.concat(frames, ignore_index=True)
+    # Concaténation puis export
+    combined = pd.concat(frames, ignore_index=True)
 
-# on crée un masque pour les lignes où 'source' contient 'quotidien_reduce'
-mask = combined['source'].str.contains('quotidien_reduce', na=False)
+    # on crée un masque pour les lignes où 'source' contient 'quotidien_reduce'
+    mask = combined['source'].str.contains('quotidien_reduce', na=False)
 
-# on remplace 'quotidien' par 'quotidien_reduce' dans 'echelle' pour ces lignes
-combined.loc[mask & (combined['echelle'] == 'quotidien'), 'echelle'] = 'quotidien_reduce'
+    # on remplace 'quotidien' par 'quotidien_reduce' dans 'echelle' pour ces lignes
+    combined.loc[mask & (combined['echelle'] == 'quotidien'), 'echelle'] = 'quotidien_reduce'
+
+    return combined
+
+combined = combined_metrics_df("metrics.csv")
+combined_signif = combined_metrics_df("metrics_signif.csv")
+combined_signif["col_calculate"] = combined_signif["col_calculate"].astype(str) + "_signif"
+combined_all = pd.concat([combined, combined_signif], ignore_index=True)
+
 
 import math
 import numpy as np
@@ -221,7 +230,8 @@ def plot_r_by_season(
         "numday":  "Nombre de jour de pluie",
         "mean":    "Cumul de précipitations",
         "mean-max": "Moyenne des maxima",
-        "z_T_p":   "Tendance relative"
+        "z_T_p":   "Tendance significative et non significative",
+        "z_T_p_signif":   "Tendance significative"
     }
 
     # ---------------------------------------------
@@ -264,7 +274,7 @@ def plot_r_by_season(
         ordre_total = [
             "HYDRO", "SON", "DJF", "MAM", "JJA",
             "JAN", "FEV", "MAR", "AVR", "MAI",
-            "JUI", "JUIL", "AOU", "SEP", "OCT", "NOV", "DEC"
+            "JUI", "JUILL", "AOU", "SEP", "OCT", "NOV", "DEC"
         ]
         saisons_pres = [s for s in ordre_total if s in sub["season"].unique()]
 
@@ -311,9 +321,11 @@ def plot_r_by_season(
             x + largeur * (pivot.shape[1] - 1) / 2,
             pivot.index
         )
+        ax.tick_params(axis='x', rotation=45)   # Rotation ici
         ax.set_xlabel("")
         ax.set_ylabel("r")
         ax.set_title(label_map.get(col_value, col_value))   # titre lisible pour chaque subplot)
+        ax.set_ylim(top=1)   # <-- Forcer ymax à 1
 
         ax.yaxis.set_major_locator(mticker.MultipleLocator(0.1))
         ax.yaxis.set_minor_locator(mticker.MultipleLocator(0.02))
@@ -361,19 +373,23 @@ Le changement climatique entraine un réchauffement de l’air à la surface de 
 
 Dans l'objectif de dégager des tendances durables (changement climatique) en opposition aux variations naturelles (variabilité climatique), il convient d'utiliser des données issues de modèles de climat sur de longues périodes. Ces dernières années, l'utilisation des modèles régionaux de climat à haute résolution (CP-RCM pour Convection-Permitting Regional Climate Models, avec une résolution de 1 à 3 km) a marqué une avancée significative. Ces modèles simulent explicitement la convection profonde, ce qui leur permet de capturer des échelles spatio-temporelles plus fines. Cette approche ouvre de nouvelles perspectives prometteuses pour l'analyse climatique [@prein2015regional].
 
-L'objectif de cette étude est de caractériser et d’étudier les tendances de précipitations extrêmes horaires en France. Les précipitations extrêmes sont généralement définies de façon statistique, non par un seuil fixe, mais par leur caractère exceptionnel au regard de la climatologie locale. Une méthode courante consiste à considérer les maxima pour une période et un pas de temps donnés mesurés par les réseaux de pluviomètres [@blanchet2022instrumental].
+L'objectif de cette étude est de caractériser et d’étudier les tendances de précipitations extrêmes horaires en France. Les précipitations extrêmes sont généralement définies de façon statistique, non par un seuil fixe, mais par leur caractère exceptionnel au regard de la climatologie locale. Une méthode courante consiste à considérer les maxima pour une période et un pas de temps donnés [@blanchet2022instrumental].
 
 ## Méthodologie
 
 ### Données utilisées
 
-Dans cette étude, le modèle numérique Application of Research to Operations at MEsoscale (AROME) a été choisi [@caillaud2021simulation]. C'est un modèle CP-RCM de résolution spatiale 2,5km et temporelle 1h, forcé par réanalyse ERA5 [@hersbach2020era5] offrant des données de précipitations de 1959 à 2022. En parallèle, l'étude utilise aussi les données de précipitations issues d'observation Météo-France [@meteofrance2024] au pas de temps journalier (1959-2022) et horaire (1990-2022). L'ensemble des analyses qui suivent se font indépendamment entre les données modélisées par AROME et les données observées par les stations.
+Dans cette étude, le modèle numérique Application of Research to Operations at MEsoscale (AROME) a été choisi [@caillaud2021simulation]. C'est un modèle CP-RCM de résolution spatiale 2,5 km et temporelle 1h, forcé par réanalyse ERA5 [@hersbach2020era5] offrant des données de précipitations de 1959 à 2022. En parallèle, l'étude utilise aussi les données de précipitations issues d'observation Météo-France [@meteofrance2024] au pas de temps journalier (1959-2022) et horaire (1990-2022).
 
 ### Statistiques descriptives
 
-Par extraction, transformation et chargement, les statistiques descriptives suivantes sont générées : nombre de jour de pluie (seuil fixé à 1mm/j), cumul de précipitations, maximum de précipitations. Ceci en chaque point de grille AROME et chaque station Météo-France à partir des données journalières de 1959 à 2022 et 1990 à 2022 ; et des données horaires de 1990 à 2022, pour chaque année et chaque saison.
+Par extraction, transformation et chargement, les statistiques descriptives suivantes sont générées : nombre de jour de pluie (seuil fixé à 1mm/j), cumul de précipitations, maximum de précipitations. Ceci en chaque point de grille AROME et chaque station Météo-France à partir des données journalières de 1959 à 2022 et 1990 à 2022 ; et des données horaires de 1990 à 2022, pour chaque année et chaque saison (ou mois).
 
 Les saisons sont définies par **SON** pour septembre (**SEP**) octobre (**OCT**) novembre (**NOV**), **DJF** pour décembre (**DEC**) janvier (**JAN**) février (**FEV**), **MAM** pour mars (**MAR**) avril (**AVR**) mai (**MAI**), et **JJA** pour juin (**JUI**) juillet (**JUILL**) août (**AOU**). L'année hydrologique (**HYDRO**) est définie comme la période allant du 1er septembre de l'année N au 31 août de l'année N+1.
+
+### Filtrage des séries
+
+Pour chaque point géographique, chaque saison (ou mois) et chaque année, on calcul la part de données manquantes dans la série temporelle. On élimine toutes les années dont cette part dépasse le seuil fixé de 10%. On déduit le nombre d’années valides restantes. On ne garde que les points géographiques qui possèdent au moins le nombre minimal d’années exigé (50 ans pour les données journalières 1959-2022 et 25 ans pour les données journalières 1990-2022 et les données horaires 1990-2022). Les analyses suivantes ne portent plus que sur ce sous‑ensemble de stations et d’années : on travaille ainsi avec des séries suffisamment complètes et longues pour être fiables.
 
 ### Modélisation statistique
 
@@ -410,7 +426,7 @@ Ce codage permet d’appliquer une pente temporelle seulement après la date de 
 
 #### Modèles utilisés
 
-Soit la covariable temporelle $t \in \mathbb{N} \mid t_{\min} \leq t \leq t_{\max}$. Le **modèle stationnaire** est défini par :
+Soit la covariable $t \in \mathbb{N} \mid t_{\min} \leq t \leq t_{\max}$. Le **modèle stationnaire** est défini par :
 
 $$
 M_0(\theta_0) \quad \text{et} \quad \theta_0 = (\mu_0, \sigma_0, \xi_0) \quad
@@ -478,7 +494,7 @@ $$
 
 #### Vraisemblance et maximum de vraisemblance
 
-Soit la fonction de vraisemblance ${\displaystyle {\mathcal {L}}(\theta ;x)} : {\displaystyle \theta \mapsto f(x;\theta )}$. La log-vraisemblance $\ell(\theta) = \log \mathcal{L}(\theta)$ s’écrit après développement (Annexes 1.1) :
+Soit la fonction de vraisemblance ${\displaystyle {\mathcal {L}}(\theta ;x)} : {\displaystyle \theta \mapsto f(x;\theta )}$. La log-vraisemblance $\ell(\theta) = \log \mathcal{L}(\theta)$ s’écrit après développement (Annexes 1-1) :
 
 :::{.callout}
 
@@ -546,7 +562,7 @@ $$
 z_T(t) = z_{T,0} + z_{T,1} \cdot t
 $$
 
-En développant les paramètres soumis à un effet temporel et on regroupant terme à terme on peut montrer que (Annexes 1.2) :
+En développant les paramètres soumis à un effet temporel et on regroupant terme à terme on peut montrer que (Annexes 1-2) :
 
 $$
 \begin{aligned}
@@ -607,7 +623,7 @@ $$
         \le \chi^{2}_{1,\,1-\alpha} \Bigr\}
 $$
 
-où $\chi^2_{1,1-\alpha}$ est le quantile d’ordre $1 - \alpha$ d’une loi du $\chi^2$ à un degré de liberté. On fixe ici $\alpha=0{,}10$.
+où $\chi^2_{1,1-\alpha}$ est le quantile d’ordre $1 - \alpha$ d’une loi du $\chi^2$ à un degré de liberté. On fixe ici $\alpha=0{,}10$. Lorsque l'intervalle de confiance ne contient pas 0 alors $\hat{z}_{T,1}$ est significatif.
 
 ### Choix du meilleur modèle
 
@@ -628,25 +644,43 @@ Soit $\alpha=0{,}10$ le seuil d’intérêt. Si un des deux modèles $M_3$ ou $M
 
 ### Calcul des tendances
 
-A partir des niveaux de retour 10 ans ($T = 10$) la tendance relative (en %) est calculée via :
+A partir des niveaux de retour 10 ans ($T = 10$) la tendance relative (en %) est calculée via la formule ci-dessous. Un exemple de calcul est disponible en annexes 2-6.
 
 :::{.callout}
 
 $$
-\text{Tendance} = \frac{z_T^{2022} - z_T^{1985}}{z_T^{1985}} \cdot {100}
+\text{Tendance} = \frac{z_T^{2022} - z_T^{1995}}{z_T^{1995}} \cdot {100}
 $$
 
 :::
 
-#### Concordance
+### Concordance
 
 On évalue l'accord entre les statistiques descriptives et les tendances obtenues à partir des simulations du modèle AROME et celles observées dans la réalité. Pour ce faire, chaque station Météo-France est associée au point de grille AROME (2,5 km × 2,5 km) correspondant à sa localisation géographique. Cette correspondance permet de calculer la corrélation de Pearson (*r*) ainsi que l'erreur moyenne (*ME*) entre les valeurs observées et simulées.
+
+### Représentation cartographique
+
+Pour homogénéiser les amplitudes extrêmes entre jeux de données (AROME et données observées), on applique une saturation de couleur suivant la période étudiée. Soit une période $P \in \{\text{HYDRO}, \text{DJF},\text{MAM},\text{JJA},\text{SON}\}$ ou $P \in \{\text{JAN},\text{FEV},\text{MAR},\text{...},\text{OCT},\text{NOV},\text{DEC}\}$. Pour chaque données (nombre de jour de pluie, cumul, moyenne des maxima, tendance relative) $T_j$ avec $j \in P$, on calcule le *p*-ième percentile des valeurs absolues :
+
+$$
+s_j(P)=\operatorname{Quantile}_{p}\big(|T_j|\big)
+$$
+
+Le seuil commun de la période $P$ est défini par $S(P)=\max_j s_j(P)$. On remplace ensuite, pour toute valeur $x\in T_j$, $x \;\leftarrow\; \operatorname{sign}(x)\,\min\big(|x|,\,S(P)\big)$.
+
+On fixe $p$ de la manière suivante :
+
+- Pour le nombre de jour de pluie : $p = 99,9$ pour l'échelle journalière 1959-2022, 1990-2022 et l'échelle horaire 1990-2022.
+- Le cumul et la moyenne des maxima de précipitations : $p = 99,0$ pour l'échelle journalière 1959-2022, 1990-2022 et l'échelle horaire 1990-2022.
+- La tendance relative : $p = 99,0$ pour l'échelle journalière 1959-2022 et 1990-2022 et $p = 90,0$ pour l'échelle horaire 1990-2022.
+
+Les courbes de niveaux 400 et 800m sont représentées en trait fin.
 
 ## Résultats
 
 ### Évaluation de la climatologie des précipitations simulées par AROME
 
-Afin d’apprécier la capacité d’AROME à restituer le climat pluviométrique les données sont confrontées aux observations de stations suivant : le nombre de jours de pluie (seuil ≥ 1 mm/j), le cumul saisonnier des précipitations et la moyenne des maxima saisonnière des précipitations.
+Afin d’apprécier la capacité d’AROME à restituer le climat pluviométrique les données sont confrontées aux observations de stations pour : 1) le nombre saisonnier de jours de pluie (seuil ≥ 1 mm/j); 2) le cumul saisonnier des précipitations ; et 3) la moyenne des maxima saisonnière des précipitations.
 
 ```{python}
 jour_pluie = assemble(
@@ -691,7 +725,7 @@ La bordure atlantique sud‑ouest (Pyrénées, Aquitaine) et les Alpes du Nord r
 
 ##### Moyenne des maxima de précipitations journalières
 
-Les plus fortes pointes quotidiennes moyennes se rencontrent dans les Cévennes et plus généralement sur la face sud-est du Massif central (environ 100–125 mm/j). Les reliefs alpins et pyrénéens montrent aussi des maxima élevés (80–100 mm/j). La façade atlantique et le bassin parisien présentent des maxima plus modérés (30–60 mm/j), tandis que la Provence et la Côte d’Azur, malgré une fréquence moindre, peuvent localement connaître de très gros orages (40–80 mm/j en moyenne).
+Les plus fortes précipitations quotidiennes moyennes se rencontrent dans les Cévennes et plus généralement sur la face sud-est du Massif central (environ 100–125 mm/j). Les reliefs alpins et pyrénéens montrent aussi des maxima élevés (80–100 mm/j). La façade atlantique et le bassin parisien présentent des maxima plus modérés (30–60 mm/j), tandis que la Provence et la Côte d’Azur, malgré une fréquence moindre, peuvent localement connaître de très gros orages (40–80 mm/j en moyenne).
 
 | \small Nombre de jours de précipitations | \small Cumul des précipitations moyennes | \small Moyenne des maxima des précipitations |
 | :---: | :---: | :---: |
@@ -699,15 +733,15 @@ Les plus fortes pointes quotidiennes moyennes se rencontrent dans les Cévennes 
 | $r =$ `{python} f'{df_jour_pluie['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_jour_pluie['n'].iloc[0].item()}'`) | $r =$ `{python} f'{df_mean_pluie_jour['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_pluie_jour['n'].iloc[0].item()}'`) | $r =$ `{python} f'{df_mean_max_pluie_jour['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_max_pluie_jour['n'].iloc[0].item()}'`) |
 
 \begin{center}
-Figure 1: Climatologie et corrélation entre le modèle AROME et les stations Météo-France issues de données journalières allant de 1959 à 2022 pour une année hydrologique. Représentation en trait fin des courbes de niveaux 400 et 800m.
+Figure 1: Climatologie et corrélation entre le modèle AROME et les stations Météo-France issues de données journalières allant de 1959 à 2022 pour une année hydrologique.
 \end{center}
 
-#### Corrélation entre le modèle AROME et les stations Météo-France (Figure 2)
+#### Corrélation entre le modèle AROME et les stations Météo-France
 
-Quelle que soit la climatologie analysée, le modèle **AROME** reproduit fidèlement les observations, avec une corrélation minimale de **0,70**.
+Quelle que soit la climatologie analysée (Figure 2), le modèle AROME reproduit fidèlement les observations, avec une corrélation minimale de **0,70**.
 Indépendamment de l’échelle temporelle retenue — journalière (1959‑2022 ou 1990‑2022) ou horaire (1990‑2022) — et de la saison, les champs simulés s’accordent très bien avec les données mesurées : la corrélation varie entre **0,92** et **0,98** pour le nombre de jours de pluie et le cumul des précipitations.
 
-Cette performance se maintient pour la moyenne des maxima journaliers (périodes 1959‑2022 et 1990‑2022) sur l’année hydrologique, l’automne, l’hiver et le printemps, mais elle se dégrade en été, avec une corrélation de **0,85**. À l’échelle horaire, la qualité de l’estimation des maxima se détériore encore : la corrélation baisse de 0,4 à 0,8 point selon la saison pour l’année hydrologique, l’automne et l’hiver, et chute à environ **0,70** au printemps et **0,69** en été où $ME =$ `{python} f'{df_mean_max_pluie_horaire['me'].iloc[0].item():.3f}'` mm/h (`{python} f'{df_mean_max_pluie_horaire['delta'].iloc[0].item()*100:.1f}'`%). AROME tend donc à sous-estimer les précipitations extrêmes estivales, ce qui reste vrai aux autres saisons.
+Cette performance se maintient pour la moyenne des maxima journaliers (périodes 1959‑2022 et 1990‑2022) sur l’année hydrologique, l’automne, l’hiver et le printemps, mais elle se dégrade en été, avec une corrélation de **0,85**. À l’échelle horaire, la qualité de l’estimation des maxima se détériore encore : la corrélation baisse de 0,4 à 0,8 point selon la saison pour l’année hydrologique, l’automne et l’hiver, et chute à **0,70** au printemps et en été où $ME =$ `{python} f'{df_mean_max_pluie_horaire['me'].iloc[0].item():.2f}'` mm/h (`{python} f'{df_mean_max_pluie_horaire['delta'].iloc[0].item()*100:.1f}'`%). AROME tend donc à sous-estimer les précipitations extrêmes estivales.
 
 ```{python} 
 plot_r_by_season(combined, echelles=['quotidien', 'quotidien_reduce', 'horaire'], col_values=['numday', 'mean', 'mean-max'], nom_fichier="histo_numday_mean_mean-max")
@@ -719,21 +753,177 @@ plot_r_by_season(combined, echelles=['quotidien', 'quotidien_reduce', 'horaire']
 Figure 2: Corrélations des données climatologiques entre le modèle AROME et les stations Météo-France pour chacune des sources de données.
 \end{center}
 
+### Evaluation des précipitations extrêmes
+
+#### Tendances relatives du niveau de retour 10 ans significatif
+
+Sur la série journalière 1959–2022 (Figure 3, panneau **J**), les distributions mensuelles des tendances relatives s’étendent typiquement de –50 % à +50 %, avec quelques extrêmes atteignant ±100 % (juillet, août, décembre). La tendance moyenne est de -4.6% pour AROME et -1.6% pour les stations. Les médianes restent proches de 0 (±10 %), mais s’en écartent positivement au printemps (mars–mai) et négativement en fin d’hiver ainsi qu’en fin d’été / début d’automne (février, mars, août, septembre). La forme des distributions est comparable entre AROME et les stations, bien que l’étalement soit plus marqué pour les stations. Les médianes sont presque toujours plus élevées pour les stations que pour AROME.
+
+Lorsque l’on restreint la période à 1990–2022 (Fig. 4, panneau **J**\*), la dispersion relative augmente pour tous les mois (queues positives plus longues), tandis que les médianes demeurent modérées (±20–30 %). La moyenne des médianes est de -0,7% pour AROME et 0,5% pour les stations. La tendance moyenne est de 2.4% pour AROME et 3.5% pour les stations. Elles restent positives au printemps (mars–juin) et en début d’hiver (octobre) (+20 à +50 %), et négatives en hiver (décembre–février), ainsi qu’en août et septembre (–20 à –50 %). Les distributions et leurs médianes sont alors très proches entre AROME et les stations.
+
+Sur les données horaires 1990–2022 (Fig. 4, panneau **H**), la dispersion s’accroît encore avec quelques valeurs extrêmes > +400% (tronquées sur la figure). La moyenne des médianes est de 5,2% pour AROME et 15,1% pour les stations. La tendance moyenne est de 8.5% pour AROME et 29.1% pour les stations. Les médianes sont d'environ ±50%, ponctuellement jusqu’à ±80/100%. Elles sont positives en début d’hiver puis en février et juin (+20 à +60 %), et négatives en août et septembre (–20 à –25 %). La distribution est similaire entre AROME et les stations, mais plus étalée pour ces dernières ; leurs médianes y dépassent presque toujours celles d’AROME.
+
+Le rapport entre les tendances moyennes (respectivement des moyennes des médianes) **H** et **J** est de -1,8 (respect. -1,3) pour AROME et -17,9 (respect. -12,5) pour les stations et entre **J\*** et **J** de -0.5 (respect. 0,2) pour AROME et -2.2 pour les stations (respect. -0,4). Quel que soit le type de données (**J**, **J**\* ou **H**), les distributions des tendances relatives convergent en août et septembre, mais divergent nettement en février et en mai. D’un mois à l’autre, les profils changent sans continuité apparente ; une agrégation purement saisonnière ne semble donc pas représentative de la variabilité réelle.
+
+![](../outputs/boxplot/violin_signif.pdf){width=100%}
+
+\begin{center}
+Figure 3: Tendances relatives significatives du niveau de retour 10 ans de 1995 à 2022 communes au modèle AROME et aux stations de Météo-France pour chacune des sources de données (\textbf{J} : données journalières 1959-2022, \textbf{J*} : données journalières 1990-2022, \textbf{H} : données horaires 1990-2022).
+\end{center}
+
+#### Corrélation des tendances relatives entre le modèle AROME et les stations Météo-France
+
+À l’échelle quotidienne (1959‑2022), les corrélations des tendances se situent entre **0,14** (HYDRO) et **0,23** (DJF) pour les saisons et entre **0,07** (JUI) et **0,51** (DEC) pour les mois, plusieurs mois atteignant ou dépassant **0,40** (JAN, MAR, AOU, NOV) (Figure 4). Sur la période restreinte (1990‑2022), les valeurs saisonnières couvrent **0,13–0,29** et les valeurs mensuelles **0,02–0,47** (JAN **0,47** ; DEC **0,35**). À l’échelle horaire (1990‑2022), les saisons présentent des corrélations faibles comprises entre **–0,08** (MAM) et **0,05** (DJF et SON) et les corrélations suivant les mois s’étendent de **0,02** (SEP, OCT) à **0,42** (FEV).
+
+```{python} 
+plot_r_by_season(combined_all , echelles=['quotidien', 'quotidien_reduce', 'horaire'], col_values=['z_T_p', 'z_T_p_signif'], nom_fichier="histo_z_T_p")
+```
+
+![](figures/histo_z_T_p.png){width=100%}
+
+\begin{center}
+Figure 4: Corrélations des tendances relatives entre le modèle AROME (première ligne) et les stations Météo-France (deuxième ligne) pour chacune des sources de données.
+\end{center}
+
+En restreignant aux tendances significatives par vraisemblance profilée, l’échelle quotidienne (1959‑2022) affiche des corrélations saisonnières de **0,19** (MAM) à **0,39** (DJF) et des valeurs mensuelles de **0,17** (JUI) à **0,77** (DEC), avec d’autres mois marquant une corrélation élevée (JAN **0,70** ; MAR **0,71** ; NOV **0,68** ; AOU **0,52**). Pour la période restreinte (1990‑2022), les valeurs saisonnières vont de **0,27** (MAM) à **0,44** (DJF) et les valeurs mensuelles de **0,17** (JUILL) à **0,69** (JAN), avec des valeurs supérieures à 0,60 en février, octobre et décembre. À l’échelle horaire (1990‑2022), les valeurs saisonnières couvrent **–0,20–0,13** et les valeurs mensuelles **–0,01–0,66**. La restriction aux tendances significatives augmente fortement les corrélations quotidiennes, avec des maxima mensuels élevés. Le gain est marqué en hiver et en fin d’été / automne (JAN, MAR, NOV, DEC, AOU). À l’échelle horaire, même après filtrage, l’amélioration reste partielle : quelques mois s'améliorent (FEV) mais plusieurs périodes sont marquées par des corrélations proches de zéro ou légèrement négatives (MAI, SEP).
+
+##### Saisonnalité récurrente de la performance
+
+L'hiver (DJF) et les mois hivernaux isolés (DEC, JAN, MAR) concentrent les plus fortes corrélations, que ce soit sur la période longue ou restreinte, et surtout après filtrage. Le printemps (MAM) et le début d’été (JUI, JUILL) affichent systématiquement les valeurs les plus basses (ou minima) dans chaque configuration. La fin d’été / automne (AOU, NOV) fournit des corrélations intermédiaires à élevées une fois les tendances significatives retenues.
+
+##### Hiérarchie claire des échelles temporelles
+
+L'étude journalière est systématiquement plus cohérente spatialement pour les tendances que l'étude horaire. Le filtrage de significativité transforme la distribution journalière (multiplication des mois >0,60), alors qu’il ne suffit pas à hisser l’horaire à un niveau comparable (un seul mois >0,60).
+
+#### Cartographie des tendances relatives du niveau de retour 10 ans significatif
+
+En annexes, l'ensemble des cartes des tendances relatives du niveau de retour 10 ans entre 1995 et 2022 montre une cohérence spatiale entre AROME et les stations malgré les corrélations faibles. 
+
+##### Peu de cohérence saisonnière entre extrêmes journaliers et horaires
+
+L'aggrégation en saison ne semble pas montrer de patterns clairs pour les données horaires (Annexes 2 - 4.3.1.2). Pour les données journalières de 1959 à 2022 (Annexes 2 - 4.1.1.2), la vallée du Rhônes est marquée par une tendance relative positive sur les données observées pour l'année hydrologique, qu'AROME ne semble pas capter. A l'autonme (SON), les Alpes du Nord (tendance négative ; -20/-30%) s'opposent fortement aux Alpes du Sud (tendance positive ; +20/30%). En hiver (DJF), les Alpes du Nord sont encore une fois marquée par une tendance négative (-10/-20%), ainsi que le Massif Central (allant jusqu'à -30%). Au printemps (MAM), la moitié Nord de la France semble marquée par une tendance relative fortement postive allant jusqu'à +30% par endroit. Cette tendance s'accentue (+50/150%) sur toute la façade ouest de la France pour les données journalières restreintes à 1990-2022. Enfin en été (JJA), le pourtour méditérannée et surtout les bassins des Pyrénées-Orientales connaissent une forte tendance négative (-20/-40%).
+
+##### Une tendance relative positive dans la vallée du Rhône
+
+Dans la vallée du Rhône (Figure 5), on observe un signal particulièrement fort. En novembre (données journalières 1959–2022), toute la vallée du Rhône affiche une légère à modérée hausse des niveaux de retour, typiquement de l’ordre de +10 % à +30 %. En octobre (données journalières 1990–2022), la vallée du Rhône connaît la plus forte augmentation : les secteurs autour de Valence, Montélimar et Avignon culminent souvent entre +80 % et +150 % de croissance des niveaux de retour. La façade méditerranéenne du sud-est et le couloir rhodanien-méditerranéen se trouve également impactés. En février (et en mars, voir Annexes 2-4.3.2.2) (données horaires 1990–2022), le renforcement est lui aussi très marqué : la zone alpine-drômoise voit ses retours horaires grimper de +100 % à +150 %, traduisant un accroissement net des épisodes de pluie très soutenue en quelques heures. Les tendances dégagées par AROME sont plus modestes (+50/100%).
+
+```{python}
+jour_tot_nov = assemble(
+  "../outputs/maps/gev_z_T_p/quotidien/compare_12/sat_99.0/nov/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_12/sat_99.0/nov/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_12/sat_99.0/legend_signif.svg",
+  "figures/jour_tot_nov.svg"
+)
+df_jour_tot_nov = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "nov") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r"]]
+
+jour_red_nov = assemble(
+  "../outputs/maps/gev_z_T_p/quotidien_reduce/compare_12/sat_99.0/oct/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien_reduce/compare_12/sat_99.0/oct/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien_reduce/compare_12/sat_99.0/legend_signif.svg",
+  "figures/jour_red_nov.svg"
+)
+df_jour_red_nov = combined_all.loc[(combined_all["echelle"] == "quotidien_reduce") & (combined_all["season"] == "oct") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r"]]
+
+
+horaire_nov = assemble(
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/fev/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/fev/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+  "figures/horaire_nov.svg"
+)
+df_horaire_nov = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "fev") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r"]]
+```
+
+
+| \small Données journalière (1959-2022) en novembre | \small Données journalière (1990-2022) en octobre | \small Données horaires (1990-2022) en février |
+| :---: | :---: | :---: |
+| ![](figures/jour_tot_nov.pdf) | ![](figures/jour_red_nov.pdf) | ![](figures/horaire_nov.pdf) |
+| $r =$ `{python} f'{df_jour_tot_nov['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_jour_tot_nov['n'].iloc[0].item()}'`) | $r =$ `{python} f'{df_jour_red_nov['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_jour_red_nov['n'].iloc[0].item()}'`) | $r =$ `{python} f'{df_horaire_nov['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_horaire_nov['n'].iloc[0].item()}'`) |
+
+\begin{center}
+Figure 5: Tendances relatives de 1995 à 2022 du niveau de retour 10 ans significatif entre le modèle AROME (première ligne) et les stations Météo-France (deuxième ligne) pour chacune des sources de données à différents mois (OCT, NOV, FEV). Exemple d'une station avec séries temporelles et niveaux de retour disponible en Annexe 2-6.
+\end{center}
+
+##### Une tendance relative variable des Pyrénées-Orientales à la vallée du Rhône
+
+Le pourtour méditerranéen (Figure 6), en particulier le Gard, l’Hérault, le sud Ardèche et la basse vallée du Rhône (Avignon – Arles), présente une forte baisse des niveaux de retour, entre -40% à -70/80% sur les données journalières de la période totale en décembre. La cohérence modèle–observation est très bonne (r = 0,77), ce qui renforce la fiabilité de ce signal. Le signal positif persiste sur les données tronquées (1990-2022). Les baisses restent fortes en Camargue et delta du Rhône (jusqu’à -100 %). En données horaires, un changement brutal est visible. La carte montre des hausses marquées au sud du Massif Central et jusqu’au delta du Rhône, avec des valeurs pouvant atteindre +100%. Les stations confirment un fort signal (allant jusqu'à +150%) en vallée du Rhône sud, Gard, Drôme, Ardèche. Cependant, le signal est plus diffus et moins systématique que pour décembre. La corrélation modèle–station chute à 0,48, ce qui traduit une variabilité horaire plus forte et moins bien capturée. On retrouve le signal positif de février dans la partie basse de la vallée du Rhône.
+
+```{python}
+jour_tot_nov = assemble(
+  "../outputs/maps/gev_z_T_p/quotidien/compare_12/sat_99.0/dec/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_12/sat_99.0/dec/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_12/sat_99.0/legend_signif.svg",
+  "figures/jour_tot_dec.svg"
+)
+df_jour_tot_dec = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "dec") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r"]]
+
+jour_red_nov = assemble(
+  "../outputs/maps/gev_z_T_p/quotidien_reduce/compare_12/sat_99.0/dec/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien_reduce/compare_12/sat_99.0/dec/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien_reduce/compare_12/sat_99.0/legend_signif.svg",
+  "figures/jour_red_dec.svg"
+)
+df_jour_red_dec = combined_all.loc[(combined_all["echelle"] == "quotidien_reduce") & (combined_all["season"] == "dec") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r"]]
+
+
+horaire_nov = assemble(
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mar/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mar/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+  "figures/horaire_mar.svg"
+)
+df_horaire_mar = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "mar") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r"]]
+```
+
+
+| \small Données journalière (1959-2022) en décembre | \small Données journalière (1990-2022) en décembre | \small Données horaires (1990-2022) en mars |
+| :---: | :---: | :---: |
+| ![](figures/jour_tot_dec.pdf) | ![](figures/jour_red_dec.pdf) | ![](figures/horaire_mar.pdf) |
+| $r =$ `{python} f'{df_jour_tot_dec['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_jour_tot_dec['n'].iloc[0].item()}'`) | $r =$ `{python} f'{df_jour_red_dec['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_jour_red_dec['n'].iloc[0].item()}'`) | $r =$ `{python} f'{df_horaire_mar['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_horaire_mar['n'].iloc[0].item()}'`) |
+
+\begin{center}
+Figure 6: Tendances relatives de 1995 à 2022 du niveau de retour 10 ans significatif entre le modèle AROME (première ligne) et les stations Météo-France (deuxième ligne) pour chacune des sources de données à différents mois (DEC, MAR).
+\end{center}
+
 ## Discussion
 
 #### Fidélité spatiale de la climatologie simulée
 
 Les résultats confirment qu’AROME reproduit correctement les grands régimes pluviométriques hexagonaux confirmé par la littérature [@Fumiere2020], [@caillaud2021simulation], [@hess-28-2579-2024], [@LucasPicher2024]. Il y a un excédent orographique sur les Alpes, les Pyrénées et le Massif central, un gradient atlantique‑continental marqué à l’ouest et un déficit fréquentiel sur le pourtour méditerranéen. Cette cohérence avec la réalité mesurée témoigne d’une représentation satisfaisante des forçages dynamiques (transport d’humidité par les flux d’ouest, soulèvement orographique, circulation de basse couche en Méditerranée). 
 
-
 #### Variabilité saisonnière et représentation des extrêmes
 
-La capacité d’AROME à restituer la fréquence et la quantité de précipitations se maintient tout au long de l’année, mais la performance chute pour la moyenne des maxima journaliers en été et davantage à l’échelle horaire. On retrouve le fait qu'AROME sous-estime des précipitations d'intensité élévées (> 40 mm/h [@Caillaud2021]) La convection estivale reste partiellement sous‑résolue malgré la résolution spatiale de 2,5 km. Dans cette étude, on a pu montrer (résultats non affichés) que la corrélation augmente lorsque la fenêtre temporelle s'agrandit à 6 ou 9h. Le modèle pourrait reproduire la cellule orageuse en démarrant trop tard ou trop tôt, en étalant l’intensité sur plusieurs mailles ou en sous‑estimant les précipitations maximales. Le pas de 2–3 km est une étape majeure pour représenter la convection sans paramétrage, mais il reste trop grossier pour certaines applications sensibles aux maxima intenses [@Prein2015Review]. Il aurait été intéressant d'introduire les données COMEPHORE (1 km, 15 min) de Météo-France dans cette étude mais les réanalyses ne débutent qu'en 1997.
+La capacité d’AROME à restituer la fréquence et la quantité de précipitations se maintient tout au long de l’année, mais la performance chute pour la moyenne des maxima journaliers en été et davantage à l’échelle horaire. On retrouve le fait qu'AROME sous-estime des précipitations d'intensité élévées (> 40 mm/h [@Caillaud2021], [@poncet2024convection]) La convection estivale reste partiellement sous‑résolue malgré la résolution spatiale de 2,5 km. Dans cette étude, on a pu montrer (résultats non affichés) que la corrélation augmente lorsque la fenêtre temporelle s'agrandit à 6 ou 9h. Le modèle pourrait reproduire la cellule orageuse en démarrant trop tard ou trop tôt, en étalant l’intensité sur plusieurs mailles (non évalué par manquante de stations) ou en sous‑estimant les précipitations maximales. Le pas de 2–3 km est une étape majeure pour représenter la convection sans paramétrage, mais il reste trop grossier pour certaines applications sensibles aux maxima intenses [@Prein2015Review]. Il aurait été intéressant d'introduire les données COMEPHORE (1 km, 15 min) de Météo-France dans cette étude mais les réanalyses ne débutent qu'en 1997.
+
+#### Robustesse statistique des signaux
+
+Une fenêtre longue (1959‑2022) réduit les incertitudes et intégre toutes les phases climatiques en atténuant ainsi la tendance réelle par mélange de plusieurs régime. Une fenêtre courte (1990‑2022) met en avant le signal forcé récent tout en augmentant la sensiblilité aux années extrêmes individuelles. Une archive longue est indispensable pour quantifier la variabilité interne, mais une fenêtre centrée sur l’ère post‑1990 est nécessaire pour capter le signal anthropique qui s’accélère. Les deux diagnostics sont donc complémentaires et les interpréter séparément évite de confondre bruit multidécoennal et forçage à long terme.
+
+En première approximation, les distributions mensuelles des tendances relatives du niveau de retour 10 ans demeurent globalement centrées sur 0% entre 1959 et 2022. En revanche, le resserrement à 1990–2022 révèle un léger basculement vers des accroissements, particulièrement visibles au printemps et en début d’hiver. Ce renforcement, bien que modeste, rejoint la littérature sur l’amplification récente des précipitations extrêmes quotidiennes en lien avec le réchauffement. Le "dimming", phénomène météorologique, est lié à la diminution de la transmission du rayonnement solaire à travers l'atmosphère en raison de la présence d'aérosols (particules fines), de polluants, ou de nuages [@Wild2009_GlobalDimmingBrightening]. Entre 1950 et 1985, malgré l’augmentation des gaz à effet de serre, il y a un refroidissement dû aux aérosols qui a en partie "masqué" le réchauffement. Ce qui explique la stagnation voire le léger refroidissement observé en France jusque dans les années 1985. À partir des années 1985 et jusqu’en 1992 – 94, une fois les aérosols réduits, le réchauffement s’est accéléré. Ainsi, une série longue (1959‑2022) échantillonne plusieurs phases internes du climat : refroidissement lié au "dimming" puis phase chaude des années 1990‑2000. La variabilité multidécoennale atténue donc la pente moyenne ; une partie du signal récent est noyée dans le bruit naturel. Une fenêtre courte centrée sur 1990‑2022 isole un régime dominé par le réchauffement rapide, la fin de la pollution sulfatée en Europe et l’augmentation quasi linéaire du contenu en vapeur d’eau. Le gradient thermodynamique (+7%/°C) ressort alors plus nettement. Si l’on impose un pas de tendance unique à 0 (1959‑85) puis linéaire (> 1985) avec l'introduction d'un point de rupture dans les modèles GEV, on compresse un virage réel de presque 10 ans ; le modèle long absorbe cette transition, ce qui réduit la pente moyenne par rapport au modèle court qui ne se fixe que sur la partie linéaire. Dans la fenêtre longue, les premières années de la pente post point de rupture englobent cette phase de rattrapage, ce qui lisse la tendance. Ce phénomène pourrait expliquer une tendance nationale observée de –1,6% sur 1959‑2022 contre +3,5% sur 1990‑2022. 
+
+Ces différences sont corroborées par un effet statistique expliqué par @DeGaetano2018 qui s'intéressent au taux relatif de changement du paramètre de localisation $\mu$ et qui montrent que pour des tendances supérieures à +0,5% par an, raccourcir la fenêtre de 60 à 30 ans modifie la pente estimée des niveaux de retour 10 ans de 10 à 20%.
+
+#### Hiérarchie temporelle et influence de la significativité
+
+Le filtrage statistique élimine nombre de sites où le signal est dominé par le bruit climatique, améliorant la cohérence spatiale des tendances et donc les diagnostics régionaux. À l’échelle journalière, les valeurs mensuelles des corrélations AROME–stations oscillent entre 0,40 et 0,77 après filtrage par significativité, contre moins de 0,20 à l’échelle horaire. Ce saut témoigne de la difficulté d'AROME à expliquer les maxima convectifs fins (1h).
+
+Le découpage saisonnier met en lumière une hiérarchie marquée par l’hiver (DJF) qui concentre systématiquement les corrélations les plus fortes et des hausses modérées à marquées des niveaux de retour. En hiver, les précipitations en Europe occidentale viennent des perturbations atlantiques véhiculées par les flux d’ouest. Leur intensité dépend directement de la quantité de vapeur d’eau dans ces masses d’air, qui augmente avec la température selon la loi de Clausius–Clapeyron. C’est pourquoi des hivers plus doux peuvent parfois être aussi plus pluvieux, même avec une dynamique atmosphérique identique. Le printemps et le début d’été (MAM–JUI) enregistrent au contraire les minima systématiques. Cela révèle la difficulté persistante, même à résolution 2,5 km, à représenter la convection faiblement organisée typique de cette saison. Le réchauffement diurne déclenche surtout des orages isolés d’origine locale. L’influence des perturbations atlantiques diminue, car le jet‑stream et ses systèmes frontaux se déplacent vers le nord. Le cisaillement vertical s’affaiblit, empêchant l’organisation des orages en structures durables. Il en résulte des précipitations brèves, très localisées et peu structurées que le couple simulation–observations capture encore mal. En août et septembre, la convergence relative des distributions (médianes proches et corrélations < 0,20) traduit une variabilité élevée et une contribution partagée entre épisodes orageux continentaux et systèmes méditerranéens précoces. La mixité des mécanismes pluvieux réduit la cohérence entre sites et la capacité d’AROME à reproduire la saisonnalité des tendances.
+
+#### Signaux régionaux contrastés : focus sur la vallée du Rhône et le pourtour méditerranéen
+
+La vallée du Rhône semble être un « hot‑spot » des tendances positives du niveau de retour, cohérent avec la recrudescence d’événements cévenols à l’automne et de perturbations orographiques renforcées en flux de sud [@Fresnay2012]. AROME sous‑diagnostique ces hausses mais en reproduit la localisation, suggérant que la dynamique (canalisation méridienne et levée orographique) est correctement simulée, tandis que l’intensité convective demeure sous‑résolue. @Ribes2018 met en évidence que cette zone cumule le plus fort renforcement observé sur l’ensemble du Midi méditerranéen avec un gain d'intensité moyen de +22% des précipitations extrêmes journalières entre 1961 et 2015. @blanchet2021explaining montrent que, depuis les années 1980, l’influence méditerranéenne automnale s’est nettement intensifiée et avancée dans la saison, avec les hausses de niveaux de retour les plus fortes centrées sur le sillon Rhône‑Alpes et les Cévennes.
+Ce « hot‑spot » est flagrant à l'échelle nationale pour les données horaires en février. @Berghald2025 montrent que les tendances horaires hivernales sont statistiquement et spatialement maximales sur l’axe Gard - basse vallée du Rhône, avec février comme mois le plus contributif (+100% sur le niveau de retour 20 ans). @Ribes2018 mettent en évidence sur la moitié sud‑est, incluant Gard, Ardèche et Drôme, un doublement de la fréquence des évènements ≥ 200 mm en 24 h depuis 1985 avec la plupart associés à des pics horaires > 50 mm. Depuis le début des années 1990, la température moyenne des mois d'hiver en France a gagné ≈+0,8°C (différence entre les normales 1961‑1990 et 1991‑2020 de Météo‑France) — soit un pouvoir de rétention d’humidité supplémentaire d’environ +6% selon la relation de Clausius‑Clapeyron. Trois leviers pourraient se cumuler en février : 1) la pluie remplace la neige, concentrant la lame d’eau [@ZAQOUT2024131439] ; 2) il existe des pentes de ~12%/°C pour les extrêmes horaires lorsque T = 0–8°C — soit presque le double des 7% classiques [@Drobinski2016] ; et 3) des flux de sud plus humides injectent davantage de vapeur dans un couloir orographique très efficace [@LorentePlazas2020].
+
+Les Pyrénées‑Orientales et le delta du Rhône montre en décembre, une tendance journalière négative marquée (‑40 à ‑80 %) qui s’étend des Corbières à la Camargue. Le signal pourrait traduire un déplacement latitudinal des cyclogenèses hivernales. Depuis les années 1970, on observe un affaiblissement – et parfois un léger décalage vers l’est – des dépressions dites « Gênes‑Ligurie » ou « Baléares‑Golfe du Lion ». Leur fréquence et leur profondeur contrôlent directement les totaux quotidiens d’un épisode hivernal dans les Pyrénées‑Orientales, le Languedoc et la Camargue [@Trigo2000]. De plus, le réchauffement fait disparaître les basses couches stables (tramontane froide) [@ObermannHellhund2018] qui, lorsqu’elles sont surmontées d’un flux humide de sud‑est, favorisent les pluies.
+À l’échelle horaire cependant, la signature s’inverse en mars, soulignant la superposition d’événements courts mais intenses (orages stationnaires) décrits par @Berghald2025 jusqu'au Gard et plus précoce comme dans la vallée du Rhône [@blanchet2021explaining].
+
+## Conclusion
+
 
 
 ## Remerciements {.unnumbered}
 
-Je tiens à remercier Juliette Blanchet et Antoine Blanc pour l'encadrement rigoureux, stimulant et bienveillant tout au long de ce stage. Leurs conseils avisés, leur disponibilité constante et leurs nombreuses remarques constructives m'ont permis d’approfondir considérablement mes compétences scientifiques et méthodologiques. Leur implication a rendu ce stage particulièrement enrichissant et motivant. Je leur suis reconnaissant pour leur confiance et leur soutien tout au long de ce travail.
+Je tiens à remercier Juliette Blanchet et Antoine Blanc pour l'encadrement rigoureux, stimulant et bienveillant tout au long de ce stage. Leurs conseils avisés, leur disponibilité constante et leurs nombreuses remarques constructives m'ont permis d’approfondir considérablement mes compétences scientifiques et méthodologiques.
 
 
 ## References {.unnumbered}

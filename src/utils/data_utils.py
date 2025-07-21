@@ -4,7 +4,7 @@ import polars as pl
 
 def years_to_load(echelle: str, season: str, input_dir: str):
     # Fixation de l'échelle pour le choix des colonnes à lire
-    mesure = "max_mm_h" if echelle == "horaire" else "max_mm_j"
+    mesure = "max_mm_h" if "horaire" in echelle else "max_mm_j"
     
     # Liste des années disponibles
     years = [
@@ -13,12 +13,12 @@ def years_to_load(echelle: str, season: str, input_dir: str):
     ]
 
     if years:
-        min_year = min(years) if echelle == "quotidien" else 1990 # Année minimale
+        min_year = min(years) if echelle in ["quotidien", "horaire_reduce"] else 1990 # Année minimale
         max_year = max(years)
     else:
         print("Aucune année valide trouvée.")
 
-    len_serie = 50 if echelle=="quotidien" else 25 # Longueur minimale d'une série valide
+    len_serie = 50 if echelle in ["quotidien", "horaire_reduce"] else 25 # Longueur minimale d'une série valide
 
     if season in ["hydro", "djf"]:
         min_year+=1 # On commence en 1960
