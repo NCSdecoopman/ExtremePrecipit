@@ -34,21 +34,19 @@ def menu_statisticals(min_years: int, max_years: int, STATS, SEASON):
         season = st.session_state["season_choice"]
         if season in ["Année hydrologique", "Hiver"]:
             st.slider(
-                "Période (années)",
+                "Période",
                 min_value=min_years+1,
                 max_value=max_years,
                 value=(min_years+1, max_years),
-                key="year_range",
-                label_visibility="collapsed"
+                key="year_range"
             )
         else:
             st.slider(
-                "Période (années)",
+                "Période",
                 min_value=min_years,
                 max_value=max_years,
                 value=(min_years, max_years),
-                key="year_range",
-                label_visibility="collapsed"
+                key="year_range"
             )
 
     with col4:

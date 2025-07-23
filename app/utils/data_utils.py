@@ -99,8 +99,6 @@ def cleaning_data_observed(
 
     return df_final
 
-import polars as pl
-
 def dont_show_extreme(
     modelised: pl.DataFrame,
     observed:   pl.DataFrame,
@@ -114,11 +112,14 @@ def dont_show_extreme(
         q_mod = modelised.select(
             pl.col(column).quantile(quantile_choice, interpolation="nearest")
         ).item()
-        q_obs = observed.select(
-            pl.col(column).quantile(quantile_choice, interpolation="nearest")
-        ).item()
 
-        seuil = max(q_mod, q_obs)
+        if observed is None or observed.height == 0:
+            seuil = q_mod
+        else:
+            q_obs = observed.select(
+                pl.col(column).quantile(quantile_choice, interpolation="nearest")
+            ).item()
+            seuil = max(q_mod, q_obs)
 
         # 2) Saturation des couleurs
         clamp_expr = (
