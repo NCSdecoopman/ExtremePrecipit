@@ -112,14 +112,17 @@ def echelle_config(type_: bool, echelle: str = None, n_colors: int = 256):
                 return cmap
             
         custom_colorscale = [
-            (0.0, "#ffffff"),  # blanc
-            (0.1, "lightblue"),
-            (0.3, "blue"),
-            (0.45, "green"),
-            (0.6, "yellow"),
-            (0.7, "orange"),
-            (0.8, "red"),      # rouge
-            (1.0, "black"),    # noir
+            (0.0, "#FFFFE5"),  # blanc
+            (0.1, "#DDEED6"),
+            (0.2, "#BCDDC8"),
+            (0.3, "#9BCCBA"),
+            (0.4, "#7ABBAC"),
+            (0.5, "#59AA9E"),
+            (0.6, "#389990"),
+            (0.7, "#29837A"),
+            (0.8, "#1C6D63"),
+            (0.9, "#0F564B"),
+            (1.0, "#003C30"),
         ]
 
         cmap = mcolors.LinearSegmentedColormap.from_list("custom", custom_colorscale)

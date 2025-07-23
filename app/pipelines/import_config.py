@@ -54,7 +54,7 @@ def pipeline_config(config_path: str, type: str, show_param: bool=False):
             st.info("Les paramètres d’analyse ne sont pas encore définis. Merci de les configurer pour lancer l’analyse.")
             st.stop()
 
-        stat_choice, quantile_choice, min_year_choice, max_year_choice, season_choice, scale_choice, missing_rate = params
+        stat_choice, quantile_choice, min_year_choice, max_year_choice, season_choice, scale_choice, missing_rate, show_relief, show_stations = params
 
         return {
             "config": config,
@@ -67,7 +67,9 @@ def pipeline_config(config_path: str, type: str, show_param: bool=False):
             "season_choice_key": SEASON[season_choice],
             "missing_rate": missing_rate,
             "quantile_choice": quantile_choice,
-            "scale_choice": scale_choice
+            "scale_choice": scale_choice,
+            "show_relief": show_relief,
+            "show_stations": show_stations
         }
 
     elif type == "gev":

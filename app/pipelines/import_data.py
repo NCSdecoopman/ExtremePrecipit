@@ -62,7 +62,8 @@ def pipeline_data(params, config, use_cache=False):
         raise RuntimeError(f"Erreur lors du chargement des données observées : {e}")
 
     # Selection des données observées
-    df_observed_cleaning = cleaning_data_observed(observed_load, missing_rate)
+    len_series = 0.75*(max_year_choice-min_year_choice+1)
+    df_observed_cleaning = cleaning_data_observed(observed_load, len_series, missing_rate)
     
     # Calcul des statistiques
     modelised = compute_statistic_per_point(modelised_load, stat_choice_key)
@@ -76,8 +77,7 @@ def pipeline_data(params, config, use_cache=False):
     column = get_stat_column_name(stat_choice_key, scale_choice_key)
 
     # Retrait des extrêmes pour l'affichage uniquement
-    modelised_show = dont_show_extreme(modelised, column, quantile_choice, stat_choice_key)
-    observed_show = dont_show_extreme(observed, column, quantile_choice, stat_choice_key)
+    modelised_show, observed_show = dont_show_extreme(modelised, observed, column, quantile_choice, stat_choice_key)
 
     return {
         "modelised_load": modelised_load,

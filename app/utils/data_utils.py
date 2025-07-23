@@ -1,3 +1,4 @@
+import numpy as np
 import polars as pl
 import streamlit as st
 from scipy.spatial import cKDTree
@@ -65,34 +66,77 @@ def load_data(type_data: str, echelle: str, min_year: int, max_year: int, season
     return pl.concat(dataframes, how="vertical")
 
 
-def cleaning_data_observed(df: pl.DataFrame, nan_limit: float = 0.1) -> pl.DataFrame:
-    # Moyenne du ratio de NaN par station (lat, lon)
+def cleaning_data_observed(
+    df: pl.DataFrame,
+    len_serie: float = None,
+    nan_limit: float = 0.10
+) -> pl.DataFrame:
+    """
+    Filtre les maxima par deux critères :
+      1) on annule les valeurs d’une année si nan_ratio > nan_limit
+      2) on ne garde que les stations ayant au moins n années valides
+    """
+    # ——— règles dépendant de l’échelle ———
+    if len_serie is None:
+        raise ValueError('Paramètre len_serie à préciser')
+    
+    # Selection des saisons avec nan_limit au maximum
+    df_filter = df.filter(pl.col("nan_ratio") <= nan_limit)
+
+    # Calcul du nombre d'années valides par station NUM_POSTE
     station_counts = (
-        df.group_by(["NUM_POSTE"])
-        .agg(pl.col("nan_ratio").mean().alias("nan_ratio"))
+        df_filter.group_by("NUM_POSTE")
+        .agg(pl.col("year").n_unique().alias("num_years"))
     )
 
-    # Stations valides selon le seuil
-    valid = station_counts.filter(pl.col("nan_ratio") <= nan_limit)
+    # Sélection des NUM_POSTE avec au moins len_serie d'années valides
+    valid_stations = station_counts.filter(pl.col("num_years") >= len_serie)
 
     # Jointure pour ne garder que les stations valides
-    df_filtered = df.join(valid.select(["NUM_POSTE"]), on=["NUM_POSTE"], how="inner")
+    df_final = df_filter.filter(
+        pl.col("NUM_POSTE").is_in(valid_stations["NUM_POSTE"])
+    )
 
-    return df_filtered
+    return df_final
 
-def dont_show_extreme(modelised, column, quantile_choice, stat_choice_key: str=None):
-    if stat_choice_key not in ["month", "date"]:
-        percentile_95 = modelised.select(
-            pl.col(column).quantile(quantile_choice, "nearest")
+import polars as pl
+
+def dont_show_extreme(
+    modelised: pl.DataFrame,
+    observed:   pl.DataFrame,
+    column:     str,
+    quantile_choice: float,
+    stat_choice_key: str = None
+) -> tuple[pl.DataFrame, pl.DataFrame]:
+
+    if stat_choice_key not in ("month", "date"):
+        # 1) Calcul des quantiles
+        q_mod = modelised.select(
+            pl.col(column).quantile(quantile_choice, interpolation="nearest")
+        ).item()
+        q_obs = observed.select(
+            pl.col(column).quantile(quantile_choice, interpolation="nearest")
         ).item()
 
-        modelised_show = modelised.filter(
-            pl.col(column) <= percentile_95
+        seuil = max(q_mod, q_obs)
+
+        # 2) Saturation des couleurs
+        clamp_expr = (
+            pl.when(pl.col(column).abs() > seuil)
+              .then(pl.lit(seuil) * pl.col(column).sign())
+              .otherwise(pl.col(column))
+              .alias(column)
         )
+
+        # 3) Renvoi des tableaux
+        modelised_show = modelised.with_columns(clamp_expr)
+        observed_show  = observed.with_columns(clamp_expr)
+
     else:
-        modelised_show = modelised
-    
-    return modelised_show
+        modelised_show, observed_show = modelised, observed
+
+    return modelised_show, observed_show
+
 
 def add_metadata(df: pl.DataFrame, scale: str, type: str) -> pl.DataFrame:
     echelle = 'horaire' if scale == 'mm_h' else 'quotidien'

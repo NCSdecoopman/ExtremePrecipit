@@ -25,7 +25,7 @@ try:
         allow_patterns=["external/*"]
     )
      
-    for echelle in ["quotidien", "horaire"]: # , "w3", "w6", "w9", "w12", "w24"
+    for echelle in ["quotidien", "horaire"]:
         print(f"Téléchargement des statistiques AROMES (mod)... - Echelle {echelle}")
         snapshot_download(
             repo_id="ncsdecoopman/ExtremePrecipit",
@@ -45,26 +45,6 @@ try:
             cache_dir=cache_path,
             allow_patterns=["statisticals/observed*"]
         )   
-
-    # print("Téléchargement des GEVs AROME...")
-    # snapshot_download(
-    #     repo_id="ncsdecoopman/ExtremePrecipit",
-    #     repo_type="dataset",
-    #     revision="main",
-    #     local_dir="data",
-    #     cache_dir=cache_path,
-    #     allow_patterns=["gev/modelised*"]
-    # )
-
-    # print("Téléchargement des GEVs STATIONS...")
-    # snapshot_download(
-    #     repo_id="ncsdecoopman/ExtremePrecipit",
-    #     repo_type="dataset",
-    #     revision="main",
-    #     local_dir="data",
-    #     cache_dir=cache_path,
-    #     allow_patterns=["gev/observed*"]
-    # )
 
 except Exception as e:
     print("Erreur pendant le téléchargement :")

@@ -187,12 +187,12 @@ def relief():
             for line in geom.geoms:
                 path_data.append({"path": list(line.coords), "altitude": altitude})
 
-    # Couleur fixe noire ; possibilité d’ajouter une couleur par altitude (cf. remarque ci-dessous)
+    # Couleur fixe blanc
     return pdk.Layer(
         "PathLayer",
         data=path_data,
         get_path="path",
-        get_color="[0, 0, 0, 100]",  # ou map dynamique : 'd.altitude > 1000 ? [0,0,0,255] : [150,150,150,150]'
+        get_color="[0, 0, 0, 100]",
         width_scale=1,
         width_min_pixels=0.5,
         pickable=False
