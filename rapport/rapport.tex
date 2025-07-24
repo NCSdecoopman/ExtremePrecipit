@@ -175,7 +175,7 @@
 \makeatletter
 \makeatother
 \makeatletter
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[breakable, interior hidden, boxrule=0pt, sharp corners, enhanced, borderline west={3pt}{0pt}{shadecolor}, frame hidden]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[enhanced, boxrule=0pt, borderline west={3pt}{0pt}{shadecolor}, interior hidden, frame hidden, breakable, sharp corners]}{\end{tcolorbox}}\fi
 \makeatother
 \usepackage{bookmark}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
@@ -211,17 +211,20 @@ profonde résolue} %% without formatting
 (+1,1°C), plus marqué en France métropolitaine (+1,7°C) et dans les
 Alpes françaises (+2°C) depuis l'ère préindustrielle. L'air plus chaud
 contient davantage d'humidité, ce qui favorise théoriquement
-l'augmentation des précipitations extrêmes, bien que cette tendance
-varie selon les régions et les circulations atmosphériques. Les modèles
-climatiques classiques (GCM et RCM) sont limités pour représenter les
-précipitations extrêmes à résolution infra-journalière en raison de leur
-faible résolution et de la paramétrisation de la convection. Les modèles
-à résolution kilométrique (CP-RCM), comme CNRM-AROME (2,5 km),
-permettent désormais une meilleure représentation explicite de la
-convection profonde. Le stage vise à analyser les tendances des
-précipitations extrêmes horaires en France (1959-2022) grâce aux données
-CP-RCM et pluviométriques, en appliquant des modèles de valeurs extrêmes
-(GEV) stationnaires et non stationnaires.}
+l'augmentation des précipitations extrêmes, bien que les tendances
+effectivement observées varient selon les régions et les circulations
+atmosphériques. Les modèles climatiques classiques (GCM et RCM) sont
+limités pour représenter les précipitations extrêmes à résolution
+infra-journalière en raison de leur faible résolution et de la
+paramétrisation de la convection. En effet, d'autres facteurs entrent en
+jeu tel que l'évolution des circulations atmosphériques, la
+disponibilité de l'humidité et les processus convectifs. Les modèles à
+résolution spatiale (CP-RCM), comme CNRM-AROME (2,5 km), permettent
+désormais une meilleure représentation explicite de la convection
+profonde. Le stage vise à analyser les tendances des précipitations
+extrêmes horaires en France (1959-2022) grâce aux données CP-RCM et
+pluviométriques, en appliquant des modèles de valeurs extrêmes (GEV)
+stationnaires et non stationnaires.}
 
 %% at least one keyword must be supplied
 \Keywords{Changement climatique, Précipitations
@@ -267,13 +270,114 @@ de la planète, plus marqué sur les continents que sur les océans
 +1,7°C à l'échelle de la France métropolitaine et +2°C à l'échelle des
 Alpes françaises depuis l'ère préindustrielle. Par ailleurs, la relation
 de Clausius-Clapeyron montre que l'air chaud contient plus d'humidité
-(+7\%/°C) \citep{clausius1850}. L'ascension de l'air chaud dans
-l'atmosphère entraîne son refroidissement adiabatique, provoquant la
-condensation de la vapeur d'eau qui se transforme en précipitations,
-telles que la pluie \citep{meteofrance}. Ainsi, en réponse au
-réchauffement climatique il existe une augmentation \emph{théorique} des
-précipitations. Cette augmentation est variable suivant les changements
-de circulations atmosphériques \citep{blanchet2021explaining}.
+(+7\%/°C) \citep{clapeyron1834}. Autrement dit, à +1°C, une même masse
+d'air pourra contenir 7\% de vapeur d'eau en plus. Du fait de la poussée
+d'Archimède, l'air chaud entourée d'air plus froid aura tendance à
+monter. L'ascension de l'air chaud dans l'atmosphère entraîne son
+refroidissement adiabatique, provoquant la condensation de la vapeur
+d'eau qui se transforme en précipitations \citep{meteofrance}.
+Toutefois, en conditions calmes le noyau de la distribution des
+précipitations n'exploite pas pleinement ce surplus d'humidité. Il
+existe des contraintes énergétiques (bilan radiatif, évaporation,
+échanges océan‑air) et dynamiques (subsidence, vent synoptique) qui
+limitent l'augmentation des précipitations moyennes à seulement
+1--3\%/°C \citep{IPCC2021}. En revanche, lors d'événements convectifs
+intenses (orage, cyclogenèse rapide) l'ascension rapide condense presque
+intégralement ce surplus, et les pluies maximales sur des durées courtes
+augmentent de 5 à 8\,\% par °C, soit presque au même rythme que le
+potentiel théorique. Les extrêmes de précipitation suivent de près la
+loi de Clausius--Clapeyron, tandis que la pluie moyenne reste sous
+l'influence de nombreux autres facteurs énergétiques et dynamiques
+\citep{ogorman2015contrasting}. Ainsi, en réponse au réchauffement
+climatique il existe une augmentation \emph{théorique} des
+précipitations extrêmes. Cette augmentation est variable suivant les
+changements de circulations atmosphériques et peut être amplifiée
+localement \citep{blanchet2021explaining}.
+
+Les précipitations extrêmes sont définies comme des épisodes de fortes
+pluies intenses sur de courtes durées (1h à 24h) et correspondent à la
+queue de la distribution des intensités pluviométriques. Ils sont au
+coeur des préoccupations climatiques et sociétales. Ces épisodent
+provoquent 90\% des coûts liés aux inondations, aux glissements de
+terrain et aux ruptures d'infrastructures \citep{IPCC_2022_WGIII}. En
+2024, de nombreux événements de ce type ont fait l'actualité, par
+exemple en Espagne orientale, au Népal, en Afghanistan ou en Europe
+centrale \citep{WMO2025}. En particulier en France, en juin 2024, des
+pluies intenses en haute altitude qui ont contribué à des inondations
+majeures dans le massif des Écrins \citep{Blanc2024} ; en octobre, plus
+de 600 mm en 48h dans le département de l'Ardèche
+\citep{MeteoFrance2024_episodesArdeches} ; en mai 2025, des orages
+courts mais extrêmement intenses (localement dépassant 120 mm/h) ont
+causé des dommages généralisés dans le sud du département du Var
+\citep{MeteoFrance2025}.
+
+La fréquence et l'intensité des pluies extrêmes journalières ont
+augmenté depuis les années\,1950. Le nombre annuel de jours à plus\,de
+10\,mm/j de précipitation a augmenté au niveau mondial de +0,2 à
++0,3\,jour par décennie sur 1951--2010 \citep{Donat2013} avec 29\% des
+mailles terrestres présentant une hausse significative. 71\% des régions
+terrestres montrent une hausse significative de l'intensité des
+précipitations maximales \citep{IPCC2021}. Les événements de type
+``pluie extrême journalières avec retour statistique décennal'' ont
+augmenté +6,7\%. Dans le sud‑est de la France, la fréquence des épisodes
+méditerranéens extrêmes (cumuls\,\textgreater\,200\,mm en 24h) a doublé
+entre 1961 et 2020, même si la variabilité interannuelle reste très
+forte \citep{meteofrance2024_episodesMediterraneens} et l'intensité
+moyenne des extrêmes journaliers a augmenté de +22\% entre 1961 et 2015
+\citep{Ribes2019}. La tendance des maxima annuels de précipitations
+quotidiennes était inexistante jusqu'aux années 1990 et d'environ +20 à
++40\% depuis. La hausse du niveau de précipitations journalières
+attendue en moyenne tous les 20 ans en automne pourrait atteindre un
+ordre de grandeur d'environ 100\,\% de sa valeur moyenne
+\citep{blanchet2021explaining}. En France, un scénario de réchauffement
+de +4\,°C conduirait à +15\% d'augmentation des pluies extrêmes
+journalières en moyenne et jusqu'à +20\% dans la moitié nord du pays
+\citep{soubeyroux:hal-04991790}.
+
+Les extrêmes horaires, mesurés sur des pas de temps de 1h ou moins, sont
+essentiels pour caractériser les phénomènes convectifs intenses (averses
+orageuses, orages stationnaires) souvent responsables d'inondations
+flash. Faute de séries longues et spatialisées, il n'existe pas
+d'analyse systématique des tendances sub‑journalières à l'échelle
+globale\,; les données sont souvent éparses et de courte durée. Malgré
+cela, plusieurs études régionales détectent une intensification des
+extrêmes horaires sur presque tous les continents, mais la confiance
+dans une hausse globale reste très faible \citep{IPCC2021}. Un
+accroissement des pluies extrêmes est relevée aux États-Unis, en Chine
+(l'été), en Australie\,(sur l'année), en Afrique du Sud (l'été), en
+Inde, en Malaisie, et en Italie. Plusieurs travaux mettent en évidence,
+selon la méthode et la région considérées, des sensibilités de l'ordre
+de +7\% à +14\% par °C, c'est‑à‑dire jusqu'à deux fois la pente de
+Clausius‑Clapeyron. En France, peu d'études régionales caractérisent
+explicitement cette hausse des cumuls extrêmes. Les valeurs maximales
+observées sur 1h atteignent maintenant 40--60\,mm dans les événements
+méditerranéens majeurs, contre 30--40\,mm dans les années 1980--1990
+\citep{meteofrance2024_episodesMediterraneens}. Seul l'étude de
+\citet{Berghald2025} semble chiffrer l'évolution des tendances des
+extrêmes horaires dans les Alpes : +100\% en novembre entre 1990 et 2020
+du niveau de précipitation attendu en moyenne une fois tous les 20 ans.
+Les tendances annuelles horaires sont majoritairement non
+significatives\,et montrent plutôt un gradient est--ouest (positives sur
+les Hautes-Alpes, négatives sur les pré‑Alpes).
+
+Il n'existe pas de définition consensuelle de ce qui caractérise un
+\emph{extrême}. Certains auteurs étudient des précipitations
+d'intensités au-dessus du 99e percentile ou des maxima
+saisonniers/annuels. D'autres, cependant, considèrent les précipitations
+extrêmes comme des événements qui sont rarement ou jamais rencontrés
+dans la vie d'un humain (par exemple, des niveaux de précipitations aux
+quels on s'attend une fois tous les 10, 20 ou 50 ans). Dans le présent
+article, nous nous intéressons principalement à la deuxième classe, car
+ces événements sont susceptibles de produire les impacts les plus forts.
+Plus précisément, nous définissons ici les extrêmes comme des niveaux de
+retour de 10 ans.
+
+Dans les années 1990, la numérisation des observations continues
+(notamment par Électricité de France, une entreprise électrique
+française, ainsi que par diverses autres institutions) a fourni un accès
+à 30-40 ans de données pour environ soixante stations, permettant la
+caractérisation des précipitations extrêmes à des échelles de temps
+infra-journalières \citep{Garcon1993}.
 
 Dans l'objectif de dégager des tendances durables (changement
 climatique) en opposition aux variations naturelles (variabilité
@@ -289,8 +393,7 @@ nouvelles perspectives prometteuses pour l'analyse climatique
 
 L'objectif de cette étude est de caractériser et d'étudier les tendances
 de précipitations extrêmes horaires en France. Les précipitations
-extrêmes sont généralement définies de façon statistique, non par un
-seuil fixe, mais par leur caractère exceptionnel au regard de la
+extrêmes sont définies par leur caractère exceptionnel au regard de la
 climatologie locale. Une méthode courante consiste à considérer les
 maxima pour une période et un pas de temps donnés
 \citep{blanchet2022instrumental}.
@@ -457,7 +560,7 @@ moyenne, une fois tous les \(T\) ans. Soit
 \(X \sim \mathrm{GEV}(\mu, \sigma, \xi)\), alors en notant \(F^{-1}\) la
 fonction quantile de la GEV, on obtient :
 
-\begin{tcolorbox}[enhanced jigsaw, breakable, bottomrule=.15mm, rightrule=.15mm, left=2mm, leftrule=.75mm, opacityback=0, colback=white, arc=.35mm, toprule=.15mm, colframe=quarto-callout-color-frame]
+\begin{tcolorbox}[enhanced jigsaw, arc=.35mm, left=2mm, rightrule=.15mm, breakable, colframe=quarto-callout-color-frame, colback=white, bottomrule=.15mm, opacityback=0, leftrule=.75mm, toprule=.15mm]
 
 \[
 \mathbb{P}(X > z_T) = \frac{1}{T}, \quad \text{soit} \quad z_T = F^{-1}\left(1 - \frac{1}{T} \right) = 
@@ -477,7 +580,7 @@ Soit la fonction de vraisemblance
 La log-vraisemblance \(\ell(\theta) = \log \mathcal{L}(\theta)\) s'écrit
 après développement (Annexes 1-1) :
 
-\begin{tcolorbox}[enhanced jigsaw, breakable, bottomrule=.15mm, rightrule=.15mm, left=2mm, leftrule=.75mm, opacityback=0, colback=white, arc=.35mm, toprule=.15mm, colframe=quarto-callout-color-frame]
+\begin{tcolorbox}[enhanced jigsaw, arc=.35mm, left=2mm, rightrule=.15mm, breakable, colframe=quarto-callout-color-frame, colback=white, bottomrule=.15mm, opacityback=0, leftrule=.75mm, toprule=.15mm]
 
 \[
 \ell(\theta)=
@@ -669,7 +772,7 @@ A partir des niveaux de retour 10 ans (\(T = 10\)) la tendance relative
 (en \%) est calculée via la formule ci-dessous. Un exemple de calcul est
 disponible en annexes 2-6.
 
-\begin{tcolorbox}[enhanced jigsaw, breakable, bottomrule=.15mm, rightrule=.15mm, left=2mm, leftrule=.75mm, opacityback=0, colback=white, arc=.35mm, toprule=.15mm, colframe=quarto-callout-color-frame]
+\begin{tcolorbox}[enhanced jigsaw, arc=.35mm, left=2mm, rightrule=.15mm, breakable, colframe=quarto-callout-color-frame, colback=white, bottomrule=.15mm, opacityback=0, leftrule=.75mm, toprule=.15mm]
 
 \[
 \text{Tendance} = \frac{z_T^{2022} - z_T^{1995}}{z_T^{1995}} \cdot {100}
@@ -800,8 +903,8 @@ localement connaître de très gros orages (40--80\,mm/j en moyenne).
 \pandocbounded{\includegraphics[keepaspectratio]{figures/mean_pluie_jour.pdf}}
 &
 \pandocbounded{\includegraphics[keepaspectratio]{figures/mean-max_pluie_jour.pdf}} \\
-\(r =\) 0.96 (n = 574) & \(r =\) 0.94 (n = 574) & \(r =\) 0.89 (n =
-574) \\
+\(r =\) 0.95 (n = 1583) & \(r =\) 0.94 (n = 1583) & \(r =\) 0.96 (n =
+1583) \\
 \end{longtable}
 
 \begin{center}
@@ -1218,7 +1321,7 @@ flux de sud \citep{Fresnay2012}. AROME sous‑diagnostique ces hausses
 mais en reproduit la localisation, suggérant que la dynamique
 (canalisation méridienne et levée orographique) est correctement
 simulée, tandis que l'intensité convective demeure sous‑résolue.
-\citet{Ribes2018} met en évidence que cette zone\,cumule le plus fort
+\citet{Ribes2019} met en évidence que cette zone\,cumule le plus fort
 renforcement observé sur l'ensemble du Midi méditerranéen avec un gain
 d'intensité moyen de +22\% des précipitations extrêmes journalières
 entre 1961 et 2015. \citet{blanchet2021explaining} montrent que, depuis
@@ -1230,7 +1333,7 @@ données horaires en février. \citet{Berghald2025} montrent que les
 tendances horaires hivernales sont statistiquement et spatialement
 maximales sur l'axe Gard\,-\,basse vallée du Rhône, avec février comme
 mois le plus contributif (+100\% sur le niveau de retour 20 ans).
-\citet{Ribes2018} mettent en évidence sur la moitié sud‑est, incluant
+\citet{Ribes2019} mettent en évidence sur la moitié sud‑est, incluant
 Gard, Ardèche et Drôme, un doublement de la fréquence des
 évènements\,≥\,200\,mm en 24\,h depuis\,1985\,avec la plupart associés à
 des pics horaires \textgreater\,50\,mm. Depuis le début des
