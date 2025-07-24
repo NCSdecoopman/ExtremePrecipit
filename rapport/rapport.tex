@@ -175,7 +175,7 @@
 \makeatletter
 \makeatother
 \makeatletter
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[enhanced, boxrule=0pt, borderline west={3pt}{0pt}{shadecolor}, interior hidden, frame hidden, breakable, sharp corners]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[enhanced, frame hidden, borderline west={3pt}{0pt}{shadecolor}, sharp corners, boxrule=0pt, interior hidden, breakable]}{\end{tcolorbox}}\fi
 \makeatother
 \usepackage{bookmark}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
@@ -264,6 +264,8 @@ Antoine Blanc\\
 
 \section{Introduction et contexte}\label{introduction-et-contexte}
 
+\subsection{Le changement climatique}\label{le-changement-climatique}
+
 Le changement climatique entraine un réchauffement de l'air à la surface
 de la planète, plus marqué sur les continents que sur les océans
 \citep{IPCC2021}. L'augmentation est de +1°C à l'échelle mondiale,
@@ -284,7 +286,7 @@ limitent l'augmentation des précipitations moyennes à seulement
 1--3\%/°C \citep{IPCC2021}. En revanche, lors d'événements convectifs
 intenses (orage, cyclogenèse rapide) l'ascension rapide condense presque
 intégralement ce surplus, et les pluies maximales sur des durées courtes
-augmentent de 5 à 8\,\% par °C, soit presque au même rythme que le
+augmentent de 5 à 8\% par °C, soit presque au même rythme que le
 potentiel théorique. Les extrêmes de précipitation suivent de près la
 loi de Clausius--Clapeyron, tandis que la pluie moyenne reste sous
 l'influence de nombreux autres facteurs énergétiques et dynamiques
@@ -294,131 +296,252 @@ précipitations extrêmes. Cette augmentation est variable suivant les
 changements de circulations atmosphériques et peut être amplifiée
 localement \citep{blanchet2021explaining}.
 
+\subsection{Les précipitations
+extrêmes}\label{les-pruxe9cipitations-extruxeames}
+
 Les précipitations extrêmes sont définies comme des épisodes de fortes
 pluies intenses sur de courtes durées (1h à 24h) et correspondent à la
-queue de la distribution des intensités pluviométriques. Ils sont au
-coeur des préoccupations climatiques et sociétales. Ces épisodent
-provoquent 90\% des coûts liés aux inondations, aux glissements de
-terrain et aux ruptures d'infrastructures \citep{IPCC_2022_WGIII}. En
-2024, de nombreux événements de ce type ont fait l'actualité, par
-exemple en Espagne orientale, au Népal, en Afghanistan ou en Europe
-centrale \citep{WMO2025}. En particulier en France, en juin 2024, des
-pluies intenses en haute altitude qui ont contribué à des inondations
-majeures dans le massif des Écrins \citep{Blanc2024} ; en octobre, plus
-de 600 mm en 48h dans le département de l'Ardèche
+queue de la distribution des intensités pluviométriques. Il n'existe pas
+de définition consensuelle de ce qui caractérise un \emph{extrême}.
+Certains auteurs étudient des précipitations d'intensités au-dessus du
+99e percentile ou des maxima saisonniers/annuels. D'autres, considèrent
+les précipitations extrêmes comme des événements qui sont rarement ou
+jamais rencontrés dans la vie d'un humain (par exemple, des niveaux de
+précipitations aux quels on s'attend une fois tous les 10, 20 ou 50
+ans). Ces extrêmes sont au coeur des préoccupations climatiques et
+sociétales. Ces épisodent provoquent 90\% des coûts liés aux
+inondations, aux glissements de terrain et aux ruptures
+d'infrastructures \citep{IPCC_2022_WGIII}. En 2024, de nombreux
+événements de ce type ont fait l'actualité, par exemple au Népal ou en
+Afghanistan et en Europe centrale avec l'Espagne orientale et la France
+\citep{WMO2025}. En particulier, en juin 2024, des pluies intenses en
+haute altitude qui ont contribué à des inondations majeures dans le
+massif des Écrins \citep{Blanc2024} ; en octobre, plus de 600 mm en 48h
+dans le département de l'Ardèche
 \citep{MeteoFrance2024_episodesArdeches} ; en mai 2025, des orages
 courts mais extrêmement intenses (localement dépassant 120 mm/h) ont
 causé des dommages généralisés dans le sud du département du Var
 \citep{MeteoFrance2025}.
 
-La fréquence et l'intensité des pluies extrêmes journalières ont
-augmenté depuis les années\,1950. Le nombre annuel de jours à plus\,de
-10\,mm/j de précipitation a augmenté au niveau mondial de +0,2 à
-+0,3\,jour par décennie sur 1951--2010 \citep{Donat2013} avec 29\% des
-mailles terrestres présentant une hausse significative. 71\% des régions
-terrestres montrent une hausse significative de l'intensité des
-précipitations maximales \citep{IPCC2021}. Les événements de type
-``pluie extrême journalières avec retour statistique décennal'' ont
-augmenté +6,7\%. Dans le sud‑est de la France, la fréquence des épisodes
+\subsubsection{A l'échelle
+journalière}\label{a-luxe9chelle-journaliuxe8re}
+
+Pour les extrêmes journaliers, le signal est clairement à la hausse à
+l'échelle globale : la fréquence et l'intensité augmentent depuis les
+années\,1950, avec des hausses significatives rapportées dans une large
+majorité de régions et de mailles terrestres. Le nombre annuel de jours
+à plus\,de 10\,mm/j de précipitation a augmenté au niveau mondial de
++0,2 à +0,3\,jour par décennie sur 1951--2010 \citep{Donat2013} avec
+29\% des mailles terrestres présentant une hausse significative. Les
+événements de type ``pluie extrême journalières avec retour statistique
+décennal'' ont augmenté +6,7\% pour 71\% des régions terrestres
+\citep{IPCC2021}. En France comme ailleurs, plusieurs études trouvent
+également des augmentations marquées et projettent de nouvelles hausses
+avec le réchauffement futur. Dans le sud‑est, la fréquence des épisodes
 méditerranéens extrêmes (cumuls\,\textgreater\,200\,mm en 24h) a doublé
 entre 1961 et 2020, même si la variabilité interannuelle reste très
-forte \citep{meteofrance2024_episodesMediterraneens} et l'intensité
+forte \citep{meteofrance2024_episodesMediterraneens}. L'intensité
 moyenne des extrêmes journaliers a augmenté de +22\% entre 1961 et 2015
-\citep{Ribes2019}. La tendance des maxima annuels de précipitations
-quotidiennes était inexistante jusqu'aux années 1990 et d'environ +20 à
-+40\% depuis. La hausse du niveau de précipitations journalières
-attendue en moyenne tous les 20 ans en automne pourrait atteindre un
-ordre de grandeur d'environ 100\,\% de sa valeur moyenne
+\citep{Ribes2019}. Jusqu'aux années 1990, il n'y avait aucune tendance
+sur les maxima annuels de précipitations quotidiennes. Depuis, il existe
+une augmentation de +20 à +40\%. La hausse du niveau de précipitations
+journalières attendue en moyenne tous les 20 ans en automne pourrait
+atteindre un ordre de grandeur d'environ 100\% de sa valeur moyenne
 \citep{blanchet2021explaining}. En France, un scénario de réchauffement
-de +4\,°C conduirait à +15\% d'augmentation des pluies extrêmes
+de +4°C conduirait à +15\% d'augmentation des pluies extrêmes
 journalières en moyenne et jusqu'à +20\% dans la moitié nord du pays
 \citep{soubeyroux:hal-04991790}.
+
+\subsubsection{A l'échelle horaire}\label{a-luxe9chelle-horaire}
 
 Les extrêmes horaires, mesurés sur des pas de temps de 1h ou moins, sont
 essentiels pour caractériser les phénomènes convectifs intenses (averses
 orageuses, orages stationnaires) souvent responsables d'inondations
 flash. Faute de séries longues et spatialisées, il n'existe pas
 d'analyse systématique des tendances sub‑journalières à l'échelle
-globale\,; les données sont souvent éparses et de courte durée. Malgré
-cela, plusieurs études régionales détectent une intensification des
-extrêmes horaires sur presque tous les continents, mais la confiance
-dans une hausse globale reste très faible \citep{IPCC2021}. Un
-accroissement des pluies extrêmes est relevée aux États-Unis, en Chine
-(l'été), en Australie\,(sur l'année), en Afrique du Sud (l'été), en
-Inde, en Malaisie, et en Italie. Plusieurs travaux mettent en évidence,
-selon la méthode et la région considérées, des sensibilités de l'ordre
-de +7\% à +14\% par °C, c'est‑à‑dire jusqu'à deux fois la pente de
-Clausius‑Clapeyron. En France, peu d'études régionales caractérisent
-explicitement cette hausse des cumuls extrêmes. Les valeurs maximales
-observées sur 1h atteignent maintenant 40--60\,mm dans les événements
-méditerranéens majeurs, contre 30--40\,mm dans les années 1980--1990
-\citep{meteofrance2024_episodesMediterraneens}. Seul l'étude de
-\citet{Berghald2025} semble chiffrer l'évolution des tendances des
+globale\,; les données sont souvent éparses, courtes et non
+significatives. Malgré cela, plusieurs études régionales détectent une
+intensification des extrêmes horaires sur presque tous les continents,
+mais la confiance dans une hausse globale reste très faible
+\citep{IPCC2021}. Un accroissement des pluies extrêmes est relevée aux
+États-Unis, en Chine (l'été), en Australie\,(sur l'année), en Afrique du
+Sud (l'été), en Inde, en Malaisie, et en Italie. Plusieurs travaux
+mettent en évidence, selon la méthode et la région considérées, des
+sensibilités de l'ordre de +7\% à +14\% par °C, c'est‑à‑dire jusqu'à
+deux fois la pente de Clausius‑Clapeyron. En France, peu d'études
+régionales caractérisent explicitement cette hausse des extrêmes. Les
+valeurs maximales observées sur 1h atteignent maintenant 40--60\,mm dans
+les événements méditerranéens majeurs, contre 30--40\,mm dans les années
+1980--1990 \citep{meteofrance2024_episodesMediterraneens}. Seul l'étude
+de \citet{Berghald2025} semble chiffrer l'évolution des tendances des
 extrêmes horaires dans les Alpes : +100\% en novembre entre 1990 et 2020
 du niveau de précipitation attendu en moyenne une fois tous les 20 ans.
 Les tendances annuelles horaires sont majoritairement non
 significatives\,et montrent plutôt un gradient est--ouest (positives sur
-les Hautes-Alpes, négatives sur les pré‑Alpes).
+les Hautes-Alpes, négatives sur les pré‑Alpes). La tendance sur les
+précipitations extrêmes horaires à la hausse est rarement significatives
+\citep{Soubeyroux01022015}.
 
-Il n'existe pas de définition consensuelle de ce qui caractérise un
-\emph{extrême}. Certains auteurs étudient des précipitations
-d'intensités au-dessus du 99e percentile ou des maxima
-saisonniers/annuels. D'autres, cependant, considèrent les précipitations
-extrêmes comme des événements qui sont rarement ou jamais rencontrés
-dans la vie d'un humain (par exemple, des niveaux de précipitations aux
-quels on s'attend une fois tous les 10, 20 ou 50 ans). Dans le présent
-article, nous nous intéressons principalement à la deuxième classe, car
-ces événements sont susceptibles de produire les impacts les plus forts.
-Plus précisément, nous définissons ici les extrêmes comme des niveaux de
-retour de 10 ans.
+\subsection{Les données disponibles}\label{les-donnuxe9es-disponibles}
 
-Dans les années 1990, la numérisation des observations continues
-(notamment par Électricité de France, une entreprise électrique
-française, ainsi que par diverses autres institutions) a fourni un accès
-à 30-40 ans de données pour environ soixante stations, permettant la
-caractérisation des précipitations extrêmes à des échelles de temps
-infra-journalières \citep{Garcon1993}.
+\subsubsection{Relevés Meteo-France}\label{relevuxe9s-meteo-france}
 
-Dans l'objectif de dégager des tendances durables (changement
-climatique) en opposition aux variations naturelles (variabilité
-climatique), il convient d'utiliser des données issues de modèles de
-climat sur de longues périodes. Ces dernières années, l'utilisation des
-modèles régionaux de climat à haute résolution (CP-RCM pour
-Convection-Permitting Regional Climate Models, avec une résolution de 1
-à 3 km) a marqué une avancée significative. Ces modèles simulent
-explicitement la convection profonde, ce qui leur permet de capturer des
-échelles spatio-temporelles plus fines. Cette approche ouvre de
-nouvelles perspectives prometteuses pour l'analyse climatique
-\citep{prein2015regional}.
+Le réseau climatologique s'est développé à la fin du XIXᵉ siècle. Les
+lectures étaient manuelles, généralement une fois par jour (autour de
+6h\,UTC, ce qui définit encore souvent le jour météorologique). Un
+réseau à l'échelle nationale est disponible à partir des années
+1950--1960, période où la couverture devient suffisamment dense. Des
+centaines de séries précipitations existent aujourd'hui
+\citep{meteo-france_2020_breve_observation_classique}. A l'échelle
+horaire, les premières stations automatiques opérationnelles (SATIN)
+datent de 1967. La généralisation et la modernisation du réseau temps
+réel se fait surtout avec RADOME à partir de 1996, ce qui rend les
+cumuls horaires réellement disponibles et diffusés à grande échelle à
+partir des années 1990--2000. Aujourd'hui la mosaïque radar nationale
+fournit des données toutes les 5\,min à 1\,km, accessibles en archives
+publiques. Les lames d'eau ANTILOPE (radar + pluviomètres) sont
+produites opérationnellement, avec un pas de 15\,min disponible depuis
+2017.
 
-L'objectif de cette étude est de caractériser et d'étudier les tendances
-de précipitations extrêmes horaires en France. Les précipitations
-extrêmes sont définies par leur caractère exceptionnel au regard de la
-climatologie locale. Une méthode courante consiste à considérer les
-maxima pour une période et un pas de temps donnés
-\citep{blanchet2022instrumental}.
+\subsubsection{Apport des modèles}\label{apport-des-moduxe8les}
+
+La modélisation des précipitations apporte 1) des données antérieures
+aux données observées de 1990 ; et 2) des champs spatiaux complets et
+cohérents physiquement utile en zones peu instrumentées. Les
+modélisations GCM (General Circulation Model) ne se sont pas
+recommandées pour cette étude : la convection est paramétrée, les
+précipitations horaires sont souvent trop lissées et mal positionnées
+avec une résolution 12--200 km. L'émergence des modèles climatiques
+régionaux à convection explicite (CPMs, Convection-Permitting Model)
+ouvre une opportunité inédite : ils permettent de simuler, avec
+réalisme, la dynamique des précipitations intenses à fine échelle
+spatiale et temporelle sur de longues périodes. Pour cette étude le
+modèle doit être RCM (Regional Climate Model, 1--4 km) à convection
+explicite (CPM) pour représenter explicitement l'initiation,
+l'organisation et la propagation des systèmes convectifs et leurs
+extrêmes horaires. Les modèles répondant à ces critères sont : WRF 3 km,
+COSMO‑CLM 2.8 km, AROME‑Climate 2.5 km \citep{cnrm_arome2007}, ICON-LEM
+2.5 km, UKCP CPM 2.2 km, CP4‑Africa, ensembles EURO-CP / FPS‑Convection.
+
+\subsubsection{Apport des réanalyses}\label{apport-des-ruxe9analyses}
+
+Un CP-RCM doit être initialisé (champs 3D de température, humidité,
+pression, vent, etc.) et forcé aux limites latérales. Classiquement
+utilisé, ERA-Interim (80 km / 6h / 1979-2019) a été remplacé par ERA5
+(25-31 km / 1h / 1949-présent) permettant de forcer dynamiquement un
+modèle régional à 3 km. Cette réanalyse permet de classer les
+environnements convectifs \citep{ecmwf_era5_data_documentation} puis de
+zoomer avec un CPM pour la convection explicite. Le produit AROME pour
+Application of Research to Operations at MEsoscale (2,5 km / 1h) forcé
+par réanalyse ERA5 (1959-2022) correspond à nos critères. Il est choisi
+comme modèle numérique pour cette étude.
+
+\subsection{Intérêt de l'étude dans le paysage
+scientifique}\label{intuxe9ruxeat-de-luxe9tude-dans-le-paysage-scientifique}
+
+Si les tendances des extrêmes journaliers sont désormais bien
+documentées à l'échelle mondiale et régionale, les précipitations
+horaires --- pourtant cruciales pour les inondations soudaines ---
+souffrent encore d'un manque de documentation, notamment en France. Les
+observations longues et homogènes y sont rares, les tendances peu
+significatives, et les études ciblées encore peu nombreuses. Ce déficit
+de connaissance s'explique à la fois par la faible durée des séries
+horaires disponibles et par la complexité physique des processus
+convectifs à l'origine de ces extrêmes. La réanalyse AROME forcée par
+ERA5 (1959--2022) fournit un jeu de données unique pour étudier les
+précipitations horaires extrêmes en France. Toutefois, la validité des
+extrêmes simulés par les CPMs reste encore peu évaluée, tant du point de
+vue statistique que physique. Notre étude s'inscrit dans cette lacune.
+Elle vise à \textbf{évaluer finement la capacité du modèle AROME à
+reproduire les extrêmes horaires observés}, en mettant en regard les
+tendances modélisées et observées sur plusieurs décennies. Elle apporte
+ainsi une double contribution : 1) méthodologique, en testant des
+approches robustes pour comparer simulations et observations d'extrêmes
+; 2) climatique, en documentant pour la première fois les
+\textbf{évolutions temporelles} des extrêmes horaires en France sur 60
+ans à partir d'un modèle à convection explicite validé. Ce travail
+éclaire ainsi la manière dont les extrêmes horaires évoluent dans un
+contexte de réchauffement climatique, tout en évaluant la pertinence des
+modèles climatiques CPM pour les études d'impact hydrométéorologique à
+l'échelle locale.
 
 \section{Méthodologie}\label{muxe9thodologie}
 
+L'étude se concentre sur la France métropolitaine. Dans un premier
+temps, l'objectif est de valider le modèle (points de grille AROME)
+vis‑à‑vis des observations (stations Météo‑France) à l'aide
+d'indicateurs simples (corrélation et biais) mais représentatifs du
+régime de précipitations. Cette étape est conduite en contexte
+stationnaire, c'est‑à‑dire sans chercher encore à interpréter des
+tendances à long terme ou des ruptures de régime. Une fois cette
+validation stationnaire établie, l'analyse sera étendue à des contextes
+non stationnaires (tendances et variabilité des extrêmes).
+
 \subsection{Données utilisées}\label{donnuxe9es-utilisuxe9es}
 
-Dans cette étude, le modèle numérique Application of Research to
-Operations at MEsoscale (AROME) a été choisi
-\citep{caillaud2021simulation}. C'est un modèle CP-RCM de résolution
-spatiale 2,5 km et temporelle 1h, forcé par réanalyse ERA5
-\citep{hersbach2020era5} offrant des données de précipitations de 1959 à
-2022. En parallèle, l'étude utilise aussi les données de précipitations
-issues d'observation Météo-France \citep{meteofrance2024} au pas de
-temps journalier (1959-2022) et horaire (1990-2022).
+\subsubsection{Données observées}\label{donnuxe9es-observuxe9es}
 
-\subsection{Statistiques descriptives}\label{statistiques-descriptives}
+Ce travail utilise les données de précipitations issues d'observations
+Météo-France \citep{meteofrance2024} au pas de temps journalier
+(1959-2022) et horaire (1990-2022) représentées sur la figure 1. Depuis
+les années 2000 des procédures d'homogénéisation (PRODIGE, puis HOMER)
+ont été mises en place dans la BDClim
+\citep{meteo-france_2020_breve_observation_classique}.
 
-Par extraction, transformation et chargement, les statistiques
-descriptives suivantes sont générées : nombre de jour de pluie (seuil
-fixé à 1mm/j), cumul de précipitations, maximum de précipitations. Ceci
-en chaque point de grille AROME et chaque station Météo-France à partir
-des données journalières de 1959 à 2022 et 1990 à 2022 ; et des données
-horaires de 1990 à 2022, pour chaque année et chaque saison (ou mois).
+\begin{longtable}[]{@{}
+  >{\centering\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\centering\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\centering
+\small Stations au pas de temps journalier (1959-2022)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\centering
+\small Stations au pas de temps horaire (1990-2022)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\pandocbounded{\includegraphics[keepaspectratio]{../outputs/maps/dispo_n_years/quotidien/compare_1/sat_100.0/hydro/obs_rast.pdf}}
+&
+\pandocbounded{\includegraphics[keepaspectratio]{../outputs/maps/dispo_n_years/horaire/compare_1/sat_100.0/hydro/obs_rast.pdf}} \\
+n = 8198 & n = 2315 \\
+\end{longtable}
+
+\captionof{figure}{Cartographie du nombre d'années hydrologiques comportant au plus 10\% de valeurs manquantes des stations Météo-France au pas de temps journalier (1959–2022) et horaire (1990–2022).}
+
+\subsubsection{Données modélisées}\label{donnuxe9es-moduxe9lisuxe9es}
+
+Le modèle numérique CP-RCM AROME, tout récemment forcé par réanalyse
+ERA5 offre, parmi différentes variables de sortie, des données de
+précipitations horaires de 1959 à 2022 à une résolution de 2,5 km sur le
+champ de calcul de la figure 2 \citep{arome2014}. En France
+métropolitaine 87 536 points sont générés. Dans le cadre d'un second
+stage auprès de Cécile Caillaud de Météo-France, Mathis Chevé a réalisé
+une étude conjointe sur la relation de Clausius-Clapeyron montrant que
+les tendances de températures du modèle sont deux fois plus faibles que
+les tendances observées. Il est donc à noter pour la suite que la part
+des tendances des extrêmes liée à Clausius-Clapeyron sera théoriquement
+deux fois plus faible que les tendances observées.\\
+
+\begin{center}
+  \includegraphics[width=0.6\textwidth]{figures/domaine_calcul_AROME.png}
+\end{center}
+
+\captionof{figure}{Cartographie du champ de calcul du modèle numérique AROME.}
+
+\subsubsection{Filtrage des séries
+temporelles}\label{filtrage-des-suxe9ries-temporelles}
+
+En chaque point géographique on calcule la part de données manquantes
+dans la série temporelle pour chaque saison (ou mois) et année. On
+élimine les années dont cette part dépasse le seuil fixé de 10\%. On
+déduit le nombre d'années valides restantes. On ne garde que les points
+géographiques qui possèdent au moins le nombre minimal d'années exigé
+(50 ans pour la période 1959-2022 et 25 ans pour la période 1990-2022).
+Les analyses suivantes ne portent plus que sur ce sous‑ensemble de
+stations et d'années.
+
+\subsection{Définition des saisons}\label{duxe9finition-des-saisons}
 
 Les saisons sont définies par \textbf{SON} pour septembre (\textbf{SEP})
 octobre (\textbf{OCT}) novembre (\textbf{NOV}), \textbf{DJF} pour
@@ -429,30 +552,44 @@ décembre (\textbf{DEC}) janvier (\textbf{JAN}) février (\textbf{FEV}),
 (\textbf{HYDRO}) est définie comme la période allant du 1er septembre de
 l'année N au 31 août de l'année N+1.
 
-\subsection{Filtrage des séries}\label{filtrage-des-suxe9ries}
+\subsection{Calcul des indicateurs
+descriptifs}\label{calcul-des-indicateurs-descriptifs}
 
-Pour chaque point géographique, chaque saison (ou mois) et chaque année,
-on calcul la part de données manquantes dans la série temporelle. On
-élimine toutes les années dont cette part dépasse le seuil fixé de 10\%.
-On déduit le nombre d'années valides restantes. On ne garde que les
-points géographiques qui possèdent au moins le nombre minimal d'années
-exigé (50 ans pour les données journalières 1959-2022 et 25 ans pour les
-données journalières 1990-2022 et les données horaires 1990-2022). Les
-analyses suivantes ne portent plus que sur ce sous‑ensemble de stations
-et d'années : on travaille ainsi avec des séries suffisamment complètes
-et longues pour être fiables.
+À partir des données obtenues de Météo-France (et après correction de
+ces dernières) et d'AROME, le nombre de jour de pluie (seuil fixé à
+1mm/j), le cumul et les maxima de précipitations journalières et
+horaires ont été calculées pour chaque point de grille AROME ou station,
+année et mois/saison sur les période 1959-2022 et 1990-2022.
 
-\subsection{Modélisation statistique}\label{moduxe9lisation-statistique}
+\subsection{Vers une généralisation par modélisation
+statistique}\label{vers-une-guxe9nuxe9ralisation-par-moduxe9lisation-statistique}
+
+Les statistiques descriptives ne permettent pas d'extrapoler, quantifier
+l'incertitude et la significativité et de relier proprement les
+tendances observées aux mécanismes physiques. On ne peut donc pas
+transformer des constats descriptifs en résultats exploitables et
+comparables. Pour répondre à ces questions, nous mobilisons la théorie
+des valeurs extrêmes (GEV) \citep{coles2001introduction}. Les maxima,
+une fois normalisés, convergent vers une loi généralisée des valeurs
+extrêmes (GEV). C'est l'analogue, pour les maxima, du théorème central
+limite pour les sommes. La GEV unifie trois familles classiques (Gumbel,
+Fréchet, Weibull) via le paramètre de forme \(\xi\), qui contrôle la
+lourdeur de la queue. La ``bonne'' famille est donc automatiquement
+choisie. Nous ajustons des lois GEV aux maxima, d'abord dans un cadre
+stationnaire pour valider le bon comportement du modèle, puis dans un
+cadre non‑stationnaire où les paramètres de la GEV dépendent du temps.
+Cette étape nous permet de comparer de manière cohérente les niveaux de
+retour entre observations et AROME, d'estimer leurs tendances et de
+relier ces tendances aux mécanismes physiques.
 
 \subsubsection{Définitions}\label{duxe9finitions}
 
 Si on note \(x\) une réalisation de la variable aléatoire \(X\),
 représentant le maximum annuel de précipitations en un point spatial
-donné, alors la loi GEV (loi des valeurs extrêmes généralisée) est une
-loi de probabilité continue paramétrée par le triplet
-\(\theta = (\mu, \sigma, \xi)\) --- respectivement la position,
-l'échelle (strictement positive) et la forme dont la fonction de
-répartition cumulative (CDF) de la GEV est définie comme suit :
+donné, alors la loi GEV est une loi de probabilité continue paramétrée
+par le triplet \(\theta = (\mu, \sigma, \xi)\) --- respectivement la
+position, l'échelle (strictement positive) et la forme dont la fonction
+de répartition cumulative est :
 
 \[
 F(x;\mu ,\sigma ,\xi ) = \exp \left\{ -\left[ 1 + \xi \left( \frac{x - \mu}{\sigma} \right) \right]^{-\frac{1}{\xi}} \right\}
@@ -467,19 +604,14 @@ annuel de précipitations observé à l'année \(t_i\) et qui suit une loi
 GEV de paramètre \(\theta\). On transforme l'année \(t_i\) en une
 covariable normalisée notée \(\tilde{t}_i\). Cette transformation est
 simplement réalisée pour des raisons numériques mais elle ne change rien
-au résultat théorique.
+au résultat théorique. On crée également une covariable temporelle avec
+point de rupture noté \(t_+\) tel que :
 
 \[
 \tilde{t}_i = \frac{t_i - t_{\min}}{t_{\max} - t_{\min}} \quad \text{avec} \quad \begin{cases}
 t_{min} = \min_i t_i \\
 t_{max} = \max_i t_i
-\end{cases}
-\]
-
-On crée également une covariable temporelle avec point de rupture noté
-\(t_+\) tel que :
-
-\[
+\end{cases} \quad \text{et} \quad
 \tilde{t}_{i}^\ast =
 \begin{cases}
 0 & \text{si } t_i < t_+ \\
@@ -493,49 +625,59 @@ dans la portion post-rupture.
 
 \subsubsection{Modèles utilisés}\label{moduxe8les-utilisuxe9s}
 
+\begin{tcolorbox}[enhanced jigsaw, leftrule=.75mm, opacityback=0, breakable, toprule=.15mm, colframe=quarto-callout-color-frame, arc=.35mm, colback=white, rightrule=.15mm, bottomrule=.15mm, left=2mm]
+
 Soit la covariable
-\(t \in \mathbb{N} \mid t_{\min} \leq t \leq t_{\max}\). Le
-\textbf{modèle stationnaire} est défini par :
+\(t \in \mathbb{N} \mid t_{\min} \leq t \leq t_{\max}\). Le modèle
+stationnaire est défini par \(M_0(\theta_0)\) et
+\(\theta_0 = (\mu_0, \sigma_0, \xi_0)\) avec \(\mu(t) = \mu_0\) ;
+\(\sigma(t) = \sigma_0\) ; \(\xi(t) = \xi_0\). Les modèles non
+stationnaires sont définis par :
 
 \[
-M_0(\theta_0) \quad \text{et} \quad \theta_0 = (\mu_0, \sigma_0, \xi_0) \quad
+\begin{array}{c@{\qquad}c@{\qquad}c}
+% -------- Colonne 1 --------
+\begin{array}{c}
+\begin{aligned}
+M_1(\theta_1)\\[-0.2ex]
+\theta_1 = (\mu_0, \mu_1, \sigma_0, \xi_0)
+\end{aligned}\\[0.4ex]
 \begin{cases}
-\mu(t) = \mu_0 \\
+\mu(t) = \mu_0 + \mu_1\, t \\
 \sigma(t) = \sigma_0 \\
 \xi(t) = \xi_0
 \end{cases}
-\]
-
-Les \textbf{modèles non stationnaires} sont définis par :
-
-\[
-M_1(\theta_1) \quad \text{et} \quad \theta_1 = (\mu_0, \mu_1, \sigma_0, \xi_0) \quad
-\begin{cases}
-\mu(t) = \mu_0 + \mu_1 \cdot t \\
-\sigma(t) = \sigma_0 \\
-\xi(t) = \xi_0
-\end{cases}
-\]
-
-\[
-M_2(\theta_2) \quad \text{et} \quad \theta_2 = (\mu_0, \sigma_0, \sigma_1, \xi_0)
-\quad
+\end{array}
+&
+% -------- Colonne 2 --------
+\begin{array}{c}
+\begin{aligned}
+M_2(\theta_2)\\[-0.2ex]
+\theta_2 = (\mu_0, \sigma_0, \sigma_1, \xi_0)
+\end{aligned}\\[0.4ex]
 \begin{cases}
 \mu(t) = \mu_0 \\
-\sigma(t) = \sigma_0 + \sigma_1 \cdot t \\
+\sigma(t) = \sigma_0 + \sigma_1\, t \\
 \xi(t) = \xi_0
 \end{cases}
+\end{array}
+&
+% -------- Colonne 3 --------
+\begin{array}{c}
+\begin{aligned}
+M_3(\theta_3)\\[-0.2ex]
+\theta_3 = (\mu_0, \mu_1, \sigma_0, \sigma_1, \xi_0)
+\end{aligned}\\[0.4ex]
+\begin{cases}
+\mu(t) = \mu_0 + \mu_1\, t \\
+\sigma(t) = \sigma_0 + \sigma_1\, t \\
+\xi(t) = \xi_0
+\end{cases}
+\end{array}
+\end{array}
 \]
 
-\[
-M_3(\theta_3) \quad \text{et} \quad \theta_3 = (\mu_0, \mu_1, \sigma_0, \sigma_1, \xi_0)
-\quad
-\begin{cases}
-\mu(t) = \mu_0 + \mu_1 \cdot t\\
-\sigma(t) = \sigma_0 + \sigma_1 \cdot t \\
-\xi(t) = \xi_0
-\end{cases}
-\]
+\end{tcolorbox}
 
 Lorsqu'un point de rupture noté \(t_+\) est introduit, on note :
 
@@ -549,18 +691,27 @@ Les modèles \(M_1\), \(M_2\) et \(M_3\) deviennent respectivements
 cette étude, on réalise les modélisations stationnaire et
 non-stationnaires avec pour covariable l'année et un effet temporel sur
 \(\mu\) ou \(\sigma\) ou \(\mu\) et \(\sigma\). \(\xi\) est choisi comme
-constant. Sur la base bibliographique, on choisi \(t_+ = 1985\)
-\citep{blanchet2022instrumental}.
+constant. Sur la base bibliographique, on choisi \(t_+ = 1985\). Cette
+année de rupture est motivée par plusieurs considérations : 1) des
+études précédentes ont montré que les tendances statistiquement
+significatives des extrêmes de précipitations quotidiennes dans le sud
+de la France commencent dans les années 1980 \citep{Blanchet2018} ; 2)
+c'est en ce point que la log-vraisemblance est maximisée
+\citep{blanchet2022instrumental}. En utilisant une année de rupture,
+nous sommes en mesure de minimiser les potentiels biais découlant des
+différentes longueurs d'observations tout en pouvant prendre en compte
+les données supplémentaires antérieures à 1985 pour rendre les
+estimations plus robustes.
 
 \subsubsection{Niveau de retour}\label{niveau-de-retour}
 
 Le niveau de retour (ou quantile d'ordre \(1 - \tfrac{1}{T}\)) dans une
-loi GEV correspond à une valeur seuil \(z_T\) que l'on dépasse, en
-moyenne, une fois tous les \(T\) ans. Soit
+loi GEV (Figure 3) correspond à une valeur seuil \(z_T\) que l'on
+dépasse, en moyenne, une fois tous les \(T\) ans. Soit
 \(X \sim \mathrm{GEV}(\mu, \sigma, \xi)\), alors en notant \(F^{-1}\) la
 fonction quantile de la GEV, on obtient :
 
-\begin{tcolorbox}[enhanced jigsaw, arc=.35mm, left=2mm, rightrule=.15mm, breakable, colframe=quarto-callout-color-frame, colback=white, bottomrule=.15mm, opacityback=0, leftrule=.75mm, toprule=.15mm]
+\begin{tcolorbox}[enhanced jigsaw, leftrule=.75mm, opacityback=0, breakable, toprule=.15mm, colframe=quarto-callout-color-frame, arc=.35mm, colback=white, rightrule=.15mm, bottomrule=.15mm, left=2mm]
 
 \[
 \mathbb{P}(X > z_T) = \frac{1}{T}, \quad \text{soit} \quad z_T = F^{-1}\left(1 - \frac{1}{T} \right) = 
@@ -572,6 +723,14 @@ fonction quantile de la GEV, on obtient :
 
 \end{tcolorbox}
 
+\hfill\break
+
+\begin{center}
+  \includegraphics[width=0.6\textwidth]{figures/fig_gev.png}
+\end{center}
+
+\captionof{figure}{\citet{berghald2024caracterisation} montre l'influence des paramètres de la GEV sur la densité de probabilité (à gauche) et sur la relation entre période et niveau de retour (à droite) : position $\mu$ (en haut), échelle $\sigma$ (centre) et forme $\xi$ (en bas). Les lignes pointillées montrent le niveau de retour de 20\,ans pour les différents cas.}
+
 \subsubsection{Vraisemblance et maximum de
 vraisemblance}\label{vraisemblance-et-maximum-de-vraisemblance}
 
@@ -580,7 +739,7 @@ Soit la fonction de vraisemblance
 La log-vraisemblance \(\ell(\theta) = \log \mathcal{L}(\theta)\) s'écrit
 après développement (Annexes 1-1) :
 
-\begin{tcolorbox}[enhanced jigsaw, arc=.35mm, left=2mm, rightrule=.15mm, breakable, colframe=quarto-callout-color-frame, colback=white, bottomrule=.15mm, opacityback=0, leftrule=.75mm, toprule=.15mm]
+\begin{tcolorbox}[enhanced jigsaw, leftrule=.75mm, opacityback=0, breakable, toprule=.15mm, colframe=quarto-callout-color-frame, arc=.35mm, colback=white, rightrule=.15mm, bottomrule=.15mm, left=2mm]
 
 \[
 \ell(\theta)=
@@ -664,17 +823,14 @@ En développant les paramètres soumis à un effet temporel et on
 regroupant terme à terme on peut montrer que (Annexes 1-2) :
 
 \[
-\begin{aligned}
-\mu_1(z_{T,1}) &= z_{T,1} -\dfrac{\hat{\sigma_1}}{\hat{\xi}_0}\Bigl(\bigl[-\log(1-\tfrac1T)\bigr]^{-\hat{\xi}_0}-1\Bigr)\\
-\sigma_1(z_{T,1}) &= \dfrac{\hat{\xi}_0\,\bigl(z_{T,1}-\hat{\mu_1}\bigr)}{\bigl[-\log\!\bigl(1-\tfrac1T\bigr)\bigr]^{-\hat{\xi}_0}-1}\\
-\end{aligned}
+\mu_1(z_{T,1}) = z_{T,1} -\dfrac{\hat{\sigma_1}}{\hat{\xi}_0}\Bigl(\bigl[-\log(1-\tfrac1T)\bigr]^{-\hat{\xi}_0}-1\Bigr) \quad \text{et} \quad
+\sigma_1(z_{T,1}) = \dfrac{\hat{\xi}_0\,\bigl(z_{T,1}-\hat{\mu_1}\bigr)}{\bigl[-\log\!\bigl(1-\tfrac1T\bigr)\bigr]^{-\hat{\xi}_0}-1}
 \]
 
 On cherche l'intervalle de confiance sur \(z_{T,1}\) donc pour chaque
 valeur candidate \(z_{T,1}\) dans une grille (autour de l'estimateur
-\(\hat{z}_{T,1}\)), on maximise les log-vraisemblances
-\textbf{\(\text{(1$'$)}\)} qui deviennent des log-vraisemblances
-profilées \(\ell^{\,p}\) :
+\(\hat{z}_{T,1}\)), on maximise les log-vraisemblances (1') qui
+deviennent des log-vraisemblances profilées \(\ell^{\,p}\) :
 
 \[
 \scalebox{0.7}{
@@ -742,15 +898,12 @@ Lorsque l'intervalle de confiance ne contient pas 0 alors
 En tout point géographique on dispose de
 \(M_0, M_1, M_2, M_3, M_1^\ast, M_2^\ast \text{ et } M_3^\ast\). Notons
 \(k_j\) le nombre de paramètres du modèle \(M_j\). Pour chaque modèle
-non stationnaire \(j\neq 0\) et chaque point \(i\)\,:
+non stationnaire \(j\neq 0\) et chaque point \(i\) en notant \(p_{ij}\)
+la \(p\)-valeur\,:
 
 \[
-\Lambda_{ij}=2\bigl(\ell_{ij}-\ell_{i0}\bigr)
-\overset{H_0}{\sim}\chi^{2}_{\;k_j-k_0}.
+\Lambda_{ij}=2\bigl(\ell_{ij}-\ell_{i0}\bigr) \overset{H_0}{\sim}\chi^{2}_{\;k_j-k_0} \quad \text{avec} \quad p_{ij}= \mathbb{P}(\chi^{2}_{k_j-k_0}\ge \Lambda_{ij}\bigr)
 \]
-
-La \(p\)-valeur est
-\(p_{ij}= \mathbb{P}(\chi^{2}_{k_j-k_0}\ge \Lambda_{ij}\bigr)\).
 
 \subsubsection{Règle hiérarchique de
 sélection}\label{ruxe8gle-hiuxe9rarchique-de-suxe9lection}
@@ -769,10 +922,10 @@ un modèle non stationnaire.
 \subsection{Calcul des tendances}\label{calcul-des-tendances}
 
 A partir des niveaux de retour 10 ans (\(T = 10\)) la tendance relative
-(en \%) est calculée via la formule ci-dessous. Un exemple de calcul est
+(en \%) est calculée via la formule ci-dessous. Un exemple graphique est
 disponible en annexes 2-6.
 
-\begin{tcolorbox}[enhanced jigsaw, arc=.35mm, left=2mm, rightrule=.15mm, breakable, colframe=quarto-callout-color-frame, colback=white, bottomrule=.15mm, opacityback=0, leftrule=.75mm, toprule=.15mm]
+\begin{tcolorbox}[enhanced jigsaw, leftrule=.75mm, opacityback=0, breakable, toprule=.15mm, colframe=quarto-callout-color-frame, arc=.35mm, colback=white, rightrule=.15mm, bottomrule=.15mm, left=2mm]
 
 \[
 \text{Tendance} = \frac{z_T^{2022} - z_T^{1995}}{z_T^{1995}} \cdot {100}
@@ -833,33 +986,39 @@ Les courbes de niveaux 400 et 800m sont représentées en trait fin.
 
 \section{Résultats}\label{ruxe9sultats}
 
+Nous commençons par évaluer, point de grille par point de grille, la
+capacité d'AROME à reproduire le régime de précipitations observé par
+les stations Météo‑France. Cette première étape stationnaire sert
+d'évaluation de qualité avant d'étudier les tendances des niveaux de
+retour.
+
 \subsection{Évaluation de la climatologie des précipitations simulées
 par
 AROME}\label{uxe9valuation-de-la-climatologie-des-pruxe9cipitations-simuluxe9es-par-arome}
 
-Afin d'apprécier la capacité d'AROME à restituer le climat
-pluviométrique les données sont confrontées aux observations de stations
-pour : 1) le nombre saisonnier de jours de pluie (seuil\,≥\,1\,mm/j); 2)
-le cumul saisonnier des précipitations ; et 3) la moyenne des maxima
-saisonnière des précipitations.
+Afin d'apprécier la capacité d'AROME à restituer la climatologie des
+précipitations les données sont confrontées aux observations de stations
+pour une saison donnée : 1) le nombre de jours de pluie
+(seuil\,≥\,1\,mm/j); 2) le cumul des précipitations ; et 3) la moyenne
+des maxima des précipitations.
 
 \subsubsection{Distribution spatiale}\label{distribution-spatiale}
 
-Sur l'ensemble de ces critères pour des données journalières de 1959 à
-2022, AROME restituent très bien la distribution spatiale de la réalite
-(Figure 1). On peut voir trois grands régimes spatiaux liés aux
-influences océaniques, méditerranéennes et orographiques.
+Pour l'ensemble des critères considérés, et sur des données journalières
+de 1959 à 2022, AROME reproduit fidèlement la distribution spatiale
+observée (Figure 4). 2 grandes influences émergent : orographique et
+atomosphérique associés aux influences océanique et méditerranéenne.
 
-\paragraph{Nombre de jours de précipitations
-annuels}\label{nombre-de-jours-de-pruxe9cipitations-annuels}
+\paragraph{Nombre de jours de
+précipitations}\label{nombre-de-jours-de-pruxe9cipitations}
 
 Les massifs montagneux (Alpes, Pyrénées, Massif central, Vosges, Jura)
-affichent les plus fortes fréquences de jours pluvieux (au‑delà de
-140--160 jours par an). Le grand Ouest atlantique (Bretagne, Normandie,
-Pays de la Loire) connaît également un nombre élevé de journées
-pluvieuses (80--120\,jours/an). À l'inverse, la façade méditerranéenne
-et le pourtour de la Provence sont les plus secs en fréquence, avec
-souvent moins de 50--70 jours de précipitations par an.
+affichent les plus fortes fréquences de jours pluvieux dans l'année
+(au‑delà de 140--160 jours par an). Le grand Ouest atlantique (Bretagne,
+Normandie, Pays de la Loire) connaît également un nombre élevé de
+journées pluvieuses (80--120\,jours/an). À l'inverse, la façade
+méditerranéenne et le pourtour de la Provence sont les plus secs en
+fréquence, avec souvent moins de 50--70 jours de précipitations par an.
 
 \paragraph{Cumul moyen des
 précipitations}\label{cumul-moyen-des-pruxe9cipitations}
@@ -890,7 +1049,7 @@ localement connaître de très gros orages (40--80\,mm/j en moyenne).
 \begin{minipage}[b]{\linewidth}\centering
 \small Nombre de jours de précipitations
 \end{minipage} & \begin{minipage}[b]{\linewidth}\centering
-\small Cumul des précipitations moyennes
+\small Cumul annuel des précipitations
 \end{minipage} & \begin{minipage}[b]{\linewidth}\centering
 \small Moyenne des maxima des précipitations
 \end{minipage} \\
@@ -903,13 +1062,23 @@ localement connaître de très gros orages (40--80\,mm/j en moyenne).
 \pandocbounded{\includegraphics[keepaspectratio]{figures/mean_pluie_jour.pdf}}
 &
 \pandocbounded{\includegraphics[keepaspectratio]{figures/mean-max_pluie_jour.pdf}} \\
-\(r =\) 0.95 (n = 1583) & \(r =\) 0.94 (n = 1583) & \(r =\) 0.96 (n =
-1583) \\
+\small \(r =\) 0.95 (n = 1583) & \small \(r =\) 0.94 (n = 1583) &
+\small \(r =\) 0.96 (n = 1583) \\
+\pandocbounded{\includegraphics[keepaspectratio]{../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_rast_diff.pdf}}
+&
+\pandocbounded{\includegraphics[keepaspectratio]{../outputs/maps/stats_mean/quotidien/compare_5/sat_99.0/hydro/obs_rast_diff.pdf}}
+&
+\pandocbounded{\includegraphics[keepaspectratio]{../outputs/maps/stats_mean-max/quotidien/compare_5/sat_99.0/hydro/obs_rast_diff.pdf}} \\
+\small \(ME =\) +6.35j (+5.56\%) & \small \(ME =\) +0.03 mm/j (+1.23\%)
+& \small \(ME =\) -1.18 mm/j (-0.02\%) \\
 \end{longtable}
 
-\begin{center}
-Figure 1: Climatologie et corrélation entre le modèle AROME et les stations Météo-France issues de données journalières allant de 1959 à 2022 pour une année hydrologique.
-\end{center}
+\textbackslash captionof\{figure\}\{Climatologie entre le modèle AROME
+(première ligne), les stations Météo-France (deuxième ligne) avec la
+corrélation (\(r\)) et le nombre de stations comparés (n) ainsi la
+différence AROME-Station (troisième ligne) avec le biais (\(ME\)) et
+l'écart relatif (\%) associé issues de données journalières allant de
+1959 à 2022 pour une année hydrologique.\}
 
 \subsubsection{Corrélation entre le modèle AROME et les stations
 Météo-France}\label{corruxe9lation-entre-le-moduxe8le-arome-et-les-stations-muxe9tuxe9o-france}

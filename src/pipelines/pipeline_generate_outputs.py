@@ -16,6 +16,58 @@ import polars as pl
 
 import seaborn as sns
 
+def import_data_dispo(
+    season,
+    echelle,
+    reduce_activate,
+    config_obs,
+    scale
+):
+    input_dir = Path(config_obs["statistics"]["path"]["outputdir"]) / echelle
+    # Paramètre de chargement des données
+    if reduce_activate:
+        _, min_year, max_year, _ = years_to_load("reduce", season, input_dir)
+    else:
+        _, min_year, max_year, _ = years_to_load(echelle, season, input_dir)
+    cols = ["NUM_POSTE", "nan_ratio"]
+
+    observed_load = load_data(input_dir, season, echelle, cols, min_year, max_year)
+
+    # Limite sur le ratio de NaNs
+    nan_limit = 0.10
+
+    # Filtrage et agrégation
+    observed = (
+        observed_load.filter(pl.col("nan_ratio") <= nan_limit)
+        .group_by("NUM_POSTE")
+        .agg(pl.col("year").n_unique().alias("n_years"))
+    )
+    
+    # Charger les metadonnées avec Polars
+    observed_meta = pl.read_csv(f"data/metadonnees/observed/postes_{echelle}.csv")
+    # Harmoniser les types des colonnes lat/lon des deux côtés
+    observed_meta = observed_meta.with_columns([
+        pl.col("NUM_POSTE").cast(pl.Int32),
+        pl.col("lat").cast(pl.Float32),
+        pl.col("lon").cast(pl.Float32),
+        pl.col("altitude").cast(pl.Int32)  # altitude en entier
+    ])
+
+    observed = observed.with_columns([  # forcer ici aussi
+        pl.col("NUM_POSTE").cast(pl.Int32)
+    ])
+
+    # Join sur NUM_POSTE
+    observed = observed.join(observed_meta, on=["NUM_POSTE"], how="left")
+    logger.info(f"n = {observed.shape[0]}")
+     
+    return {
+        "modelised": None,
+        "observed": observed,
+        "column": "n_years",
+        "season": season
+    }
+
 def import_data_stat(
     season,
     echelle,
@@ -127,6 +179,7 @@ def calculate_data_maps(
     saturation_col: int = 100,
     # Grid
     side_km: float = 2.5,
+    diff: bool = False
 ) -> None:
     """Trace cartes + une légende commune (SVG)
     La plage de la légende est calculée sur **l'ensemble** des valeurs (modèle
@@ -135,6 +188,7 @@ def calculate_data_maps(
 
     # S’assurer que le répertoire existe (création si nécessaire)
     suffix_reduce = "_reduce" if reduce_activate else ""
+    suffix_diff = "_diff" if diff else ""
     name_dir = f"outputs/maps/{data_type}_{col_calculate}/{echelle}{suffix_reduce}/compare_{len(titles)}/sat_{saturation_col}"
     dir_path = Path(name_dir)
 
@@ -285,9 +339,14 @@ def generate_maps(
     relief_path: str = "data/external/niveaux/selection_courbes_niveau_france.shp",
     relief_linewidth: float = 0.5,
     relief_color: str = "#000000",
-    figsize: Tuple[int, int] = (6, 6)
+    figsize: Tuple[int, int] = (6, 6),
+    diff: bool = False,
+    mesure: str = None
 ) -> None:
     
+    if data_type == "dispo":
+        min_pt, max_pt = 0.5, 3
+
     if val_col not in ["significant", "model"]:
         if col_calculate == "numday":
             legend = "jours"
@@ -327,7 +386,7 @@ def generate_maps(
     # ------------------------------------------------------------------
     # 7. Colormap & Normalisation communes
     # ------------------------------------------------------------------
-    if data_type=="gev":
+    if data_type=="gev" or diff:
 
         if val_col in ["significant", "model"]:
             all_series = pd.concat([
@@ -374,25 +433,17 @@ def generate_maps(
             hex_colors = [to_hex(rgb[i]) for i in idx]
             cmap = LinearSegmentedColormap.from_list("prec_div", hex_colors, N=n_colors)
 
+    elif data_type == "dispo":
+        vmin, n_colors = 0, 15
+        vmax = 64 if scale == 'mm_j' else 33
+        levels = np.arange(vmin, vmax + 2)    
+        cmap = plt.cm.viridis
+        norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
+
     elif data_type=="stats":
         all_maxs = [g[val_col].max() for g in model_gdfs + obs_gdfs if g is not None]
         vmin = 0.0
         vmax = max(all_maxs)
-
-        # --- définition échelle de couleurs ---
-        # custom_colorscale = [
-        #     (0.0, "#FFFFE5"),  # blanc
-        #     (0.1, "#DDEED6"),
-        #     (0.2, "#BCDDC8"),
-        #     (0.3, "#9BCCBA"),
-        #     (0.4, "#7ABBAC"),
-        #     (0.5, "#59AA9E"),
-        #     (0.6, "#389990"),
-        #     (0.7, "#29837A"),
-        #     (0.8, "#1C6D63"),
-        #     (0.9, "#0F564B"),
-        #     (1.0, "#003C30"),
-        # ]
 
         # custom_colorscale = [
         #     (0.0, "#ffffff"),  # blanc
@@ -542,12 +593,15 @@ def generate_maps(
                         shrink = 0.6,
                         aspect = 20
                     )
+                    if mesure is not None:
+                        cb.ax.set_ylabel(f"{legend}", rotation=90, fontsize=10)
 
 
             suffix_obs = "obs" if show_obs else ""
             suffix_mod = "mod" if show_mod else ""
             suffix_signif = "_signif" if show_signif else ""
-            name_file = f"{suffix_mod}{suffix_obs}{suffix_signif}_{mode}"
+            suffix_diff = "_diff" if diff else ""
+            name_file = f"{suffix_mod}{suffix_obs}{suffix_signif}_{mode}{suffix_diff}"
 
             subdir = dir_path / title.lower() 
             subdir.mkdir(parents=True, exist_ok=True)
@@ -586,7 +640,9 @@ def generate_maps(
         cb2.ax.set_ylabel(f"{legend}", rotation=90, fontsize=20)
 
     suffix_signif = "_signif" if show_signif else ""
-    name_legend = f"legend{suffix_signif}"
+    suffix_diff = "_diff" if diff else ""
+    name_legend = f"legend{suffix_signif}{suffix_diff}"
+    
     fig2.savefig(dir_path / f"{name_legend}.svg", format="svg", bbox_inches="tight", pad_inches=0)
     fig2.savefig(dir_path / f"{name_legend}.pdf", format="pdf", bbox_inches="tight", pad_inches=0)
     plt.close(fig2)
@@ -599,13 +655,13 @@ def generate_scatter(
     col_calculate: str,
     echelle: str,
     show_signif: bool,
-    scale: str,
-    generate_violon: bool=False
+    scale: str
 ):
+    global logger
     if col_calculate not in ["significant", "model"]:
 
         metrics = []
-        violin_rows = []
+        datasets_diff = []
 
         df_obs_vs_mod = pl.read_csv(f"data/metadonnees/obs_vs_mod/obs_vs_mod_{echelle}.csv")
 
@@ -620,6 +676,22 @@ def generate_scatter(
                 obs = obs.filter(pl.col("significant") == True)
 
             obs_vs_mod = match_and_compare(obs, mod, col, df_obs_vs_mod)
+
+            obs_vs_mod_diff = obs_vs_mod.select([
+                pl.Series("NUM_POSTE", range(1, obs_vs_mod.height + 1)),
+                pl.col("lat"),
+                pl.col("lon"),
+                (pl.col("AROME") - pl.col("Station")).alias(col)
+            ])
+
+            res = {
+                "modelised": None,
+                "observed": obs_vs_mod_diff,
+                "column": col,
+                "season": season
+            }
+
+            datasets_diff.append(res)
 
             if obs_vs_mod.is_empty():
                 logger.warning(f"Aucune donnée après filtrage pour {echelle} {season} - {col_calculate} - signif {show_signif}")
@@ -667,9 +739,9 @@ def generate_scatter(
             me = np.mean(x - y)
             corr = np.corrcoef(x, y)[0, 1] if len(x) > 1 else np.nan
             n = len(x)
-            mean_mod = obs_vs_mod.select(pl.col("AROME").mean()).to_numpy()
-            mean_obs = obs_vs_mod.select(pl.col("Station").mean()).to_numpy()
-            delta = me / np.mean([mean_mod, mean_obs])
+            mean_mod = obs_vs_mod.select(pl.col("AROME").mean()).item()
+            mean_obs = obs_vs_mod.select(pl.col("Station").mean()).item()
+            delta = me / np.mean([mean_mod, mean_obs])*100
 
             metrics.append({
                 "echelle": echelle,
@@ -681,14 +753,6 @@ def generate_scatter(
                 "delta": delta
             })
 
-            # ----- COLLECTE POUR VIOLIN PLOT -----
-            arome_vals = obs_vs_mod["AROME"].to_numpy()
-            station_vals = obs_vs_mod["Station"].to_numpy()
-
-            for v in arome_vals:
-                violin_rows.append({"season": season, "source": "AROME", "value": v})
-            for v in station_vals:
-                violin_rows.append({"season": season, "source": "Stations", "value": v})
 
         suffix = "_signif" if show_signif else ""
         if metrics:
@@ -697,71 +761,7 @@ def generate_scatter(
         else:
             logger.warning(f"Aucun résultat significatif, fichier metrics{suffix}.csv non créé")
 
-    # violin + boxplot
-    if violin_rows and generate_violon:
-        df_violin = pd.DataFrame(violin_rows)
-        seasons = df_violin["season"].unique()
-        counts  = df_violin[df_violin.source == "AROME"].groupby("season").size()
-        ymin, ymax = df_violin["value"].min(), df_violin["value"].max()
-        offset = (ymax - ymin) * 0.05
-
-        fig, ax = plt.subplots(figsize=(10, 5))
-        # violin semi-transparent
-        sns.violinplot(
-            data=df_violin,
-            x="season", y="value", hue="source",
-            split=False, inner=None, cut=0,
-            scale="width", saturation=0.4, linewidth=1, ax=ax
-        )
-        # thick box inside
-        sns.boxplot(
-            data=df_violin,
-            x="season", y="value", hue="source",
-            dodge=True, width=0.25,
-            boxprops={'facecolor':'none','edgecolor':'black','linewidth':2,'zorder':3},
-            whiskerprops={'linewidth':2,'color':'black','zorder':3},
-            capprops={'linewidth':2,'color':'black','zorder':3},
-            medianprops={'linewidth':2,'color':'black','zorder':4},
-            showfliers=False, ax=ax
-        )
-
-        # --- AJOUT : ligne pointillée sur 0 ---
-        ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.8, zorder=5)
-        
-        # legend cleanup
-        handles, labels = ax.get_legend_handles_labels()
-        leg = ax.legend(
-            handles[:2], labels[:2],
-            title="",
-            loc='upper left',            # coin supérieur gauche
-            bbox_to_anchor=(0.01, 0.99), # léger padding
-            borderaxespad=0,
-            frameon=True
-        )
-
-        # s'assurer qu'elle est au-dessus
-        leg.set_zorder(20)
-        leg.set_alpha(0.9)               # fond légèrement transparent
-        leg.get_frame().set_facecolor('white')
-
-        # annotate n
-        ax.set_xticks(range(len(seasons)))
-        ax.set_xticklabels([s.upper() for s in seasons], rotation=45, ha='right')
-        for i, s in enumerate(seasons):
-            ax.text(i, ymax + offset, f"n={counts[s]}", ha='center', va='bottom', fontsize='small')
-
-        legend_texte = "Tendance relative" if "z_T_p" in col_calculate else col_calculate
-        ax.set_xlabel("")
-        ax.set_ylabel(f"{legend_texte} ({legend})")
-        fig.tight_layout()
-        fig.savefig(dir_path / f"violin{suffix}.svg", bbox_inches="tight")
-        fig.savefig(dir_path / f"violin{suffix}.pdf", bbox_inches="tight")
-        plt.close(fig)
-        logger.info(dir_path / f"violin{suffix}.svg")
-
-    else:
-        logger.warning("Pas de données pour le violin plot.")
-
+    return datasets_diff
 
 def main(args):
     global logger
@@ -782,7 +782,7 @@ def main(args):
     SIGNIFICANT_SHOW = [False] # On affiche tous les points, pas d'histoire de significativité
 
     for e in echelle:
-        
+       
         scale = "mm_j" if e == "quotidien" else "mm_h"
 
         if col_calculate == "numday":
@@ -793,6 +793,16 @@ def main(args):
             mesure = f"max_{scale}"
 
         for s in season:
+
+            if data_type == "dispo":
+                res = import_data_dispo(
+                    season=s,
+                    echelle=e,
+                    reduce_activate=reduce_activate,
+                    config_obs=config_obs,
+                    scale=scale
+                )
+
             if data_type == "stats":
                 res = import_data_stat(
                     season=s,
@@ -835,7 +845,44 @@ def main(args):
                 saturation_col=sat
             )
 
-            for show in [True, False]:
+            # for show in [True, False]:
+            #     generate_maps(
+            #         dir_path=dir_path,
+            #         model_gdfs=model_gdfs,
+            #         obs_gdfs=obs_gdfs,
+            #         data_type=data_type,
+            #         titles=titles,
+            #         val_col=val_col,
+            #         show_mod=show,
+            #         show_obs=not show,
+            #         show_signif=signif,
+            #         col_calculate=col_calculate,
+            #         scale=scale
+            #     )
+
+        if data_type != "dispo":
+            datasets_diff = generate_scatter(
+                datasets=datasets,
+                dir_path=dir_path,
+                col_calculate=col_calculate,
+                echelle=e,
+                show_signif=signif,
+                scale=scale
+            )
+
+            for signif in SIGNIFICANT_SHOW:
+                dir_path, val_col, titles, model_gdfs, obs_gdfs = calculate_data_maps(
+                    datasets_diff,
+                    echelle=e,
+                    data_type=data_type,
+                    col_calculate=col_calculate,
+                    reduce_activate=reduce_activate,
+                    show_signif=signif,
+                    titles=[s.upper() for s in season],  # titres des 4 sous-cartes
+                    saturation_col=sat,
+                    diff=True
+                )
+
                 generate_maps(
                     dir_path=dir_path,
                     model_gdfs=model_gdfs,
@@ -843,22 +890,14 @@ def main(args):
                     data_type=data_type,
                     titles=titles,
                     val_col=val_col,
-                    show_mod=show,
-                    show_obs=not show,
+                    show_mod=False,
+                    show_obs=not False,
                     show_signif=signif,
                     col_calculate=col_calculate,
-                    scale=scale
+                    scale=scale,
+                    diff=True,
+                    mesure=mesure
                 )
-
-            generate_scatter(
-                datasets=datasets,
-                dir_path=dir_path,
-                col_calculate=col_calculate,
-                echelle=e,
-                show_signif=signif,
-                scale=scale,
-                generate_violon=False
-            )
 
 
 def str2bool(v):
@@ -869,8 +908,8 @@ def str2bool(v):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pipeline de génération des représentation")
-    parser.add_argument("--data_type", choices=["stats", "gev"])
-    parser.add_argument("--col_calculate", choices=["numday", "mean", "mean-max", "z_T_p", "significant", "model"], default=None)
+    parser.add_argument("--data_type", choices=["dispo", "stats", "gev"])
+    parser.add_argument("--col_calculate", choices=["n_years", "numday", "mean", "mean-max", "z_T_p", "significant", "model"], default=None)
     parser.add_argument("--echelle", choices=["horaire", "quotidien", "horaire_reduce"], nargs='+', default=["horaire"])
     parser.add_argument("--season", type=str, nargs='+', default=["son"])
     parser.add_argument("--reduce_activate", type=str2bool, default=False)
