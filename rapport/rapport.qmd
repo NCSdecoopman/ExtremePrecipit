@@ -379,7 +379,7 @@ Les précipitations extrêmes sont définies comme des épisodes de fortes pluie
 
 #### A l'échelle journalière
 
-Pour les extrêmes journaliers, le signal est clairement à la hausse à l’échelle globale : la fréquence et l’intensité augmentent depuis les années 1950, avec des hausses significatives rapportées dans une large majorité de régions et de mailles terrestres. Le nombre annuel de jours à plus de 10 mm/j de précipitation a augmenté au niveau mondial de +0,2 à +0,3 jour par décennie sur 1951–2010 [@Donat2013] avec 29% des mailles terrestres présentant une hausse significative. 71% des régions terrestres montrent une hausse significative de l’intensité des précipitations maximales [@IPCC2021]. Les événements de type "pluie extrême journalières avec retour statistique décennal" ont augmenté +6,7%. En France comme ailleurs, plusieurs études trouvent également des augmentations marquées et projettent de nouvelles hausses avec le réchauffement futur. Dans le sud‑est, la fréquence des épisodes méditerranéens extrêmes (cumuls > 200 mm en 24h) a doublé entre 1961 et 2020, même si la variabilité interannuelle reste très forte [@meteofrance2024_episodesMediterraneens]. L’intensité moyenne des extrêmes journaliers a augmenté de +22% entre 1961 et 2015 [@Ribes2019]. Jusqu'aux années 1990, il n'y avait aucune tendance sur les maxima annuels de précipitations quotidiennes. Depuis, il existe une augmentation de +20 à +40%. La hausse du niveau de précipitations journalières attendue en moyenne tous les 20 ans en automne pourrait atteindre un ordre de grandeur d'environ 100% de sa valeur moyenne [@blanchet2021explaining]. En France, un scénario de réchauffement de +4°C conduirait à +15% d’augmentation des pluies extrêmes journalières en moyenne et jusqu’à +20% dans la moitié nord du pays [@soubeyroux:hal-04991790].
+Pour les extrêmes journaliers, le signal est clairement à la hausse à l’échelle globale : la fréquence et l’intensité augmentent depuis les années 1950, avec des hausses significatives rapportées dans une large majorité de régions et de mailles terrestres. Le nombre annuel de jours à plus de 10 mm/j de précipitation a augmenté au niveau mondial de +0,2 à +0,3 jour par décennie sur 1951–2010 [@Donat2013] avec 29% des mailles terrestres présentant une hausse significative. Les événements de type "pluie extrême journalières avec retour statistique décennal" ont augmenté +6,7% pour 71% des régions terrestres [@IPCC2021]. En France comme ailleurs, plusieurs études trouvent également des augmentations marquées et projettent de nouvelles hausses avec le réchauffement futur. Dans le sud‑est, la fréquence des épisodes méditerranéens extrêmes (cumuls > 200 mm en 24h) a doublé entre 1961 et 2020, même si la variabilité interannuelle reste très forte [@meteofrance2024_episodesMediterraneens]. L’intensité moyenne des extrêmes journaliers a augmenté de +22% entre 1961 et 2015 [@Ribes2019]. Jusqu'aux années 1990, il n'y avait aucune tendance sur les maxima annuels de précipitations quotidiennes. Depuis, il existe une augmentation de +20 à +40%. La hausse du niveau de précipitations journalières attendue en moyenne tous les 20 ans en automne pourrait atteindre un ordre de grandeur d'environ 100% de sa valeur moyenne [@blanchet2021explaining]. En France, un scénario de réchauffement de +4°C conduirait à +15% d’augmentation des pluies extrêmes journalières en moyenne et jusqu’à +20% dans la moitié nord du pays [@soubeyroux:hal-04991790].
 
 #### A l'échelle horaire
 
@@ -389,17 +389,15 @@ Les extrêmes horaires, mesurés sur des pas de temps de 1h ou moins, sont essen
 
 #### Relevés Meteo-France
 
-Le réseau climatologique s'est développé à la fin du XIXᵉ siècle. Les lectures étaient manuelles, généralement une fois par jour (généralement autour de 6 UTC, ce qui définit encore souvent le jour météorologique). Un réseau à l’échelle nationale est disponible à partir des années 1950–1960, période où la couverture devient suffisamment dense et où les procédures d’homogénéisation (PRODIGE, puis HOMER) ont été mises en place depuis les années 2000 dans la BDClim. Des centaines de séries précipitations homogénéisées existent aujourd’hui [@meteo-france_2020_breve_observation_classique]. A l'échelle horaire, les premières stations automatiques opérationnelles (SATIN) datent de 1967. La généralisation et la modernisation du réseau temps réel se fait surtout avec RADOME à partir de 1996, ce qui rend les cumuls horaires réellement disponibles et diffusés à grande échelle à partir des années 1990–2000. Aujourd’hui la mosaïque radar nationale fournit des données toutes les 5 min à 1 km, accessibles en archives publiques. Les lames d’eau ANTILOPE (radar + pluviomètres) sont produites opérationnellement, avec un pas de 15 min disponible depuis 2017.
+Le réseau climatologique s'est développé à la fin du XIXᵉ siècle. Les lectures étaient manuelles, généralement une fois par jour (autour de 6h UTC, ce qui définit encore souvent le jour météorologique). Un réseau à l’échelle nationale est disponible à partir des années 1950–1960, période où la couverture devient suffisamment dense. Des centaines de séries précipitations existent aujourd’hui [@meteo-france_2020_breve_observation_classique]. A l'échelle horaire, les premières stations automatiques opérationnelles (SATIN) datent de 1967. La généralisation et la modernisation du réseau temps réel se fait surtout avec RADOME à partir de 1996, ce qui rend les cumuls horaires réellement disponibles et diffusés à grande échelle à partir des années 1990–2000. Aujourd’hui la mosaïque radar nationale fournit des données toutes les 5 min à 1 km, accessibles en archives publiques. Les lames d’eau ANTILOPE (radar + pluviomètres) sont produites opérationnellement, avec un pas de 15 min disponible depuis 2017.
 
 #### Apport des modèles
 
-La modélisation des précipitations apporte 1) des données antérieures aux données observées de 1990 ; et 2) des champs spatiaux complets et cohérents physiquement utile en zones peu instrumentées. Les modélisations GCM (general circulation model) (résolution 12–200 km, convection paramétrée) ne se sont pas recommandées pour cette étude : la convection est paramétrée, les précipitations horaires sont souvent trop lissées et mal positionnées. L’émergence des modèles climatiques régionaux à convection explicite (CPMs) ouvre une opportunité inédite : ils permettent de simuler, avec réalisme, la dynamique des précipitations intenses à fine échelle spatiale et temporelle sur de longues périodes. Pour cette étude le modèle doit être RCM (Regional Climate Model, 1–4 km) à convection explicite (CPM pour Convection-Permitting Model) pour représenter explicitement l’initiation, l’organisation et la propagation des systèmes convectifs et leurs extrêmes horaires. Les modèles répondant à ces critères sont : WRF 3 km, COSMO‑CLM 2.8 km, AROME‑Climate 2.5 km [@cnrm_arome2007], ICON-LEM 2.5 km, UKCP CPM 2.2 km, CP4‑Africa, ensembles EURO-CP / FPS‑Convection.
+La modélisation des précipitations apporte 1) des données antérieures aux données observées de 1990 ; et 2) des champs spatiaux complets et cohérents physiquement utile en zones peu instrumentées. Les modélisations GCM (General Circulation Model) ne se sont pas recommandées pour cette étude : la convection est paramétrée, les précipitations horaires sont souvent trop lissées et mal positionnées avec une résolution 12–200 km. L’émergence des modèles climatiques régionaux à convection explicite (CPMs, Convection-Permitting Model) ouvre une opportunité inédite : ils permettent de simuler, avec réalisme, la dynamique des précipitations intenses à fine échelle spatiale et temporelle sur de longues périodes. Pour cette étude le modèle doit être RCM (Regional Climate Model, 1–4 km) à convection explicite (CPM) pour représenter explicitement l’initiation, l’organisation et la propagation des systèmes convectifs et leurs extrêmes horaires. Les modèles répondant à ces critères sont : WRF 3 km, COSMO‑CLM 2.8 km, AROME‑Climate 2.5 km [@cnrm_arome2007], ICON-LEM 2.5 km, UKCP CPM 2.2 km, CP4‑Africa, ensembles EURO-CP / FPS‑Convection.
 
 #### Apport des réanalyses
 
-Un CP-RCM doit être initialisé (champs 3D de température, humidité, pression, vent, etc.) et forcé aux limites latérales. Classiquement utilisé, ERA-Interim (80 km / 6h / 1979-2019) a été remplacé par ERA5 (25-31 km / 1h / 1949-présent) permettant de forcer dynamiquement un modèle régional à 3 km. Cette réanalyse permet de classer les environnements convectifs (types de journées) [@ecmwf_era5_data_documentation] puis de zoomer avec un CPM pour la convection explicite. Le produit AROME (2,5 km / 1h) forcé par réanalyse ERA5 (1959-2022) correspond à nos critères. Il est choisi comme modèle numérique pour cette étude.
-
-Voici une proposition de paragraphe synthétique et rigoureux pour **dégager l’intérêt de votre étude dans le paysage scientifique**, à placer idéalement juste après votre état de l’art :
+Un CP-RCM doit être initialisé (champs 3D de température, humidité, pression, vent, etc.) et forcé aux limites latérales. Classiquement utilisé, ERA-Interim (80 km / 6h / 1979-2019) a été remplacé par ERA5 (25-31 km / 1h / 1949-présent) permettant de forcer dynamiquement un modèle régional à 3 km. Cette réanalyse permet de classer les environnements convectifs [@ecmwf_era5_data_documentation] puis de zoomer avec un CPM pour la convection explicite. Le produit AROME pour Application of Research to Operations at MEsoscale (2,5 km / 1h) forcé par réanalyse ERA5 (1959-2022) correspond à nos critères. Il est choisi comme modèle numérique pour cette étude.
 
 ### Intérêt de l’étude dans le paysage scientifique
 
@@ -407,25 +405,51 @@ Si les tendances des extrêmes journaliers sont désormais bien documentées à 
 
 ## Méthodologie
 
+L'étude se concentre sur la France métropolitaine. Dans un premier temps, l’objectif est de valider le modèle (points de grille AROME) vis‑à‑vis des observations (stations Météo‑France) à l’aide d’indicateurs simples (corrélation et biais) mais représentatifs du régime de précipitations. Cette étape est conduite en contexte stationnaire, c’est‑à‑dire sans chercher encore à interpréter des tendances à long terme ou des ruptures de régime. Une fois cette validation stationnaire établie, l’analyse sera étendue à des contextes non stationnaires (tendances et variabilité des extrêmes).
+
 ### Données utilisées
 
-Dans cette étude, le modèle numérique Application of Research to Operations at MEsoscale (AROME) a été choisi [@caillaud2021simulation]. C'est un modèle CP-RCM de résolution spatiale 2,5 km et temporelle 1h, forcé par réanalyse ERA5 [@hersbach2020era5] offrant des données de précipitations de 1959 à 2022. En parallèle, l'étude utilise aussi les données de précipitations issues d'observation Météo-France [@meteofrance2024] au pas de temps journalier (1959-2022) et horaire (1990-2022).
+#### Données observées
 
-### Statistiques descriptives
+Ce travail utilise les données de précipitations issues d'observations Météo-France [@meteofrance2024] au pas de temps journalier (1959-2022) et horaire (1990-2022) représentées sur la figure 1. Depuis les années 2000 des procédures d’homogénéisation (PRODIGE, puis HOMER) ont été mises en place dans la BDClim [@meteo-france_2020_breve_observation_classique].
 
-Par extraction, transformation et chargement, les statistiques descriptives suivantes sont générées : nombre de jour de pluie (seuil fixé à 1mm/j), cumul de précipitations, maximum de précipitations. Ceci en chaque point de grille AROME et chaque station Météo-France à partir des données journalières de 1959 à 2022 et 1990 à 2022 ; et des données horaires de 1990 à 2022, pour chaque année et chaque saison (ou mois).
+| \small Stations au pas de temps journalier (1959-2022) | \small Stations au pas de temps horaire (1990-2022) |
+| :---: | :---: |
+| ![](../outputs/maps/dispo_n_years/quotidien/compare_1/sat_100.0/hydro/obs_rast.pdf) | ![](../outputs/maps/dispo_n_years/horaire/compare_1/sat_100.0/hydro/obs_rast.pdf) |
+| n = 8198 | n = 2315 |
+
+
+\captionof{figure}{Cartographie du nombre d'années hydrologiques comportant au plus 10\% de valeurs manquantes des stations Météo-France au pas de temps journalier (1959–2022) et horaire (1990–2022).}
+
+#### Données modélisées
+
+Le modèle numérique CP-RCM AROME, tout récemment forcé par réanalyse ERA5 offre, parmi différentes variables de sortie, des données de précipitations horaires de 1959 à 2022 à une résolution de 2,5 km sur le champ de calcul de la figure 2 [@arome2014]. En France métropolitaine 87 536 points sont générés. Dans le cadre d'un second stage auprès de Cécile Caillaud de Météo-France, Mathis Chevé a réalisé une étude conjointe sur la relation de Clausius-Clapeyron montrant que les tendances de températures du modèle sont deux fois plus faibles que les tendances observées. Il est donc à noter pour la suite que la part des tendances des extrêmes liée à Clausius-Clapeyron sera théoriquement deux fois plus faible que les tendances observées.
+\
+\begin{center}
+  \includegraphics[width=0.6\textwidth]{figures/domaine_calcul_AROME.png}
+\end{center}
+
+\captionof{figure}{Cartographie du champ de calcul du modèle numérique AROME.}
+
+#### Filtrage des séries temporelles
+
+En chaque point géographique on calcule la part de données manquantes dans la série temporelle pour chaque saison (ou mois) et année. On élimine les années dont cette part dépasse le seuil fixé de 10%. On déduit le nombre d’années valides restantes. On ne garde que les points géographiques qui possèdent au moins le nombre minimal d’années exigé (50 ans pour la période 1959-2022 et 25 ans pour la période 1990-2022). Les analyses suivantes ne portent plus que sur ce sous‑ensemble de stations et d’années.
+
+### Définition des saisons
 
 Les saisons sont définies par **SON** pour septembre (**SEP**) octobre (**OCT**) novembre (**NOV**), **DJF** pour décembre (**DEC**) janvier (**JAN**) février (**FEV**), **MAM** pour mars (**MAR**) avril (**AVR**) mai (**MAI**), et **JJA** pour juin (**JUI**) juillet (**JUILL**) août (**AOU**). L'année hydrologique (**HYDRO**) est définie comme la période allant du 1er septembre de l'année N au 31 août de l'année N+1.
 
-### Filtrage des séries
+### Calcul des indicateurs descriptifs
 
-Pour chaque point géographique, chaque saison (ou mois) et chaque année, on calcul la part de données manquantes dans la série temporelle. On élimine toutes les années dont cette part dépasse le seuil fixé de 10%. On déduit le nombre d’années valides restantes. On ne garde que les points géographiques qui possèdent au moins le nombre minimal d’années exigé (50 ans pour les données journalières 1959-2022 et 25 ans pour les données journalières 1990-2022 et les données horaires 1990-2022). Les analyses suivantes ne portent plus que sur ce sous‑ensemble de stations et d’années : on travaille ainsi avec des séries suffisamment complètes et longues pour être fiables.
+À partir des données obtenues de Météo-France (et après correction de ces dernières) et d'AROME, le nombre de jour de pluie (seuil fixé à 1mm/j), le cumul et les maxima de précipitations journalières et horaires ont été calculées pour chaque point de grille AROME ou station, année et mois/saison sur les période 1959-2022 et 1990-2022.
 
-### Modélisation statistique
+### Vers une généralisation par modélisation statistique
+
+Les statistiques descriptives ne permettent pas d’extrapoler, quantifier l’incertitude et la significativité et de relier proprement les tendances observées aux mécanismes physiques. On ne peut donc pas transformer des constats descriptifs en résultats exploitables et comparables. Pour répondre à ces questions, nous mobilisons la théorie des valeurs extrêmes (GEV) [@coles2001introduction]. Les maxima, une fois normalisés, convergent vers une loi généralisée des valeurs extrêmes (GEV). C’est l’analogue, pour les maxima, du théorème central limite pour les sommes. La GEV unifie trois familles classiques (Gumbel, Fréchet, Weibull) via le paramètre de forme $\xi$, qui contrôle la lourdeur de la queue. La "bonne" famille est donc automatiquement choisie. Nous ajustons des lois GEV aux maxima, d’abord dans un cadre stationnaire pour valider le bon comportement du modèle, puis dans un cadre non‑stationnaire où les paramètres de la GEV dépendent du temps. Cette étape nous permet de comparer de manière cohérente les niveaux de retour entre observations et AROME, d’estimer leurs tendances et de relier ces tendances aux mécanismes physiques.
 
 #### Définitions
 
-Si on note $x$ une réalisation de la variable aléatoire $X$, représentant le maximum annuel de précipitations en un point spatial donné, alors la loi GEV (loi des valeurs extrêmes généralisée) est une loi de probabilité continue paramétrée par le triplet $\theta = (\mu, \sigma, \xi)$ — respectivement la position, l’échelle (strictement positive) et la forme dont la fonction de répartition cumulative (CDF) de la GEV est définie comme suit :
+Si on note $x$ une réalisation de la variable aléatoire $X$, représentant le maximum annuel de précipitations en un point spatial donné, alors la loi GEV est une loi de probabilité continue paramétrée par le triplet $\theta = (\mu, \sigma, \xi)$ — respectivement la position, l’échelle (strictement positive) et la forme dont la fonction de répartition cumulative est :
 
 $$
 F(x;\mu ,\sigma ,\xi ) = \exp \left\{ -\left[ 1 + \xi \left( \frac{x - \mu}{\sigma} \right) \right]^{-\frac{1}{\xi}} \right\}
@@ -433,18 +457,13 @@ $$
 
 #### Covariable temporelle
 
-On dispose d'une série temporelle de $n$ maximas annuels indépendants de précipitations pour un point géographique. Ces observations sont notées $\{x_1, x_2, \dots, x_n\}$ où chaque $x_i$ est un maximum annuel de précipitations observé à l'année $t_i$ et qui suit une loi GEV de paramètre $\theta$. On transforme l’année $t_i$ en une covariable normalisée notée $\tilde{t}_i$. Cette transformation est simplement réalisée pour des raisons numériques mais elle ne change rien au résultat théorique.
+On dispose d'une série temporelle de $n$ maximas annuels indépendants de précipitations pour un point géographique. Ces observations sont notées $\{x_1, x_2, \dots, x_n\}$ où chaque $x_i$ est un maximum annuel de précipitations observé à l'année $t_i$ et qui suit une loi GEV de paramètre $\theta$. On transforme l’année $t_i$ en une covariable normalisée notée $\tilde{t}_i$. Cette transformation est simplement réalisée pour des raisons numériques mais elle ne change rien au résultat théorique. On crée également une covariable temporelle avec point de rupture noté $t_+$ tel que :
 
 $$
 \tilde{t}_i = \frac{t_i - t_{\min}}{t_{\max} - t_{\min}} \quad \text{avec} \quad \begin{cases}
 t_{min} = \min_i t_i \\
 t_{max} = \max_i t_i
-\end{cases}
-$$
-
-On crée également une covariable temporelle avec point de rupture noté $t_+$ tel que :
-
-$$
+\end{cases} \quad \text{et} \quad
 \tilde{t}_{i}^\ast =
 \begin{cases}
 0 & \text{si } t_i < t_+ \\
@@ -456,47 +475,53 @@ Ce codage permet d’appliquer une pente temporelle seulement après la date de 
 
 #### Modèles utilisés
 
-Soit la covariable $t \in \mathbb{N} \mid t_{\min} \leq t \leq t_{\max}$. Le **modèle stationnaire** est défini par :
+:::{.callout}
+Soit la covariable $t \in \mathbb{N} \mid t_{\min} \leq t \leq t_{\max}$. Le modèle stationnaire est défini par $M_0(\theta_0)$ et $\theta_0 = (\mu_0, \sigma_0, \xi_0)$ avec $\mu(t) = \mu_0$ ; $\sigma(t) = \sigma_0$ ; $\xi(t) = \xi_0$. Les modèles non stationnaires sont définis par :
 
 $$
-M_0(\theta_0) \quad \text{et} \quad \theta_0 = (\mu_0, \sigma_0, \xi_0) \quad
+\begin{array}{c@{\qquad}c@{\qquad}c}
+% -------- Colonne 1 --------
+\begin{array}{c}
+\begin{aligned}
+M_1(\theta_1)\\[-0.2ex]
+\theta_1 = (\mu_0, \mu_1, \sigma_0, \xi_0)
+\end{aligned}\\[0.4ex]
 \begin{cases}
-\mu(t) = \mu_0 \\
+\mu(t) = \mu_0 + \mu_1\, t \\
 \sigma(t) = \sigma_0 \\
 \xi(t) = \xi_0
 \end{cases}
-$$
-
-Les **modèles non stationnaires** sont définis par :
-
-$$
-M_1(\theta_1) \quad \text{et} \quad \theta_1 = (\mu_0, \mu_1, \sigma_0, \xi_0) \quad
-\begin{cases}
-\mu(t) = \mu_0 + \mu_1 \cdot t \\
-\sigma(t) = \sigma_0 \\
-\xi(t) = \xi_0
-\end{cases}
-$$
-
-$$
-M_2(\theta_2) \quad \text{et} \quad \theta_2 = (\mu_0, \sigma_0, \sigma_1, \xi_0)
-\quad
+\end{array}
+&
+% -------- Colonne 2 --------
+\begin{array}{c}
+\begin{aligned}
+M_2(\theta_2)\\[-0.2ex]
+\theta_2 = (\mu_0, \sigma_0, \sigma_1, \xi_0)
+\end{aligned}\\[0.4ex]
 \begin{cases}
 \mu(t) = \mu_0 \\
-\sigma(t) = \sigma_0 + \sigma_1 \cdot t \\
+\sigma(t) = \sigma_0 + \sigma_1\, t \\
 \xi(t) = \xi_0
 \end{cases}
+\end{array}
+&
+% -------- Colonne 3 --------
+\begin{array}{c}
+\begin{aligned}
+M_3(\theta_3)\\[-0.2ex]
+\theta_3 = (\mu_0, \mu_1, \sigma_0, \sigma_1, \xi_0)
+\end{aligned}\\[0.4ex]
+\begin{cases}
+\mu(t) = \mu_0 + \mu_1\, t \\
+\sigma(t) = \sigma_0 + \sigma_1\, t \\
+\xi(t) = \xi_0
+\end{cases}
+\end{array}
+\end{array}
 $$
 
-$$
-M_3(\theta_3) \quad \text{et} \quad \theta_3 = (\mu_0, \mu_1, \sigma_0, \sigma_1, \xi_0)
-\quad
-\begin{cases}
-\mu(t) = \mu_0 + \mu_1 \cdot t\\
-\sigma(t) = \sigma_0 + \sigma_1 \cdot t \\
-\xi(t) = \xi_0
-\end{cases}
-$$
+:::
 
 Lorsqu'un point de rupture noté $t_+$ est introduit, on note : 
 
@@ -504,11 +529,11 @@ $$
 t^\ast = t \cdot \mathbb{1}_{t > t_+} \quad \text{avec} \quad t_+ \in \mathbb{N}
 $$
 
-Les modèles $M_1$, $M_2$ et $M_3$ deviennent respectivements $M_1^\ast$, $M_2^\ast$ et $M_3^\ast$. Sur cete même notation $\theta_i$ devient $\theta^\ast_i$ avec $i \in \{1, 2, 3\}$. Dans cette étude, on réalise les modélisations stationnaire et non-stationnaires avec pour covariable l'année et un effet temporel sur $\mu$ ou $\sigma$ ou $\mu$ et $\sigma$. $\xi$ est choisi comme constant. Sur la base bibliographique, on choisi $t_+ = 1985$ [@blanchet2022instrumental].
+Les modèles $M_1$, $M_2$ et $M_3$ deviennent respectivements $M_1^\ast$, $M_2^\ast$ et $M_3^\ast$. Sur cete même notation $\theta_i$ devient $\theta^\ast_i$ avec $i \in \{1, 2, 3\}$. Dans cette étude, on réalise les modélisations stationnaire et non-stationnaires avec pour covariable l'année et un effet temporel sur $\mu$ ou $\sigma$ ou $\mu$ et $\sigma$. $\xi$ est choisi comme constant. Sur la base bibliographique, on choisi $t_+ = 1985$. Cette année de rupture est motivée par plusieurs considérations : 1) des études précédentes ont montré que les tendances statistiquement significatives des extrêmes de précipitations quotidiennes dans le sud de la France commencent dans les années 1980 [@Blanchet2018] ; 2) c'est en ce point que la log-vraisemblance est maximisée [@blanchet2022instrumental]. En utilisant une année de rupture, nous sommes en mesure de minimiser les potentiels biais découlant des différentes longueurs d'observations tout en pouvant prendre en compte les données supplémentaires antérieures à 1985 pour rendre les estimations plus robustes.
 
 #### Niveau de retour
 
-Le niveau de retour (ou quantile d’ordre $1 - \tfrac{1}{T}$) dans une loi GEV correspond à une valeur seuil $z_T$ que l’on dépasse, en moyenne, une fois tous les $T$ ans. Soit $X \sim \mathrm{GEV}(\mu, \sigma, \xi)$, alors en notant $F^{-1}$ la fonction quantile de la GEV, on obtient :
+Le niveau de retour (ou quantile d’ordre $1 - \tfrac{1}{T}$) dans une loi GEV (Figure 3) correspond à une valeur seuil $z_T$ que l’on dépasse, en moyenne, une fois tous les $T$ ans. Soit $X \sim \mathrm{GEV}(\mu, \sigma, \xi)$, alors en notant $F^{-1}$ la fonction quantile de la GEV, on obtient :
 
 :::{.callout}
 
@@ -521,6 +546,13 @@ $$
 $$
 
 :::
+
+\
+\begin{center}
+  \includegraphics[width=0.6\textwidth]{figures/fig_gev.png}
+\end{center}
+
+\captionof{figure}{\citet{berghald2024caracterisation} montre l'influence des paramètres de la GEV sur la densité de probabilité (à gauche) et sur la relation entre période et niveau de retour (à droite) : position $\mu$ (en haut), échelle $\sigma$ (centre) et forme $\xi$ (en bas). Les lignes pointillées montrent le niveau de retour de 20\,ans pour les différents cas.}
 
 #### Vraisemblance et maximum de vraisemblance
 
@@ -595,13 +627,11 @@ $$
 En développant les paramètres soumis à un effet temporel et on regroupant terme à terme on peut montrer que (Annexes 1-2) :
 
 $$
-\begin{aligned}
-\mu_1(z_{T,1}) &= z_{T,1} -\dfrac{\hat{\sigma_1}}{\hat{\xi}_0}\Bigl(\bigl[-\log(1-\tfrac1T)\bigr]^{-\hat{\xi}_0}-1\Bigr)\\
-\sigma_1(z_{T,1}) &= \dfrac{\hat{\xi}_0\,\bigl(z_{T,1}-\hat{\mu_1}\bigr)}{\bigl[-\log\!\bigl(1-\tfrac1T\bigr)\bigr]^{-\hat{\xi}_0}-1}\\
-\end{aligned}
+\mu_1(z_{T,1}) = z_{T,1} -\dfrac{\hat{\sigma_1}}{\hat{\xi}_0}\Bigl(\bigl[-\log(1-\tfrac1T)\bigr]^{-\hat{\xi}_0}-1\Bigr) \quad \text{et} \quad
+\sigma_1(z_{T,1}) = \dfrac{\hat{\xi}_0\,\bigl(z_{T,1}-\hat{\mu_1}\bigr)}{\bigl[-\log\!\bigl(1-\tfrac1T\bigr)\bigr]^{-\hat{\xi}_0}-1}
 $$
 
-On cherche l'intervalle de confiance sur $z_{T,1}$ donc pour chaque valeur candidate $z_{T,1}$ dans une grille (autour de l’estimateur $\hat{z}_{T,1}$), on maximise les log-vraisemblances **$\text{(1$'$)}$** qui deviennent des log-vraisemblances profilées $\ell^{\,p}$ :
+On cherche l'intervalle de confiance sur $z_{T,1}$ donc pour chaque valeur candidate $z_{T,1}$ dans une grille (autour de l’estimateur $\hat{z}_{T,1}$), on maximise les log-vraisemblances (1') qui deviennent des log-vraisemblances profilées $\ell^{\,p}$ :
 
 $$
 \scalebox{0.7}{
@@ -659,14 +689,11 @@ où $\chi^2_{1,1-\alpha}$ est le quantile d’ordre $1 - \alpha$ d’une loi du 
 
 #### Test du rapport de vraisemblance (LRT)
 
-En tout point géographique on dispose de $M_0, M_1, M_2, M_3, M_1^\ast, M_2^\ast \text{ et } M_3^\ast$. Notons $k_j$ le nombre de paramètres du modèle $M_j$. Pour chaque modèle non stationnaire $j\neq 0$ et chaque point $i$ :
+En tout point géographique on dispose de $M_0, M_1, M_2, M_3, M_1^\ast, M_2^\ast \text{ et } M_3^\ast$. Notons $k_j$ le nombre de paramètres du modèle $M_j$. Pour chaque modèle non stationnaire $j\neq 0$ et chaque point $i$ en notant $p_{ij}$ la $p$-valeur :
 
 $$
-\Lambda_{ij}=2\bigl(\ell_{ij}-\ell_{i0}\bigr)
-\overset{H_0}{\sim}\chi^{2}_{\;k_j-k_0}.
+\Lambda_{ij}=2\bigl(\ell_{ij}-\ell_{i0}\bigr) \overset{H_0}{\sim}\chi^{2}_{\;k_j-k_0} \quad \text{avec} \quad p_{ij}= \mathbb{P}(\chi^{2}_{k_j-k_0}\ge \Lambda_{ij}\bigr)
 $$
-
-La $p$-valeur est $p_{ij}= \mathbb{P}(\chi^{2}_{k_j-k_0}\ge \Lambda_{ij}\bigr)$.
 
 #### Règle hiérarchique de sélection
 
@@ -674,7 +701,7 @@ Soit $\alpha=0{,}10$ le seuil d’intérêt. Si un des deux modèles $M_3$ ou $M
 
 ### Calcul des tendances
 
-A partir des niveaux de retour 10 ans ($T = 10$) la tendance relative (en %) est calculée via la formule ci-dessous. Un exemple de calcul est disponible en annexes 2-6.
+A partir des niveaux de retour 10 ans ($T = 10$) la tendance relative (en %) est calculée via la formule ci-dessous. Un exemple graphique est disponible en annexes 2-6.
 
 :::{.callout}
 
@@ -708,9 +735,11 @@ Les courbes de niveaux 400 et 800m sont représentées en trait fin.
 
 ## Résultats
 
+Nous commençons par évaluer, point de grille par point de grille, la capacité d’AROME à reproduire le régime de précipitations observé par les stations Météo‑France. Cette première étape stationnaire sert d'évaluation de qualité avant d'étudier les tendances des niveaux de retour.
+
 ### Évaluation de la climatologie des précipitations simulées par AROME
 
-Afin d’apprécier la capacité d’AROME à restituer le climat pluviométrique les données sont confrontées aux observations de stations pour : 1) le nombre saisonnier de jours de pluie (seuil ≥ 1 mm/j); 2) le cumul saisonnier des précipitations ; et 3) la moyenne des maxima saisonnière des précipitations.
+Afin d’apprécier la capacité d’AROME à restituer la climatologie des précipitations les données sont confrontées aux observations de stations pour une saison donnée : 1) le nombre de jours de pluie (seuil ≥ 1 mm/j); 2) le cumul des précipitations ; et 3) la moyenne des maxima des précipitations.
 
 ```{python}
 jour_pluie = assemble(
@@ -719,7 +748,7 @@ jour_pluie = assemble(
   "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/legend.svg",
   "figures/jour_pluie.svg"
 )
-df_jour_pluie = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "numday"), ["n", "r"]]
+df_jour_pluie = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "numday"), ["n", "r", "me", "delta"]]
 
 mean_pluie_jour = assemble(
   "../outputs/maps/stats_mean/quotidien/compare_5/sat_99.0/hydro/mod_norast.svg",
@@ -727,7 +756,7 @@ mean_pluie_jour = assemble(
   "../outputs/maps/stats_mean/quotidien/compare_5/sat_99.0/legend.svg",
   "figures/mean_pluie_jour.svg"
 )
-df_mean_pluie_jour = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "mean"), ["n", "r"]]
+df_mean_pluie_jour = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "mean"), ["n", "r", "me", "delta"]]
 
 
 mean_max_pluie_jour = assemble(
@@ -736,18 +765,18 @@ mean_max_pluie_jour = assemble(
   "../outputs/maps/stats_mean-max/quotidien/compare_5/sat_99.0/legend.svg",
   "figures/mean-max_pluie_jour.svg"
 )
-df_mean_max_pluie_jour = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "mean-max"), ["n", "r"]]
+df_mean_max_pluie_jour = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
 
 df_mean_max_pluie_horaire = combined.loc[(combined["echelle"] == "horaire") & (combined["season"] == "jja") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
 ```
 
 #### Distribution spatiale
 
-Sur l'ensemble de ces critères pour des données journalières de 1959 à 2022, AROME restituent très bien la distribution spatiale de la réalite (Figure 1). On peut voir trois grands régimes spatiaux liés aux influences océaniques, méditerranéennes et orographiques.
+Pour l’ensemble des critères considérés, et sur des données journalières de 1959 à 2022, AROME reproduit fidèlement la distribution spatiale observée (Figure 4). 2 grandes influences émergent : orographique et atomosphérique associés aux influences océanique et méditerranéenne.
 
-##### Nombre de jours de précipitations annuels
+##### Nombre de jours de précipitations
 
-Les massifs montagneux (Alpes, Pyrénées, Massif central, Vosges, Jura) affichent les plus fortes fréquences de jours pluvieux (au‑delà de 140–160 jours par an). Le grand Ouest atlantique (Bretagne, Normandie, Pays de la Loire) connaît également un nombre élevé de journées pluvieuses (80–120 jours/an). À l’inverse, la façade méditerranéenne et le pourtour de la Provence sont les plus secs en fréquence, avec souvent moins de 50–70 jours de précipitations par an.
+Les massifs montagneux (Alpes, Pyrénées, Massif central, Vosges, Jura) affichent les plus fortes fréquences de jours pluvieux dans l'année (au‑delà de 140–160 jours par an). Le grand Ouest atlantique (Bretagne, Normandie, Pays de la Loire) connaît également un nombre élevé de journées pluvieuses (80–120 jours/an). À l’inverse, la façade méditerranéenne et le pourtour de la Provence sont les plus secs en fréquence, avec souvent moins de 50–70 jours de précipitations par an.
 
 ##### Cumul moyen des précipitations
 
@@ -757,14 +786,14 @@ La bordure atlantique sud‑ouest (Pyrénées, Aquitaine) et les Alpes du Nord r
 
 Les plus fortes précipitations quotidiennes moyennes se rencontrent dans les Cévennes et plus généralement sur la face sud-est du Massif central (environ 100–125 mm/j). Les reliefs alpins et pyrénéens montrent aussi des maxima élevés (80–100 mm/j). La façade atlantique et le bassin parisien présentent des maxima plus modérés (30–60 mm/j), tandis que la Provence et la Côte d’Azur, malgré une fréquence moindre, peuvent localement connaître de très gros orages (40–80 mm/j en moyenne).
 
-| \small Nombre de jours de précipitations | \small Cumul des précipitations moyennes | \small Moyenne des maxima des précipitations |
+| \small Nombre de jours de précipitations | \small Cumul annuel des précipitations | \small Moyenne des maxima des précipitations |
 | :---: | :---: | :---: |
 | ![](figures/jour_pluie.pdf) | ![](figures/mean_pluie_jour.pdf) | ![](figures/mean-max_pluie_jour.pdf) |
-| $r =$ `{python} f'{df_jour_pluie['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_jour_pluie['n'].iloc[0].item()}'`) | $r =$ `{python} f'{df_mean_pluie_jour['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_pluie_jour['n'].iloc[0].item()}'`) | $r =$ `{python} f'{df_mean_max_pluie_jour['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_max_pluie_jour['n'].iloc[0].item()}'`) |
+| \small $r =$ `{python} f'{df_jour_pluie['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_jour_pluie['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_mean_pluie_jour['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_pluie_jour['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_mean_max_pluie_jour['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_max_pluie_jour['n'].iloc[0].item()}'`) |
+| ![](../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_rast_diff.pdf) | ![](../outputs/maps/stats_mean/quotidien/compare_5/sat_99.0/hydro/obs_rast_diff.pdf) | ![](../outputs/maps/stats_mean-max/quotidien/compare_5/sat_99.0/hydro/obs_rast_diff.pdf) |
+| \small $ME =$ `{python} f'{df_jour_pluie['me'].iloc[0].item():+.2f}'`j (`{python} f'{df_jour_pluie['delta'].iloc[0].item():+.2f}'`%) | \small $ME =$ `{python} f'{df_mean_pluie_jour['me'].iloc[0].item():+.2f}'` mm/j (`{python} f'{df_mean_pluie_jour['delta'].iloc[0].item():+.2f}'`%) | \small $ME =$ `{python} f'{df_mean_max_pluie_jour['me'].iloc[0].item():+.2f}'` mm/j (`{python} f'{df_mean_max_pluie_jour['delta'].iloc[0].item():+.2f}'`%) |
 
-\begin{center}
-Figure 1: Climatologie et corrélation entre le modèle AROME et les stations Météo-France issues de données journalières allant de 1959 à 2022 pour une année hydrologique.
-\end{center}
+\captionof{figure}{Climatologie entre le modèle AROME (première ligne), les stations Météo-France (deuxième ligne) avec la corrélation ($r$) et le nombre de stations comparés (n) ainsi la différence AROME-Station (troisième ligne) avec le biais ($ME$) et l'écart relatif (%) associé issues de données journalières allant de 1959 à 2022 pour une année hydrologique.}
 
 #### Corrélation entre le modèle AROME et les stations Météo-France
 
