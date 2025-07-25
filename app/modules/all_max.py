@@ -81,7 +81,7 @@ def show(config_path, min_year: int, max_year: int, middle_year: int, missing_ra
 
     periodes = {
         "mm_h": [(middle_year, max_year)],
-        "mm_j": [(min_year, max_year)] #, (middle_year, max_year)
+        "mm_j": [(min_year, max_year), (middle_year, max_year)]
     }
 
     results = []

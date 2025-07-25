@@ -205,7 +205,7 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 log(f"Lancement des générations de maps")
 
 
-for data_type in ["stats"]: # "stats", "gev"
+for data_type in ["gev"]: # "stats", "gev", "dispo"
                 
     if data_type == "dispo":
         COL_CALCULATE = ["n_years"]
