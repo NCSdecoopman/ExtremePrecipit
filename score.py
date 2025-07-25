@@ -5,7 +5,10 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
+from skgstat import Variogram
+
 def generate_metrics(df: pl.DataFrame, x_label: str = "AROME", y_label: str = "Station"):
+    print(df)
     x = df[x_label].to_numpy()
     y = df[y_label].to_numpy()
 
@@ -27,6 +30,37 @@ def generate_metrics(df: pl.DataFrame, x_label: str = "AROME", y_label: str = "S
     corr = np.corrcoef(x_valid, y_valid)[0, 1] if len(x_valid) > 1 else np.nan
     r2_corr = corr**2 if not np.isnan(corr) else np.nan
 
+    def concordance_ccc(x, y):
+        x = np.asarray(x)
+        y = np.asarray(y)
+        mx, my = x.mean(), y.mean()
+        vx, vy = x.var(ddof=1), y.var(ddof=1)
+        cov = np.cov(x, y, ddof=1)[0,1]
+        return 2*cov / (vx + vy + (mx - my)**2)
+
+    ccc = concordance_ccc(y_valid, x_valid)
+    print("Lin's CCC =", ccc)
+
+    coords = np.vstack([df["lon_obs"].to_numpy(), df["lat_obs"].to_numpy()]).T
+    residus = df[y_label].to_numpy() - df[x_label].to_numpy()
+
+    # 4. Estimer le variogramme empirique des résidus
+    #    Ici on utilise scikit-gstat
+    V = Variogram(
+        coordinates=coords,
+        values=residus,
+        normalize=False,     # on ne normalise pas, pour garder l'échelle de la variance
+        maxlag="auto",       # distance maximale pour le variogramme
+        n_lags=12,           # nombre de classes de distance
+        model="spherical"    # modèle théorique à ajuster
+    )
+
+    # 5. Afficher et extraire les paramètres théoriques
+    V.plot(show=False)  # affiche automatiquement nugget, sill et range
+    params = V.parameters
+    vrange, vsill, vnugget = params[:3]     # pour un modèle sphérique, exponentiel, etc.
+    print(f"Range : {vrange:.3f}, Sill : {vsill:.3f}, Nugget : {vnugget:.3f}")
+
     return me, mae, rmse, r2_corr, corr
 
 def main():
@@ -40,6 +74,7 @@ def main():
     dfs = {}
     mappings = {}
     for pas in pas_de_temps:
+        print(f'{pas} - {saison}')
         mapping = pl.read_csv(mapping_files[pas])
         col_obs = "NUM_POSTE_obs"
         col_mod = "NUM_POSTE_mod"
@@ -103,14 +138,19 @@ def main():
             axes[idx].set_title(f"Scatter {pas} - {saison}")
             axes[idx].set_xlim(min_val, max_val)
             axes[idx].set_ylim(min_val, max_val)
+            # Calcul et affichage des métriques
+            me, mae, rmse, r2_corr, corr = generate_metrics(df)
+            metrics_text = f"ME={me:.2f}\nMAE={mae:.2f}\nRMSE={rmse:.2f}\nR²={r2_corr:.2f}\nCorr={corr:.2f}"
+            axes[idx].text(0.05, 0.95, metrics_text, transform=axes[idx].transAxes, fontsize=10, verticalalignment='top', bbox=dict(boxstyle="round", facecolor="white", alpha=0.7))
             axes[idx].legend()
         # Créer une légende personnalisée pour les NUM_POSTE communs
         import matplotlib.patches as mpatches
         legend_patches = [mpatches.Patch(color=color_dict[n], label=n) for n in num_poste_communs]
         axes[1].legend(handles=legend_patches, title="NUM_POSTE communs", bbox_to_anchor=(1.05, 1), loc='upper left')
         plt.tight_layout()
-        plt.show()
+        #plt.show()
         plt.close()
+        print(metrics_text)
     else:
         print("Impossible de charger les deux pas de temps pour la saison demandée.")
 

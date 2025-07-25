@@ -63,7 +63,6 @@ def pipeline_data(params, config, use_cache=False):
 
     # Selection des données observées
     df_observed_cleaning = cleaning_data_observed(observed_load, missing_rate, scale_choice)
-    
     # Calcul des statistiques
     modelised = compute_statistic_per_point(modelised_load, stat_choice_key)
     observed = compute_statistic_per_point(df_observed_cleaning, stat_choice_key)

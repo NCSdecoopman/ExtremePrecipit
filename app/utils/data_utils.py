@@ -126,6 +126,11 @@ def cleaning_data_observed(
     # Sélection des NUM_POSTE avec au moins min_valid_years d'années valides
     valid_stations = station_counts.filter(pl.col("num_years") >= min_valid_years)
 
+    # Gestion du cas de quotidien_reduce (1990-2022)
+    if valid_stations.is_empty() and echelle=="quotidien":
+        valid_stations = station_counts.filter(pl.col("num_years") >= 25)
+
+
     # Jointure pour ne garder que les stations valides
     df_final = df_filter.filter(
         pl.col("NUM_POSTE").is_in(valid_stations["NUM_POSTE"])

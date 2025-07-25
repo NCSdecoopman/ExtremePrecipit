@@ -4,7 +4,7 @@ import polars as pl
 
 def years_to_load(echelle: str, season: str, input_dir: str):
     # Fixation de l'échelle pour le choix des colonnes à lire
-    mesure = "max_mm_h" if echelle == "horaire" else "max_mm_j"
+    mesure = "max_mm_h" if "horaire" in echelle else "max_mm_j"
     
     # Liste des années disponibles
     years = [
@@ -13,18 +13,12 @@ def years_to_load(echelle: str, season: str, input_dir: str):
     ]
 
     if years:
-        min_year = min(years) if echelle == "quotidien" else 1990 # Année minimale
+        min_year = min(years) if echelle in ["quotidien", "horaire_reduce"] else 1990 # Année minimale
         max_year = max(years)
     else:
-        logger.error("Aucune année valide trouvée.")
+        print("Aucune année valide trouvée.")
 
-    len_serie = 50 if echelle=="quotidien" else 25 # Longueur minimale d'une série valide
-
-
-    min_year = 1990
-    max_year = 2022
-    len_serie = 25
-
+    len_serie = 50 if echelle in ["quotidien", "horaire_reduce"] else 25 # Longueur minimale d'une série valide
 
     if season in ["hydro", "djf"]:
         min_year+=1 # On commence en 1960
@@ -35,7 +29,12 @@ def years_to_load(echelle: str, season: str, input_dir: str):
 
 def load_season(year: int, cols: tuple, season_key: str, base_path: str) -> pl.DataFrame:
     filename = f"{base_path}/{year:04d}/{season_key}.parquet"
-    return pl.read_parquet(filename, columns=cols)
+    if cols is None:
+        # pas de filtrage : on ne passe pas l'argument columns
+        return pl.read_parquet(filename)
+    else:
+        # filtrage sur les colonnes spécifiées
+        return pl.read_parquet(filename, columns=cols)
 
 def load_data(intputdir: str, season: str, echelle: str, cols: tuple, min_year: int, max_year: int) -> pl.DataFrame:
     dataframes = []
