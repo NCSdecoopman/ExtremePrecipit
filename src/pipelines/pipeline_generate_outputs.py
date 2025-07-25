@@ -861,16 +861,17 @@ def main(args):
             #     )
 
         if data_type != "dispo":
-            datasets_diff = generate_scatter(
-                datasets=datasets,
-                dir_path=dir_path,
-                col_calculate=col_calculate,
-                echelle=e,
-                show_signif=signif,
-                scale=scale
-            )
-
             for signif in SIGNIFICANT_SHOW:
+
+                datasets_diff = generate_scatter(
+                    datasets=datasets,
+                    dir_path=dir_path,
+                    col_calculate=col_calculate,
+                    echelle=e,
+                    show_signif=signif,
+                    scale=scale
+                )
+                
                 dir_path, val_col, titles, model_gdfs, obs_gdfs = calculate_data_maps(
                     datasets_diff,
                     echelle=e,
