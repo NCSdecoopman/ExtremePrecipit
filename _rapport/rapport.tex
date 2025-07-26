@@ -175,7 +175,7 @@
 \makeatletter
 \makeatother
 \makeatletter
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[frame hidden, borderline west={3pt}{0pt}{shadecolor}, interior hidden, breakable, boxrule=0pt, enhanced, sharp corners]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[enhanced, interior hidden, borderline west={3pt}{0pt}{shadecolor}, frame hidden, breakable, sharp corners, boxrule=0pt]}{\end{tcolorbox}}\fi
 \makeatother
 \usepackage{bookmark}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
@@ -576,17 +576,16 @@ tendances observées aux mécanismes physiques. On ne peut donc pas
 transformer des constats descriptifs en résultats exploitables et
 comparables. Pour répondre à ces questions, nous mobilisons la théorie
 des valeurs extrêmes (GEV) \citep{coles2001introduction}. Les maxima,
-une fois normalisés, convergent vers une loi généralisée des valeurs
-extrêmes (GEV). C'est l'analogue, pour les maxima, du théorème central
-limite pour les sommes. La GEV unifie trois familles classiques (Gumbel,
-Fréchet, Weibull) via le paramètre de forme \(\xi\), qui contrôle la
-lourdeur de la queue. La ``bonne'' famille est donc automatiquement
-choisie. Nous ajustons des lois GEV aux maxima, d'abord dans un cadre
-stationnaire pour valider le bon comportement du modèle, puis dans un
-cadre non‑stationnaire où les paramètres de la GEV dépendent du temps.
-Cette étape nous permet de comparer de manière cohérente les niveaux de
-retour entre observations et AROME, d'estimer leurs tendances et de
-relier ces tendances aux mécanismes physiques.
+une fois normalisés, convergent vers une GEV. C'est l'analogue, pour les
+maxima, du théorème central limite pour les sommes. La GEV unifie trois
+familles classiques (Gumbel, Fréchet, Weibull) via le paramètre de forme
+\(\xi\), qui contrôle la lourdeur de la queue. La ``bonne'' famille est
+donc automatiquement choisie. Nous ajustons des lois GEV aux maxima,
+d'abord dans un cadre stationnaire pour valider le bon comportement du
+modèle, puis dans un cadre non‑stationnaire où les paramètres de la GEV
+dépendent du temps. Cette étape nous permet de comparer de manière
+cohérente les niveaux de retour entre observations et AROME, d'estimer
+leurs tendances et de relier ces tendances aux mécanismes physiques.
 
 \subsubsection{Définitions}\label{duxe9finitions}
 
@@ -631,7 +630,7 @@ dans la portion post-rupture.
 
 \subsubsection{Modèles utilisés}\label{moduxe8les-utilisuxe9s}
 
-\begin{tcolorbox}[enhanced jigsaw, left=2mm, arc=.35mm, leftrule=.75mm, colframe=quarto-callout-color-frame, rightrule=.15mm, bottomrule=.15mm, breakable, toprule=.15mm, colback=white, opacityback=0]
+\begin{tcolorbox}[enhanced jigsaw, toprule=.15mm, bottomrule=.15mm, colback=white, breakable, left=2mm, leftrule=.75mm, colframe=quarto-callout-color-frame, arc=.35mm, rightrule=.15mm, opacityback=0]
 
 Soit la covariable
 \(t \in \mathbb{N} \mid t_{\min} \leq t \leq t_{\max}\). Le modèle
@@ -717,7 +716,7 @@ dépasse, en moyenne, une fois tous les \(T\) ans. Soit
 \(X \sim \mathrm{GEV}(\mu, \sigma, \xi)\), alors en notant \(F^{-1}\) la
 fonction quantile de la GEV, on obtient :
 
-\begin{tcolorbox}[enhanced jigsaw, left=2mm, arc=.35mm, leftrule=.75mm, colframe=quarto-callout-color-frame, rightrule=.15mm, bottomrule=.15mm, breakable, toprule=.15mm, colback=white, opacityback=0]
+\begin{tcolorbox}[enhanced jigsaw, toprule=.15mm, bottomrule=.15mm, colback=white, breakable, left=2mm, leftrule=.75mm, colframe=quarto-callout-color-frame, arc=.35mm, rightrule=.15mm, opacityback=0]
 
 \[
 \mathbb{P}(X > z_T) = \frac{1}{T}, \quad \text{soit} \quad z_T = F^{-1}\left(1 - \frac{1}{T} \right) = 
@@ -745,7 +744,7 @@ Soit la fonction de vraisemblance
 La log-vraisemblance \(\ell(\theta) = \log \mathcal{L}(\theta)\) s'écrit
 après développement (Annexes 1-1) :
 
-\begin{tcolorbox}[enhanced jigsaw, left=2mm, arc=.35mm, leftrule=.75mm, colframe=quarto-callout-color-frame, rightrule=.15mm, bottomrule=.15mm, breakable, toprule=.15mm, colback=white, opacityback=0]
+\begin{tcolorbox}[enhanced jigsaw, toprule=.15mm, bottomrule=.15mm, colback=white, breakable, left=2mm, leftrule=.75mm, colframe=quarto-callout-color-frame, arc=.35mm, rightrule=.15mm, opacityback=0]
 
 \[
 \ell(\theta)=
@@ -931,7 +930,7 @@ A partir des niveaux de retour 10 ans (\(T = 10\)) la tendance relative
 (en \%) est calculée via la formule ci-dessous. Un exemple graphique est
 disponible en annexes 2-6.
 
-\begin{tcolorbox}[enhanced jigsaw, left=2mm, arc=.35mm, leftrule=.75mm, colframe=quarto-callout-color-frame, rightrule=.15mm, bottomrule=.15mm, breakable, toprule=.15mm, colback=white, opacityback=0]
+\begin{tcolorbox}[enhanced jigsaw, toprule=.15mm, bottomrule=.15mm, colback=white, breakable, left=2mm, leftrule=.75mm, colframe=quarto-callout-color-frame, arc=.35mm, rightrule=.15mm, opacityback=0]
 
 \[
 \text{Tendance} = \frac{z_T^{2022} - z_T^{1995}}{z_T^{1995}} \cdot {100}
@@ -1003,9 +1002,9 @@ par
 AROME}\label{uxe9valuation-de-la-climatologie-des-pruxe9cipitations-simuluxe9es-par-arome}
 
 Afin d'apprécier la capacité d'AROME à restituer la climatologie des
-précipitations les données sont confrontées aux observations de stations
-pour une saison donnée : 1) le nombre de jours de pluie
-(seuil\,≥\,1\,mm/j); 2) le cumul des précipitations ; et 3) la moyenne
+précipitations, différents indicateurs sont confrontées aux observations
+de stations pour une saison donnée : 1) le nombre de jours de pluie
+(seuil\,≥\,1\,mm/j) ; 2) le cumul des précipitations ; et 3) la moyenne
 des maxima des précipitations.
 
 \subsubsection{Distribution spatiale}\label{distribution-spatiale}
@@ -1020,7 +1019,7 @@ surestime l'orographique ou sous-estime les convectifs intenses).
 \paragraph{Nombre de jours de
 précipitations}\label{nombre-de-jours-de-pruxe9cipitations}
 
-Sur la période 1959-2022 (Figure 3, colonne de gauche), AROME surestime
+Sur la période 1959-2022 (Figure 4, colonne de gauche), AROME surestime
 légèrement la fréquence annuelle des jours de précipitation : +6.35
 jours/an (soit +5.56\%). Des biais locaux marqués subsistent
 toutefois\,: plus de +30 jours pour plusieurs stations du Massif central
@@ -1073,7 +1072,7 @@ jours/an.
 \paragraph{Cumul annuel des
 précipitations}\label{cumul-annuel-des-pruxe9cipitations}
 
-Sur la période 1959-2022 (Figure 3, colonne du centre), AROME estime
+Sur la période 1959-2022 (Figure 4, colonne du centre), AROME estime
 correctement le cumul annuel des précipitations : +0.03 mm/j (soit
 +1.23\%). Des biais locaux marqués subsistent toutefois\,: plus de +1,0
 mm/j pour l'ensemble des stations de la crête pyrénéenne et de la
@@ -1092,7 +1091,7 @@ données horaires de 1990 à 2022 (Annexe 2-2.3).
 \paragraph{Moyenne des maxima des
 précipitations}\label{moyenne-des-maxima-des-pruxe9cipitations}
 
-Sur la période 1959-2022 (Figure 3, colonne de droite), AROME
+Sur la période 1959-2022 (Figure 4, colonne de droite), AROME
 sous-estime légèrement la moyenne des maxima des précipitations : -1.18
 mm/j (soit -2.35\%). Il subsiste d'importants biais locaux : déficits de
 −5 à moins de −20 mm/j sur l'ensemble des Cévennes et se prolongeant
@@ -1129,7 +1128,7 @@ localement connaître de très gros orages (40--80\,mm/j en moyenne).
 
 Ces premiers résultats, marqués par des biais locaux importants sur les
 maxima journaliers, nous conduisent à descendre au pas de temps horaire
-(Figure 4). Sur la période 1990-2022, AROME sous-estime fortement la
+(Figure 5). Sur la période 1990-2022, AROME sous-estime fortement la
 moyenne des maxima des précipitations : -3.42 mm/h (soit -18.65\%). Il
 subsiste d'importants biais : déficits de −5 à moins de −10 mm/h sur
 presque l'ensemble de la France mais surtout dans les Cévennes et la
@@ -1162,7 +1161,7 @@ chute à 0,70 au printemps et en été.
 
 \captionof{figure}{\small Corrélations des données climatologiques entre le modèle AROME et les stations Météo-France pour chacune des sources de données.}
 
-\begin{tcolorbox}[enhanced jigsaw, left=2mm, arc=.35mm, leftrule=.75mm, colframe=quarto-callout-color-frame, rightrule=.15mm, bottomrule=.15mm, breakable, toprule=.15mm, colback=white, opacityback=0]
+\begin{tcolorbox}[enhanced jigsaw, toprule=.15mm, bottomrule=.15mm, colback=white, breakable, left=2mm, leftrule=.75mm, colframe=quarto-callout-color-frame, arc=.35mm, rightrule=.15mm, opacityback=0]
 
 AROME sous‑représente les extrêmes convectifs estivaux, surtout à
 l'échelle horaire, malgré une structure spatiale bien captée.
@@ -1237,7 +1236,7 @@ une analyse saisonnière (Figure 7).
 \hfill\break
 
 À l'automne (\textbf{SON}), AROME indique des tendances négatives (−10 à
-\textless\,−30\,\%) sur le Bassin parisien, le versant occidental du
+\textless\,−30\,\%) sur le bassin parisien, le versant occidental du
 Massif central et les pré‑Alpes, et une hausse marquée dans le
 Mercantour, comme précédemment. Les stations confirment ce schéma, mais
 avec une diminution moins prononcée sur les pré‑Alpes et un signal
@@ -1251,7 +1250,7 @@ atlantique nord et manche présentent des tendances positives de +10 à
 +30\%. Les stations confirment ce schéma, tout en étendant la zone de
 baisse sur les Alpes du Nord. Au printemps (\textbf{MAM}), le signal est
 peu structuré\,: AROME n'isole pas de pattern net, mais suggère des
-tendances positives sur la moitié Nord et Ouest de la France (+15 à
+tendances positives sur la moitié nord et ouest de la France (+15 à
 +30\%). Les stations renforcent ce diagnostic, avec une hausse
 généralisée sur l'ensemble de la moitié Nord, localement
 \textgreater\,+35\%. En été (\textbf{JJA}), AROME met en évidence une
@@ -1262,14 +1261,14 @@ confirment ce motif spatial.\\
 
 Globalement, AROME reproduit la distribution spatiale des tendances
 observées, mais avec une extension parfois réduite --- sur les Alpes du
-Nord en automne et en hiver, ainsi que sur la moitié Nord au printemps
---- et sous‑estime systématiquement leur amplitude, avec un biais moyen
-compris entre −2,42\% (MAM) et −4,87\% (HYDRO).
+Nord en automne et en hiver, ainsi que sur la moitié nord de la France
+au printemps --- et sous‑estime systématiquement leur amplitude, avec un
+biais moyen compris entre −2,42\% (MAM) et −4,87\% (HYDRO).
 
 \paragraph{Données horaires}\label{donnuxe9es-horaires}
 
 Nous passons désormais à l'échelle horaire afin d'évaluer l'éventuelle
-intensification des extrêmes sous‑journaliers. Face à l'hétérogénéité
+intensification des extrêmes infra‑journaliers. Face à l'hétérogénéité
 spatiale persistante des tendances saisonnières (Annexes\,2‑4.3.1.2,
 HYDRO, SON, DJF, MAM et JJA), nous affinons l'analyse au pas mensuel
 (Figure 8).
@@ -1398,16 +1397,16 @@ comparer systématiquement AROME aux stations selon les saisons et les
 mois.\\
 
 Sur la série journalière 1959--2022 (Fig. 10, panneau \textbf{J}), les
-distributions mensuelles des tendances relatives s'étendent typiquement
-de --50\,\% à +50\,\%, avec quelques extrêmes atteignant ±100\,\%
-(juillet, août, décembre). La tendance moyenne est de -4.6\% pour AROME
-et -1.6\% pour les stations. Les médianes restent proches de 0
-(±10\,\%), mais s'en écartent positivement au printemps (mars--mai) et
-négativement en fin d'hiver ainsi qu'en fin d'été / début d'automne
-(février, mars, août, septembre). La forme des distributions est
-comparable entre AROME et les stations, bien que l'étalement soit plus
-marqué pour les stations. Les médianes sont presque toujours plus
-élevées pour les stations que pour AROME.\\
+distributions mensuelles des tendances relatives s'étendent de --50\,\%
+à +50\,\%, avec quelques extrêmes atteignant ±100\,\% (juillet, août,
+décembre). La tendance moyenne est de -4.6\% pour AROME et -1.6\% pour
+les stations. Les médianes restent proches de 0 (±10\,\%), mais s'en
+écartent positivement au printemps (mars--mai) et négativement en fin
+d'hiver ainsi qu'en fin d'été / début d'automne (février, mars, août,
+septembre). La forme des distributions est comparable entre AROME et les
+stations, bien que l'étalement soit plus marqué pour les stations. Les
+médianes sont presque toujours plus élevées pour les stations que pour
+AROME.\\
 
 Lorsque l'on restreint la période à 1990--2022 (Fig.\,10, panneau
 \textbf{J}*), la dispersion relative augmente pour tous les mois (queues
@@ -1493,8 +1492,8 @@ limites}\label{tendances-des-extruxeames-de-pruxe9cipitations-cohuxe9rences-dive
 \paragraph{Données journalière}\label{donnuxe9es-journaliuxe8re}
 
 La tendance positive et significative sont cohérentes avec l'étude à
-l'échelle terrestre de \citet{IPCC2021} montrant une hausse du niveau de
-retour 10 ans de +6,7\% issu des pluies journalières pour 71\% de la
+l'échelle terrestre de l'\citet{IPCC2021} montrant une hausse du niveau
+de retour 10 ans de +6,7\% issu des pluies journalières pour 71\% de la
 surface. Les hot-spots sur le Mercantour (+20 à +30\,\%) et, côté
 stations, sur la vallée du Rhône (+5 à \textless\,+30\,\%) sont
 cohérents avec les travaux montrant une intensification des extrêmes
