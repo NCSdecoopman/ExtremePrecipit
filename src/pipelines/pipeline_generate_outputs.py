@@ -14,8 +14,6 @@ import numpy as np
 import pandas as pd
 import polars as pl
 
-import seaborn as sns
-
 def import_data_dispo(
     season,
     echelle,
@@ -109,6 +107,13 @@ def import_data_stat(
         col = "jours_pluie_moyen"
     elif col_calculate == "mean":
         col = f"mean_all_{scale}"
+        n = 365 if season == "hydro" else 3*30
+        modelised = modelised.with_columns(
+            (pl.col(col) * n).alias(col)
+        )
+        observed = observed.with_columns(
+            (pl.col(col) * n).alias(col)
+        )
     elif col_calculate == "mean-max":
         col = f"max_mean_{scale}"
     
@@ -163,7 +168,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.colors import BoundaryNorm, TwoSlopeNorm, LinearSegmentedColormap, ListedColormap, to_hex
 from matplotlib.colorbar import ColorbarBase
-import matplotlib.cm as cm
+from matplotlib.ticker import FormatStrFormatter
 
 def calculate_data_maps(
     datasets: Sequence[Mapping[str, pl.DataFrame]],
@@ -350,6 +355,8 @@ def generate_maps(
     if val_col not in ["significant", "model"]:
         if col_calculate == "numday":
             legend = "jours"
+        elif col_calculate == "mean":
+            legend = "mm/an"
         elif col_calculate == "z_T_p":
             legend = "%"
         else:
@@ -441,8 +448,9 @@ def generate_maps(
         norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
 
     elif data_type=="stats":
+        all_mins = [g[val_col].min() for g in model_gdfs + obs_gdfs if g is not None]
         all_maxs = [g[val_col].max() for g in model_gdfs + obs_gdfs if g is not None]
-        vmin = 0.0
+        vmin = max(all_mins)
         vmax = max(all_maxs)
 
         # custom_colorscale = [
@@ -595,6 +603,8 @@ def generate_maps(
                     )
                     if mesure is not None:
                         cb.ax.set_ylabel(f"{legend}", rotation=90, fontsize=10)
+                    # Forcer un chiffre après la virgule
+                    cb.ax.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
 
 
             suffix_obs = "obs" if show_obs else ""
@@ -638,6 +648,8 @@ def generate_maps(
         # cas continu : on laisse matplotlib trouver lui‑même les ticks
         cb2 = fig2.colorbar(sm2, cax=ax2, spacing = "proportional")
         cb2.ax.set_ylabel(f"{legend}", rotation=90, fontsize=20)
+        # Forcer un chiffre après la virgule
+        cb2.ax.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
 
     suffix_signif = "_signif" if show_signif else ""
     suffix_diff = "_diff" if diff else ""
@@ -650,7 +662,7 @@ def generate_maps(
 
 
 def generate_scatter(
-    datasets,
+    datasets: dict[str, pd.DataFrame],
     dir_path: Path,
     col_calculate: str,
     echelle: str,
@@ -700,6 +712,8 @@ def generate_scatter(
             # Légende unités
             if col_calculate == "numday":
                 legend = "jours"
+            elif col_calculate == "mean":
+                legend = "mm/an"
             elif col_calculate == "z_T_p":
                 legend = "%"
             else:
@@ -845,22 +859,22 @@ def main(args):
                 saturation_col=sat
             )
 
-            # for show in [True, False]:
-            #     generate_maps(
-            #         dir_path=dir_path,
-            #         model_gdfs=model_gdfs,
-            #         obs_gdfs=obs_gdfs,
-            #         data_type=data_type,
-            #         titles=titles,
-            #         val_col=val_col,
-            #         show_mod=show,
-            #         show_obs=not show,
-            #         show_signif=signif,
-            #         col_calculate=col_calculate,
-            #         scale=scale
-            #     )
+            for show in [True, False]:
+                generate_maps(
+                    dir_path=dir_path,
+                    model_gdfs=model_gdfs,
+                    obs_gdfs=obs_gdfs,
+                    data_type=data_type,
+                    titles=titles,
+                    val_col=val_col,
+                    show_mod=show,
+                    show_obs=not show,
+                    show_signif=signif,
+                    col_calculate=col_calculate,
+                    scale=scale
+                )
 
-        if data_type != "dispo":
+        if data_type != "dispo" and col_calculate not in ["significant", "model"]:
             for signif in SIGNIFICANT_SHOW:
 
                 datasets_diff = generate_scatter(
