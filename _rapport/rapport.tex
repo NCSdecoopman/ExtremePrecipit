@@ -164,7 +164,7 @@
 \makeatletter
 \makeatother
 \makeatletter
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[borderline west={3pt}{0pt}{shadecolor}, interior hidden, boxrule=0pt, enhanced, frame hidden, breakable, sharp corners]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[boxrule=0pt, sharp corners, enhanced, borderline west={3pt}{0pt}{shadecolor}, interior hidden, frame hidden, breakable]}{\end{tcolorbox}}\fi
 \makeatother
 
 \usepackage{bookmark}
@@ -652,7 +652,7 @@ dans la portion post-rupture.
 
 \subsubsection{Modèles utilisés}\label{moduxe8les-utilisuxe9s}
 
-\begin{tcolorbox}[enhanced jigsaw, opacityback=0, leftrule=.75mm, breakable, left=2mm, arc=.35mm, rightrule=.15mm, bottomrule=.15mm, toprule=.15mm, colback=white, colframe=quarto-callout-color-frame]
+\begin{tcolorbox}[enhanced jigsaw, toprule=.15mm, left=2mm, rightrule=.15mm, leftrule=.75mm, breakable, opacityback=0, colback=white, arc=.35mm, bottomrule=.15mm, colframe=quarto-callout-color-frame]
 
 Soit la covariable
 \(t \in \mathbb{N} \mid t_{\min} \leq t \leq t_{\max}\). Le modèle
@@ -738,7 +738,7 @@ dépasse, en moyenne, une fois tous les \(T\) ans. Soit
 \(X \sim \mathrm{GEV}(\mu, \sigma, \xi)\), alors en notant \(F^{-1}\) la
 fonction quantile de la GEV, on obtient :
 
-\begin{tcolorbox}[enhanced jigsaw, opacityback=0, leftrule=.75mm, breakable, left=2mm, arc=.35mm, rightrule=.15mm, bottomrule=.15mm, toprule=.15mm, colback=white, colframe=quarto-callout-color-frame]
+\begin{tcolorbox}[enhanced jigsaw, toprule=.15mm, left=2mm, rightrule=.15mm, leftrule=.75mm, breakable, opacityback=0, colback=white, arc=.35mm, bottomrule=.15mm, colframe=quarto-callout-color-frame]
 
 \[
 \mathbb{P}(X > z_T) = \frac{1}{T}, \quad \text{soit} \quad z_T = F^{-1}\left(1 - \frac{1}{T} \right) = 
@@ -770,7 +770,7 @@ Soit la fonction de vraisemblance
 La log-vraisemblance \(\ell(\theta) = \log \mathcal{L}(\theta)\) s'écrit
 après développement (Annexes 1-1) :
 
-\begin{tcolorbox}[enhanced jigsaw, opacityback=0, leftrule=.75mm, breakable, left=2mm, arc=.35mm, rightrule=.15mm, bottomrule=.15mm, toprule=.15mm, colback=white, colframe=quarto-callout-color-frame]
+\begin{tcolorbox}[enhanced jigsaw, toprule=.15mm, left=2mm, rightrule=.15mm, leftrule=.75mm, breakable, opacityback=0, colback=white, arc=.35mm, bottomrule=.15mm, colframe=quarto-callout-color-frame]
 
 \[
 \ell(\theta)=
@@ -960,7 +960,7 @@ A partir des niveaux de retour 10 ans (\(T = 10\)) la tendance relative
 (en \%) entre 1995 et 2022 est calculée via la formule ci-dessous. Un
 exemple graphique est disponible en annexes 2-6.
 
-\begin{tcolorbox}[enhanced jigsaw, opacityback=0, leftrule=.75mm, breakable, left=2mm, arc=.35mm, rightrule=.15mm, bottomrule=.15mm, toprule=.15mm, colback=white, colframe=quarto-callout-color-frame]
+\begin{tcolorbox}[enhanced jigsaw, toprule=.15mm, left=2mm, rightrule=.15mm, leftrule=.75mm, breakable, opacityback=0, colback=white, arc=.35mm, bottomrule=.15mm, colframe=quarto-callout-color-frame]
 
 \[
 \text{Tendance} = \frac{z_T^{2022} - z_T^{1995}}{z_T^{1995}} \cdot {100}
@@ -1102,7 +1102,7 @@ jours/an.
 \pandocbounded{\includegraphics[keepaspectratio]{../outputs/maps/stats_mean-max/quotidien/compare_5/sat_99.0/hydro/obs_rast_diff.pdf}}
 &
 \pandocbounded{\includegraphics[keepaspectratio]{../outputs/maps/stats_mean-max/horaire/compare_5/sat_99.0/hydro/obs_rast_diff.pdf}} \\
-\small \(ME =\) +6.35 j (+5.56\%) & \small \(ME =\) +11.48 mm/an
+\small \(ME =\) +6.35 j ~(+5.56\%) & \small \(ME =\) +11.48 mm/an
 (+1.23\%) & \small \(ME =\) -1.18 mm/j (-2.35\%) & \small \(ME =\) -3.42
 mm/j (-18.65\%) \\
 \end{longtable}
@@ -1187,7 +1187,7 @@ chute à 0,70 au printemps et en été.
 
 \captionof{figure}{\small Corrélations des données climatologiques entre le modèle AROME et les stations Météo-France pour chacune des sources de données.}
 
-\begin{tcolorbox}[enhanced jigsaw, opacityback=0, leftrule=.75mm, breakable, left=2mm, arc=.35mm, rightrule=.15mm, bottomrule=.15mm, toprule=.15mm, colback=white, colframe=quarto-callout-color-frame]
+\begin{tcolorbox}[enhanced jigsaw, toprule=.15mm, left=2mm, rightrule=.15mm, leftrule=.75mm, breakable, opacityback=0, colback=white, arc=.35mm, bottomrule=.15mm, colframe=quarto-callout-color-frame]
 
 AROME sous‑représente les extrêmes convectifs estivaux, surtout à
 l'échelle horaire, malgré une structure spatiale bien captée.
