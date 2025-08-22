@@ -184,7 +184,15 @@ build_table(
     col     = "mean",
     echelle = "quotidien",
     sat     = "sat_99.0",
-    seasons = ["hydro", "son", "djf", "mam", "jja"]
+    seasons = ["hydro"]
+)
+
+build_table(
+    stats   = "stats",
+    col     = "mean",
+    echelle = "quotidien",
+    sat     = "sat_99.0",
+    seasons = ["son", "djf", "mam", "jja"]
 )
 ```
 
@@ -196,7 +204,15 @@ build_table(
     col     = "mean",
     echelle = "quotidien_reduce",
     sat     = "sat_99.0",
-    seasons = ["hydro", "son", "djf", "mam", "jja"]
+    seasons = ["hydro"]
+)
+
+build_table(
+    stats   = "stats",
+    col     = "mean",
+    echelle = "quotidien_reduce",
+    sat     = "sat_99.0",
+    seasons = ["son", "djf", "mam", "jja"]
 )
 ```
 
@@ -208,7 +224,15 @@ build_table(
     col     = "mean",
     echelle = "horaire",
     sat     = "sat_99.0",
-    seasons = ["hydro", "son", "djf", "mam", "jja"]
+    seasons = ["hydro"]
+)
+
+build_table(
+    stats   = "stats",
+    col     = "mean",
+    echelle = "horaire",
+    sat     = "sat_99.0",
+    seasons = ["son", "djf", "mam", "jja"]
 )
 ```
 

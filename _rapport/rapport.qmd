@@ -16,7 +16,7 @@ author:
     affiliations:
       - RTM
 abstract: |
-  Le changement climatique provoque un réchauffement global (+1,1°C), plus marqué en France métropolitaine (+1,7°C) et dans les Alpes françaises (+2°C) par rapport à l’ère préindustrielle. L'air plus chaud contient davantage d'humidité, ce qui favorise théoriquement l'augmentation des précipitations extrêmes, bien que les tendances effectivement observées varient selon les régions et les circulations atmosphériques. Les modèles climatiques classiques globaux et régionaux sont limités pour représenter les précipitations extrêmes à résolution infra-journalière en raison de leur faible résolution et de la paramétrisation de la convection. En effet, d'autres facteurs entrent en jeu tel que l'évolution des circulations atmosphériques, la disponibilité de l'humidité et les processus convectifs. Les modèles à résolution spatiale (CP-RCM), comme CNRM-AROME (2,5 km), permettent désormais une meilleure représentation explicite de la convection profonde. Le stage vise à analyser les tendances des précipitations extrêmes horaires en France (1959-2022) grâce aux données CP-RCM et pluviométriques, en appliquant des modèles de valeurs extrêmes (GEV) stationnaires et non stationnaires.
+  Le changement climatique provoque un réchauffement global (+1,1 °C), plus marqué en France métropolitaine (+1,7 °C) et dans les Alpes françaises (+2 °C) par rapport à l’ère préindustrielle. Un air plus chaud peut contenir davantage d’humidité et favoriser en théorie une intensification des précipitations extrêmes. Toutefois, d’autres facteurs jouent un rôle déterminant, comme l’évolution des circulations atmosphériques, la disponibilité en humidité ou encore les processus convectifs, de sorte que les tendances observées varient selon les régions. Les modèles climatiques globaux et régionaux classiques reproduisent mal ces phénomènes, en particulier en zone de montagne, car leur résolution reste trop faible et la convection y est paramétrée. Les modèles à convection explicite à maille kilométrique (CP-RCM), comme CNRM-AROME (2,5 km), permettent désormais une meilleure représentation des précipitations extrêmes en simulant explicitement la convection profonde. Le stage vise à analyser les tendances des précipitations extrêmes horaires en France (1959-2022) à partir des données CP-RCM et pluviométriques, en appliquant des modèles de valeurs extrêmes (GEV) stationnaires et non stationnaires.
 
 keywords-formatted: [Changement climatique, Précipitations extrêmes, Clausius-Clapeyron, Convection profonde, Modèles climatiques régionaux (RCM), Modèles de climat à résolution kilométrique (CP-RCM), CNRM-AROME, Théorie des valeurs extrêmes (GEV), Tendances non stationnaires]
 
@@ -29,18 +29,11 @@ execute:
   error: false     # pour voir les erreurs si ça plante
 ---
 
+*Les cartes étant rasterisées, il est possible d’appliquer un zoom à n’importe quel niveau afin de mieux distinguer les détails visuels. Toutefois, comme il s’agit de données en pixels et non vectorielles, un agrandissement trop important entraîne une perte de netteté et l’apparition de pixellisation.*
+
+Repository : https://github.com/NCSdecoopman/ExtremePrecipit
+
 ```{python}
-#!/usr/bin/env python3
-"""assemble_cartes.py – Assemble une carte AROME + stations + légende.
-
-Correctifs :
-
-* calcul fiable des dimensions (viewBox prioritaire, conversion mm/cm/pt/in → px) pour éviter
-  le rognage des SVG et garantir un canvas assez grand ;
-* refactorisation légère (_to_px, _dims) ;
-* messages d'erreur plus explicites.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -160,61 +153,6 @@ def assemble(arome: Path, stations: Path, legend: Path, output: Path) -> None:
     pdf_path = str(output)[:-4] + ".pdf"
     cairosvg.svg2pdf(url=str(output), write_to=pdf_path)
     return str(output)
-
-from svgutils.transform import fromfile, SVGFigure
-import os
-import cairosvg
-
-def assemble_row(arome: Path, stations: Path, legend: Path, output: Path) -> str:
-    # Charger les 3 SVG
-    fig_arome   = fromfile(str(arome))
-    fig_stations = fromfile(str(stations))
-    fig_legend  = fromfile(str(legend))
-
-    # Dimensions d'origine
-    w_arome, h_arome     = _dims(fig_arome)
-    w_stations, h_stations = _dims(fig_stations)
-    w_leg, h_leg         = _dims(fig_legend)
-
-    # Calcul du facteur d'échelle pour que la légende fasse 80% de h_arome
-    scale_leg = (0.8 * h_arome) / h_leg
-    w_leg_s   = w_leg * scale_leg
-    h_leg_s   = h_leg * scale_leg  # = 0.8 * h_arome
-
-    # Taille du canvas : largeur = somme des 3 largeurs, hauteur = max des 3 hauteurs
-    width  = w_arome + w_stations + w_leg_s
-    height = max(h_arome, h_stations, h_leg_s)
-
-    # Création du canvas
-    canvas = SVGFigure(f"{width}px", f"{height}px")
-    canvas.root.set('viewBox', f"0 0 {width} {height}")
-
-    # Racines et redimensionnement de la légende
-    root_arome    = fig_arome.getroot()
-    root_stations = fig_stations.getroot()
-    root_legend   = fig_legend.getroot()
-    root_legend.scale(scale_leg, scale_leg)
-
-    # Positionnement en ligne
-    # AROME à x=0
-    root_arome.moveto(0, 0)
-    # Stations à x = fin de AROME
-    root_stations.moveto(w_arome, (height - h_stations) / 2)
-    # Légende à x = fin de Stations, centrée verticalement
-    x_leg = w_arome + w_stations
-    root_legend.moveto(x_leg, (height - h_leg_s) / 2)
-
-    # Ajout des éléments et sauvegarde
-    canvas.append([root_arome, root_stations, root_legend])
-    os.makedirs(os.path.dirname(str(output)), exist_ok=True)
-    canvas.save(str(output))
-
-    # Optionnel : conversion en PDF
-    pdf_path = str(output)[:-4] + ".pdf"
-    cairosvg.svg2pdf(url=str(output), write_to=pdf_path)
-
-    return str(output)
-
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -434,7 +372,7 @@ Les précipitations extrêmes sont définies comme des épisodes de fortes pluie
 
 #### A l'échelle journalière
 
-Pour les extrêmes journaliers, le signal moyen à l’échelle globale est orienté à la hausse : la fréquence et l’intensité augmentent depuis les années 1950, avec des hausses significatives rapportées dans une majorité de régions et de mailles terrestres. Par exemple, le nombre annuel de jours dépassant 10 mm/j de précipitation a augmenté de +0,2 à +0,3 jour par décennie sur 1951–2010 [@Donat2013], avec seulement 29% des mailles terrestres présentant une hausse statistiquement significative. Les événements de type pluie extrême journalière avec retour décennal ont progressé d’environ +6,7 % dans 71 % des régions terrestres [@IPCC2021]. En France, les signaux sont beaucoup plus hétérogènes et souvent moins nets que pour la température, avec de fortes variations régionales. Dans la plupart des régions, les tendances restent faibles ou non significatives, et ce n’est que dans certaines zones, notamment le sud-est, que l’on détecte des signaux clairs. Dans cette région, la fréquence des épisodes méditerranéens extrêmes (cumuls > 200 mm en 24h) a doublé entre 1961 et 2020, même si la variabilité interannuelle reste très marquée [@meteofrance2024_episodesMediterraneens]. L’intensité moyenne des extrêmes journaliers y a augmenté de +22% entre 1961 et 2015 [@Ribes2019]. À l’échelle nationale, aucune tendance significative n’était détectable sur les maxima annuels de précipitations quotidiennes jusqu’aux années 1990. Depuis, certaines études rapportent des augmentations de +20 % à +40 %, mais ces estimations restent sensibles à la période et à la méthode d’analyse. Dans le sud-est des Alpes, la hausse du niveau de précipitation journalière attendue en moyenne tous les 20 ans en automne entre 1958 et 2017 pourrait atteindre un ordre de grandeur comparable à sa valeur moyenne (environ +100%) [@blanchet2021explaining]. Enfin, les projections montrent qu’un scénario de réchauffement de +4°C pourrait conduire à une hausse moyenne d’environ +15% des pluies extrêmes journalières en France et jusqu’à +20 % dans la moitié nord [@soubeyroux:hal-04991790]. Ces chiffres doivent être interprétés avec prudence au vu de la forte variabilité spatiale et interannuelle.
+Pour les extrêmes journaliers, le signal moyen à l’échelle globale est orienté à la hausse : la fréquence et l’intensité augmentent depuis les années 1950, avec des hausses significatives rapportées dans une majorité de régions et de mailles terrestres. Par exemple, le nombre annuel de jours dépassant 10 mm/j de précipitation a augmenté de +0,2 à +0,3 jour par décennie sur 1951–2010 [@Donat2013], avec seulement 29% des mailles terrestres présentant une hausse statistiquement significative. Les événements de type pluie extrême journalière avec retour décennal ont progressé d’environ +6,7 % dans 71 % des régions terrestres [@IPCC2021]. En France, les signaux sont beaucoup plus hétérogènes et souvent moins nets que pour la température, avec de fortes variations régionales. Dans la plupart des régions, les tendances restent faibles ou non significatives, et ce n’est que dans certaines zones, notamment le sud-est, que l’on détecte des signaux clairs. Dans cette région, la fréquence des épisodes méditerranéens extrêmes (cumuls > 200 mm en 24h) a doublé entre 1961 et 2020, même si la variabilité interannuelle reste très marquée [@meteofrance2024_episodesMediterraneens]. L’intensité moyenne des extrêmes journaliers y a augmenté de +22% entre 1961 et 2015 [@Ribes2019]. À l’échelle nationale, aucune tendance significative n’était détectable sur les maxima annuels de précipitations quotidiennes jusqu’aux années 1990. Depuis, certaines études rapportent des augmentations de +20 % à +40 %, mais ces estimations restent sensibles à la période et à la méthode d’analyse. Dans le sud-est des Alpes, la hausse du niveau de précipitation journalière attendue en moyenne tous les 20 ans en automne entre 1958 et 2017 pourrait atteindre un ordre de grandeur comparable à sa valeur moyenne (environ +100%) [@blanchet2021explaining]. Enfin, les projections montrent qu’un scénario de réchauffement de +4°C pourrait conduire à une hausse moyenne d’environ +15% des pluies extrêmes journalières en France et jusqu’à +20 % dans la moitié nord [@soubeyroux:hal-04991790]. Il existe une forte variabilité spatiale et interannuelle.
 
 #### A l'échelle horaire
 
@@ -468,7 +406,7 @@ L'étude se concentre sur la France métropolitaine. Dans un premier temps, l’
 
 Ce travail utilise les données de précipitations issues d'observations Météo-France [@meteofrance2024] au pas de temps journalier (1959-2022) et horaire (1990-2022) représentées sur la figure 1. Depuis les années 2000 des procédures d’homogénéisation (PRODIGE, puis HOMER) ont été mises en place dans la BDClim [@meteo-france_2020_breve_observation_classique].
 
-\setlength{\tabcolsep}{0pt} % pas d'espace entre colonnes
+\setlength{\tabcolsep}{0pt}  
 
 | \small Stations au pas de temps journalier (1959-2022) | \small Stations au pas de temps horaire (1990-2022) |
 | :---: | :---: |
@@ -499,7 +437,7 @@ Les saisons sont définies par **SON** pour septembre (**SEP**) octobre (**OCT**
 
 ### Calcul des indicateurs descriptifs
 
-À partir des données obtenues de Météo-France et d'AROME, le nombre de jour de pluie (seuil fixé à 1mm/j), le cumul et les maxima de précipitations journalières et horaires ont été calculées pour chaque point de grille AROME ou station, année et mois/saison sur les période 1959-2022 et 1990-2022.
+À partir des données obtenues de Météo-France et d'AROME, le nombre de jour de pluie (seuil fixé à 1 mm/j), le cumul et les maxima de précipitations journalières et horaires ont été calculées pour chaque point de grille AROME ou station, année et mois/saison sur les période 1959-2022 et 1990-2022.
 
 ### Vers une généralisation par modélisation statistique
 
@@ -812,9 +750,9 @@ jour_pluie = assemble(
 df_jour_pluie = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "numday"), ["n", "r", "me", "delta"]]
 
 mean_pluie_jour = assemble(
-  "../outputs/maps/stats_mean/quotidien/compare_5/sat_99.0/hydro/mod_norast.svg",
-  "../outputs/maps/stats_mean/quotidien/compare_5/sat_99.0/hydro/obs_norast.svg",
-  "../outputs/maps/stats_mean/quotidien/compare_5/sat_99.0/legend.svg",
+  "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/mod_norast.svg",
+  "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_norast.svg",
+  "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/legend.svg",
   "figures/mean_pluie_jour.svg"
 )
 df_mean_pluie_jour = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "mean"), ["n", "r", "me", "delta"]]
@@ -827,6 +765,17 @@ mean_max_pluie_jour = assemble(
   "figures/mean-max_pluie_jour.svg"
 )
 df_mean_max_pluie_jour = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
+
+mean_max_pluie_horaire = assemble(
+  "../outputs/maps/stats_mean-max/horaire/compare_5/sat_99.0/hydro/mod_norast.svg",
+  "../outputs/maps/stats_mean-max/horaire/compare_5/sat_99.0/hydro/obs_norast.svg",
+  "../outputs/maps/stats_mean-max/horaire/compare_5/sat_99.0/legend.svg",
+  "figures/mean-max_pluie_horaire.svg"
+)
+
+df_mean_max_pluie_horaire = combined.loc[(combined["echelle"] == "horaire") & (combined["season"] == "hydro") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
+
+df_mean_max_pluie_horaire_jja = combined.loc[(combined["echelle"] == "horaire") & (combined["season"] == "jja") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
 ```
 
 #### Distribution spatiale
@@ -837,14 +786,14 @@ La distribution spatiale des indicateurs d'AROME au regard des observations perm
 
 Sur la période 1959-2022 (Figure 4, colonne de gauche), AROME surestime légèrement la fréquence annuelle des jours de précipitation : `{python} f'{df_jour_pluie['me'].iloc[0].item():+.2f}'` jours/an (soit `{python} f'{df_jour_pluie['delta'].iloc[0].item():+.2f}'`%). Des biais locaux marqués subsistent toutefois : plus de +30 jours pour plusieurs stations du Massif central et des Pyrénées, tandis que des biais négatifs (−10 à −30 jours) se concentrent dans les Alpes du Nord, le Finistère et l’Alsace. La corrélation spatiale est élevée (*r =* `{python} f'{df_jour_pluie['r'].iloc[0].item():.2f}'`), indiquant que le modèle reproduit correctement les grands gradients régionaux. AROME et les observations s’accordent pour situer les fréquences maximales sur les massifs montagneux (Alpes, Pyrénées, Massif central, Vosges, Jura), avec plus de 140–160 jours/an, et des valeurs également élevées sur le Grand Ouest atlantique (Bretagne, Normandie, Pays de la Loire : 80–120 jours/an). À l’inverse, la façade méditerranéenne et le pourtour provençal restent les plus secs en fréquence, souvent < 50–70 jours/an.
 
-\setlength{\tabcolsep}{0pt} % pas d'espace entre colonnes
+\setlength{\tabcolsep}{0pt}  
 
-| \small Nombre de jours par an de précipitations | \small Cumul annuel des précipitations | \small Moyenne des maxima journaliers des précipitations |
-| :---: | :---: | :---: |
-| ![](figures/jour_pluie.pdf) | ![](figures/mean_pluie_jour.pdf) | ![](figures/mean-max_pluie_jour.pdf) |
-| \small $r =$ `{python} f'{df_jour_pluie['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_jour_pluie['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_mean_pluie_jour['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_pluie_jour['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_mean_max_pluie_jour['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_max_pluie_jour['n'].iloc[0].item()}'`) |
-| ![](../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_rast_diff.pdf) | ![](../outputs/maps/stats_mean/quotidien/compare_5/sat_99.0/hydro/obs_rast_diff.pdf) | ![](../outputs/maps/stats_mean-max/quotidien/compare_5/sat_99.0/hydro/obs_rast_diff.pdf) |
-| \small $ME =$ `{python} f'{df_jour_pluie['me'].iloc[0].item():+.2f}'`j (`{python} f'{df_jour_pluie['delta'].iloc[0].item():+.2f}'`%) | \small $ME =$ `{python} f'{df_mean_pluie_jour['me'].iloc[0].item():+.2f}'` mm/j (`{python} f'{df_mean_pluie_jour['delta'].iloc[0].item():+.2f}'`%) | \small $ME =$ `{python} f'{df_mean_max_pluie_jour['me'].iloc[0].item():+.2f}'` mm/j (`{python} f'{df_mean_max_pluie_jour['delta'].iloc[0].item():+.2f}'`%) |
+| \small Nombre de jours par an de précipitations | \small Cumul annuel des précipitations | \small Moyenne des maxima journaliers des précipitations | \small Moyenne des maxima horaires des précipitations |
+| :---: | :---: | :---: | :---: |
+| ![](figures/jour_pluie.pdf) | ![](figures/mean_pluie_jour.pdf) | ![](figures/mean-max_pluie_jour.pdf) | ![](figures/mean-max_pluie_horaire.pdf) |
+| \small $r =$ `{python} f'{df_jour_pluie['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_jour_pluie['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_mean_pluie_jour['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_pluie_jour['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_mean_max_pluie_jour['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_max_pluie_jour['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_mean_max_pluie_horaire['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_max_pluie_horaire['n'].iloc[0].item()}'`) |
+| ![](../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_rast_diff.pdf) | ![](../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_rast_diff.pdf) | ![](../outputs/maps/stats_mean-max/quotidien/compare_5/sat_99.0/hydro/obs_rast_diff.pdf) | ![](../outputs/maps/stats_mean-max/horaire/compare_5/sat_99.0/hydro/obs_rast_diff.pdf) |
+| \small $ME =$ `{python} f'{df_jour_pluie['me'].iloc[0].item():+.2f}'` j  (`{python} f'{df_jour_pluie['delta'].iloc[0].item():+.2f}'`%) | \small $ME =$ `{python} f'{df_mean_pluie_jour['me'].iloc[0].item():+.2f}'` mm/an (`{python} f'{df_mean_pluie_jour['delta'].iloc[0].item():+.2f}'`%) | \small $ME =$ `{python} f'{df_mean_max_pluie_jour['me'].iloc[0].item():+.2f}'` mm/j (`{python} f'{df_mean_max_pluie_jour['delta'].iloc[0].item():+.2f}'`%) | \small $ME =$ `{python} f'{df_mean_max_pluie_horaire['me'].iloc[0].item():+.2f}'` mm/j (`{python} f'{df_mean_max_pluie_horaire['delta'].iloc[0].item():+.2f}'`%) |
 
 
 \captionof{figure}{\small Climatologie entre le modèle AROME (première ligne), les stations Météo-France (deuxième ligne) avec la corrélation ($r$) et le nombre de stations comparés (n) ainsi que la différence AROME-Station (troisième ligne) avec le biais ($ME$) et l'écart relatif (\%) associé issues de données journalières allant de 1959 à 2022 pour une année hydrologique.}
@@ -852,38 +801,15 @@ Sur la période 1959-2022 (Figure 4, colonne de gauche), AROME surestime légèr
 
 ##### Cumul annuel des précipitations
 
-Sur la période 1959-2022 (Figure 4, colonne du centre), AROME estime correctement le cumul annuel des précipitations : `{python} f'{df_mean_pluie_jour['me'].iloc[0].item():+.2f}'` mm/j (soit `{python} f'{df_mean_pluie_jour['delta'].iloc[0].item():+.2f}'`%). Des biais locaux marqués subsistent toutefois : plus de +1,0 mm/j pour l'ensemble des stations de la crête pyrénéenne et de la station de Chamonix, tandis que des biais négatifs (−0,5 à −1,5 mm/j) se concentrent dans les Alpes du Nord, la côte basque et l’Alsace. La corrélation spatiale est élevée (*r =* `{python} f'{df_mean_pluie_jour['r'].iloc[0].item():.2f}'`), indiquant que le modèle reproduit correctement les grands gradients régionaux. La bordure atlantique sud‑ouest (Pyrénées, Aquitaine) et les Alpes du Nord reçoivent les plus forts cumuls (plus de 5 mm/j). Le Massif central et les reliefs intérieurs (Vosges, Jura) présentent des cumuls intermédiaires (2,5-4 mm/j). Le pourtour méditerranéen (Languedoc, Provence) reste globalement plus sec (< 1,5 mm/j), malgré des pluies intenses ponctuelles. Ces résultats sont identiques avec les données horaires de 1990 à 2022 (Annexe 2-2.3).
+Sur la période 1959-2022 (Figure 4, colonne du centre), AROME estime correctement le cumul annuel des précipitations : `{python} f'{df_mean_pluie_jour['me'].iloc[0].item():+.2f}'` mm/an (soit `{python} f'{df_mean_pluie_jour['delta'].iloc[0].item():+.2f}'`%). Des biais locaux marqués subsistent toutefois : plus de +1,0 mm/j pour l'ensemble des stations de la crête pyrénéenne et de la station de Chamonix, tandis que des biais négatifs (−0,5 à −1,5 mm/j) se concentrent dans les Alpes du Nord, la côte basque et l’Alsace. La corrélation spatiale est élevée (*r =* `{python} f'{df_mean_pluie_jour['r'].iloc[0].item():.2f}'`), indiquant que le modèle reproduit correctement les grands gradients régionaux. La bordure atlantique sud‑ouest (Pyrénées, Aquitaine) et les Alpes du Nord reçoivent les plus forts cumuls (plus de 5 mm/j). Le Massif central et les reliefs intérieurs (Vosges, Jura) présentent des cumuls intermédiaires (2,5-4 mm/j). Le pourtour méditerranéen (Languedoc, Provence) reste globalement plus sec (< 1,5 mm/j), malgré des pluies intenses ponctuelles. Ces résultats sont identiques avec les données horaires de 1990 à 2022 (Annexe 2-2.3).
 
 ##### Moyenne des maxima des précipitations
 
 Sur la période 1959-2022 (Figure 4, colonne de droite), AROME sous-estime légèrement la moyenne des maxima journaliers des précipitations : `{python} f'{df_mean_max_pluie_jour['me'].iloc[0].item():+.2f}'` mm/j (soit `{python} f'{df_mean_max_pluie_jour['delta'].iloc[0].item():+.2f}'`%). Il subsiste d'importants biais locaux : déficits de −5 à moins de −20 mm/j sur l'ensemble des Cévennes et se prolongeant vers l'extrimité Nord des Alpes du Nord, sur la côté sud-est et la côte basque ; jusqu'à -5 mm/j sur une large partie du centre de la France et de l'Alsace ; de +5 à +20 mm/j sur la crête pyrénéennes, les contreforts ouest des Cévennes et les Alpes du Nord. La corrélation spatiale est élevée (*r =* `{python} f'{df_mean_max_pluie_jour['r'].iloc[0].item():.2f}'`), indiquant que le modèle reproduit correctement les grands gradients régionaux. Les plus fortes précipitations quotidiennes moyennes se rencontrent dans les Cévennes et plus généralement sur la face sud-est du Massif central (environ 100–125 mm/j). Les reliefs alpins et pyrénéens montrent aussi des maxima élevés (80–100 mm/j). La façade atlantique et le bassin parisien présentent des maxima plus modérés (30–60 mm/j), tandis que la Provence et la Côte d’Azur, malgré une fréquence moindre, peuvent localement connaître de très gros orages (40–80 mm/j en moyenne).
 
-```{python}
-mean_max_pluie_horaire = assemble_row(
-  "../outputs/maps/stats_mean/horaire/compare_5/sat_99.0/hydro/mod_norast.svg",
-  "../outputs/maps/stats_mean/horaire/compare_5/sat_99.0/hydro/obs_norast.svg",
-  "../outputs/maps/stats_mean/horaire/compare_5/sat_99.0/legend.svg",
-  "figures/mean-max_pluie_horaire.svg"
-)
-
-df_mean_max_pluie_horaire = combined.loc[(combined["echelle"] == "horaire") & (combined["season"] == "hydro") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
-
-df_mean_max_pluie_horaire_jja = combined.loc[(combined["echelle"] == "horaire") & (combined["season"] == "jja") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
-```
-
-
-\setlength{\tabcolsep}{0pt} % pas d'espace entre colonnes
-
-| |  |
-| :---: | :---: | 
-| ![](figures/mean-max_pluie_horaire.pdf){width=115%} | ![](../outputs/maps/stats_mean-max/horaire/compare_5/sat_99.0/hydro/obs_rast_diff.pdf){width=70%}|
-| \small $r =$ `{python} f'{df_mean_max_pluie_horaire['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_max_pluie_horaire['n'].iloc[0].item()}'`) | \small $ME =$ `{python} f'{df_mean_max_pluie_horaire['me'].iloc[0].item():+.2f}'` mm/j (`{python} f'{df_mean_max_pluie_horaire['delta'].iloc[0].item():+.2f}'`%) |
-
-\captionof{figure}{\small Moyenne des maxima horaires des précipitations entre le modèle AROME (première colonne), les stations Météo-France (deuxième colonne) avec la corrélation ($r$) et le nombre de stations comparés (n) ainsi que la différence AROME-Station (troisième colonne) avec le biais ($ME$) et l'écart relatif (\%) associé issues de données horaires allant de 1990 à 2022 pour une année hydrologique.}
-
 \
 
-Ces premiers résultats, marqués par des biais locaux importants sur les maxima journaliers, nous conduisent à descendre au pas de temps horaire (Figure 5). Sur la période 1990-2022, AROME sous-estime fortement la moyenne des maxima horaires des précipitations : `{python} f'{df_mean_max_pluie_horaire['me'].iloc[0].item():+.2f}'` mm/h (soit `{python} f'{df_mean_max_pluie_horaire['delta'].iloc[0].item():+.2f}'`%). Il subsiste d'importants biais : déficits de −5 à moins de −10 mm/h sur presque l'ensemble de la France mais surtout dans les Cévennes et la vallée du Rhône. La corrélation spatiale reste élevée (*r =* `{python} f'{df_mean_max_pluie_horaire['r'].iloc[0].item():.2f}'`), attestant d’une bonne restitution des grands gradients déjà observés au pas journalier. Au regard des saisons (Annexes 2-3.3), le biais s'étend de -0,02 mm/h (DJF) à -3,75 mm/h (JJA), suggérant une sous‑représentation marquée des extrêmes convectifs estivaux.
+Ces premiers résultats, marqués par des biais locaux importants sur les maxima journaliers, nous conduisent à descendre au pas de temps horaire (Figure 4). Sur la période 1990-2022, AROME sous-estime fortement la moyenne des maxima horaires des précipitations : `{python} f'{df_mean_max_pluie_horaire['me'].iloc[0].item():+.2f}'` mm/h (soit `{python} f'{df_mean_max_pluie_horaire['delta'].iloc[0].item():+.2f}'`%). Il subsiste d'importants biais : déficits de −5 à moins de −10 mm/h sur presque l'ensemble de la France mais surtout dans les Cévennes et la vallée du Rhône. La corrélation spatiale reste élevée (*r =* `{python} f'{df_mean_max_pluie_horaire['r'].iloc[0].item():.2f}'`), attestant d’une bonne restitution des grands gradients déjà observés au pas journalier. Au regard des saisons (Annexes 2-3.3), le biais s'étend de -0,02 mm/h (DJF) à -3,75 mm/h (JJA), suggérant une sous‑représentation marquée des extrêmes convectifs estivaux.
 
 #### Corrélation entre le modèle AROME et les stations Météo-France
 
@@ -953,7 +879,7 @@ df_trend_pluie_jja = combined_all.loc[(combined_all["echelle"] == "quotidien") &
 ```
 
 
-\setlength{\tabcolsep}{0pt} % pas d'espace entre colonnes
+\setlength{\tabcolsep}{0pt}  
 
 | \small SON | \small DJF | \small MAM | \small JJA |
 | :---: | :---: | :---: | :---: |
@@ -1063,7 +989,7 @@ Les résultats confirment qu’AROME reproduit correctement les grands régimes 
 
 #### Variabilité saisonnière et représentation des extrêmes
 
-La capacité d’AROME à restituer la fréquence et la quantité de précipitations se maintient tout au long de l’année, mais la performance chute pour la moyenne des maxima journaliers en été et davantage à l’échelle horaire. On retrouve le fait qu'AROME sous-estime des précipitations d'intensité élévées (> 40 mm/h [@Caillaud2021], [@poncet2024convection]) La convection estivale reste partiellement sous‑résolue malgré la résolution spatiale de 2,5 km. Dans cette étude, on a pu montrer (résultats non affichés) que la corrélation augmente lorsque la fenêtre temporelle s'agrandit à 6 ou 9h. Le modèle pourrait reproduire la cellule orageuse en démarrant trop tard ou trop tôt, en étalant l’intensité sur plusieurs mailles (non évalué par manque de stations) ou en sous‑estimant les précipitations maximales. Le pas de 2–3 km est une étape majeure pour représenter la convection sans paramétrage, mais il reste trop grossier pour certaines applications sensibles aux maxima intenses [@Prein2015Review]. Il aurait été intéressant d'introduire les données COMEPHORE (1 km, 15 min) de Météo-France dans cette étude mais les réanalyses radar ne débutent qu'en 1997 avec une qualité médiocre sur les Alpes avant 2007 [@Fumiere2020_extreme_rainfall].
+La capacité d’AROME à restituer la fréquence et la quantité de précipitations se maintient tout au long de l’année, mais la performance chute pour la moyenne des maxima journaliers en été et davantage à l’échelle horaire. On retrouve le fait qu'AROME sous-estime des précipitations d'intensité élévées (> 40 mm/h [@Caillaud2021], [@poncet2024convection]) La convection estivale reste partiellement sous‑résolue malgré la résolution spatiale de 2,5 km. Dans cette étude, on a pu montrer (résultats non affichés) que la corrélation augmente lorsque la fenêtre temporelle s'agrandit à 6 ou 9h. Le modèle pourrait reproduire la cellule orageuse en démarrant trop tard ou trop tôt, en étalant l’intensité sur plusieurs mailles (non évalué par manque de stations) ou en sous‑estimant les précipitations maximales. Le pas de 2–3 km est une étape majeure pour représenter la convection sans paramétrage, mais il reste trop grossier pour certaines applications sensibles aux maxima intenses [@Prein2015Review]. Il aurait été intéressant d'introduire les données COMEPHORE (1 km, 15 min) de Météo-France dans cette étude mais les réanalyses radar ne débutent qu'en 1997 avec une qualité médiocre sur les Alpes avant 2007 [@Fumiere2020].
 
 #### Tendances des extrêmes de précipitations : cohérences, divergences et limites
 
