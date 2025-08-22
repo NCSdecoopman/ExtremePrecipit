@@ -122,7 +122,7 @@
 \Plainauthor{\@author}
 \Volume{}
 \Year{2025}
-\Month{Rapport de stage - 29 août}
+\Month{Rapport de stage - 26 août}
 \Issue{}
 \Submitdate{yyyy-mm-dd}
 \Acceptdate{yyyy-mm-dd}
