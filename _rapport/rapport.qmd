@@ -5,6 +5,11 @@ format:
         keep-tex: true
         journal:
           suppress: [footer, headings]
+        header-includes: |
+          % Réduire uniquement l'espace avant le grand titre
+          \makeatletter
+          \patchcmd{\@maketitle}{\vskip 1in}{\vspace*{0.2in}}{}{}
+          \makeatother
 author:
   - name: Nicolas Decoopman
     affiliations:
@@ -31,7 +36,8 @@ execute:
 
 *Les cartes étant rasterisées, il est possible d’appliquer un zoom à n’importe quel niveau afin de mieux distinguer les détails visuels. Toutefois, comme il s’agit de données en pixels et non vectorielles, un agrandissement trop important entraîne une perte de netteté et l’apparition de pixellisation.*
 
-Repository : https://github.com/NCSdecoopman/ExtremePrecipit
+\small Repository : https://github.com/NCSdecoopman/ExtremePrecipit \
+\small Application : https://huggingface.co/spaces/ncsdecoopman/ExtremePrecipit
 
 ```{python}
 from __future__ import annotations
@@ -376,7 +382,7 @@ Pour les extrêmes journaliers, le signal moyen à l’échelle globale est orie
 
 #### A l'échelle horaire
 
-Les extrêmes horaires, mesurés sur des pas de temps de 1h ou moins, sont essentiels pour caractériser les phénomènes convectifs intenses (averses orageuses, orages stationnaires) souvent responsables de crues éclaires. Faute de séries longues et spatialisées, il n’existe pas d’analyse systématique des tendances sub‑journalières à l’échelle globale ; les données sont souvent éparses, courtes et non significatives. Malgré cela, plusieurs études régionales détectent une intensification des extrêmes horaires sur presque tous les continents, mais la confiance dans une hausse globale reste très faible [@IPCC2021]. Un accroissement des pluies extrêmes est relevée aux États-Unis, en Chine (l'été), en Australie (sur l'année), en Afrique du Sud (l'été), en Inde, en Malaisie, et en Italie. Plusieurs travaux mettent en évidence, selon la méthode et la région considérées, des sensibilités de l’ordre de +7% à +14% par °C, c’est‑à‑dire jusqu’à deux fois la pente de Clausius‑Clapeyron. En France, peu d'études régionales caractérisent explicitement cette hausse des extrêmes. Les valeurs maximales observées sur 1h atteignent maintenant 40–60 mm dans les événements méditerranéens majeurs, contre 30–40 mm dans les années 1980–1990 [@meteofrance2024_episodesMediterraneens]. Seul l'étude de @Berghald2025 semble chiffrer l'évolution des tendances des extrêmes horaires dans les Alpes. Cependant, la tendance sur le niveau de retour horaire est faible à non significative, sans cohérence spatiale ni saisonnière marquée, en contraste avec les résultats clairs observés au pas de temps journalier. Cela montre que les extrêmes horaires ne montrent pas (encore) de signal climatique clair dans les Alpes françaises. On peut retrouver que la tendance sur les précipitations extrêmes horaires à la hausse est rarement significative [@Soubeyroux01022015].
+Les extrêmes horaires, mesurés sur des pas de temps de 1h ou moins, sont essentiels pour caractériser les phénomènes convectifs intenses (averses orageuses, orages stationnaires) souvent responsables de crues éclaires. Faute de séries longues et spatialisées, il n’existe pas d’analyse systématique des tendances sub‑journalières à l’échelle globale ; les données sont souvent éparses, courtes et non significatives. Malgré cela, plusieurs études régionales détectent une intensification des extrêmes horaires sur presque tous les continents, mais la confiance dans une hausse globale reste très faible [@IPCC2021]. Un accroissement des pluies extrêmes est relevée aux États-Unis, en Chine (l'été), en Australie (sur l'année), en Afrique du Sud (l'été), en Inde, en Malaisie, et en Italie. Plusieurs travaux mettent en évidence, selon la méthode et la région considérées, des sensibilités de l’ordre de +7% à +14% par °C, c’est‑à‑dire jusqu’à deux fois la pente de Clausius‑Clapeyron. En France, peu d'études régionales caractérisent explicitement cette hausse des extrêmes. Les valeurs maximales observées sur 1h atteignent maintenant 40–60 mm dans les événements méditerranéens majeurs, contre 30–40 mm dans les années 1980–1990 [@meteofrance2024_episodesMediterraneens]. Seul l'étude de @Berghald2025 semble chiffrer l'évolution des tendances des extrêmes horaires dans les Alpes. Cependant, la tendance sur le niveau de retour horaire est faible à non significative, sans cohérence spatiale ni saisonnière marquée, en contraste avec les résultats clairs observés au pas de temps journalier. Cela montre que les extrêmes horaires ne montrent pas (encore) de signal climatique clair [@Soubeyroux01022015].
 
 ### Les données disponibles
 
@@ -786,10 +792,15 @@ La distribution spatiale des indicateurs d'AROME au regard des observations perm
 
 Sur la période 1959-2022 (Figure 4, colonne de gauche), AROME surestime légèrement la fréquence annuelle des jours de précipitation : `{python} f'{df_jour_pluie['me'].iloc[0].item():+.2f}'` jours/an (soit `{python} f'{df_jour_pluie['delta'].iloc[0].item():+.2f}'`%). Des biais locaux marqués subsistent toutefois : plus de +30 jours pour plusieurs stations du Massif central et des Pyrénées, tandis que des biais négatifs (−10 à −30 jours) se concentrent dans les Alpes du Nord, le Finistère et l’Alsace. La corrélation spatiale est élevée (*r =* `{python} f'{df_jour_pluie['r'].iloc[0].item():.2f}'`), indiquant que le modèle reproduit correctement les grands gradients régionaux. AROME et les observations s’accordent pour situer les fréquences maximales sur les massifs montagneux (Alpes, Pyrénées, Massif central, Vosges, Jura), avec plus de 140–160 jours/an, et des valeurs également élevées sur le Grand Ouest atlantique (Bretagne, Normandie, Pays de la Loire : 80–120 jours/an). À l’inverse, la façade méditerranéenne et le pourtour provençal restent les plus secs en fréquence, souvent < 50–70 jours/an.
 
+##### Cumul annuel des précipitations
+
+Sur la période 1959-2022 (Figure 4, colonne du centre), AROME estime correctement le cumul annuel des précipitations : `{python} f'{df_mean_pluie_jour['me'].iloc[0].item():+.2f}'` mm/an (soit `{python} f'{df_mean_pluie_jour['delta'].iloc[0].item():+.2f}'`%). Des biais locaux marqués subsistent toutefois : plus de +1,0 mm/j pour l'ensemble des stations de la crête pyrénéenne et de la station de Chamonix, tandis que des biais négatifs (−0,5 à −1,5 mm/j) se concentrent dans les Alpes du Nord, la côte basque et l’Alsace. La corrélation spatiale est élevée (*r =* `{python} f'{df_mean_pluie_jour['r'].iloc[0].item():.2f}'`), indiquant que le modèle reproduit correctement les grands gradients régionaux. La bordure atlantique sud‑ouest (Pyrénées, Aquitaine) et les Alpes du Nord reçoivent les plus forts cumuls (plus de 5 mm/j). Le Massif central et les reliefs intérieurs (Vosges, Jura) présentent des cumuls intermédiaires (2,5-4 mm/j). Le pourtour méditerranéen (Languedoc, Provence) reste globalement plus sec (< 1,5 mm/j), malgré des pluies intenses ponctuelles. Ces résultats sont identiques avec les données horaires de 1990 à 2022 (Annexe 2-2.3).
+
+
 \setlength{\tabcolsep}{0pt}  
 
-| \small Nombre de jours par an de précipitations | \small Cumul annuel des précipitations | \small Moyenne des maxima journaliers des précipitations | \small Moyenne des maxima horaires des précipitations |
-| :---: | :---: | :---: | :---: |
+| \shortstack{\small Nombre de jours\\ par an\\ de précipitations} | \shortstack{\small Cumul\\ annuel\\ des précipitations} | \shortstack{\small Moyenne des maxima\\ journaliers\\ des précipitations} | \shortstack{\small Moyenne des maxima\\ horaires\\ des précipitations} |
+|:---:|:---:|:---:|:---:|
 | ![](figures/jour_pluie.pdf) | ![](figures/mean_pluie_jour.pdf) | ![](figures/mean-max_pluie_jour.pdf) | ![](figures/mean-max_pluie_horaire.pdf) |
 | \small $r =$ `{python} f'{df_jour_pluie['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_jour_pluie['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_mean_pluie_jour['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_pluie_jour['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_mean_max_pluie_jour['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_max_pluie_jour['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_mean_max_pluie_horaire['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_max_pluie_horaire['n'].iloc[0].item()}'`) |
 | ![](../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_rast_diff.pdf) | ![](../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_rast_diff.pdf) | ![](../outputs/maps/stats_mean-max/quotidien/compare_5/sat_99.0/hydro/obs_rast_diff.pdf) | ![](../outputs/maps/stats_mean-max/horaire/compare_5/sat_99.0/hydro/obs_rast_diff.pdf) |
@@ -798,10 +809,6 @@ Sur la période 1959-2022 (Figure 4, colonne de gauche), AROME surestime légèr
 
 \captionof{figure}{\small Climatologie entre le modèle AROME (première ligne), les stations Météo-France (deuxième ligne) avec la corrélation ($r$) et le nombre de stations comparés (n) ainsi que la différence AROME-Station (troisième ligne) avec le biais ($ME$) et l'écart relatif (\%) associé issues de données journalières allant de 1959 à 2022 pour une année hydrologique.}
 
-
-##### Cumul annuel des précipitations
-
-Sur la période 1959-2022 (Figure 4, colonne du centre), AROME estime correctement le cumul annuel des précipitations : `{python} f'{df_mean_pluie_jour['me'].iloc[0].item():+.2f}'` mm/an (soit `{python} f'{df_mean_pluie_jour['delta'].iloc[0].item():+.2f}'`%). Des biais locaux marqués subsistent toutefois : plus de +1,0 mm/j pour l'ensemble des stations de la crête pyrénéenne et de la station de Chamonix, tandis que des biais négatifs (−0,5 à −1,5 mm/j) se concentrent dans les Alpes du Nord, la côte basque et l’Alsace. La corrélation spatiale est élevée (*r =* `{python} f'{df_mean_pluie_jour['r'].iloc[0].item():.2f}'`), indiquant que le modèle reproduit correctement les grands gradients régionaux. La bordure atlantique sud‑ouest (Pyrénées, Aquitaine) et les Alpes du Nord reçoivent les plus forts cumuls (plus de 5 mm/j). Le Massif central et les reliefs intérieurs (Vosges, Jura) présentent des cumuls intermédiaires (2,5-4 mm/j). Le pourtour méditerranéen (Languedoc, Provence) reste globalement plus sec (< 1,5 mm/j), malgré des pluies intenses ponctuelles. Ces résultats sont identiques avec les données horaires de 1990 à 2022 (Annexe 2-2.3).
 
 ##### Moyenne des maxima des précipitations
 
@@ -972,14 +979,13 @@ Sur la série journalière 1959–2022 (Fig. 10, panneau **J**), les distributio
 
 Lorsque l’on restreint la période à 1990–2022 (Fig. 10, panneau **J**\*), la dispersion relative augmente pour tous les mois (queues positives plus longues), tandis que les médianes demeurent modérées (±20–30 %). La moyenne des médianes est de -0,7% pour AROME et 0,5% pour les stations. La tendance moyenne est de 2.4% pour AROME et 3.5% pour les stations. Elles restent positives au printemps (mars–juin) et en début d’hiver (octobre) (+20 à +50 %), et négatives en hiver (décembre–février), ainsi qu’en août et septembre (–20 à –50 %). Les distributions et leurs médianes sont alors très proches entre AROME et les stations. \
 
-Sur les données horaires 1990–2022 (Fig. 10, panneau **H**), la dispersion s’accroît encore avec quelques valeurs extrêmes > +400% (tronquées sur la figure). La moyenne des médianes est de 5,2% pour AROME et 15,1% pour les stations. La tendance moyenne est de 8.5% pour AROME et 29.1% pour les stations. Les médianes sont d'environ ±50%, ponctuellement jusqu’à ±80/100%. Elles sont positives en début d’hiver puis en février et juin (+20 à +60 %), et négatives en août et septembre (–20 à –25 %). La distribution est similaire entre AROME et les stations, mais plus étalée pour ces dernières ; leurs médianes y dépassent presque toujours celles d’AROME.
+Sur les données horaires 1990–2022 (Fig. 10, panneau **H**), la dispersion s’accroît encore avec quelques valeurs extrêmes > +400% (tronquées sur la figure). La moyenne des médianes est de 5,2% pour AROME et 15,1% pour les stations. La tendance moyenne est de 8.5% pour AROME et 29.1% pour les stations. Les médianes sont d'environ ±50%, ponctuellement jusqu’à ±80/100%. Elles sont positives en début d’hiver puis en février et juin (+20 à +60 %), et négatives en août et septembre (–20 à –25 %). La distribution est similaire entre AROME et les stations, mais plus étalée pour ces dernières ; leurs médianes y dépassent presque toujours celles d’AROME. \
+
+Quel que soit le type de données (**J**, **J**\* ou **H**), les distributions des tendances relatives s'accordent entre AROME et les stations en août et septembre. D’un mois à l’autre, les profils changent sans continuité apparente ; une agrégation purement saisonnière ne semble donc pas représentative de la variabilité réelle.
 
 ![](../outputs/boxplot/violin_signif.pdf){width=100%}
 
-\captionof{figure}{\small Distribution des tendances relatives significatives entre AROME et les stations Météo‑France, par saison et par mois pour chacune des sources de données (\textbf{J} : données journalières 1959-2022, \textbf{J*} : données journalières 1990-2022, \textbf{H} : données horaires 1990-2022).} 
-\
-
-Quel que soit le type de données (**J**, **J**\* ou **H**), les distributions des tendances relatives s'accordent entre AROME et les stations en août et septembre. D’un mois à l’autre, les profils changent sans continuité apparente ; une agrégation purement saisonnière ne semble donc pas représentative de la variabilité réelle.
+\captionof{figure}{\small Distribution des tendances relatives significatives entre AROME et les stations Météo‑France, par saison et par mois pour chacune des sources de données (\textbf{J} : données journalières 1959-2022, \textbf{J*} : données journalières 1990-2022, \textbf{H} : données horaires 1990-2022).}
 
 ## Discussion
 
@@ -1024,8 +1030,10 @@ La vallée du Rhône semble être un « hot‑spot » des tendances positive
 
 ## Conclusion
 
+L’évaluation conduite sur les précipitations en France montre que le modèle AROME (2,5 km, forcé par ERA5) restitue correctement les grands régimes pluviométriques observés. La climatologie simulée reproduit les contrastes majeurs du territoire : excédent orographique sur les reliefs, gradient atlantique–continental à l’ouest et déficit fréquentiel sur le pourtour méditerranéen. Cette cohérence confirme que les principaux forçages dynamiques (flux d’ouest, soulèvements orographiques, circulations méditerranéennes de basse couche) sont bien représentés. Cependant, la comparaison avec les observations révèle des **biais locaux notables**. Le modèle surestime la fréquence et les cumuls dans certains reliefs (Massif central, Pyrénées, Chamonix), et sous-estime systématiquement les extrêmes dans les Alpes du Nord, l’Alsace, la côte basque et la vallée du Rhône. Aux échelles extrêmes, les écarts atteignent −5 à −20 mm/j pour les maxima journaliers et −5 à −10 mm/h pour les maxima horaires, avec une sous-représentation marquée des événements convectifs estivaux (biais saisonnier de −3,7 mm/h en été contre −0,02 mm/h en hiver). Malgré ces écarts en valeur absolue, la corrélation spatiale reste élevée (r = 0,9 au pas journalier et 0,7–0,8 au pas horaire), montrant que la structure spatiale des précipitations est globalement captée, mais que leur intensité est aplatie. \
 
-
+L’analyse des **tendances** apporte un diagnostic contrasté. À l’échelle journalière (1959–2022), les tendances positives observées dans le sud-est (Mercantour, vallée du Rhône) ou sur la moitié nord concordent avec les signaux déjà documentés, mais AROME sous-estime leur amplitude de 2 à 5 % en moyenne. À l’échelle horaire (1990–2022), les signaux apparaissent plus hétérogènes, souvent non significatifs et faiblement corrélés aux observations. Ils montrent que si des **indices locaux d’intensification existent** (vallée du Rhône en hiver, arc méditerranéen au printemps et en automne), ils restent noyés dans le bruit de la variabilité convective et ne permettent pas de conclure à une tendance généralisée. Ce constat rejoint la littérature internationale qui souligne la difficulté d’inférer des tendances robustes sur les extrêmes infra-journaliers, en raison de la longueur limitée des séries et de l’hétérogénéité des processus convectifs. En définitive, l’étude confirme que les modèles à convection explicite comme AROME constituent un progrès net pour la représentation spatiale des extrêmes et leur évaluation sur de longues périodes, mais qu’ils peinent encore à reproduire l’intensité et l’évolution des précipitations horaires extrêmes.
+ 
 ## Remerciements {.unnumbered}
 
 Je tiens à remercier Juliette Blanchet et Antoine Blanc pour l'encadrement rigoureux, stimulant et bienveillant tout au long de ce stage. Leurs conseils avisés, leur disponibilité constante et leurs nombreuses remarques constructives m'ont permis d’approfondir considérablement mes compétences scientifiques et méthodologiques.
@@ -1101,3 +1109,13 @@ $$
 -\dfrac{\sigma_1}{\xi_0}\Bigl(\bigl[-\log(1-\tfrac1T)\bigr]^{-\xi_0}-1\Bigr).
 \end{aligned}
 $$
+
+\newpage
+
+## Annexes 2 : cartographie {.unnumbered}
+
+Afin d’alléger le corps du document, l’ensemble des cartes produites dans le cadre de cette étude n’est pas reproduit ici. Elles sont mises à disposition sous forme de figures rasterisées et vectorielles dans un répertoire en ligne accessible à l’adresse suivante : \ 
+
+
+
+Ces annexes complémentaires permettent de visualiser l’ensemble des diagnostics spatiaux (détaillés par saison, pas de temps et indicateur) avec une possibilité de zoom pour examiner les motifs régionaux fins.
