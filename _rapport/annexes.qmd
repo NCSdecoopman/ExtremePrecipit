@@ -175,6 +175,26 @@ build_table(
 )
 ```
 
+## Données horaires (1990-2022)
+
+```{python}
+build_table(
+    stats   = "stats",
+    col     = "numday",
+    echelle = "horaire",
+    sat     = "sat_99.9",
+    seasons = ["hydro"]
+)
+
+build_table(
+    stats   = "stats",
+    col     = "numday",
+    echelle = "quotidien_reduce",
+    sat     = "sat_99.9",
+    seasons = ["son", "djf", "mam", "jja"]
+)
+```
+
 # Cumul moyen des précipitations par année hydrologique
 
 ## Données journalières (1959-2022) 

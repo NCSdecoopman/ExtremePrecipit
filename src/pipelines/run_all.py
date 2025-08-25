@@ -205,12 +205,12 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 log(f"Lancement des générations de maps")
 
 
-for data_type in ["gev"]: #"dispo", "stats", "gev"
+for data_type in ["stats"]: #"dispo", "stats", "gev"
                 
     if data_type == "dispo":
         COL_CALCULATE = ["n_years"]
     elif data_type == "stats":
-        COL_CALCULATE = ["mean-max"] # "numday", "mean", 
+        COL_CALCULATE = [ "numday", "mean", "mean-max"] #
     elif data_type == "gev":
         COL_CALCULATE = ["model"] # "significant", "z_T_p", 
 
@@ -225,7 +225,7 @@ for data_type in ["gev"]: #"dispo", "stats", "gev"
         else:
             sat = 100
                 
-        for echelle in ["quotidien", "horaire"]: # 
+        for echelle in ["horaire"]: # "quotidien", 
 
             if col_calculate in ["z_T_p"]:
                 if echelle=="horaire":

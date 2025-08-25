@@ -108,6 +108,8 @@ def import_data_stat(
     elif col_calculate == "mean":
         col = f"mean_all_{scale}"
         n = 365 if season == "hydro" else 3*30
+        if echelle == "horaire":
+            n = n*24
         modelised = modelised.with_columns(
             (pl.col(col) * n).alias(col)
         )

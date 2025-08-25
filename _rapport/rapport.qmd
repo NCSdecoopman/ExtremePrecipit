@@ -1110,12 +1110,10 @@ $$
 \end{aligned}
 $$
 
-\newpage
-
 ## Annexes 2 : cartographie {.unnumbered}
 
-Afin d’alléger le corps du document, l’ensemble des cartes produites dans le cadre de cette étude n’est pas reproduit ici. Elles sont mises à disposition sous forme de figures rasterisées et vectorielles dans un répertoire en ligne accessible à l’adresse suivante : \ 
+Afin d’alléger le corps du document, l’ensemble des cartes produites dans le cadre de cette étude n’est pas reproduit ici. Elles sont mises à disposition sous forme de figures rasterisées et vectorielles dans un répertoire en ligne accessible à l’adresse suivante :   \
 
-
+https://ncsdecoopman.github.io/ExtremePrecipit/publications/annexes.pdf   \
 
 Ces annexes complémentaires permettent de visualiser l’ensemble des diagnostics spatiaux (détaillés par saison, pas de temps et indicateur) avec une possibilité de zoom pour examiner les motifs régionaux fins.
