@@ -19,8 +19,7 @@ execute:
   warning: false
   message: false
   error: true
-  freeze: auto  
-jupyter: extremeprecipit
+  freeze: auto
 ---
 
 
