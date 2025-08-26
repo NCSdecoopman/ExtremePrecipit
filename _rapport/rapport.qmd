@@ -827,6 +827,7 @@ Cette performance se maintient pour la moyenne des maxima journaliers (périodes
 
 ```{python} 
 plot_r_by_season(combined, echelles=['quotidien', 'quotidien_reduce', 'horaire'], col_values=['numday', 'mean', 'mean-max'], nom_fichier="histo_numday_mean_mean-max")
+plot_r_by_season(combined, echelles=['quotidien', 'quotidien_reduce', 'horaire'], col_values=['mean-max'], nom_fichier="histo_mean-max")
 ```
 
 ![](figures/histo_numday_mean_mean-max.png){width=100%}
