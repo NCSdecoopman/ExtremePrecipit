@@ -6,15 +6,12 @@ subtitle: |
   en France\newline 
   à partir d’un modèle régional de climat\newline 
   à convection profonde résolue
-author:
-- Decoopman Nicolas (UGA)\newline
-- Juliette Blanchet (IGE, CNRS)\newline
-- Antoine Blanc (RTM)
-short-author: "Decoopman Nicolas"
 institute: "UGA M2 SSD"
 lang: fr
 date: 2025-08-29
 date-format: "D MMMM YYYY"
+bibliography: ../_rapport/bibliography.bib 
+csl: ieee.csl
 format:
   beamer:
     execute:
@@ -27,8 +24,9 @@ format:
 header-includes:
   - |
     \AtBeginDocument{\author[Decoopman Nicolas]{Decoopman Nicolas\\
-    Juliette Blanchet (IGE, CNRS)\\
-    Antoine Blanc (RTM)}}
+    ---\\
+    Encadrement\\
+    Juliette Blanchet (IGE, CNRS) et Antoine Blanc (RTM)}}
   - \usepackage{adjustbox}
 ---
 
@@ -74,9 +72,9 @@ combined_all = pd.concat([combined, combined_signif], ignore_index=True)
 
 ## Réchauffement de la planète
 
-- Plus fort sur les continents que les océans \newline (+1°C monde, +1,7°C France, +2°C Alpes françaises)
-- Clausius–Clapeyron (+7%/°C)   
-- L'air chaud monte, se refroidit, l'eau se condense sous forme de pluie
+- Plus fort sur les continents que les océans \newline(+1°C monde, +1,7°C France, +2°C Alpes françaises)
+- L'air chaud contient plus de vapeur avant saturation (CC +7%/°C)   
+- L'air chaud monte, se refroidit (-10°C/km), l'eau se condense (rosée)
   
 ## En réponse au réchauffement
 
@@ -85,13 +83,42 @@ combined_all = pd.concat([combined, combined_signif], ignore_index=True)
 
 ## Utilisation de modèles de climat sur de longues périodes
 
-- Tendances durables (changement climatique) *vs.* \newline variations naturelles (variabilité climatique)  
-- Modèle numérique **A**pplication of **R**esearch to **O**perations at **ME**soscale  
-- **C**onvection-**P**ermitting, **R**egional **C**limate **M**odel (2,5km - 1h) \newline forcer par réanalyse ERA5  
+- Changement climatique *vs.* variabilité climatique   
+- Données horaires à partir de 1990-2000
+- **C**onvection-**P**ermitting, **R**egional **C**limate **M**odel (2,5km - 1h)  
+- Modèle numérique **A**pplication of **R**esearch to **O**perations at **ME**soscale \newline forcer par réanalyse ERA5  
+
+#  Intérêt de l’étude dans le paysage scientifique
+
+## Peu de documentation des tendances des extrêmes horaires
+
+- Faible durée des séries horaires disponibles 
+- Complexité physique des processus convectifs à l’origine de ces extrêmes
+
+## La validité des extrêmes simulés par ce modèle n’a jamais été évalué
+
+## Objectifs
+
+- Evaluer la capacité du modèle AROME à reproduire les extrêmes horaires observés
+- Caractériser l'évolution des extrêmes horaires dans un contexte de réchauffement climatique
 
 # Méthodologie
 
 ![](schema/methodologie.pdf)
+
+# Méthodologie
+
+Soit $X \sim \mathrm{GEV}(\mu, \sigma, \xi)$ et le niveau de retour $z_T$ de la période $T$, alors en notant $F^{-1}$ la fonction quantile de la GEV, on obtient :
+
+$$
+z_T = F^{-1}\left(1 - \frac{1}{T} \right) = 
+\begin{cases}
+\mu + \frac{\sigma}{\xi} \left[ \left( -\log\left(1 - \frac{1}{T}\right) \right)^{-\xi} - 1 \right] & \text{si } \xi \ne 0 \\
+\mu - \sigma \log \left( -\log\left(1 - \frac{1}{T} \right) \right) & \text{si } \xi = 0 \quad \text{(Gumbel)}
+\end{cases}
+$$
+
+![](schema/niveaux_retours.png)
 
 # Statistiques descriptives
 
@@ -207,3 +234,128 @@ r = `{python} f'{df_mean_max_pluie_horaire['r'].iloc[0].item():.2f}'` \newline
 # Bonne distribution et difficulté évènementielle
 
 ![](schema/bilan-2.pdf)
+
+# Tendances des précipitations extrêmes journalières
+
+```{python}
+df_trend_pluie_hydro = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "hydro") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+df_trend_pluie_son = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "son") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+df_trend_pluie_djf = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "djf") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+df_trend_pluie_mam = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "mam") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+df_trend_pluie_jja = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "jja") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+```
+
+**Tendances relatives de 1995 à 2022 du niveau de retour 10 ans** (HYDRO)
+
+\setlength{\tabcolsep}{0pt}
+\begin{columns}[T,totalwidth=\textwidth]
+  \column{0.47\textwidth}\centering\includegraphics[width=\linewidth]{../outputs/maps/gev_z_T_p/quotidien/compare_5/sat_99.0/hydro/mod_signif_norast.pdf}
+  \column{0.47\textwidth}\centering\includegraphics[width=\linewidth]{../outputs/maps/gev_z_T_p/quotidien/compare_5/sat_99.0/hydro/obs_signif_norast.pdf}
+  \column{0.06\textwidth}\centering\adjustbox{valign=c}{\includegraphics[width=\linewidth]{../outputs/maps/gev_z_T_p/quotidien/compare_5/sat_99.0/legend_signif.pdf}}
+\end{columns}
+
+r = `{python} f'{df_trend_pluie_hydro['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_hydro['n'].iloc[0].item()}'`) \newline
+ME = `{python} f'{df_trend_pluie_hydro['me'].iloc[0].item():+.2f}'`%
+
+# Tendances des précipitations extrêmes journalières
+
+**Tendances relatives de 1995 à 2022 du niveau de retour 10 ans**
+
+\setlength{\tabcolsep}{0pt}  
+
+| \small SON | \small DJF | \small MAM | \small JJA |
+| :---: | :---: | :---: | :---: |
+| ![](../_rapport/figures/trend_pluie_son.pdf) | ![](../_rapport/figures/trend_pluie_djf.pdf) | ![](../_rapport/figures/trend_pluie_mam.pdf) | ![](../_rapport/figures/trend_pluie_jja.pdf) |
+| \small $r =$ `{python} f'{df_trend_pluie_son['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_son['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_pluie_djf['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_djf['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_pluie_mam['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_mam['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_pluie_jja['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_jja['n'].iloc[0].item()}'`) |
+| \small $ME =$ `{python} f'{df_trend_pluie_son['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_pluie_djf['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_pluie_mam['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_pluie_jja['me'].iloc[0].item():+.2f}'`% |
+
+# Tendances des précipitations extrêmes horaires
+
+**Tendances relatives de 1995 à 2022 du niveau de retour 10 ans**
+
+```{python}
+df_trend_horaire_pluie_hydro = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "hydro") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+df_trend_horaire_pluie_son = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "son") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+df_trend_horaire_pluie_djf = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "djf") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+df_trend_horaire_pluie_mam = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "mam") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+df_trend_horaire_pluie_jja = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "jja") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+```
+
+\setlength{\tabcolsep}{0pt}  
+
+| \small SON | \small DJF | \small MAM | \small JJA |
+| :---: | :---: | :---: | :---: |
+| ![](../_rapport/figures/trend_horaire_pluie_son.pdf) | ![](../_rapport/figures/trend_horaire_pluie_djf.pdf) | ![](../_rapport/figures/trend_horaire_pluie_mam.pdf) | ![](../_rapport/figures/trend_horaire_pluie_jja.pdf) |
+| \small $r =$ `{python} f'{df_trend_horaire_pluie_son['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_horaire_pluie_son['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_horaire_pluie_djf['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_horaire_pluie_djf['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_horaire_pluie_mam['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_horaire_pluie_mam['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_horaire_pluie_jja['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_horaire_pluie_jja['n'].iloc[0].item()}'`) |
+| \small $ME =$ `{python} f'{df_trend_horaire_pluie_son['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_horaire_pluie_djf['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_horaire_pluie_mam['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_horaire_pluie_jja['me'].iloc[0].item():+.2f}'`% |
+
+# Tendances des précipitations extrêmes horaires
+
+**Tendances relatives de 1995 à 2022 du niveau de retour 10 ans**
+
+```{python}
+df_trend_pluie_fev = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "fev") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+df_trend_pluie_mar = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "mar") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+df_trend_pluie_jui = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "jui") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+df_trend_pluie_nov = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "nov") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+```
+
+| \small FEV | \small MAR | \small JUI | \small NOV |
+| :---: | :---: | :---: | :---: | 
+| ![](../_rapport/figures/trend_pluie_fev.pdf) | ![](../_rapport/figures/trend_pluie_mar.pdf) | ![](../_rapport/figures/trend_pluie_jui.pdf) | ![](../_rapport/figures/trend_pluie_nov.pdf) |
+| \small $r =$ `{python} f'{df_trend_pluie_fev['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_fev['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_pluie_mar['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_mar['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_pluie_jui['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_jui['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_pluie_nov['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_nov['n'].iloc[0].item()}'`) |
+| \small $ME =$ `{python} f'{df_trend_pluie_fev['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_pluie_mar['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_pluie_jui['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_pluie_nov['me'].iloc[0].item():+.2f}'`% |
+
+# Corrélations des tendances relatives 
+
+![](../_rapport/figures/histo_z_T_p_signif.png)
+
+- Saisonnalité récurrente de la performance (DJF, DEC, JAN, MAR) \newline \textit{vs.} les valeurs les plus basses (MAM, JUI, JUILL)
+- Hiérarchie cohérence spatiale des échelles temporelles : journalière \newline \textit{vs.} horaire
+
+# Discussion
+
+## Représentation des extrêmes sous-estimés
+
+- En été, à l’échelle horaire [@Caillaud2021], [@poncet2024convection]
+- Données COMEPHORE (1 km, 15 min, Météo-France) mais ne débutent qu'en 1997 avec une qualité médiocre sur les Alpes avant 2007 [@Fumiere2020]
+
+## Tendances des extrêmes journaliers cohérents
+
+- Hausse globale du niveau de retour 10 ans (+6,7%) [@IPCC2021]
+- Intensification confirmée dans le Sud-Est et Alpes du Sud [@blanchet2021explaining]
+- Projections nationales plus fortes dans le Nord (+20% pour +4°C [@soubeyroux:hal-04991790])
+
+## Tendances des extrêmes horaires hétérogènes
+
+- Faible confiance dans une hausse globale des extrêmes sous‑journaliers [@IPCC2021] 
+- AROME sous-estimate les pics horaires *vs.* stations captent des pointes marquées (+7 à +14 %/°C)
+- Les tendances de températures AROME sont deux fois plus faibles que les tendances observées (Chevé M.)
+
+# Conclusion
+
+## AROME forcé par ERA5
+
+- Structure spatiale des précipitations est captée (*r* élevée)
+- Biais locaux notables dans certains reliefs
+- Une sous-représentation marquée des événements convectifs estivaux
+- Simule correctement la climatologie et les principaux forçages dynamiques
+
+## Les tendances apporte un diagnostic contrasté
+
+- Journalière : AROME sous-estime leur amplitude de 2-5%
+- Horaire : hétérogène, peu significatif et faiblement corrélé aux observations
+- Indices d’intensification : vallée du Rhône et arc méditerranéen
+
+## L'étude rejoint la littérature internationale
+
+**Diffulté de dégager des tendances robustes sur les extrêmes horaires**
+
+- Longueur limitée des séries  
+- Hétérogénéité des processus convectifs
+
+# References
+
+\fontsize{9}{7}\selectfont
+:::{#refs}
+:::

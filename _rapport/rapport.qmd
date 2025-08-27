@@ -392,7 +392,7 @@ Le réseau climatologique s'est développé à la fin du XIXᵉ siècle. Les lec
 
 #### Apport des modèles climatiques
 
-La simulation des précipitation par modèle climatique apporte 1) des données antérieures aux données observées de 1990 ; et 2) des champs spatiaux complets et cohérents physiquement utile en zones peu instrumentées. Les modélisations GCM (General Circulation Model) ne se sont pas recommandées pour cette étude : la convection est paramétrée, les précipitations horaires sont souvent trop lissées et mal positionnées avec une résolution 12–200 km. L’émergence des modèles climatiques régionaux à convection explicite (CPMs, Convection-Permitting Model) ouvre une opportunité inédite : ils permettent de simuler, avec réalisme, la dynamique des précipitations intenses à fine échelle spatiale et temporelle sur de longues périodes. Pour cette étude le modèle doit être RCM (Regional Climate Model, 1–4 km) à convection explicite (CPM) pour représenter explicitement l’initiation, l’organisation et la propagation des systèmes convectifs et leurs extrêmes horaires. Les modèles répondant à ces critères sont : WRF 3 km, COSMO‑CLM 2.8 km, AROME‑Climate 2.5 km [@cnrm_arome2007], ICON-LEM 2.5 km, UKCP CPM 2.2 km, CP4‑Africa, ensembles EURO-CP / FPS‑Convection.
+La simulation des précipitations par modèle climatique apporte 1) des données antérieures aux données observées de 1990 ; et 2) des champs spatiaux complets et cohérents physiquement utile en zones peu instrumentées. Les modélisations GCM (General Circulation Model) ne se sont pas recommandées pour cette étude : la convection est paramétrée, les précipitations horaires sont souvent trop lissées et mal positionnées avec une résolution 12–200 km. L’émergence des modèles climatiques régionaux à convection explicite (CPMs, Convection-Permitting Model) ouvre une opportunité inédite : ils permettent de simuler, avec réalisme, la dynamique des précipitations intenses à fine échelle spatiale et temporelle sur de longues périodes. Pour cette étude le modèle doit être RCM (Regional Climate Model, 1–4 km) à convection explicite (CPM) pour représenter explicitement l’initiation, l’organisation et la propagation des systèmes convectifs et leurs extrêmes horaires. Les modèles répondant à ces critères sont : WRF 3 km, COSMO‑CLM 2.8 km, AROME‑Climate 2.5 km [@cnrm_arome2007], ICON-LEM 2.5 km, UKCP CPM 2.2 km, CP4‑Africa, ensembles EURO-CP / FPS‑Convection.
 
 #### Apport des réanalyses
 
@@ -447,7 +447,7 @@ Les saisons sont définies par **SON** pour septembre (**SEP**) octobre (**OCT**
 
 ### Vers une généralisation par modélisation statistique
 
-Les statistiques descriptives ne permettent pas d’extrapoler, quantifier l’incertitude et la significativité et de relier proprement les tendances observées aux mécanismes physiques. On ne peut donc pas transformer des constats descriptifs en résultats exploitables et comparables. Pour répondre à ces questions, nous mobilisons la théorie des valeurs extrêmes et en particulier le théorème de Fisher–Tippett–Gnedenko [@coles2001introduction]. Les maxima, une fois normalisés, convergent vers une GEV. C’est l’analogue, pour les maxima, du théorème central limite pour les sommes. Ce théorème stipule que, si $(M_n)$ désigne la suite des maxima normalisés d’échantillons indépendants et identiquement distribués, alors sous des conditions générales, la loi limite de $M_n$ appartient à la famille généralisée des valeurs extrêmes (Generalized Extreme Value, GEV). La GEV unifie trois familles classiques : Gumbel ($\xi \to 0$), Fréchet ($\xi > 0$) et Weibull ($\xi < 0$). La *bonne* famille étant déterminée automatiquement par l’estimation de $\xi$ qui contrôle la lourdeur de la queue. Nous ajustons des lois GEV aux maxima, d’abord dans un cadre stationnaire pour valider le bon comportement du modèle, puis dans un cadre non‑stationnaire où les paramètres de la GEV dépendent du temps. Cette étape nous permet de comparer de manière cohérente les niveaux de retour entre observations et AROME, d’estimer leurs tendances et de relier ces tendances aux mécanismes physiques.
+Les statistiques descriptives ne permettent pas d’extrapoler, quantifier l’incertitude et la significativité et de relier proprement les tendances observées aux mécanismes physiques. On ne peut donc pas transformer des constats descriptifs en résultats exploitables et comparables. Pour répondre à ces questions, nous mobilisons la théorie des valeurs extrêmes et en particulier le théorème de Fisher–Tippett–Gnedenko [@coles2001introduction]. Les maxima, une fois normalisés, convergent vers une famille généralisée des valeurs extrêmes (GEV - Generalized Extreme Value). C’est l’analogue, pour les maxima, du théorème central limite pour les sommes. Ce théorème stipule que, si $(M_n)$ désigne la suite des maxima normalisés d’échantillons indépendants et identiquement distribués, alors sous des conditions générales, la loi limite de $M_n$ appartient à la famille généralisée des valeurs extrêmes. La GEV unifie trois familles classiques : Gumbel ($\xi \to 0$), Fréchet ($\xi > 0$) et Weibull ($\xi < 0$). La *bonne* famille étant déterminée automatiquement par l’estimation de $\xi$ qui contrôle la lourdeur de la queue. Nous ajustons des lois GEV aux maxima, d’abord dans un cadre stationnaire pour valider le bon comportement du modèle, puis dans un cadre non‑stationnaire où les paramètres de la GEV dépendent du temps. Cette étape nous permet de comparer de manière cohérente les niveaux de retour entre observations et AROME, d’estimer leurs tendances et de relier ces tendances aux mécanismes physiques.
 
 #### Définitions
 
@@ -853,6 +853,13 @@ Nous commençons par vérifier que notre méthodologie restitue bien les tendanc
 Les tendances relatives de 1995 à 2022 estimées avec AROME sont spatialement hétérogènes (Annexes 2‑4.1.1.2, **HYDRO**). Seul le Mercantour se distingue par une hausse significative comprise entre +20 et +30 %. Les stations montrent par ailleurs un signal positif généralisé le long de la vallée du Rhône, avec des tendances de +5 à >+30 %. Hors de ces zones, les tendances sont faibles, de signe variable et le plus souvent non significatives, ce qui plaide pour une analyse saisonnière (Figure 7).
 
 ```{python}
+trend_pluie_hydro = assemble(
+  "../outputs/maps/gev_z_T_p/quotidien/compare_5/sat_99.0/hydro/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_5/sat_99.0/hydro/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_5/sat_99.0/legend_signif.svg",
+  "figures/trend_pluie_hydro.svg"
+)
+
 trend_pluie_son = assemble(
   "../outputs/maps/gev_z_T_p/quotidien/compare_5/sat_99.0/son/mod_signif_norast.svg",
   "../outputs/maps/gev_z_T_p/quotidien/compare_5/sat_99.0/son/obs_signif_norast.svg",
@@ -909,6 +916,33 @@ Globalement, AROME reproduit la distribution spatiale des tendances observées, 
 Nous passons désormais à l’échelle horaire afin d’évaluer l’éventuelle intensification des extrêmes infra‑journaliers. Face à l’hétérogénéité spatiale persistante des tendances saisonnières (Annexes 2‑4.3.1.2, HYDRO, SON, DJF, MAM et JJA), nous affinons l’analyse au pas mensuel (Figure 8).
 
 ```{python}
+trend_horaire_pluie_son = assemble(
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/son/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/son/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/legend_signif.svg",
+  "figures/trend_horaire_pluie_son.svg"
+)
+trend_horaire_pluie_djf = assemble(
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/djf/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/djf/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/legend_signif.svg",
+  "figures/trend_horaire_pluie_djf.svg"
+)
+trend_horaire_pluie_mam = assemble(
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/mam/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/mam/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/legend_signif.svg",
+  "figures/trend_horaire_pluie_mam.svg"
+)
+trend_horaire_pluie_jja = assemble(
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/jja/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/jja/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/legend_signif.svg",
+  "figures/trend_horaire_pluie_jja.svg"
+)
+```
+
+```{python}
 trend_pluie_fev = assemble(
   "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/fev/mod_signif_norast.svg",
   "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/fev/obs_signif_norast.svg",
@@ -954,6 +988,7 @@ Pour objectiver ces divergences et mesurer la robustesse des signaux, nous exami
 À l’échelle quotidienne (1959‑2022), les corrélations des tendances se situent entre **0,14** (HYDRO) et **0,23** (DJF) pour les saisons et entre **0,07** (JUI) et **0,51** (DEC) pour les mois, plusieurs mois atteignant ou dépassant **0,40** (JAN, MAR, AOU, NOV) (Figure 9). Sur la période restreinte (1990‑2022), les valeurs saisonnières couvrent **0,13–0,29** et les valeurs mensuelles **0,02–0,47** (JAN **0,47** ; DEC **0,35**). À l’échelle horaire (1990‑2022), les saisons présentent des corrélations faibles comprises entre **–0,08** (MAM) et **0,05** (DJF et SON) et les corrélations suivant les mois s’étendent de **0,02** (SEP, OCT) à **0,42** (FEV).
 
 ```{python} 
+plot_r_by_season(combined_all , echelles=['quotidien', 'quotidien_reduce', 'horaire'], col_values=['z_T_p_signif'], nom_fichier="histo_z_T_p_signif")
 plot_r_by_season(combined_all , echelles=['quotidien', 'quotidien_reduce', 'horaire'], col_values=['z_T_p', 'z_T_p_signif'], nom_fichier="histo_z_T_p")
 ```
 

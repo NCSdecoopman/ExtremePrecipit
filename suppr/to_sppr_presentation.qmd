@@ -1,0 +1,1099 @@
+---
+title: "Caractérisation et évolution<br/>des précipitations extrêmes horaires<br/>en France<br/>à partir d’un modèle régional de climat<br/>à convection profonde résolue"
+author: 
+  - name: "<br/><br/>Decoopman Nicolas<br/>M2 mathématiques et applications parcours statistique et science des données<br/><br/>---<br/>Encadrement<br/>Juliette Blanchet (CNRS, IGE) et Antoine Blanc (RTM)"
+format:
+  revealjs:
+    theme: simple
+    slide-number: true
+    pdf-separate-fragments: false
+    toc: false
+    width: 1280
+    height: 720
+    self-contained: false 
+    allow-scripts: true 
+    css: presentation/styles.css
+execute:
+  cache: true
+  echo: false
+  warning: false
+  message: false
+  error: true
+  freeze: auto
+---
+
+
+<style>
+  /* Reset complet de la grille */
+  table.no-gutter {
+    border-collapse: collapse;   /* fusionne bordures */
+    border-spacing: 0;           /* espacement nul */
+    margin: 0;
+    padding: 0;
+  }
+  table.no-gutter th,
+  table.no-gutter td {
+    border: none;                /* pas de lignes */
+    margin: 0;
+    padding: 0;                  /* pas de marge interne */
+  }
+  table.no-gutter th {
+    text-align: center;
+  }
+  table.no-gutter img {
+    display: block;              /* pas d’espace bas */
+    margin: 0;
+    padding: 0;
+    width: 300px;                /* ajustez selon besoin */
+    height: 300px;
+  }
+
+figure { margin: 0; text-align: center; }
+figcaption { margin-top: .3rem; font-size: .9rem; }
+</style>
+
+
+```{python}
+%config InlineBackend.figure_format = 'svg'
+%config InlineBackend.figure_dpi = 500
+```
+
+```{python}
+import yaml
+from pathlib import Path
+from typing import Sequence, Mapping, Tuple, Optional
+
+import pandas as pd
+import polars as pl
+import numpy as np
+import geopandas as gpd
+from shapely.geometry import box
+
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap, BoundaryNorm, TwoSlopeNorm, Normalize, LinearSegmentedColormap
+import plotly.express as px
+
+from IPython.display import display, HTML, Markdown
+import plotly.io as pio
+
+import matplotlib as mpl
+
+from app.utils.config_utils import menu_config_gev
+
+from app.utils.data_utils import (
+    match_and_compare,
+    add_metadata,
+    dont_show_extreme,
+    standardize_year,
+    filter_nan
+)
+from app.utils.stats_utils import generate_metrics
+
+from app.pipelines.import_quarto import (
+    pipeline_data_quarto, pipeline_data_gev_quarto,
+    pipeline_map_quarto,
+    pipeline_map_legend_scatter,
+    pipeline_title, pipeline_show_html,
+    pipeline_quarto_gev_half_france
+)
+
+# Charger les paramètres depuis config.yaml
+config_path = Path("app/config/config.yaml")
+with open(config_path, "r") as f:
+    config = yaml.safe_load(f)
+
+def pipeline_total_title_map_legend_scatter_delta(
+    title: str,
+    year_min: int,
+    year_max: int,
+    echelle: str,
+    html_map_legend: str,
+    html_scatter: str,
+    season_choice: str="hydro",
+    me: int=None,
+    percent: int=None,
+    r2: int=None,
+    unit: str=None,
+    nb_after_comma: int=1
+):
+    if unit is None:
+        unit = "mm/j" if echelle == "quotidien" else "mm/h"
+
+
+    title_show = pipeline_title(title, year_min, year_max, echelle, season_choice)
+    display(HTML(title_show))
+    display(HTML(pipeline_show_html(html_map_legend, html_scatter)))
+    
+    if r2 is not None:
+        display(HTML(f"r² = {r2:+.3f}"))
+    elif me is not None:
+        if percent is not None:
+            display(HTML(f"Δ (AROME - Stations) : {me:+.{nb_after_comma}f} {unit} ({percent*100:+.1f}%)"))
+        else:
+            display(HTML(f"Δ (AROME - Stations) : {me:+.{nb_after_comma}f} {unit}"))
+
+```
+
+
+# Contexte
+
+
+<h2>Réchauffement de la planète</h2>
+
+- Plus fort sur les continents que les océans (+1°C monde, +1,7°C France, +2°C Alpes françaises)
+- Clausius–Clapeyron (+7%/°C)   
+- L'air chaud monte, se refroidit, l'eau se condense sous forme de pluie
+  
+<h2>En réponse au réchauffement</h2>
+
+- Augmentation *théorique* des précipitations extrêmes
+- Variable suivant les changements de circulations atmosphériques
+
+<h2>Utilisation de modèles de climat sur de longues périodes</h2>
+
+- Tendances durables (changement climatique) *vs.* variations naturelles (variabilité climatique)  
+- Modèle numérique **A**pplication of **R**esearch to **O**perations at **ME**soscale  
+- **C**onvection-**P**ermitting, **R**egional **C**limate **M**odel (2,5km - 1h), **forcer** par **réanalyse** ERA5  
+
+
+
+# Méthodologie
+
+![](presentation/schema/methodologie.svg){.center}
+
+---
+
+```{python}
+#| label: jours_pluie_total
+title="Nombre de jour de pluie moyen"
+year_display_min = config["years"]["min"]
+year_display_max = config["years"]["max"]
+echelle="quotidien"
+
+# Étape 1 : récupérer résultats avec pipeline_data_quarto
+result = pipeline_data_quarto(
+    config=config,
+    stat_choice="numday",
+    echelle=echelle,
+    min_year=year_display_min,
+    max_year=year_display_max,
+    season_choice="hydro",
+    unit_choice="jours",
+    missing_choice=0.10,
+    quantile_choice=0.995
+)
+
+# Étape 2 : affichage carte + scatter
+html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
+    name="jour_pluie_total",
+    result=result,
+    echelle=echelle,
+    stat_choice_label=title,
+    missing_choice=0.10,
+    unit_choice="jours"
+)
+
+pipeline_total_title_map_legend_scatter_delta(
+    title=title,
+    year_min=year_display_min,
+    year_max=year_display_max,
+    echelle=echelle,
+    html_map_legend=html_map_legend,
+    html_scatter=html_scatter,
+    me=me,
+    percent=percent,
+    unit="jours"
+)
+```
+
+```{python}
+year_display_min = 1990
+year_display_max = config["years"]["max"]
+echelle="quotidien"
+
+# Étape 1 : récupérer les résultats avec pipeline_data_quarto
+result = pipeline_data_quarto(
+    config=config,
+    stat_choice="numday",
+    echelle=echelle,
+    min_year=year_display_min,
+    max_year=year_display_max,
+    season_choice="hydro",
+    unit_choice="jours",
+    missing_choice=0.10,
+    quantile_choice=0.995
+)
+
+# Étape 2 : affichage carte + scatter
+_, _, _, me, _, percent = pipeline_map_legend_scatter(
+    name="jour_pluie_total_1990",
+    result=result,
+    echelle=echelle,
+    stat_choice_label=title,
+    missing_choice=0.10,
+    unit_choice="jours"
+)
+display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me:+.1f} jours ({percent*100:+.1f}%)"))
+```
+
+**Tendance à déclencher des jours de pluie plus fréquemment que ce qui est observé**
+
+
+---
+
+```{python}
+#| label: moy_precipit_jour_total
+title="Cumul des précipitations"
+year_display_min = config["years"]["min"]
+year_display_max = config["years"]["max"]
+echelle="quotidien"
+
+# Étape 1 : récupérer les résultats avec pipeline_data_quarto
+result = pipeline_data_quarto(
+    config=config,
+    stat_choice="mean",
+    echelle=echelle,
+    min_year=year_display_min,
+    max_year=year_display_max,
+    season_choice="hydro",
+    missing_choice=0.10,
+    quantile_choice=0.995
+)
+
+# Étape 2 : affichage carte + scatter
+html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
+    name="jour_mean_total",
+    result=result,
+    echelle=echelle,
+    missing_choice=0.10,
+    stat_choice_label="Moyenne des précipitations"
+)
+
+pipeline_total_title_map_legend_scatter_delta(
+    title=title,
+    year_min=year_display_min,
+    year_max=year_display_max,
+    echelle=echelle,
+    html_map_legend=html_map_legend,
+    html_scatter=html_scatter,
+    me=me,
+    percent=percent,
+    nb_after_comma=3
+)
+```
+
+```{python}
+#| label: moy_precipit_jour_1990_MAX_only_metric
+year_display_min = 1990
+year_display_max = config["years"]["max"]
+echelle="quotidien"
+
+# Étape 1 : récupérer les résultats avec pipeline_data_quarto
+result = pipeline_data_quarto(
+    config=config,
+    stat_choice="mean",
+    echelle=echelle,
+    min_year=year_display_min,
+    max_year=year_display_max,
+    season_choice="hydro",
+    missing_choice=0.10,
+    quantile_choice=0.995
+)
+
+# Étape 2 : affichage carte + scatter
+_, _, _, me, _, percent = pipeline_map_legend_scatter(
+    name="jour_mean_1990",
+    result=result,
+    echelle=echelle,
+    missing_choice=0.10,
+    stat_choice_label="Moyenne des précipitations"
+)
+display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me:+.3f} mm/j ({percent*100:+.1f}%)"))
+```
+
+**Répartition correcte de la quantité totale d’eau**
+
+---
+
+```{python}
+#| label: moy_precipit_horaire_2000_MAX
+year_display_min = 1990
+year_display_max = config["years"]["max"]
+echelle="horaire"
+
+# Étape 1 : récupérer les résultats avec pipeline_data_quarto
+result = pipeline_data_quarto(
+    config=config,
+    stat_choice="mean",
+    echelle=echelle,
+    min_year=year_display_min,
+    max_year=year_display_max,
+    season_choice="hydro",
+    missing_choice=0.10,
+    quantile_choice=0.995
+)
+
+# Étape 2 : affichage carte + scatter
+html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
+    name="horaire_mean_2000",
+    result=result,
+    echelle=echelle,
+    missing_choice=0.10,
+    stat_choice_label="Moyenne des précipitations"
+)
+
+pipeline_total_title_map_legend_scatter_delta(
+    title=title,
+    year_min=year_display_min,
+    year_max=year_display_max,
+    echelle=echelle,
+    html_map_legend=html_map_legend,
+    html_scatter=html_scatter,
+    me=me,
+    percent=percent,
+    nb_after_comma=3
+)
+```
+
+<br/>**Résultat semblable**
+
+---
+
+<h2>Pluies plus fréquentes en plus faibles quantités</h2>
+
+![](presentation/schema/bilan-1.svg){.center}
+
+
+---
+
+```{python}
+#| label: moy_max_precipit_jour_total
+title="Moyenne des maxima des précipitations"
+year_display_min = config["years"]["min"]
+year_display_max = config["years"]["max"]
+echelle="quotidien"
+
+# Étape 1 : récupérer les résultats avec pipeline_data_quarto
+result = pipeline_data_quarto(
+    config=config,
+    stat_choice="mean-max",
+    echelle=echelle,
+    min_year=year_display_min,
+    max_year=year_display_max,
+    season_choice="hydro",
+    missing_choice=0.10,
+    quantile_choice=0.995
+)
+
+# Étape 2 : affichage carte + scatter
+html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
+    name="jour_mean_max_total",
+    result=result,
+    echelle=echelle,
+    missing_choice=0.10,
+    stat_choice_label="Moyenne des maxima"
+)
+
+pipeline_total_title_map_legend_scatter_delta(
+    title=title,
+    year_min=year_display_min,
+    year_max=year_display_max,
+    echelle=echelle,
+    html_map_legend=html_map_legend,
+    html_scatter=html_scatter,
+    me=me,
+    percent=percent,
+    nb_after_comma=3
+)
+```
+
+```{python}
+#| label: moy_max_precipit_jour_1990_MAX
+year_display_min = 1990
+year_display_max = config["years"]["max"]
+echelle="quotidien"
+
+# Étape 1 : récupérer les résultats avec pipeline_data_quarto
+result = pipeline_data_quarto(
+    config=config,
+    stat_choice="mean-max",
+    echelle=echelle,
+    min_year=year_display_min,
+    max_year=year_display_max,
+    season_choice="hydro",
+    missing_choice=0.10,
+    quantile_choice=0.995
+)
+
+# Étape 2 : affichage carte + scatter
+_, _, _, me, _, percent = pipeline_map_legend_scatter(
+    name="jour_mean_max_1900",
+    result=result,
+    echelle=echelle,
+    missing_choice=0.10,
+    stat_choice_label="Moyenne des maxima"
+)
+
+display(HTML(f"Δ (AROME - Stations) de {year_display_min} à {year_display_max} : {me:+.3f} mm/j ({percent*100:+.1f}%)"))
+```
+
+---
+
+```{python}
+#| label: moy_max_precipit_horaire_2000_MAX
+year_display_min = 1990
+year_display_max = config["years"]["max"]
+echelle="horaire"
+
+# Étape 1 : récupérer les résultats avec pipeline_data_quarto
+result = pipeline_data_quarto(
+    config=config,
+    stat_choice="mean-max",
+    echelle=echelle,
+    min_year=year_display_min,
+    max_year=year_display_max,
+    season_choice="hydro",
+    missing_choice=0.10,
+    quantile_choice=0.995
+)
+
+# Étape 2 : affichage carte + scatter
+html_map_legend, html_scatter, r2, me, n, percent = pipeline_map_legend_scatter(
+    name="horaire_mean_max_2000",
+    result=result,
+    echelle=echelle,
+    missing_choice=0.10,
+    stat_choice_label="Moyenne des maxima"
+)
+
+pipeline_total_title_map_legend_scatter_delta(
+    title=title,
+    year_min=year_display_min,
+    year_max=year_display_max,
+    echelle=echelle,
+    html_map_legend=html_map_legend,
+    html_scatter=html_scatter,
+    me=me,
+    percent=percent,
+    nb_after_comma=3
+)
+```
+
+
+---
+
+
+```{python}
+# | label: moyenne-max_vs_series-max
+# suppresion de l'affichage ici
+year_display_min = config["years"]["min"]
+year_display_max = config["years"]["max"]
+echelle="quotidien"
+title="Comparaison de la moyenne des maxima aux maxima annuels des précipitations"
+title_show = pipeline_title(title, year_display_min, year_display_max, echelle)
+
+# --------------- VALEURS MOYENNES
+result = pipeline_data_quarto(
+    config=config,
+    stat_choice="mean-max",
+    echelle=echelle,
+    min_year=year_display_min,
+    max_year=year_display_max,
+    season_choice="hydro",
+    missing_choice=0.10,
+    quantile_choice=0.995
+)
+
+_, html_scatter_mean, r2_mean, me_mean, n_mean, _ = pipeline_map_legend_scatter(
+    name="jour_mean_max_total",
+    result=result,
+    echelle=echelle,
+    missing_choice=0.10,
+    stat_choice_label="Moyenne des maxima"
+)
+```
+
+
+
+```{python}
+#  --------------- MAX ANNNUELS
+from app.modules import all_max
+from app.utils.scatter_plot_utils import generate_scatter_plot_interactive
+from app.utils.stats_utils import generate_metrics
+
+year_display_min = config["years"]["min"]
+year_display_max = config["years"]["max"]
+missing_choice=0.10
+year_display_middle, height, unit_choice = 1990, 500, "mm/j"
+df_all, df_r2_all_max = all_max.show(config_path, year_display_min, year_display_max, year_display_middle, missing_choice)
+df_all = df_all.rename({"lat_obs": "lat", "lon_obs": "lon"})
+
+# Ajout du scatter plot pour AROME vs station annuels
+fig_r2_all_max_hydro_jour = generate_scatter_plot_interactive(
+    df=df_all,
+    stat_choice="",
+    unit_label=unit_choice,
+    height=height-60
+)
+
+fig_r2_all_max_hydro_jour.update_layout(
+    template="simple_white",
+    margin=dict(l=100, r=0, t=50, b=50),
+    xaxis=dict(title=dict(text=f"AROME ({unit_choice})"), showticklabels=True),
+    yaxis=dict(title=dict(text=f"Stations ({unit_choice})"), showticklabels=True)
+)
+
+me_all, _, _, r2_all = generate_metrics(df_all)
+scatter_path = "assets/fig_r2_all_max_hydro_jour.html"
+pio.write_html(fig_r2_all_max_hydro_jour, file=scatter_path, include_plotlyjs="cdn", full_html=False)
+```
+
+```{python}
+title = "Moyenne des maximas des précipitations suivant la saison et l'échelle temporelle"
+display(HTML(f"""
+    <div style="font-size: 18px; color: #333;">
+        <p style="font-size: 22px; font-weight: bold; color: #2c3e50;">{title}</p>
+    </div>    
+"""))
+```
+
+```{python}
+#| label: moyenne-max_vs_series-max_ALL
+afficher_cat = [
+    f"Journalière ({year_display_min}-{year_display_max})", f"Journalière ({year_display_middle}-{year_display_max})",
+    "1h", "3h glissante", "6h glissante", "9h glissante", "12h glissante", "24h glissante", "1h (agreg 3x3)", "1h (agreg 5x5)"
+    ]
+
+# Définir une palette manuelle cohérente
+color_map = {
+    f"Journalière ({year_display_min}-{year_display_max})": "#17becf",       # Bleu clair
+    f"Journalière ({year_display_middle}-{year_display_max})": "#1f77b4",       # Bleu (Plotly[0])
+    "1h": "#ff7f0e",                # Orange (Plotly[1])
+    "3h glissante": "#2ca02c",      # Vert (Plotly[2])
+    "6h glissante": "#d62728",      # Rouge (Plotly[3])
+    "9h glissante": "#9467bd",      # Violet (Plotly[4])
+    "12h glissante": "#8c564b",     # Marron (Plotly[5])
+    "24h glissante": "#e377c2",     # Rose (Plotly[6])
+    "1h (agreg 3x3)": "#ff9f4e",    # Orange légèrement ajusté
+    "1h (agreg 5x5)": "#fff44f",       # jaune pastel
+}
+    
+
+# refaire la catégorisation et le plotting sur cette nouvelle colonne
+afficher_cat_lbl = [f"{cat}" 
+                    for cat in afficher_cat]
+
+df_r2_all_max["Echelle_lbl"] = pd.Categorical(
+    df_r2_all_max["Echelle"], 
+    categories=afficher_cat_lbl, 
+    ordered=True
+)
+
+df_r2_all_max["Echelle"] = pd.Categorical(df_r2_all_max["Echelle"], categories=afficher_cat, ordered=True)
+df_r2_all_max["r2_txt"] = df_r2_all_max["r²"].apply(lambda x: f"{x:.2f}".lstrip("0"))
+df_r2_all_max["ME_txt"] = df_r2_all_max["ME"].apply(lambda x: f"{x:.2f}".lstrip("0"))
+
+
+# Sélectionner uniquement les données pour "Maxima annuels"
+df_r2_all_max = df_r2_all_max[df_r2_all_max["Type"] == "Moyenne des maxima"]
+
+# Création de la figure avec px.bar
+fig_r2_all_max = px.bar(
+    df_r2_all_max,
+    x="Saison",
+    y="r²",
+    text="r2_txt",
+    color="Echelle",
+    custom_data=["Stations"],            
+    barmode="group",
+    category_orders={"Echelle": afficher_cat},
+    title="",
+    facet_col_spacing=0.01,
+    height=440
+)
+
+# Positionner le texte à l'extérieur des barres
+fig_r2_all_max.update_traces(
+    textfont=dict(size=10),  # réduit la taille du texte à 10 px
+    texttemplate="%{text}<br>%{customdata[0]}",  # Afficher uniquement la partie décimale comme .93, .41, etc.
+    textposition="outside",  # Positionner le texte à l'extérieur de la barre
+    insidetextanchor="start"  # Assure que le texte est bien visible à l'extérieur
+)
+
+fig_r2_all_max.update_layout(
+    template="simple_white",
+    legend_title_text=""  # Ajout du titre à la légende
+)
+fig_r2_all_max.update_xaxes(title=None, tickangle=0)
+fig_r2_all_max.update_yaxes(range=[0, 1.1])   # borne inf. 0, borne sup. 1
+
+# Appliquer la couleur à chaque trace selon son nom de légende
+for trace in fig_r2_all_max.data:
+    trace.marker.color = color_map.get(trace.name, "#888888")
+
+fig_r2_path = f"assets/fig_r2_all_max.html"
+pio.write_html(fig_r2_all_max, file=fig_r2_path, include_plotlyjs="cdn", full_html=False)
+
+display(HTML(f"""
+    <div style="height: {height-10}px; border: 1px solid #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px;">
+        <iframe loading="lazy" src="{fig_r2_path}" width="100%" height="100%" frameborder="0" style="flex: 3; width: 0; min-width: 0; max-width: 100%;"></iframe>
+    </div>
+"""))
+```
+
+---
+
+<h2>Bonne distribution et difficulté évènementielle</h2>
+
+![](presentation/schema/bilan-2.svg){.center}
+
+---
+
+
+```{python}
+title_show = pipeline_title("Tendances relatives (&#37; saturé à partir q99) du niveau de retour 10 ans estimée par le meilleur modèle", 1995, 2022, "quotidien", None)
+display(HTML(title_show))
+```
+
+
+
+<table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
+  <thead>
+    <tr>
+      <th>SON</th>
+      <th>DJF</th>
+      <th>MAM</th>
+      <th>JJA</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td>
+        <a href="presentation_files/map/quotidien_SON_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/quotidien_SON_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/quotidien_DJF_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/quotidien_DJF_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/quotidien_MAM_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/quotidien_MAM_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/quotidien_JJA_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/quotidien_JJA_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+    <td rowspan="2" style="vertical-align: middle; text-align: center;">
+    <object type="image/svg+xml" data="presentation_files/map/quotidien_legend_1.svg"
+            width="40" height="600" class="legend-svg">
+    </object>
+    </td>
+    </tr>
+    <tr>
+      <td>
+        <a href="presentation_files/map/quotidien_SON_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_SON_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/quotidien_DJF_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_DJF_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/quotidien_MAM_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_MAM_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/quotidien_JJA_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_JJA_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+---
+
+```{python}
+title_show = pipeline_title("Tendances relatives (&#37; saturé à partir q99) du niveau de retour 10 ans estimée par le meilleur modèle", 1995, 2022, "quotidien", None)
+display(HTML(title_show))
+```
+
+
+
+
+<table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
+  <thead>
+    <tr>
+      <th></th>
+      <th>SON</th>
+      <th>OND</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td>
+        </td>
+        <td>
+        <a href="presentation_files/map/quotidien_SON_BIS_rast_obs.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/quotidien_SON_BIS_norast_obs.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/quotidien_NOD_rast_obs.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/quotidien_NOD_norast_obs.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        </td>
+    <td rowspan="2" style="vertical-align: middle; text-align: center;">
+    <object type="image/svg+xml" data="presentation_files/map/quotidien_legend_2.svg"
+            width="40" height="600" class="legend-svg">
+    </object>
+    </td>
+    </tr>
+  <tr>
+    <td>
+      <figure>
+        <a href="presentation_files/map/quotidien_SEP_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_SEP_norast_obs.svg" alt="September">
+        </a>
+        <figcaption>Sept</figcaption>
+      </figure>
+    </td>
+    <td>
+      <figure>
+        <a href="presentation_files/map/quotidien_OCT_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_OCT_norast_obs.svg" alt="October">
+        </a>
+        <figcaption>Oct</figcaption>
+      </figure>
+    </td>
+    <td>
+      <figure>
+        <a href="presentation_files/map/quotidien_NOV_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_NOV_norast_obs.svg" alt="November">
+        </a>
+        <figcaption>Nov</figcaption>
+      </figure>
+    </td>
+    <td>
+      <figure>
+        <a href="presentation_files/map/quotidien_DEC_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/quotidien_DEC_norast_obs.svg" alt="December">
+        </a>
+        <figcaption>Dec</figcaption>
+      </figure>
+    </td>
+  </tr>
+</tbody>
+</table>
+
+
+
+
+---
+
+
+```{python}
+title_show = pipeline_title("Tendances relatives (&#37; saturé à partir q99) du niveau de retour 10 ans estimée par le meilleur modèle", 1995, 2022, "horaire", None)
+display(HTML(title_show))
+```
+
+
+<table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
+  <thead>
+    <tr>
+      <th>SON</th>
+      <th>DJF</th>
+      <th>MAM</th>
+      <th>JJA</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td>
+        <a href="presentation_files/map/horaire_SON_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_SON_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_DJF_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_DJF_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_MAM_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_MAM_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_JJA_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_JJA_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+    <td rowspan="2" style="vertical-align: middle; text-align: center;">
+    <object type="image/svg+xml" data="presentation_files/map/horaire_legend_1.svg"
+            width="40" height="600" class="legend-svg">
+    </object>
+    </td>
+    </tr>
+    <tr>
+      <td>
+        <a href="presentation_files/map/horaire_SON_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_SON_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_DJF_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_DJF_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_MAM_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_MAM_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_JJA_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_JJA_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+```{python}
+title_show = pipeline_title("Tendances relatives (&#37; saturé à partir q95) du niveau de retour 10 ans estimée par le meilleur modèle", 1995, 2022, "horaire", None)
+display(HTML(title_show))
+```
+
+
+<table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
+  <thead>
+    <tr>
+      <th>JAN</th>
+      <th>FEV</th>
+      <th>MAR</th>
+      <th>AVR</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td>
+        <a href="presentation_files/map/horaire_JAN_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_JAN_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_FEV_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_FEV_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_MAR_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_MAR_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_AVR_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_AVR_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+    <td rowspan="2" style="vertical-align: middle; text-align: center;">
+    <object type="image/svg+xml" data="presentation_files/map/horaire_legend_1.svg"
+            width="40" height="600" class="legend-svg">
+    </object>
+    </td>
+    </tr>
+    <tr>
+      <td>
+        <a href="presentation_files/map/horaire_JAN_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_JAN_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_FEV_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_FEV_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_MAR_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_MAR_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_AVR_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_AVR_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+```{python}
+title_show = pipeline_title("Tendances relatives (&#37; saturé à partir q95) du niveau de retour 10 ans estimée par le meilleur modèle", 1995, 2022, "horaire", None)
+display(HTML(title_show))
+```
+
+
+<table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
+  <thead>
+    <tr>
+      <th>MAI</th>
+      <th>JUI</th>
+      <th>JUILL</th>
+      <th>AOU</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td>
+        <a href="presentation_files/map/horaire_MAI_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_MAI_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_JUI_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_JUI_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_JUILL_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_JUILL_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_AOU_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_AOU_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+    <td rowspan="2" style="vertical-align: middle; text-align: center;">
+    <object type="image/svg+xml" data="presentation_files/map/horaire_legend_1.svg"
+            width="40" height="600" class="legend-svg">
+    </object>
+    </td>
+    </tr>
+    <tr>
+      <td>
+        <a href="presentation_files/map/horaire_MAI_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_MAI_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_JUI_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_JUI_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_JUILL_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_JUILL_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_AOU_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_AOU_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+```{python}
+title_show = pipeline_title("Tendances relatives (&#37; saturé à partir q95) du niveau de retour 10 ans estimée par le meilleur modèle", 1995, 2022, "horaire", None)
+display(HTML(title_show))
+```
+
+
+<table class="no-gutter" border="0" cellspacing="0" cellpadding="0" style="width:100%; text-align:center;">
+  <thead>
+    <tr>
+      <th>SEP</th>
+      <th>OCT</th>
+      <th>NOV</th>
+      <th>DEC</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td>
+        <a href="presentation_files/map/horaire_SEP_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_SEP_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_OCT_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_OCT_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_NOV_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_NOV_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+        <td>
+        <a href="presentation_files/map/horaire_DEC_rast_mod.svg" target="_blank" rel="noopener">
+            <img src="presentation_files/map/horaire_DEC_norast_mod.svg" alt="En cours de calcul">
+        </a>
+        </td>
+    <td rowspan="2" style="vertical-align: middle; text-align: center;">
+    <object type="image/svg+xml" data="presentation_files/map/horaire_legend_1.svg"
+            width="40" height="600" class="legend-svg">
+    </object>
+    </td>
+    </tr>
+    <tr>
+      <td>
+        <a href="presentation_files/map/horaire_SEP_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_SEP_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_OCT_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_OCT_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_NOV_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_NOV_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+      <td>
+        <a href="presentation_files/map/horaire_DEC_rast_obs.svg" target="_blank" rel="noopener">
+          <img src="presentation_files/map/horaire_DEC_norast_obs.svg" alt="En cours de calcul">
+        </a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+# La suite
+
+<br/><br/><br/><br/>
+
+<h2>Evaluer la correspondance des tendances</h2>
+
+<br/><br/>
+  
+<h2>Evaluer la significativité des tendances</h2>
+
