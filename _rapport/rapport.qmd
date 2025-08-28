@@ -208,6 +208,7 @@ def plot_r_by_season(
     echelles,
     col_values,          # <-- plusieurs indicateurs (ex. ['numday', 'mean', 'mean-max'])
     nom_fichier,         # préfixe du fichier (le numéro du facet est ajouté automatiquement)
+    col_plot: str="r"
 ):
     """
     Trace un bar‑chart groupé « r » par saison, pour plusieurs indicateurs.
@@ -260,7 +261,7 @@ def plot_r_by_season(
         sub = df.loc[
             (df["echelle"].isin(echelles)) &
             (df["col_calculate"] == col_value),
-            ["season", "echelle", "r"]
+            ["season", "echelle", col_plot]
         ]
         if sub.empty:
             ax.set_visible(False)
@@ -286,7 +287,7 @@ def plot_r_by_season(
 
         # --- 4) Pivot ---
         pivot = (
-            sub.pivot(index="season", columns="echelle", values="r")
+            sub.pivot(index="season", columns="echelle", values=col_plot)
                .rename(columns=rename_map)
                .reindex(saisons_pres)
         )
@@ -322,12 +323,20 @@ def plot_r_by_season(
         )
         ax.tick_params(axis='x', rotation=45)   # Rotation ici
         ax.set_xlabel("")
-        ax.set_ylabel("r")
+        if col_plot=="me":
+          ax.set_ylabel("Δ (AROME - Stations) (mm/h)")
+        else:
+          ax.set_ylabel(col_plot)
         ax.set_title(label_map.get(col_value, col_value))   # titre lisible pour chaque subplot)
-        ax.set_ylim(top=1)   # <-- Forcer ymax à 1
 
-        ax.yaxis.set_major_locator(mticker.MultipleLocator(0.1))
-        ax.yaxis.set_minor_locator(mticker.MultipleLocator(0.02))
+        if col_plot=="r":
+          ax.set_ylim(top=1)   # <-- Forcer ymax à 1
+          ax.yaxis.set_major_locator(mticker.MultipleLocator(0.1))
+          ax.yaxis.set_minor_locator(mticker.MultipleLocator(0.02))
+        else:
+          ax.yaxis.set_major_locator(mticker.MultipleLocator(0.5))
+          ax.yaxis.set_minor_locator(mticker.MultipleLocator(0.25))
+
         ax.grid(axis="y", which="major", linestyle="--", alpha=0.8)
         ax.grid(axis="y", which="minor", linestyle=":",  alpha=0.5)
 
@@ -382,7 +391,7 @@ Pour les extrêmes journaliers, le signal moyen à l’échelle globale est orie
 
 #### A l'échelle horaire
 
-Les extrêmes horaires, mesurés sur des pas de temps de 1h ou moins, sont essentiels pour caractériser les phénomènes convectifs intenses (averses orageuses, orages stationnaires) souvent responsables de crues éclaires. Faute de séries longues et spatialisées, il n’existe pas d’analyse systématique des tendances sub‑journalières à l’échelle globale ; les données sont souvent éparses, courtes et non significatives. Malgré cela, plusieurs études régionales détectent une intensification des extrêmes horaires sur presque tous les continents, mais la confiance dans une hausse globale reste très faible [@IPCC2021]. Un accroissement des pluies extrêmes est relevée aux États-Unis, en Chine (l'été), en Australie (sur l'année), en Afrique du Sud (l'été), en Inde, en Malaisie, et en Italie. Plusieurs travaux mettent en évidence, selon la méthode et la région considérées, des sensibilités de l’ordre de +7% à +14% par °C, c’est‑à‑dire jusqu’à deux fois la pente de Clausius‑Clapeyron. En France, peu d'études régionales caractérisent explicitement cette hausse des extrêmes. Les valeurs maximales observées sur 1h atteignent maintenant 40–60 mm dans les événements méditerranéens majeurs, contre 30–40 mm dans les années 1980–1990 [@meteofrance2024_episodesMediterraneens]. Seul l'étude de @Berghald2025 semble chiffrer l'évolution des tendances des extrêmes horaires dans les Alpes. Cependant, la tendance sur le niveau de retour horaire est faible à non significative, sans cohérence spatiale ni saisonnière marquée, en contraste avec les résultats clairs observés au pas de temps journalier. Cela montre que les extrêmes horaires ne montrent pas (encore) de signal climatique clair [@Soubeyroux01022015].
+Les extrêmes horaires, mesurés sur des pas de temps de 1h ou moins, sont essentiels pour caractériser les phénomènes convectifs intenses (averses orageuses, orages stationnaires) souvent responsables de crues éclaires. Faute de séries longues et spatialisées, il n’existe pas d’analyse systématique des tendances sub‑journalières à l’échelle globale ; les données sont souvent éparses, courtes et non significatives. Malgré cela, plusieurs études régionales détectent une intensification des extrêmes horaires sur presque tous les continents, mais la confiance dans une hausse globale reste très faible [@IPCC2021]. Un accroissement des pluies extrêmes est relevée aux États-Unis, en Chine (l'été), en Australie (sur l'année), en Afrique du Sud (l'été), en Inde, en Malaisie, et en Italie. Plusieurs travaux mettent en évidence, selon la méthode et la région considérées, des sensibilités de l’ordre de +7% à +13% par °C, c’est‑à‑dire jusqu’à deux fois la pente de Clausius‑Clapeyron [@molnar2015relation]. En France, peu d'études régionales caractérisent explicitement cette hausse des extrêmes. Les valeurs maximales observées sur 1h atteignent maintenant 40–60 mm dans les événements méditerranéens majeurs, contre 30–40 mm dans les années 1980–1990 [@meteofrance2024_episodesMediterraneens]. Seul l'étude de @Berghald2025 semble chiffrer l'évolution des tendances des extrêmes horaires dans les Alpes. Cependant, la tendance sur le niveau de retour horaire est faible à non significative, sans cohérence spatiale ni saisonnière marquée, en contraste avec les résultats clairs observés au pas de temps journalier. Cela montre que les extrêmes horaires ne montrent pas (encore) de signal climatique clair [@Soubeyroux01022015].
 
 ### Les données disponibles
 
@@ -827,7 +836,7 @@ Cette performance se maintient pour la moyenne des maxima journaliers (périodes
 
 ```{python} 
 plot_r_by_season(combined, echelles=['quotidien', 'quotidien_reduce', 'horaire'], col_values=['numday', 'mean', 'mean-max'], nom_fichier="histo_numday_mean_mean-max")
-plot_r_by_season(combined, echelles=['quotidien', 'quotidien_reduce', 'horaire'], col_values=['mean-max'], nom_fichier="histo_mean-max")
+plot_r_by_season(combined, echelles=['quotidien', 'quotidien_reduce', 'horaire'], col_values=['mean-max'], nom_fichier="histo_mean-max", col_plot="me")
 ```
 
 ![](figures/histo_numday_mean_mean-max.png){width=100%}
@@ -1043,7 +1052,7 @@ La tendance positive et significative sont cohérentes avec l'étude à l'échel
 
 Les signaux sont beaucoup moins robuste au pas de temps horaire qu'au pas de temps journalier. Ils montrent des tendances très hétérogènes, souvent peu ou pas significatives, et parfois incohérentes spatialement entre AROME et les stations (en juin, *r =* 0,07). Cela rejoint le constat de @IPCC2021 concernant la faible confiance dans une hausse globale des extrêmes sous‑journaliers, faute de séries longues, denses et homogènes. Les hausses marquées en février (vallée du Rhône, pré‑Alpes), mars (arc méditerranéen ouest) et novembre (arc méditerranéen est) sont compatibles avec les régimes dynamiques et thermo‑marins propices aux épisodes méditerranéens/transitionnels (fin d’hiver, intersaison automnale). Le signal doublé par les stations en février sur la vallée du Rhône souligne le lissages et biais d’amplitude d’AROME sur les extrêmes horaires. Toutefois, la période restreinte (1990–2022) offre peu de puissance statistique, et la variabilité interannuelle convective peut cacher ou mimer une tendance. En juin, la hausse généralisée (jusqu’à +150%), mais sans accord spatial entre AROME et stations montre la variabilité convective locale (orages très ponctuels) et les erreurs de représentativité point *vs.* maille deviennent dominantes. C'est un exemple des limites de l’inférence mensuelle sur les extrêmes convectifs. \
 
-De nombreuses études régionales mettent en évidence des sensibilités infra‑journalières de +7 à +14%/°C, parfois supérieures à Clausius‑Clapeyron, notamment pour des orages convectifs brefs. L'étude n'identifie pas de signal clair avec le modèle AROME qui sous‑estime fortement les pics horaires, alors que les stations captent des pointes locales. C'est ce à quoi on s'attendait au regard de la part des tendances des extrêmes liée à Clausius-Clapeyron qui devait théoriquement être deux fois plus faible que les tendances observées.
+DeS études régionales mettent en évidence des sensibilités infra‑journalières de +7 à +13%/°C, parfois supérieures à Clausius‑Clapeyron, notamment pour des orages convectifs brefs [@molnar2015relation]. L'étude n'identifie pas de signal clair avec le modèle AROME qui sous‑estime fortement les pics horaires, alors que les stations captent des pointes locales. C'est ce à quoi on s'attendait au regard de la part des tendances des extrêmes liée à Clausius-Clapeyron qui devait théoriquement être deux fois plus faible que les tendances observées.
 
 #### Robustesse statistique des signaux
 
