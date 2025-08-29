@@ -1,0 +1,51 @@
+name: build-and-deploy-quarto
+
+on:
+  push:
+    branches: [ data-pipeline ] 
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: latest
+          tinytex: true        # rendre des PDFs avec LaTeX
+
+      - name: Render Quarto
+        run: |
+          quarto render
+          # Copie tous les PDF générés (hors _site) vers _site en préservant l'arborescence
+          mkdir -p _site
+          find . -type f -name '*.pdf' -not -path './_site/*' -exec cp --parents {} _site \;
+          # Désactive Jekyll côté Pages pour servir les PDF tels quels pour ne pas planter les qmd
+          touch _site/.nojekyll
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
