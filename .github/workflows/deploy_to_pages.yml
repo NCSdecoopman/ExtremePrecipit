@@ -34,7 +34,7 @@ jobs:
 
           mkdir -p _site
           # PDFs
-          find rapport annexes presentation -type f -name '*.pdf' -exec cp --parents {} _site \;
+          find rapport presentation -type f -name '*.pdf' -exec cp --parents {} _site \;
 
           touch _site/.nojekyll
 
