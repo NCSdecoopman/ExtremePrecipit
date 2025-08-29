@@ -2,7 +2,7 @@ name: build-and-deploy-quarto
 
 on:
   push:
-    branches: [ data-pipeline ] 
+    branches: [ data-pipeline ]
   workflow_dispatch:
 
 permissions:
@@ -23,15 +23,19 @@ jobs:
       - uses: quarto-dev/quarto-actions/setup@v2
         with:
           version: release
-          tinytex: true        # rendre des PDFs avec LaTeX
+          tinytex: true
 
-      - name: Render Quarto
+      - name: Render Quarto (fichiers ciblés)
         run: |
-          quarto render
-          # Copie tous les PDF générés (hors _site) vers _site en préservant l'arborescence
+          # set -e
+          # quarto render rapport/rapport.qmd
+          # quarto render rapport/annexes.qmd
+          # quarto render presentation/presentation.qmd
+
           mkdir -p _site
-          find . -type f -name '*.pdf' -not -path './_site/*' -exec cp --parents {} _site \;
-          # Désactive Jekyll côté Pages pour servir les PDF tels quels pour ne pas planter les qmd
+          # PDFs
+          find rapport presentation -type f -name '*.pdf' -exec cp --parents {} _site \;
+
           touch _site/.nojekyll
 
       - uses: actions/configure-pages@v5
