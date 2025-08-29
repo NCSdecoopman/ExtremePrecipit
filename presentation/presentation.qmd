@@ -10,7 +10,7 @@ institute: "UGA M2 SSD"
 lang: fr
 date: 2025-08-29
 date-format: "D MMMM YYYY"
-bibliography: ../_rapport/bibliography.bib 
+bibliography: ../rapport/bibliography.bib 
 csl: ieee.csl
 format:
   beamer:
@@ -315,7 +315,7 @@ Sous-estime précipitations d’intensité élévées (>40 mm/h)
 
 **Biais des maxima des précipitations entre le modèle AROME et les stations**
 
-![](../_rapport/figures/histo_mean-max.png){width=100%} -->
+![](../rapport/figures/histo_mean-max.png){width=100%} -->
 
 
 # Bonne distribution et difficulté évènementielle
@@ -350,7 +350,7 @@ ME = `{python} f'{df_trend_pluie_hydro['me'].iloc[0].item():+.2f}'`% -->
 
 | \small SON | \small DJF | \small MAM | \small JJA |
 | :---: | :---: | :---: | :---: |
-| ![](../_rapport/figures/trend_pluie_son.pdf) | ![](../_rapport/figures/trend_pluie_djf.pdf) | ![](../_rapport/figures/trend_pluie_mam.pdf) | ![](../_rapport/figures/trend_pluie_jja.pdf) |
+| ![](../rapport/figures/trend_pluie_son.pdf) | ![](../rapport/figures/trend_pluie_djf.pdf) | ![](../rapport/figures/trend_pluie_mam.pdf) | ![](../rapport/figures/trend_pluie_jja.pdf) |
 | \small $r =$ `{python} f'{df_trend_pluie_son['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_son['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_pluie_djf['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_djf['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_pluie_mam['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_mam['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_pluie_jja['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_jja['n'].iloc[0].item()}'`) |
 | \small $ME =$ `{python} f'{df_trend_pluie_son['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_pluie_djf['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_pluie_mam['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_pluie_jja['me'].iloc[0].item():+.2f}'`% |
 
@@ -381,7 +381,7 @@ df_trend_horaire_pluie_jja = combined_all.loc[(combined_all["echelle"] == "horai
 
 | \small SON | \small DJF | \small MAM | \small JJA |
 | :---: | :---: | :---: | :---: |
-| ![](../_rapport/figures/trend_horaire_pluie_son.pdf) | ![](../_rapport/figures/trend_horaire_pluie_djf.pdf) | ![](../_rapport/figures/trend_horaire_pluie_mam.pdf) | ![](../_rapport/figures/trend_horaire_pluie_jja.pdf) |
+| ![](../rapport/figures/trend_horaire_pluie_son.pdf) | ![](../rapport/figures/trend_horaire_pluie_djf.pdf) | ![](../rapport/figures/trend_horaire_pluie_mam.pdf) | ![](../rapport/figures/trend_horaire_pluie_jja.pdf) |
 | \small $r =$ `{python} f'{df_trend_horaire_pluie_son['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_horaire_pluie_son['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_horaire_pluie_djf['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_horaire_pluie_djf['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_horaire_pluie_mam['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_horaire_pluie_mam['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_horaire_pluie_jja['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_horaire_pluie_jja['n'].iloc[0].item()}'`) |
 | \small $ME =$ `{python} f'{df_trend_horaire_pluie_son['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_horaire_pluie_djf['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_horaire_pluie_mam['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_horaire_pluie_jja['me'].iloc[0].item():+.2f}'`% |
 
@@ -396,7 +396,7 @@ df_trend_pluie_nov = combined_all.loc[(combined_all["echelle"] == "horaire") & (
 
 | \small FEV | \small MAR | \small JUI | \small NOV |
 | :---: | :---: | :---: | :---: | 
-| ![](../_rapport/figures/trend_pluie_fev.pdf) | ![](../_rapport/figures/trend_pluie_mar.pdf) | ![](../_rapport/figures/trend_pluie_jui.pdf) | ![](../_rapport/figures/trend_pluie_nov.pdf) |
+| ![](../rapport/figures/trend_pluie_fev.pdf) | ![](../rapport/figures/trend_pluie_mar.pdf) | ![](../rapport/figures/trend_pluie_jui.pdf) | ![](../rapport/figures/trend_pluie_nov.pdf) |
 | \small $r =$ `{python} f'{df_trend_pluie_fev['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_fev['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_pluie_mar['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_mar['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_pluie_jui['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_jui['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_pluie_nov['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_nov['n'].iloc[0].item()}'`) |
 | \small $ME =$ `{python} f'{df_trend_pluie_fev['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_pluie_mar['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_pluie_jui['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_pluie_nov['me'].iloc[0].item():+.2f}'`% |
 
@@ -414,7 +414,7 @@ Les tendances de températures AROME sont deux fois plus faibles que les tendanc
 
 <!-- # Corrélations des tendances relatives 
 
-![](../_rapport/figures/histo_z_T_p_signif.png)
+![](../rapport/figures/histo_z_T_p_signif.png)
 
 - Saisonnalité récurrente de la performance (DJF, DEC, JAN, MAR) \newline \textit{vs.} les valeurs les plus basses (MAM, JUI, JUILL)
 - Hiérarchie cohérence spatiale des échelles temporelles : journalière \newline \textit{vs.} horaire -->
