@@ -147,7 +147,6 @@ Toutes les données transformées (métadonnées, NetCDF bruts, résultats GEV, 
   * `pipeline_zarr_to_stats.py` : extraire les statistiques (par ex. maxima annuel) des Zarr et les enregistrer en Parquet.
   * `pipeline_stats_to_gev.py` : ajuster un modèle GEV aux séries statistiques et enregistrer les paramètres.
   * `pipeline_obs_vs_mod.py` : comparer observé vs modélisé.
-  * `pipeline_gev_min_loglike.py` : recherche du modèle GEV optimal sur critère log-vraisemblance.
   * `pipeline_best_gev.py` : sélection du meilleur modèle GEV, génération de cartes de paramètres.
   * `run_all.py` : exécute l’ensemble des étapes dans l’ordre automatiquement.
 * **`app/utils/`** : fonctions communes (lecture de fichiers YAML, gestion des chemins, journalisation, manipulations de données, création de menus Streamlit).
@@ -212,7 +211,6 @@ Toutes les données transformées (métadonnées, NetCDF bruts, résultats GEV, 
 > python app/pipelines/pipeline_stats_to_gev.py
 > python app/pipelines/pipeline_obs_to_zarr.py
 > python app/pipelines/pipeline_obs_vs_mod.py
-> python app/pipelines/pipeline_gev_min_loglike.py
 > python app/pipelines/pipeline_best_gev.py
 > ```
 >
@@ -267,7 +265,6 @@ ExtremePrecipit/
 │   │   ├─ pipeline_stats_to_gev.py
 │   │   ├─ pipeline_obs_to_zarr.py
 │   │   ├─ pipeline_obs_vs_mod.py
-│   │   ├─ pipeline_gev_min_loglike.py
 │   │   ├─ pipeline_best_gev.py
 │   │   └─ run_all.py
 │   ├─ upload/                   # Upload des résultats (ex. : vers un cloud)
