@@ -1,6 +1,6 @@
 ---
 title: "Cartographie"
-
+render_with_liquid: false
 table-of-contents: true
 toc-depth: 5         # profondeur max (#, ##) –‑ optionnel*
 toc-title: "Sommaire" 
