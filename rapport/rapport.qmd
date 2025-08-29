@@ -1,5 +1,6 @@
 ---
 title: "Caractérisation et évolution des précipitations extrêmes horaires en France à partir d’un modèle régional de climat à convection profonde résolue"
+render_with_liquid: false
 format:
     jss-pdf:
         keep-tex: true
