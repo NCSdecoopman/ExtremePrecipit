@@ -206,9 +206,15 @@ $$
 \text{Tendance} = \frac{z_T^{2022} - z_T^{1995}}{z_T^{1995}} \cdot {100}
 $$
 
-\fontsize{7}{7}\selectfont Station Météo-France de Saint-Marcel-lès-Valence, Vallée du Rhône ($M_1^\ast$, $M_1$, $M_3$)
+\fontsize{7}{7}\selectfont Station Météo-France de Saint-Marcel-lès-Valence, Vallée du Rhône ($M_2$, $M_3$, $M_3$)
 
-![](../outputs/series/26313001_serie.png)
+![](schema/26313001_serie_fev.png)
+
+# Méthodologie du calcul de tendance
+
+\fontsize{7}{7}\selectfont Station Météo-France de Saint-Marcel-lès-Valence, Vallée du Rhône ($M_1^\ast$, $M_2$, $M_2$)
+
+![](schema/26313001_serie_nov.png)
 
 # Statistiques descriptives
 
