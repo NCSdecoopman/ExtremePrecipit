@@ -62,8 +62,8 @@ def plot_series_station(station_id):
     break_year = 1985
 
     # Fichiers Parquet GEV
-    file_1990_2022 = Path('data/gev/observed/horaire/fev/gev_param_best_model.parquet')
-    file_1959_2022 = Path('data/gev/observed/quotidien/fev/gev_param_best_model.parquet')
+    file_1990_2022 = Path('data/gev/observed/horaire/nov/gev_param_best_model.parquet')
+    file_1959_2022 = Path('data/gev/observed/quotidien/nov/gev_param_best_model.parquet')
     gev_1959_2022 = pl.read_parquet(file_1959_2022)
     gev_1990_2022 = pl.read_parquet(file_1990_2022)
 
@@ -74,8 +74,8 @@ def plot_series_station(station_id):
     mesure_hor = "max_mm_h"
     cols_quot = ["NUM_POSTE", mesure_quot, "nan_ratio"]
     cols_hor = ["NUM_POSTE", mesure_hor, "nan_ratio"]
-    df_1959_2022 = load_data(input_dir_quot, "fev", "quotidien", cols_quot, 1959, 2022)
-    df_1990_2022 = load_data(input_dir_hor, "fev", "horaire", cols_hor, 1990, 2022)
+    df_1959_2022 = load_data(input_dir_quot, "nov", "quotidien", cols_quot, 1959, 2022)
+    df_1990_2022 = load_data(input_dir_hor, "nov", "horaire", cols_hor, 1990, 2022)
 
     df_1959_2022 = cleaning_data_observed(df_1959_2022, "quotidien", len_serie=50)
     df_1990_2022 = cleaning_data_observed(df_1990_2022, "horaire", len_serie=25)
@@ -101,12 +101,12 @@ def plot_series_station(station_id):
     )
 
     # Ajout de la série 'quotidien_reduce' (1990-2022)
-    file_quot_reduce = Path('data/gev/observed/quotidien_reduce/fev/gev_param_best_model.parquet')
+    file_quot_reduce = Path('data/gev/observed/quotidien_reduce/nov/gev_param_best_model.parquet')
     gev_quot_reduce = pl.read_parquet(file_quot_reduce)
     input_dir_quot_reduce = Path("data/statisticals/observed/quotidien")
     mesure_quot_reduce = "max_mm_j"
     cols_quot_reduce = ["NUM_POSTE", mesure_quot_reduce, "nan_ratio"]
-    df_quot_reduce = load_data(input_dir_quot_reduce, "fev", "quotidien_reduce", cols_quot_reduce, 1990, 2022)
+    df_quot_reduce = load_data(input_dir_quot_reduce, "nov", "quotidien_reduce", cols_quot_reduce, 1990, 2022)
     df_quot_reduce = cleaning_data_observed(df_quot_reduce, "quotidien", len_serie=25)
     df_quot_reduce = df_quot_reduce.drop_nulls(subset=[mesure_quot_reduce])
     df_series_quot_reduce = build_x_ttilde(df_quot_reduce, 1990, 2022, gev_quot_reduce, break_year, mesure_quot_reduce)
@@ -119,22 +119,22 @@ def plot_series_station(station_id):
     )
     # Série quotidienne classique mais restreinte à 1990-2022
     cols_quot_1990 = ["NUM_POSTE", mesure_quot, "nan_ratio"]
-    df_quot_1990_2022 = load_data(input_dir_quot, "fev", "quotidien", cols_quot_1990, 1990, 2022)
+    df_quot_1990_2022 = load_data(input_dir_quot, "nov", "quotidien", cols_quot_1990, 1990, 2022)
     df_quot_1990_2022 = cleaning_data_observed(df_quot_1990_2022, "quotidien", len_serie=25)
     df_quot_1990_2022 = df_quot_1990_2022.drop_nulls(subset=[mesure_quot])
-    df_series_quot_1990_2022 = build_x_ttilde(df_quot_1990_2022, 1990, 2022, gev_quot_reduce, break_year, mesure_quot)
 
     # Extraction pour la station
     station_id_cast = station_id if isinstance(station_id, str) else str(station_id)
     df_station = df_1959_2022.filter(pl.col("NUM_POSTE") == station_id_cast)
+    print("Données journalières (1959-2022)")
+    print(gev_1959_2022.filter(pl.col("NUM_POSTE") == station_id_cast))
     years = df_station["year"].to_numpy()
     values = df_station[mesure_quot].to_numpy()
     df_station_hor = df_1990_2022.filter(pl.col("NUM_POSTE") == station_id_cast)
+    print("Données horaires (1990-2022)")
+    print(gev_1990_2022.filter(pl.col("NUM_POSTE") == station_id_cast))
     years_hor = df_station_hor["year"].to_numpy()
     values_hor = df_station_hor[mesure_hor].to_numpy()
-    df_station_quot_reduce = df_quot_reduce.filter(pl.col("NUM_POSTE") == station_id_cast)
-    years_quot_reduce = df_station_quot_reduce["year"].to_numpy()
-    values_quot_reduce = df_station_quot_reduce[mesure_quot_reduce].to_numpy()
     z_1959_2022 = z_levels_1959_2022.filter(pl.col("NUM_POSTE") == station_id_cast)["zT"].to_numpy()[0]
     z_1990_2022 = z_levels_1990_2022.filter(pl.col("NUM_POSTE") == station_id_cast)["zT"].to_numpy()[0]
     z_quot_reduce = z_levels_quot_reduce.filter(pl.col("NUM_POSTE") == station_id_cast)["zT"].to_numpy()[0]
@@ -142,6 +142,8 @@ def plot_series_station(station_id):
     years_1990_2022 = np.arange(1990, 2023)
     years_quot_reduce_grid = np.arange(1990, 2023)
     df_station_quot_1990_2022 = df_quot_1990_2022.filter(pl.col("NUM_POSTE") == station_id_cast)
+    print("Données journalières (1990-2022)")
+    print(gev_quot_reduce.filter(pl.col("NUM_POSTE") == station_id_cast))
     years_quot_1990_2022 = df_station_quot_1990_2022["year"].to_numpy()
     values_quot_1990_2022 = df_station_quot_1990_2022[mesure_quot].to_numpy()
 
@@ -163,7 +165,7 @@ def plot_series_station(station_id):
     ax1.plot(years, values, label="Série observée quotidienne", color="black", marker="o", linestyle="-", alpha=0.5)
     ax1.plot(years_1959_2022, z_1959_2022, label="Niveau de retour 1959-2022", color="blue")
     ax1.set_ylabel("Précipitation (mm/j)")
-    ax1.set_title("Données journalières (1959-2022) en février")
+    ax1.set_title("Données journalières (1959-2022) en novembre")
     leg1 = ax1.legend(loc="upper left")
     ax1.grid(True)
     for year in [1995, 2022]:
@@ -191,7 +193,7 @@ def plot_series_station(station_id):
     ax3.plot(years_hor, values_hor, label="Série observée horaire", color="black", marker="o", linestyle="-", alpha=0.5)
     ax3.plot(years_1990_2022, z_1990_2022, label="Niveau de retour 1990-2022", color="red")
     ax3.set_ylabel("Précipitation (mm/h)")
-    ax3.set_title("Données horaires (1990-2022) en février")
+    ax3.set_title("Données horaires (1990-2022) en novembre")
     leg3 = ax3.legend(loc="upper left")
     ax3.grid(True)
     for year in [1995, 2022]:
@@ -219,7 +221,7 @@ def plot_series_station(station_id):
     ax2.plot(years_quot_1990_2022, values_quot_1990_2022, label="Série observée quotidienne", color="black", marker="o", linestyle="-", alpha=0.5)
     ax2.plot(years_quot_reduce_grid, z_quot_reduce, label="Niveau de retour 1990-2022", color="orange")
     ax2.set_ylabel("Précipitation (mm/j)")
-    ax2.set_title("Données journalières (1990-2022) en février")
+    ax2.set_title("Données journalières (1990-2022) en novembre")
     leg2 = ax2.legend(loc="upper left")
     ax2.grid(True)
     for year in [1995, 2022]:
@@ -250,7 +252,7 @@ def plot_series_station(station_id):
     # Enregistrement
     output_dir = Path("presentation/schema")
     output_dir.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output_dir / f"{station_id}_serie.png", dpi=150)
+    fig.savefig(output_dir / f"{station_id}_serie_nov.png", dpi=150)
     plt.close(fig)
 
 if __name__ == "__main__":
