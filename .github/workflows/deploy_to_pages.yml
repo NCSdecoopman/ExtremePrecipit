@@ -33,8 +33,11 @@ jobs:
           # quarto render presentation/presentation.qmd
 
           mkdir -p _site
+
           # PDFs
           find rapport presentation -type f -name '*.pdf' -exec cp --parents {} _site \;
+          # MP4
+          find presentation -type f -name '*.mp4' -exec cp --parents {} _site \;
 
           touch _site/.nojekyll
 
