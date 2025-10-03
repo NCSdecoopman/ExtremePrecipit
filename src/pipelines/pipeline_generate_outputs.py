@@ -306,16 +306,32 @@ def calculate_data_maps(
     # ------------------------------------------------------------------
     # 7. Filtrage des données significatives si demandé
     # ------------------------------------------------------------------
-    if show_signif:
+    # if show_signif:
 
+    #     for idx, gdf in enumerate(model_gdfs):
+    #         if gdf is not None and "significant" in gdf.columns:
+    #             model_gdfs[idx] = gdf.loc[gdf["significant"] == True].copy()
+
+    #     for idx, gdf in enumerate(obs_gdfs):
+    #         if gdf is not None and "significant" in gdf.columns:
+    #             obs_gdfs[idx] = gdf.loc[gdf["significant"] == True].copy()     
+
+
+    # ------------------------------------------------------------------
+    # 7. Si demandé : on conserve tout mais on met à 0 les non-significatifs
+    # ------------------------------------------------------------------
+    if show_signif:
         for idx, gdf in enumerate(model_gdfs):
-            if gdf is not None and "significant" in gdf.columns:
-                model_gdfs[idx] = gdf.loc[gdf["significant"] == True].copy()
+            if gdf is not None and "significant" in gdf.columns and val_col in gdf.columns:
+                gdf = gdf.copy()
+                gdf.loc[gdf["significant"] == False, val_col] = 0
+                model_gdfs[idx] = gdf
 
         for idx, gdf in enumerate(obs_gdfs):
-            if gdf is not None and "significant" in gdf.columns:
-                obs_gdfs[idx] = gdf.loc[gdf["significant"] == True].copy()     
-
+            if gdf is not None and "significant" in gdf.columns and val_col in gdf.columns:
+                gdf = gdf.copy()
+                gdf.loc[gdf["significant"] == False, val_col] = 0
+                obs_gdfs[idx] = gdf
 
     return dir_path, val_col, titles, model_gdfs, obs_gdfs
 
@@ -340,7 +356,7 @@ def generate_maps(
     min_pt: int = 4,
     max_pt: int = 10,
     middle_pt: int = 9,
-    obs_edgecolor: str = "#000000",
+    obs_edgecolor: str = "#BFBFBF",
     obs_facecolor: Optional[str] = None,
     # Relief
     relief_path: str = "data/external/niveaux/selection_courbes_niveau_france.shp",
@@ -510,7 +526,7 @@ def generate_maps(
             fig, ax = plt.subplots(figsize=figsize)
 
             # 1. départements avec lignes fines
-            deps_metro.boundary.plot(ax=ax, edgecolor="#AAAAAA", linewidth=0.2, zorder=0)
+            #deps_metro.boundary.plot(ax=ax, edgecolor="#AAAAAA", linewidth=0.2, zorder=0)
 
             # 2. contour national épaissi
             #    mask est déjà défini plus haut comme l'union de tous les départements
@@ -560,18 +576,43 @@ def generate_maps(
 
                     gdf_o.loc[:, "_size_pt2"] = sizes
 
-                kw = dict(
+
+                # split 0 vs non-0
+                gdf_zero = gdf_o[gdf_o[val_col] == 0]
+                gdf_nonzero = gdf_o[gdf_o[val_col] != 0]
+
+                kw_zero = dict(
                     markersize="_size_pt2",
                     marker="o",
                     edgecolor=obs_edgecolor,
                     linewidth=0.1,
-                    zorder=3,
                 )
 
-                if obs_facecolor is None:
-                    gdf_o.plot(ax=ax, column=val_col, cmap=cmap, norm=norm, **kw)
-                else:
-                    gdf_o.plot(ax=ax, facecolor=obs_facecolor, **kw)
+                kw_nonzero = dict(
+                    markersize="_size_pt2",
+                    marker="o",
+                    edgecolor="face",
+                    linewidth=0.1,
+                )
+
+                # 1. points à 0 (en-dessous)
+                if not gdf_zero.empty:
+                    if obs_facecolor is None:
+                        gdf_zero.plot(ax=ax, column=val_col, cmap=cmap, norm=norm,
+                                    zorder=2, **kw_zero)
+                    else:
+                        gdf_zero.plot(ax=ax, facecolor=obs_facecolor,
+                                    zorder=2, **kw_zero)
+
+                # 2. points non nuls (par-dessus)
+                if not gdf_nonzero.empty:
+                    if obs_facecolor is None:
+                        gdf_nonzero.plot(ax=ax, column=val_col, cmap=cmap, norm=norm,
+                                        zorder=3, **kw_nonzero)
+                    else:
+                        gdf_nonzero.plot(ax=ax, facecolor=obs_facecolor,
+                                        zorder=3, **kw_nonzero)
+
 
             # — Relief ------------------------------------------------------
             relief.plot(ax=ax, color=relief_color, linewidth=relief_linewidth, alpha=0.8, zorder=2)
@@ -662,6 +703,56 @@ def generate_maps(
     plt.close(fig2)
 
 
+from matplotlib.ticker import MaxNLocator, MultipleLocator
+
+def generate_hist(res: dict, echelle: str, season: str, reduce_activate: bool) -> None:
+    """Histogramme des longueurs de séries observées (années) au style article."""
+    obs_df = res.get("observed")
+    if obs_df is None or obs_df.height == 0:
+        return
+
+    years = obs_df["n_years"].to_numpy()
+    if years.size == 0:
+        return
+
+    y_max = int(np.ceil(years.max()))
+    bins = np.arange(-0.5, y_max + 1.5, 1)
+
+    fig, ax = plt.subplots(figsize=(4, 4), dpi=600)
+    ax.hist(years, bins=bins, edgecolor="black", linewidth=0.6,
+            facecolor="#E9ECEF", alpha=1.0)
+
+    # Axes et labels
+    ax.set_xlim(-0.5, y_max + 0.5)
+    ax.set_xlabel("Series length (years)", fontsize=11)
+    ax.set_ylabel("Number of stations", fontsize=11)
+    ax.grid(axis="y", which="major", linewidth=0.3, color="#BFBFBF")
+    ax.set_axisbelow(True)
+
+    # Ticks sobres : x tous les 5 ans, y entier
+    ax.xaxis.set_major_locator(MultipleLocator(5))
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.tick_params(axis="both", labelsize=8, length=3, width=0.6, direction="out")
+
+    # Cadre: bas/gauche visibles, haut/droite atténués
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    for side in ("bottom", "left"):
+        ax.spines[side].set_linewidth(0.8)
+
+    fig.tight_layout()
+
+    suffix = "_reduce" if reduce_activate else ""
+    out_dir = Path(f"outputs/hist/dispo/{echelle}{suffix}/{season.lower()}")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_dir / "hist_len_years.svg", format="svg", bbox_inches="tight", pad_inches=0)
+    fig.savefig(out_dir / "hist_len_years.pdf", format="pdf", bbox_inches="tight", pad_inches=0)
+    print(f"{out_dir}/hist_len_years.svg")
+    plt.close(fig)
+
+
+
+
 
 def generate_scatter(
     datasets: dict[str, pd.DataFrame],
@@ -686,8 +777,10 @@ def generate_scatter(
             season = d.get("season")
 
             if show_signif:
-                mod = mod.filter(pl.col("significant") == True)
+                # mod = mod.filter(pl.col("significant") == True)
                 obs = obs.filter(pl.col("significant") == True)
+                # toujours se baser sur les stations
+                # et calculer avec AROME correspondant même si non significatif
 
             obs_vs_mod = match_and_compare(obs, mod, col, df_obs_vs_mod)
 
@@ -795,8 +888,6 @@ def main(args):
 
     datasets = []
 
-    SIGNIFICANT_SHOW = [False] # On affiche tous les points, pas d'histoire de significativité
-
     for e in echelle:
        
         scale = "mm_j" if e == "quotidien" else "mm_h"
@@ -843,8 +934,10 @@ def main(args):
                     scale=scale
                 )
                 
-                if col_calculate in ["z_T_p", "model"]:
-                    SIGNIFICANT_SHOW = [False, True] # On choisi d'afficher ou non les points significatifs 
+            if col_calculate in ["z_T_p", "model"]:
+                SIGNIFICANT_SHOW = [True] # On choisi d'afficher ou non les points significatifs 
+            else:
+                SIGNIFICANT_SHOW = [False]
 
             logger.info(f"Echelle {e} - Saison {s} données générées")
             datasets.append(res)    # On range le résultat dans la bonne liste
@@ -875,6 +968,9 @@ def main(args):
                     col_calculate=col_calculate,
                     scale=scale
                 )
+
+        if data_type == "dispo":
+            generate_hist(res, echelle=e, season=s, reduce_activate=reduce_activate)
 
         if data_type != "dispo" and col_calculate not in ["significant", "model"]:
             for signif in SIGNIFICANT_SHOW:
