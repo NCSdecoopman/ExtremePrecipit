@@ -159,6 +159,22 @@ def gev_non_stationnaire(
     df = df.dropna(subset=[col_val])
     values = pd.Series(df[col_val].values, index=df.index)
 
+
+    # ###############################################################################
+    # # MODIF TEMP
+    # # --- retirer l'observation du maximum ---
+    # if not values.empty:
+    #     max_val = values.max()
+    #     idx_max = values[values == max_val].index
+    #     df = df.drop(index=idx_max)  # supprime aussi la covariable correspondante
+    #     values = pd.Series(df[col_val].values, index=df.index)
+    # ###############################################################################
+
+
+
+
+
+
     model_struct, param_names = MODEL_REGISTRY[model_name]
 
     # === Initialisation personnalisée basée sur les moments empiriques d'un GEV stationnaire ===
