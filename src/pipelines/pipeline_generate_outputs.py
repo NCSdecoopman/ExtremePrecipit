@@ -360,7 +360,7 @@ def generate_maps(
     obs_facecolor: Optional[str] = None,
     # Relief
     relief_path: str = "data/external/niveaux/selection_courbes_niveau_france.shp",
-    relief_linewidth: float = 0.5,
+    relief_linewidth: float = 0.3,
     relief_color: str = "#000000",
     figsize: Tuple[int, int] = (6, 6),
     diff: bool = False,
@@ -615,7 +615,7 @@ def generate_maps(
 
 
             # — Relief ------------------------------------------------------
-            relief.plot(ax=ax, color=relief_color, linewidth=relief_linewidth, alpha=0.8, zorder=2)
+            relief.plot(ax=ax, color=relief_color, linewidth=relief_linewidth, alpha=0.8, zorder=5)
 
             ax.set_axis_off()
             ax.set_rasterization_zorder(z)
@@ -666,7 +666,7 @@ def generate_maps(
     # ------------------------------------------------------------------
     # 9. Légende seule ---------------------------------------------------
     # ------------------------------------------------------------------
-    mpl.rcParams.update({"font.size": 18})
+    mpl.rcParams.update({"font.size": 22})
     fig2 = plt.figure(figsize=(1, figsize[1] * 2))
     ax2 = fig2.add_axes([0.25, 0.05, 0.5, 0.9])
     sm2 = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
@@ -690,7 +690,7 @@ def generate_maps(
     else:
         # cas continu : on laisse matplotlib trouver lui‑même les ticks
         cb2 = fig2.colorbar(sm2, cax=ax2, spacing = "proportional")
-        cb2.ax.set_ylabel(f"{legend}", rotation=90, fontsize=20)
+        cb2.ax.set_ylabel(f"{legend}", rotation=90, fontsize=22)
         # Forcer un chiffre après la virgule
         cb2.ax.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
 
@@ -702,11 +702,54 @@ def generate_maps(
     fig2.savefig(dir_path / f"{name_legend}.pdf", format="pdf", bbox_inches="tight", pad_inches=0)
     plt.close(fig2)
 
+    # --- 9bis. Légende horizontale ---------------------------------------
+    mpl.rcParams.update({"font.size": 22})
+    figh = plt.figure(figsize=(figsize[0]*1.4, 1.2))
+    axh = figh.add_axes([0.08, 0.45, 0.84, 0.35])  # [left, bottom, width, height]
+
+    smh = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
+    smh.set_array([])
+
+    if isinstance(norm, mpl.colors.BoundaryNorm) and val_col in ["significant", "model"]:
+        ticks = np.arange(len(all_cat))
+        cbh = ColorbarBase(
+            axh,
+            cmap=cmap,
+            norm=norm,
+            boundaries=np.arange(len(all_cat)+1) - 0.5,
+            ticks=ticks,
+            spacing="proportional",
+            orientation="horizontal"
+        )
+        display_labels = [TRANSFO[code] for code in all_cat]
+        cbh.ax.set_xticklabels(display_labels, rotation=0, ha="center")
+    else:
+        cbh = figh.colorbar(
+            smh,
+            cax=axh,
+            spacing="proportional",
+            orientation="horizontal"
+        )
+        # if mesure is not None:
+        #     cbh.ax.set_xlabel(f"{legend}", labelpad=6, fontsize=20)
+        cbh.ax.xaxis.set_major_formatter(FormatStrFormatter('%.0f'))
+
+    # style propre
+    cbh.outline.set_linewidth(0.8)
+    cbh.ax.tick_params(axis="x", labelsize=12, length=4, width=0.8, direction="out")
+
+    suffix_signif = "_signif" if show_signif else ""
+    suffix_diff = "_diff" if diff else ""
+    name_legend_h = f"legend_horiz{suffix_signif}{suffix_diff}"
+
+    figh.savefig(dir_path / f"{name_legend_h}.svg", format="svg", bbox_inches="tight", pad_inches=0)
+    figh.savefig(dir_path / f"{name_legend_h}.pdf", format="pdf", bbox_inches="tight", pad_inches=0)
+    plt.close(figh)
+
 
 from matplotlib.ticker import MaxNLocator, MultipleLocator
 
 def generate_hist(res: dict, echelle: str, season: str, reduce_activate: bool) -> None:
-    """Histogramme des longueurs de séries observées (années) au style article."""
     obs_df = res.get("observed")
     if obs_df is None or obs_df.height == 0:
         return
@@ -719,36 +762,30 @@ def generate_hist(res: dict, echelle: str, season: str, reduce_activate: bool) -
     bins = np.arange(-0.5, y_max + 1.5, 1)
 
     fig, ax = plt.subplots(figsize=(4, 4), dpi=600)
-    ax.hist(years, bins=bins, edgecolor="black", linewidth=0.6,
-            facecolor="#E9ECEF", alpha=1.0)
+    ax.hist(years, bins=bins, cumulative=True, density=False,
+            edgecolor="black", linewidth=0.6, facecolor="#E9ECEF", alpha=1.0)
 
-    # Axes et labels
     ax.set_xlim(-0.5, y_max + 0.5)
     ax.set_xlabel("Series length (years)", fontsize=11)
-    ax.set_ylabel("Number of stations", fontsize=11)
+    ax.set_ylabel("Cumulative number of stations", fontsize=11)
     ax.grid(axis="y", which="major", linewidth=0.3, color="#BFBFBF")
     ax.set_axisbelow(True)
-
-    # Ticks sobres : x tous les 5 ans, y entier
     ax.xaxis.set_major_locator(MultipleLocator(5))
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
     ax.tick_params(axis="both", labelsize=8, length=3, width=0.6, direction="out")
-
-    # Cadre: bas/gauche visibles, haut/droite atténués
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
     for side in ("bottom", "left"):
         ax.spines[side].set_linewidth(0.8)
-
     fig.tight_layout()
 
     suffix = "_reduce" if reduce_activate else ""
     out_dir = Path(f"outputs/hist/dispo/{echelle}{suffix}/{season.lower()}")
     out_dir.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_dir / "hist_len_years.svg", format="svg", bbox_inches="tight", pad_inches=0)
-    fig.savefig(out_dir / "hist_len_years.pdf", format="pdf", bbox_inches="tight", pad_inches=0)
-    print(f"{out_dir}/hist_len_years.svg")
+    fig.savefig(out_dir / "hist_len_years_cum.svg", format="svg", bbox_inches="tight", pad_inches=0)
+    fig.savefig(out_dir / "hist_len_years_cum.pdf", format="pdf", bbox_inches="tight", pad_inches=0)
+    print(f"{out_dir}/hist_len_years_cum.svg")
     plt.close(fig)
+
 
 
 

@@ -9,11 +9,6 @@ format:
     documentclass: article
     papersize: a4
     fontsize: 11pt
-    geometry:
-      - top=0cm
-      - bottom=0cm
-      - left=1cm
-      - right=1cm
     number-sections: true
     toc: false
 
@@ -22,6 +17,12 @@ execute:
   echo: false
   warning: false
   error: false
+
+header-includes:
+  - \usepackage{graphicx}
+  - \usepackage{tabularx}
+  - \usepackage{multirow}
+  - \usepackage{geometry}
 ---
 
 ```{python}
@@ -97,7 +98,8 @@ def _dims(fig) -> Tuple[float, float]:
     return _to_px(w), _to_px(h)
 
 
-def assemble(arome: Path, stations: Path, legend: Path, output: Path) -> None:
+
+def assemble_vertical(arome: Path, stations: Path, legend: Path, output: Path) -> None:
     # Charger les 3 SVG
     fig_arome = fromfile(str(arome))
     fig_stations = fromfile(str(stations))
@@ -143,6 +145,43 @@ def assemble(arome: Path, stations: Path, legend: Path, output: Path) -> None:
     canvas.save(str(output))
     pdf_path = str(output)[:-4] + ".pdf"
     cairosvg.svg2pdf(url=str(output), write_to=pdf_path)
+    return str(output)
+
+
+def assemble(arome: Path, stations: Path, legend: Path, output: Path) -> str:
+    # Charger les 2 cartes
+    fig_arome = fromfile(str(arome))
+    fig_stations = fromfile(str(stations))
+
+    # Dimensions via _dims existant
+    w_a, h_a = _dims(fig_arome)
+    w_s, h_s = _dims(fig_stations)
+
+    # Mise à l'échelle: même hauteur que AROME
+    scale_s = h_a / h_s if h_s != 0 else 1.0
+    root_a = fig_arome.getroot()
+    root_s = fig_stations.getroot()
+    root_s.scale(scale_s)
+
+    w_s_scaled, h_s_scaled = w_s * scale_s, h_s * scale_s
+
+    # Canvas côte à côte
+    width  = w_a + w_s_scaled
+    height = max(h_a, h_s_scaled)
+
+    canvas = SVGFigure(f"{width}px", f"{height}px")
+    canvas.root.set("viewBox", f"0 0 {width} {height}")
+
+    # Positionnement: AROME à gauche, Stations à droite
+    root_a.moveto(0, 0)
+    root_s.moveto(w_a, 0)
+
+    # Pas de légende
+    canvas.append([root_a, root_s])
+
+    os.makedirs(os.path.dirname(str(output)), exist_ok=True)
+    canvas.save(str(output))
+    cairosvg.svg2pdf(url=str(output), write_to=str(output)[:-4] + ".pdf")
     return str(output)
 
 import numpy as np
@@ -365,30 +404,78 @@ def plot_r_by_season(
 
 
 
-\setlength{\tabcolsep}{0pt}  
+\newpage
+<!-- FIGURE 1 -->
+```{=latex}
+\newlength{\SavedTextWidthA}
+\setlength{\SavedTextWidthA}{\textwidth}
 
-| \small Stations au pas de temps journalier (1959-2022) | \small Stations au pas de temps horaire (1990-2022) |
-| :---: | :---: |
-| ![](../outputs/hist/dispo/quotidien/hydro/hist_len_years.pdf) | ![](../outputs/hist/dispo/horaire/hydro/hist_len_years.pdf) |
-| n = 8198 | n = 2315 |
+\begingroup
+\newgeometry{left=0.1cm,right=0.1cm}
 
+\noindent
+\begin{minipage}[t]{\paperwidth}
+\centering
+\setlength{\tabcolsep}{0pt}%
+\renewcommand{\arraystretch}{1}%
 
-\captionof{figure}{\small Distribution du nombre d'années hydrologiques comportant au plus 10\% de valeurs manquantes des stations Météo-France au pas de temps journalier (1959–2022) et horaire (1990–2022).}
+\begin{tabular}{>{\centering\arraybackslash}p{.49\paperwidth}
+                >{\centering\arraybackslash}p{.49\paperwidth}}
+\includegraphics[width=\linewidth]{../outputs/hist/dispo/quotidien/hydro/hist_len_years_cum.pdf} &
+\includegraphics[width=\linewidth]{../outputs/hist/dispo/horaire/hydro/hist_len_years_cum.pdf} \\[-0.5mm]
+
+\small Stations at daily time step (n = 8198) &
+\small Stations at hourly time step (n = 2315)
+\end{tabular}
+
+\medskip
+\captionsetup{type=figure}%
+\hspace*{\fill}%
+\begin{minipage}{\SavedTextWidthA}
+  \captionof{figure}{\small Distribution of the number of hydrological years with at most 10\% missing values for Météo-France stations at the daily (1959-2022) and hourly (1990-2022) time steps.}
+\end{minipage}%
+\hspace*{\fill}%
+
+\end{minipage}
+\restoregeometry
+\endgroup
+```
 
 \newpage
+<!-- FIGURE 2 -->
 
-\
-\begin{center}
-  \centering \includegraphics[width=0.5\textwidth]{figures/espace_definition.pdf}
-\end{center}
-\
-\captionof{figure}{\small Cartographie du champ de calcul du modèle numérique AROME.}
+```{=latex}
+\newlength{\SavedTextWidthB}
+\setlength{\SavedTextWidthB}{\textwidth}
+
+\begingroup
+\newgeometry{left=0.1cm,right=0.1cm}
+
+\noindent
+\begin{minipage}[t]{\paperwidth}
+\centering
+\includegraphics[width=.5\SavedTextWidthB]{figures/espace_definition.pdf}
+
+\medskip
+\captionsetup{type=figure}%
+\hspace*{\fill}%
+\begin{minipage}{\SavedTextWidthB}
+  \captionof{figure}{\small Mapping of the computational domain of the AROME numerical model.}
+\end{minipage}%
+\hspace*{\fill}%
+
+\end{minipage}
+\restoregeometry
+\endgroup
+```
+
 
 
 \newpage
+<!-- FIGURE 3 -->
 
 ```{python}
-jour_pluie = assemble(
+jour_pluie = assemble_vertical(
   "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/mod_norast.svg",
   "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_norast.svg",
   "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/legend.svg",
@@ -396,7 +483,7 @@ jour_pluie = assemble(
 )
 df_jour_pluie = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "numday"), ["n", "r", "me", "delta"]]
 
-mean_pluie_jour = assemble(
+mean_pluie_jour = assemble_vertical(
   "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/mod_norast.svg",
   "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_norast.svg",
   "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/legend.svg",
@@ -405,7 +492,7 @@ mean_pluie_jour = assemble(
 df_mean_pluie_jour = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "mean"), ["n", "r", "me", "delta"]]
 
 
-mean_max_pluie_jour = assemble(
+mean_max_pluie_jour = assemble_vertical(
   "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/hydro/mod_norast.svg",
   "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/hydro/obs_norast.svg",
   "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/legend.svg",
@@ -413,7 +500,7 @@ mean_max_pluie_jour = assemble(
 )
 df_mean_max_pluie_jour = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
 
-mean_max_pluie_horaire = assemble(
+mean_max_pluie_horaire = assemble_vertical(
   "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/hydro/mod_norast.svg",
   "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/hydro/obs_norast.svg",
   "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/legend.svg",
@@ -425,19 +512,69 @@ df_mean_max_pluie_horaire = combined.loc[(combined["echelle"] == "horaire") & (c
 df_mean_max_pluie_horaire_jja = combined.loc[(combined["echelle"] == "horaire") & (combined["season"] == "jja") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
 ```
 
-\setlength{\tabcolsep}{0pt}  
-
-| \shortstack{\small Nombre de jours\\ par an\\ de précipitations} | \shortstack{\small Cumul\\ annuel\\ des précipitations} | \shortstack{\small Moyenne des maxima\\ journaliers\\ des précipitations} | \shortstack{\small Moyenne des maxima\\ horaires\\ des précipitations} |
-|:---:|:---:|:---:|:---:|
-| ![](figures/jour_pluie.pdf) | ![](figures/mean_pluie_jour.pdf) | ![](figures/mean-max_pluie_jour.pdf) | ![](figures/mean-max_pluie_horaire.pdf) |
-| \small $r =$ `{python} f'{df_jour_pluie['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_jour_pluie['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_mean_pluie_jour['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_pluie_jour['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_mean_max_pluie_jour['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_max_pluie_jour['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_mean_max_pluie_horaire['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_max_pluie_horaire['n'].iloc[0].item()}'`) |
-| ![](../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_rast_diff.pdf) | ![](../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_rast_diff.pdf) | ![](../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/hydro/obs_rast_diff.pdf) | ![](../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/hydro/obs_rast_diff.pdf) |
-| \small $ME =$ `{python} f'{df_jour_pluie['me'].iloc[0].item():+.2f}'` j \ (`{python} f'{df_jour_pluie['delta'].iloc[0].item():+.2f}'`%) | \small $ME =$ `{python} f'{df_mean_pluie_jour['me'].iloc[0].item():+.2f}'` mm/an (`{python} f'{df_mean_pluie_jour['delta'].iloc[0].item():+.2f}'`%) | \small $ME =$ `{python} f'{df_mean_max_pluie_jour['me'].iloc[0].item():+.2f}'` mm/j (`{python} f'{df_mean_max_pluie_jour['delta'].iloc[0].item():+.2f}'`%) | \small $ME =$ `{python} f'{df_mean_max_pluie_horaire['me'].iloc[0].item():+.2f}'` mm/j (`{python} f'{df_mean_max_pluie_horaire['delta'].iloc[0].item():+.2f}'`%) |
 
 
-\captionof{figure}{\small Climatologie entre le modèle AROME (première ligne), les stations Météo-France (deuxième ligne) avec la corrélation ($r$) et le nombre de stations comparés (n) ainsi que la différence AROME-Station (troisième ligne) avec le biais ($ME$) et l'écart relatif (\%) associé issues de données journalières allant de 1959 à 2022 pour une année hydrologique.}
+```{=latex}
+\newlength{\SavedTextWidthC}
+\setlength{\SavedTextWidthC}{\textwidth}
+
+\begingroup
+\providecommand{\+}{+}% neutralise \+ localement
+\renewcommand{\.}{.}% neutralise \. localement
+
+\newgeometry{left=0.1cm,right=0.1cm}
+
+\noindent
+\begin{minipage}[t]{\paperwidth}
+\centering
+\setlength{\tabcolsep}{0pt}%
+\renewcommand{\arraystretch}{1}%
+
+\begin{tabular}{>{\centering\arraybackslash}p{.24\paperwidth}
+                >{\centering\arraybackslash}p{.24\paperwidth}
+                >{\centering\arraybackslash}p{.24\paperwidth}
+                >{\centering\arraybackslash}p{.24\paperwidth}}
+\small\bfseries \shortstack{Number of days\\ per year\\ with precipitation} &
+\small\bfseries \shortstack{Annual\\ precipitation\\ total} &
+\small\bfseries \shortstack{Mean of daily\\ precipitation\\ maxima} &
+\small\bfseries \shortstack{Mean of hourly\\ precipitation\\ maxima} \\[-0.5mm]
+
+\small $r =$ `{python} f'{df_jour_pluie["r"].iloc[0].item():.2f}'` (n = `{python} f'{df_jour_pluie["n"].iloc[0].item()}'`) &
+\small $r =$ `{python} f'{df_mean_pluie_jour["r"].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_pluie_jour["n"].iloc[0].item()}'`) &
+\small $r =$ `{python} f'{df_mean_max_pluie_jour["r"].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_max_pluie_jour["n"].iloc[0].item()}'`) &
+\small $r =$ `{python} f'{df_mean_max_pluie_horaire["r"].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_max_pluie_horaire["n"].iloc[0].item()}'`) \\[-0.5mm]
+
+\includegraphics[width=\linewidth]{figures/jour_pluie.pdf} &
+\includegraphics[width=\linewidth]{figures/mean_pluie_jour.pdf} &
+\includegraphics[width=\linewidth]{figures/mean-max_pluie_jour.pdf} &
+\includegraphics[width=\linewidth]{figures/mean-max_pluie_horaire.pdf} \\[-0.5mm]
+
+\small $ME = `{python} f'{df_jour_pluie["me"].iloc[0].item():+.2f}'`\,\mathrm{j}\,(`{python} f'{df_jour_pluie["delta"].iloc[0].item():+.2f}'`\%)$ &
+\small $ME = `{python} f'{df_mean_pluie_jour["me"].iloc[0].item():+.2f}'`\,\mathrm{mm/yr}\,(`{python} f'{df_mean_pluie_jour["delta"].iloc[0].item():+.2f}'`\%)$ &
+\small $ME = `{python} f'{df_mean_max_pluie_jour["me"].iloc[0].item():+.2f}'`\,\mathrm{mm/day}\,(`{python} f'{df_mean_max_pluie_jour["delta"].iloc[0].item():+.2f}'`\%)$ &
+\small $ME = `{python} f'{df_mean_max_pluie_horaire["me"].iloc[0].item():+.2f}'`\,\mathrm{mm/h}\,(`{python} f'{df_mean_max_pluie_horaire["delta"].iloc[0].item():+.2f}'`\%)$\\[-0.5mm]
+
+\includegraphics[width=\linewidth]{../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_rast_diff.pdf} &
+\includegraphics[width=\linewidth]{../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_rast_diff.pdf} &
+\includegraphics[width=\linewidth]{../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/hydro/obs_rast_diff.pdf} &
+\includegraphics[width=\linewidth]{../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/hydro/obs_rast_diff.pdf}
+\end{tabular}
+
+\bigskip
+\captionsetup{type=figure}%
+\noindent\makebox[\paperwidth][c]{%
+  \parbox{\SavedTextWidthC}{%
+    \captionof{figure}{\small Climatology between the AROME model (first row), Météo-France stations (second row) with the correlation ($r$) and the number of stations compared (n), and the AROME–Station difference (third row) with the bias ($ME$) and the associated relative deviation (\%) derived from daily data from 1959 to 2022 and hourly data from 1990 to 2022 for a hydrological year.}%
+  }%
+}
+
+\end{minipage}
+\restoregeometry
+\endgroup
+```
 
 \newpage
+<!-- FIGURE 4 -->
 
 ```{python} 
 plot_r_by_season(combined, echelles=['quotidien', 'quotidien_reduce', 'horaire'], col_values=['numday', 'mean', 'mean-max'], nom_fichier="histo_numday_mean_mean-max")
@@ -445,9 +582,10 @@ plot_r_by_season(combined, echelles=['quotidien', 'quotidien_reduce', 'horaire']
 
 ![](figures/histo_numday_mean_mean-max.png){width=100%}
 
-\captionof{figure}{\small Corrélations des données climatologiques entre le modèle AROME et les stations Météo-France pour chacune des sources de données.}
+\captionof{figure}{\small Correlations of climatological data between the AROME model and Météo-France stations for each data source.}
 
 \newpage
+<!-- FIGURE 5 -->
 
 ```{python}
 trend_pluie_hydro = assemble(
@@ -457,38 +595,6 @@ trend_pluie_hydro = assemble(
   "figures/trend_pluie_hydro.svg"
 )
 df_trend_pluie_hydro = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "hydro") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
-
-trend_pluie_son = assemble(
-  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/son/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/son/obs_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/legend_signif.svg",
-  "figures/trend_pluie_son.svg"
-)
-df_trend_pluie_son = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "son") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
-
-trend_pluie_djf = assemble(
-  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/djf/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/djf/obs_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/legend_signif.svg",
-  "figures/trend_pluie_djf.svg"
-)
-df_trend_pluie_djf = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "djf") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
-
-trend_pluie_mam = assemble(
-  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/mam/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/mam/obs_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/legend_signif.svg",
-  "figures/trend_pluie_mam.svg"
-)
-df_trend_pluie_mam = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "mam") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
-
-trend_pluie_jja = assemble(
-  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/jja/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/jja/obs_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/legend_signif.svg",
-  "figures/trend_pluie_jja.svg"
-)
-df_trend_pluie_jja = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "jja") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
 
 trend_pluie_ond = assemble(
   "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/ond/mod_signif_norast.svg",
@@ -533,10 +639,6 @@ df_trend_pluie_jas = combined_all.loc[(combined_all["echelle"] == "quotidien") &
 | \small $r =$ `{python} f'{df_trend_pluie_hydro['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_hydro['n'].iloc[0].item()}'`) |   |   |   |
 | \small $ME =$ `{python} f'{df_trend_pluie_hydro['me'].iloc[0].item():+.2f}'`% |   |   |   |
 | ![](figures/trend_pluie_hydro.pdf) |   |   |   |
-| \small \textbf{SON} | \small \textbf{DJF} | \small \textbf{MAM} | \small \textbf{JJA} |
-| \small $r =$ `{python} f'{df_trend_pluie_son['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_son['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_pluie_djf['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_djf['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_pluie_mam['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_mam['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_pluie_jja['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_jja['n'].iloc[0].item()}'`) |
-| \small $ME =$ `{python} f'{df_trend_pluie_son['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_pluie_djf['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_pluie_mam['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_pluie_jja['me'].iloc[0].item():+.2f}'`% |
-| ![](figures/trend_pluie_son.pdf) | ![](figures/trend_pluie_djf.pdf) | ![](figures/trend_pluie_mam.pdf) | ![](figures/trend_pluie_jja.pdf) |
 | \small \textbf{OND} | \small \textbf{JFM} | \small \textbf{AMJ} | \small \textbf{JAS} |
 | \small $r =$ `{python} f'{df_trend_pluie_ond['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_ond['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_pluie_jfm['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_jfm['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_pluie_amj['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_amj['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_pluie_jas['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_pluie_jas['n'].iloc[0].item()}'`) |
 | \small $ME =$ `{python} f'{df_trend_pluie_ond['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_pluie_jfm['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_pluie_amj['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_pluie_jas['me'].iloc[0].item():+.2f}'`% |
@@ -557,38 +659,6 @@ trend_horaire_pluie_hydro = assemble(
   "figures/trend_horaire_pluie_hydro.svg"
 )
 df_trend_horaire_pluie_hydro = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "hydro") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
-
-trend_horaire_pluie_son = assemble(
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/son/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/son/obs_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/legend_signif.svg",
-  "figures/trend_horaire_pluie_son.svg"
-)
-df_trend_horaire_pluie_son = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "son") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
-
-trend_horaire_pluie_djf = assemble(
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/djf/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/djf/obs_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/legend_signif.svg",
-  "figures/trend_horaire_pluie_djf.svg"
-)
-df_trend_horaire_pluie_djf = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "djf") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
-
-trend_horaire_pluie_mam = assemble(
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/mam/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/mam/obs_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/legend_signif.svg",
-  "figures/trend_horaire_pluie_mam.svg"
-)
-df_trend_horaire_pluie_mam = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "mam") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
-
-trend_horaire_pluie_jja = assemble(
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/jja/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/jja/obs_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/legend_signif.svg",
-  "figures/trend_horaire_pluie_jja.svg"
-)
-df_trend_horaire_pluie_jja = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "jja") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
 
 trend_horaire_pluie_ond = assemble(
   "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/ond/mod_signif_norast.svg",
@@ -633,10 +703,6 @@ df_trend_horaire_pluie_jas = combined_all.loc[(combined_all["echelle"] == "horai
 | \small $r =$ `{python} f'{df_trend_horaire_pluie_hydro['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_horaire_pluie_hydro['n'].iloc[0].item()}'`) |   |   |   |
 | \small $ME =$ `{python} f'{df_trend_horaire_pluie_hydro['me'].iloc[0].item():+.2f}'`% |   |   |   |
 | ![](figures/trend_horaire_pluie_hydro.pdf) |   |   |   |
-| \small \textbf{SON} | \small \textbf{DJF} | \small \textbf{MAM} | \small \textbf{JJA} |
-| \small $r =$ `{python} f'{df_trend_horaire_pluie_son['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_horaire_pluie_son['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_horaire_pluie_djf['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_horaire_pluie_djf['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_horaire_pluie_mam['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_horaire_pluie_mam['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_horaire_pluie_jja['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_horaire_pluie_jja['n'].iloc[0].item()}'`) |
-| \small $ME =$ `{python} f'{df_trend_horaire_pluie_son['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_horaire_pluie_djf['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_horaire_pluie_mam['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_horaire_pluie_jja['me'].iloc[0].item():+.2f}'`% |
-| ![](figures/trend_horaire_pluie_son.pdf) | ![](figures/trend_horaire_pluie_djf.pdf) | ![](figures/trend_horaire_pluie_mam.pdf) | ![](figures/trend_horaire_pluie_jja.pdf) |
 | \small \textbf{OND} | \small \textbf{JFM} | \small \textbf{AMJ} | \small \textbf{JAS} |
 | \small $r =$ `{python} f'{df_trend_horaire_pluie_ond['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_horaire_pluie_ond['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_horaire_pluie_jfm['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_horaire_pluie_jfm['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_horaire_pluie_amj['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_horaire_pluie_amj['n'].iloc[0].item()}'`) | \small $r =$ `{python} f'{df_trend_horaire_pluie_jas['r'].iloc[0].item():.2f}'` (n = `{python} f'{df_trend_horaire_pluie_jas['n'].iloc[0].item()}'`) |
 | \small $ME =$ `{python} f'{df_trend_horaire_pluie_ond['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_horaire_pluie_jfm['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_horaire_pluie_amj['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_horaire_pluie_jas['me'].iloc[0].item():+.2f}'`% |
@@ -667,8 +733,8 @@ trend_pluie_quotidien_mar = assemble(
 df_trend_quotidien_pluie_mar = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "mar") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
 
 trend_pluie_quotidien_jui = assemble(
-  "../outputs/maps/gev_z_T_p/quotidien/compare_12/sat_99.0/nov/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/quotidien/compare_12/sat_99.0/nov/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_12/sat_99.0/jui/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_12/sat_99.0/jui/obs_signif_norast.svg",
   "../outputs/maps/gev_z_T_p/quotidien/compare_12/sat_99.0/legend_signif.svg",
   "figures/trend_pluie_quotidien_jui.svg"
 )
@@ -695,7 +761,7 @@ df_trend_quotidien_pluie_nov = combined_all.loc[(combined_all["echelle"] == "quo
 | \small $ME =$ `{python} f'{df_trend_quotidien_pluie_fev['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_quotidien_pluie_mar['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_quotidien_pluie_jui['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_quotidien_pluie_nov['me'].iloc[0].item():+.2f}'`% |
 | ![](figures/trend_pluie_quotidien_fev.pdf) | ![](figures/trend_pluie_quotidien_mar.pdf) | ![](figures/trend_pluie_quotidien_jui.pdf) | ![](figures/trend_pluie_quotidien_nov.pdf) |
 
-\captionof{figure}{\small Analyse saisonnière des trendances relatives de 1995 à 2022 (\%) du niveau de retour 10 ans significatif entre le modèle AROME (première ligne) et les stations Météo-France (deuxième ligne) avec la corrélation ($r$), le nombre de stations comparés (n) et le biais ($ME$) issues des maxima de précipitations au pas de temps journalier allant de 1959 à 2022.}
+\captionof{figure}{\small Analyse saisonnière des tendances relatives de 1995 à 2022 (\%) du niveau de retour 10 ans significatif entre le modèle AROME (première ligne) et les stations Météo-France (deuxième ligne) avec la corrélation ($r$), le nombre de stations comparés (n) et le biais ($ME$) issues des maxima de précipitations au pas de temps journalier allant de 1959 à 2022.}
 
 \restoregeometry
 
@@ -720,8 +786,8 @@ trend_pluie_horaire_mar = assemble(
 df_trend_horaire_pluie_mar = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "mar") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
 
 trend_pluie_horaire_jui = assemble(
-  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/nov/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/nov/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jui/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jui/obs_signif_norast.svg",
   "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
   "figures/trend_pluie_horaire_jui.svg"
 )
@@ -748,14 +814,13 @@ df_trend_horaire_pluie_nov = combined_all.loc[(combined_all["echelle"] == "horai
 | \small $ME =$ `{python} f'{df_trend_horaire_pluie_fev['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_horaire_pluie_mar['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_horaire_pluie_jui['me'].iloc[0].item():+.2f}'`% | \small $ME =$ `{python} f'{df_trend_horaire_pluie_nov['me'].iloc[0].item():+.2f}'`% |
 | ![](figures/trend_pluie_horaire_fev.pdf) | ![](figures/trend_pluie_horaire_mar.pdf) | ![](figures/trend_pluie_horaire_jui.pdf) | ![](figures/trend_pluie_horaire_nov.pdf) |
 
-\captionof{figure}{\small Analyse saisonnière des trendances relatives de 1995 à 2022 (\%) du niveau de retour 10 ans significatif entre le modèle AROME (première ligne) et les stations Météo-France (deuxième ligne) avec la corrélation ($r$), le nombre de stations comparés (n) et le biais ($ME$) issues des maxima de précipitations au pas de temps horaire allant de 1990 à 2022.}
+\captionof{figure}{\small Analyse saisonnière des tendances relatives de 1995 à 2022 (\%) du niveau de retour 10 ans significatif entre le modèle AROME (première ligne) et les stations Météo-France (deuxième ligne) avec la corrélation ($r$), le nombre de stations comparés (n) et le biais ($ME$) issues des maxima de précipitations au pas de temps horaire allant de 1990 à 2022.}
 
 \restoregeometry
 
 \newpage
 
 ```{python} 
-plot_r_by_season(combined_all , echelles=['quotidien', 'quotidien_reduce', 'horaire'], col_values=['z_T_p_signif'], nom_fichier="histo_z_T_p_signif")
 plot_r_by_season(combined_all , echelles=['quotidien', 'quotidien_reduce', 'horaire'], col_values=['z_T_p', 'z_T_p_signif'], nom_fichier="histo_z_T_p")
 ```
 

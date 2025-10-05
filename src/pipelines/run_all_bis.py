@@ -31,7 +31,7 @@ SEASON_SEAS = [
     "son", "ond"
 ]
 
-SEASONS = SEASON_SEAS + SEASON_MONTHS
+SEASONS = SEASON_SEAS #+ SEASON_MONTHS
 
 
 ############################################################
@@ -203,14 +203,14 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 # # Pipeline maps
 log(f"Lancement des générations de maps")
 
-for data_type in ["dispo"]: # "dispo", "stats", 
+for data_type in ["gev"]: # "dispo", "stats", 
                 
     if data_type == "dispo":
         COL_CALCULATE = ["n_years"]
     elif data_type == "stats":
         COL_CALCULATE = [ "numday", "mean", "mean-max"] #
     elif data_type == "gev":
-        COL_CALCULATE = ["z_T_p", "model"] # "significant", 
+        COL_CALCULATE = ["z_T_p"] # "significant", , "model"
 
     for col_calculate in COL_CALCULATE:
 
@@ -223,7 +223,7 @@ for data_type in ["dispo"]: # "dispo", "stats",
         else:
             sat = 100
                 
-        for echelle in ["quotidien", "horaire"]: # 
+        for echelle in ["quotidien"]: # , "horaire"
 
             if col_calculate in ["z_T_p"]:
                 if echelle=="horaire":
