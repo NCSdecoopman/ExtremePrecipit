@@ -25,10 +25,10 @@ SEASON_MONTHS = [
 ]
 
 SEASON_SEAS = [
-    # "djf", "jfm",
-    # "mam", "amj",
-    # "jja", "jas",
-    # "son", "ond"
+    "djf", "jfm",
+    "mam", "amj",
+    "jja", "jas",
+    "son", "ond"
 ]
 
 SEASONS = SEASON_SEAS + SEASON_MONTHS
@@ -113,86 +113,86 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 
 
 
-############################################################
-# -------------------------- GEV --------------------------
-############################################################
+# ############################################################
+# # -------------------------- GEV --------------------------
+# ############################################################
 
-# Pipeline GEV
-log(f"Lancement du traitement gev")
+# # Pipeline GEV
+# log(f"Lancement du traitement gev")
 
-for setting in ["config/observed_settings.yaml", "config/modelised_settings.yaml"]: #, ""
+# for setting in ["config/observed_settings.yaml", "config/modelised_settings.yaml"]: #, ""
 
-    for echelle in ["horaire"]: #"quotidien", 
+#     for echelle in ["horaire"]: #"quotidien", 
 
-        if echelle == "quotidien":            
-            DIFFERENTE_PERIODE = [False, True]
-        else:            
-            DIFFERENTE_PERIODE = [False] # True
+#         if echelle == "quotidien":            
+#             DIFFERENTE_PERIODE = [False, True]
+#         else:            
+#             DIFFERENTE_PERIODE = [False] # True
             
         
-        for diffente_periode in DIFFERENTE_PERIODE:
+#         for diffente_periode in DIFFERENTE_PERIODE:
         
-            if echelle == "quotidien" and not diffente_periode:
-                MODELS = [
-                    "s_gev", # Stationnaire
-                    "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
-                    "ns_gev_m1_break_year", "ns_gev_m2_break_year", "ns_gev_m3_break_year" # Non stationnaire avec point de rupture
-                    ]
-            elif echelle == "horaire" and diffente_periode:
-                MODELS = [
-                    "s_gev", # Stationnaire
-                    "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
-                    "ns_gev_m1_break_year", "ns_gev_m2_break_year", "ns_gev_m3_break_year" # Non stationnaire avec point de rupture
-                    ]
-            else:
-                MODELS = [
-                    "s_gev", # Stationnaire
-                    "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
-                    ]
+#             if echelle == "quotidien" and not diffente_periode:
+#                 MODELS = [
+#                     "s_gev", # Stationnaire
+#                     "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
+#                     "ns_gev_m1_break_year", "ns_gev_m2_break_year", "ns_gev_m3_break_year" # Non stationnaire avec point de rupture
+#                     ]
+#             elif echelle == "horaire" and diffente_periode:
+#                 MODELS = [
+#                     "s_gev", # Stationnaire
+#                     "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
+#                     "ns_gev_m1_break_year", "ns_gev_m2_break_year", "ns_gev_m3_break_year" # Non stationnaire avec point de rupture
+#                     ]
+#             else:
+#                 MODELS = [
+#                     "s_gev", # Stationnaire
+#                     "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
+#                     ]
 
-            for season in SEASONS:
-                for model in MODELS:
+#             for season in SEASONS:
+#                 for model in MODELS:
                 
-                    subprocess.run(
-                        [
-                            "python",
-                            "-m",
-                            "src.pipelines.pipeline_stats_to_gev",
-                            "--config", setting,
-                            "--echelle", echelle,
-                            "--season", season,
-                            "--model", model,
-                            "--reduce_activate", str(diffente_periode)
-                        ],
-                        check=True
-                    )
+#                     subprocess.run(
+#                         [
+#                             "python",
+#                             "-m",
+#                             "src.pipelines.pipeline_stats_to_gev",
+#                             "--config", setting,
+#                             "--echelle", echelle,
+#                             "--season", season,
+#                             "--model", model,
+#                             "--reduce_activate", str(diffente_periode)
+#                         ],
+#                         check=True
+#                     )
 
-                subprocess.run(
-                    [
-                        "python",
-                        "-m",
-                        "src.pipelines.pipeline_best_model",
-                        "--config", setting,
-                        "--echelle", echelle,
-                        "--season", season,
-                        "--reduce_activate", str(diffente_periode)
-                    ],
-                    check=True
-                )
+#                 subprocess.run(
+#                     [
+#                         "python",
+#                         "-m",
+#                         "src.pipelines.pipeline_best_model",
+#                         "--config", setting,
+#                         "--echelle", echelle,
+#                         "--season", season,
+#                         "--reduce_activate", str(diffente_periode)
+#                     ],
+#                     check=True
+#                 )
 
 
-                subprocess.run(
-                    [
-                        "python",
-                        "-m",
-                        "src.pipelines.pipeline_best_to_niveau_retour",
-                        "--config", setting,
-                        "--echelle", echelle,
-                        "--season", season,
-                        "--reduce_activate", str(diffente_periode)
-                    ],
-                    check=True
-                )
+#                 subprocess.run(
+#                     [
+#                         "python",
+#                         "-m",
+#                         "src.pipelines.pipeline_best_to_niveau_retour",
+#                         "--config", setting,
+#                         "--echelle", echelle,
+#                         "--season", season,
+#                         "--reduce_activate", str(diffente_periode)
+#                     ],
+#                     check=True
+#                 )
 
 
 
