@@ -372,13 +372,15 @@ def generate_maps(
 
     if val_col not in ["significant", "model"]:
         if col_calculate == "numday":
-            legend = "jours"
+            legend = "days"
         elif col_calculate == "mean":
-            legend = "mm/an"
+            legend = "mm/year"
         elif col_calculate == "z_T_p":
             legend = "%"
         else:
             legend = scale.replace('_', '/')
+            # normalisation des unités jour → anglais
+            legend = legend.replace("mm/j", "mm/d")
     else:
         legend = ""
 
@@ -408,6 +410,7 @@ def generate_maps(
         .to_crs("EPSG:2154")
         .clip(mask)
     )
+    relief["geometry"] = relief.geometry.simplify(500)
     # ------------------------------------------------------------------
     # 7. Colormap & Normalisation communes
     # ------------------------------------------------------------------
@@ -666,7 +669,10 @@ def generate_maps(
     # ------------------------------------------------------------------
     # 9. Légende seule ---------------------------------------------------
     # ------------------------------------------------------------------
-    mpl.rcParams.update({"font.size": 22})
+    if diff:
+        mpl.rcParams.update({"font.size": 30})
+    else:
+        mpl.rcParams.update({"font.size": 22})
     fig2 = plt.figure(figsize=(1, figsize[1] * 2))
     ax2 = fig2.add_axes([0.25, 0.05, 0.5, 0.9])
     sm2 = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
@@ -690,7 +696,10 @@ def generate_maps(
     else:
         # cas continu : on laisse matplotlib trouver lui‑même les ticks
         cb2 = fig2.colorbar(sm2, cax=ax2, spacing = "proportional")
-        cb2.ax.set_ylabel(f"{legend}", rotation=90, fontsize=22)
+        if diff:
+            cb2.ax.set_ylabel(f"{legend}", rotation=90, fontsize=30)
+        else:
+            cb2.ax.set_ylabel(f"{legend}", rotation=90, fontsize=22)
         # Forcer un chiffre après la virgule
         cb2.ax.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
 
@@ -761,18 +770,18 @@ def generate_hist(res: dict, echelle: str, season: str, reduce_activate: bool) -
     y_max = int(np.ceil(years.max()))
     bins = np.arange(-0.5, y_max + 1.5, 1)
 
-    fig, ax = plt.subplots(figsize=(4, 4), dpi=600)
+    fig, ax = plt.subplots(figsize=(3.5, 3.5), dpi=150)
     ax.hist(years, bins=bins, cumulative=True, density=False,
             edgecolor="black", linewidth=0.6, facecolor="#E9ECEF", alpha=1.0)
 
     ax.set_xlim(-0.5, y_max + 0.5)
-    ax.set_xlabel("Series length (years)", fontsize=11)
-    ax.set_ylabel("Cumulative number of stations", fontsize=11)
+    ax.set_xlabel("Series length (years)", fontsize=7)
+    ax.set_ylabel("Cumulative number of stations", fontsize=7) if echelle=="quotidien" else ax.set_ylabel("")
     ax.grid(axis="y", which="major", linewidth=0.3, color="#BFBFBF")
     ax.set_axisbelow(True)
     ax.xaxis.set_major_locator(MultipleLocator(5))
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-    ax.tick_params(axis="both", labelsize=8, length=3, width=0.6, direction="out")
+    ax.tick_params(axis="both", labelsize=6, length=3, width=0.6, direction="out")
     ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
     for side in ("bottom", "left"):
         ax.spines[side].set_linewidth(0.8)
@@ -843,9 +852,9 @@ def generate_scatter(
 
             # Légende unités
             if col_calculate == "numday":
-                legend = "jours"
+                legend = "days"
             elif col_calculate == "mean":
-                legend = "mm/an"
+                legend = "mm/year"
             elif col_calculate == "z_T_p":
                 legend = "%"
             else:
