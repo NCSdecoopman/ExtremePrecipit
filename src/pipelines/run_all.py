@@ -203,12 +203,12 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 # # Pipeline maps
 log(f"Lancement des générations de maps")
 
-for data_type in ["stats", "gev"]: # "dispo", "stats",  "gev"
+for data_type in ["stats"]: #  "dispo", "gev"
                 
     if data_type == "dispo":
         COL_CALCULATE = ["n_years"]
     elif data_type == "stats":
-        COL_CALCULATE = [ "numday", "mean", "mean-max"] #
+        COL_CALCULATE = ["mean-max"] # "numday", "mean", 
     elif data_type == "gev":
         COL_CALCULATE = ["z_T_p"] # "significant", , "model"
 
@@ -223,14 +223,14 @@ for data_type in ["stats", "gev"]: # "dispo", "stats",  "gev"
         else:
             sat = 100
                 
-        for echelle in ["quotidien", "horaire"]: # 
+        for echelle in ["quotidien"]: # "horaire", 
 
             if col_calculate in ["z_T_p"]:
                 if echelle=="horaire":
                     sat = 90
 
             if echelle == "quotidien":            
-                DIFFERENTE_PERIODE = [False] # 
+                DIFFERENTE_PERIODE = [False, True] # 
             else:            
                 DIFFERENTE_PERIODE = [False] # 
 
@@ -240,7 +240,7 @@ for data_type in ["stats", "gev"]: # "dispo", "stats",  "gev"
                     SEASON_GENERATE = [["hydro"]]
                 elif data_type == "stats":
                     if col_calculate == "mean-max":
-                        SEASON_GENERATE = [["hydro", *SEASON_SEAS]]
+                        SEASON_GENERATE = [SEASON_MONTHS] #["hydro", *SEASON_SEAS]
                     else:
                         SEASON_GENERATE = [["hydro"], SEASON_SEAS] # hydro doit être calculer séparement
                 else:
@@ -266,6 +266,6 @@ for data_type in ["stats", "gev"]: # "dispo", "stats",  "gev"
 
 
 # subprocess.run(
-#     ["quarto", "render", "article/article_2.qmd"],
+#     ["quarto", "render", "article/article.qmd"],
 #     check=True
 # )
