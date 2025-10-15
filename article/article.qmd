@@ -1,0 +1,1353 @@
+---
+title: "Characterization and evolution of hourly extreme precipitation in France using an Explicit-Convection Regional Climate Model"
+
+lang: fr
+bibliography: bibliography.bib
+
+format:
+  pdf:
+    documentclass: article
+    papersize: a4
+    fontsize: 11pt
+    number-sections: true
+    toc: false
+
+execute:
+  eval: true
+  echo: false
+  warning: false
+  error: false
+
+geometry: margin=1.5cm   # ajuste les marges ici
+linestretch: 1.2         # espacement des lignes
+
+header-includes:
+  - \usepackage{lineno}  # package pour la numérotation des lignes
+  - \linenumbers
+  - \renewcommand\thelinenumber{\arabic{linenumber}} 
+  - \setcounter{linenumber}{1}
+  - \modulolinenumbers[5]   # affiche un numéro tous les 10 lignes
+
+  - \usepackage{graphicx}
+  - \usepackage{tabularx}
+  - \usepackage{multirow}
+  - \usepackage{geometry}
+---
+
+Nicolas Decoopman, Juliette Blanchet (Univ. Grenoble Alpes, CNRS, INRAE, IRD, Grenoble INP*, IGE, 38000 Grenoble, France), Antoine Blanc (RTM, ONF, 38000 Grenoble, France).
+
+
+**Abstract.** Climate change is intensifying the global water cycle, with extreme precipitation events increasing in frequency and intensity. While trends in daily precipitation extremes are well-documented, sub-daily extremes—critical for flash flood risk—remain poorly characterized, especially in France, due to limited long-term, high-resolution observations. This study evaluates the ability of the AROME regional climate model (2.5 km resolution, 1959–2022), forced by ERA5 reanalysis, to reproduce observed hourly precipitation extremes and their trends, using a dense network of Météo-France stations.
+
+We first validate AROME’s climatology against station data, showing that the model accurately captures spatial patterns of precipitation frequency, cumulative totals, and daily maxima, but systematically underestimates hourly extremes, particularly in summer. Correlation with observations is high for daily metrics (*r* > 0.9) but drops for hourly maxima (*r* = 0.6–0.7), reflecting challenges in resolving convective processes at 2.5 km resolution.
+
+Using extreme value theory (GEV modeling), we then analyze trends in 10-year return levels for both daily and hourly extremes. At the daily scale, AROME reproduces observed positive trends in southeastern France (e.g., +20–30% in the Mercantour and Rhône Valley), consistent with previous studies and Clausius–Clapeyron scaling. At the hourly scale, trends are more heterogeneous and less robust, with significant increases in February, March, and November, but high spatial variability and low model-observation correlation in summer. Filtering for statistically significant trends improves agreement, especially in winter and late autumn, but hourly extremes remain poorly captured in spring and summer.
+
+Our results highlight the added value of explicit-convection models for extreme precipitation studies, while underscoring their limitations for convective extremes at resolutions coarser than 1 km. The Rhône Valley emerges as a hotspot for intensifying hourly extremes, driven by increased moisture flux and orographic enhancement. This work provides the first national-scale assessment of hourly precipitation trends in France, offering new insights for flood risk management and climate adaptation strategies.
+
+**Keywords.** Extreme precipitation, climate change, convection-permitting model, AROME, sub-daily trends, France, extreme value theory, flash floods, Clausius–Clapeyron scaling
+
+```{python}
+from __future__ import annotations
+
+import sys
+import os
+from pathlib import Path
+from typing import Tuple
+
+import pandas as pd
+
+from svgutils.transform import fromfile, SVGFigure
+import cairosvg
+
+def _to_px(value: str | None) -> float:
+    """
+    Convertit une longueur SVG (px, mm, cm, pt, in) en pixels (float).
+
+    Si `value` est None ou vide, retourne 0.
+    """
+    if not value:
+        return 0.0
+    value = value.strip()
+    num = ''
+    unit = ''
+    for ch in value:
+        if ch.isdigit() or ch in '.-':
+            num += ch
+        else:
+            unit += ch
+    if not num:
+        return 0.0
+    numf = float(num)
+    unit = unit.strip().lower()
+    if unit in ('', 'px'):
+        return numf
+    if unit == 'mm':
+        return numf * 3.779527559055  # 96 dpi
+    if unit == 'cm':
+        return numf * 37.79527559055
+    if unit == 'in':
+        return numf * 96
+    if unit == 'pt':
+        return numf * 1.3333333333333  # 1 pt = 1/72 in
+    # Fallback: assume pixels
+    return numf
+
+
+def _dims(fig) -> Tuple[float, float]:
+    """
+    Renvoie (width, height) de `fig` en pixels.
+
+    1) viewBox (les 2 derniers termes)
+    2) attributs width/height de la racine
+    3) fig.get_size()
+    """
+    root = fig.root  # Correction ici : on accède à la balise <svg>
+    viewbox = root.get('viewBox')
+    if viewbox:
+        parts = [p for p in viewbox.replace(',', ' ').split() if p]
+        if len(parts) == 4:
+            return float(parts[2]), float(parts[3])
+
+    # attributs width/height sur la balise <svg>
+    w_attr = root.get('width')
+    h_attr = root.get('height')
+    if w_attr and h_attr:
+        return _to_px(w_attr), _to_px(h_attr)
+
+    # fallback
+    w, h = fig.get_size()
+    return _to_px(w), _to_px(h)
+
+
+
+def assemble_vertical(arome: Path, stations: Path, legend: Path, output: Path) -> None:
+    # Charger les 3 SVG
+    fig_arome = fromfile(str(arome))
+    fig_stations = fromfile(str(stations))
+    fig_legend = fromfile(str(legend))
+
+    # Dimensions
+    w_arome, h_arome = _dims(fig_arome)
+    w_stations, h_stations = _dims(fig_stations)
+    w_leg, h_leg = _dims(fig_legend)
+
+    # Canvas global
+    w_maps = max(w_arome, w_stations)
+    h_maps = h_arome + h_stations
+    height = h_maps  # somme des deux cartes
+
+    # Facteur d'échelle pour que la légende fasse 1.5 fois la hauteur de la carte AROME
+    scale_leg = (1.5 * h_arome) / h_leg
+    w_leg_scaled = w_leg * scale_leg
+    h_leg_scaled = h_leg * scale_leg  # = 1.5 * h_arome
+
+    width = w_maps + w_leg_scaled  # légende à droite
+
+    canvas = SVGFigure(f"{width}px", f"{height}px")
+    canvas.root.set('viewBox', f"0 0 {width} {height}")
+
+    # Racines
+    root_arome = fig_arome.getroot()
+    root_stations = fig_stations.getroot()
+    root_legend = fig_legend.getroot()
+
+    # Redimensionnement de la légende
+    root_legend.scale(scale_leg, scale_leg)
+
+    # Positionnement
+    root_stations.moveto(0, h_arome)
+    # Centrage vertical de la légende sur la hauteur totale
+    y_leg = (h_maps - h_leg_scaled) / 2
+    root_legend.moveto(w_maps, y_leg)
+
+    canvas.append([root_arome, root_stations, root_legend])
+
+    os.makedirs(os.path.dirname(str(output)), exist_ok=True)
+    canvas.save(str(output))
+    pdf_path = str(output)[:-4] + ".pdf"
+    cairosvg.svg2pdf(url=str(output), write_to=pdf_path)
+    return str(output)
+
+
+def assemble(arome: Path, stations: Path, legend: Path, output: Path) -> str:
+    # Charger les 2 cartes
+    fig_arome = fromfile(str(arome))
+    fig_stations = fromfile(str(stations))
+
+    # Dimensions via _dims existant
+    w_a, h_a = _dims(fig_arome)
+    w_s, h_s = _dims(fig_stations)
+
+    # Mise à l'échelle: même hauteur que AROME
+    scale_s = h_a / h_s if h_s != 0 else 1.0
+    root_a = fig_arome.getroot()
+    root_s = fig_stations.getroot()
+    root_s.scale(scale_s)
+
+    w_s_scaled, h_s_scaled = w_s * scale_s, h_s * scale_s
+
+    # Canvas côte à côte
+    width  = w_a + w_s_scaled
+    height = max(h_a, h_s_scaled)
+
+    canvas = SVGFigure(f"{width}px", f"{height}px")
+    canvas.root.set("viewBox", f"0 0 {width} {height}")
+
+    # Positionnement: AROME à gauche, Stations à droite
+    root_a.moveto(0, 0)
+    root_s.moveto(w_a, 0)
+
+    # Pas de légende
+    canvas.append([root_a, root_s])
+
+    os.makedirs(os.path.dirname(str(output)), exist_ok=True)
+    canvas.save(str(output))
+    cairosvg.svg2pdf(url=str(output), write_to=str(output)[:-4] + ".pdf")
+    return str(output)
+
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+
+def combined_metrics_df(name_file: str):
+    base_dir = Path("../outputs")         # dossier racine à explorer
+    csv_paths = list(base_dir.rglob(name_file))
+
+    frames = []
+    for path in csv_paths:
+        try:
+            df = pd.read_csv(path)
+            df["source"] = str(path.relative_to(base_dir))  # garder la provenance
+            frames.append(df)
+        except Exception as exc:                             # CSV illisible
+            print(f"⚠️  Fichier ignoré {path}: {exc}")
+
+    if not frames:
+        raise SystemExit("Aucun metrics.csv trouvé !")
+
+    # Concaténation puis export
+    combined = pd.concat(frames, ignore_index=True)
+
+    # --- harmonisation des échelles ---
+    # cas quotidien_reduce
+    mask_q = combined["source"].str.contains("quotidien_reduce", na=False)
+    combined.loc[mask_q & (combined["echelle"] == "quotidien"), "echelle"] = "quotidien_reduce"
+
+    # cas horaire_reduce
+    mask_h = combined["source"].str.contains("horaire_reduce", na=False)
+    combined.loc[mask_h & (combined["echelle"] == "horaire"), "echelle"] = "horaire_reduce"
+
+    return combined
+
+combined = combined_metrics_df("metrics.csv")
+combined_signif = combined_metrics_df("metrics_signif.csv")
+combined_signif["col_calculate"] = combined_signif["col_calculate"].astype(str) + "_signif"
+combined_all = pd.concat([combined, combined_signif], ignore_index=True)
+
+
+import math
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+
+
+def plot_r_by_season(
+    df,
+    echelles,
+    col_values,          # <-- plusieurs indicateurs (ex. ['numday', 'mean', 'mean-max'])
+    nom_fichier,         # préfixe du fichier (le numéro du facet est ajouté automatiquement)
+    col_plot: str="r"
+):
+    """
+    Trace un bar‑chart groupé « r » par saison, pour plusieurs indicateurs.
+    Produit un seul PNG contenant un facet‑grid (nrows × ncols).
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+    echelles : list[str]
+        Sous-ensemble d'échelles à garder (ex. ['quotidien', 'horaire'])
+    col_values : list[str]
+        Liste des valeurs cibles de la colonne 'col_calculate'
+    nom_fichier : str
+        Nom de base du fichier PNG (sans extension)
+    """
+    ncols=len(col_values)
+
+    label_map = {
+        "numday": "Number of rainy days",
+        "mean": "Total precipitation",
+        "mean-max": "Mean of maxima",
+        "z_T_p": "Significant and non-significant trend",
+        "z_T_p_signif": "Significant trend"
+    }
+
+
+    # ---------------------------------------------
+    # 0) Préparation de la grille de sous‑graphes
+    # ---------------------------------------------
+    n_facets = len(col_values)
+    ncols = max(1, min(ncols, n_facets))
+    nrows = math.ceil(n_facets / ncols)
+
+    fig, axes = plt.subplots(
+        nrows=nrows,
+        ncols=ncols,
+        figsize=(12, 5 * nrows),
+        sharey=True
+    )
+    # axes → tableau 1D pour itération uniforme
+    axes = np.atleast_1d(axes).flatten()
+
+    # Pour récupérer une seule fois handles/labels de la légende
+    first_handles, first_labels = None, None
+
+    # ------------------------------------------------------------------
+    # Boucle sur chaque col_value demandé → un subplot par indicateur
+    # ------------------------------------------------------------------
+    for ax, col_value in zip(axes, col_values):
+        # --- 1) Filtrage identique ---
+        sub = df.loc[
+            (df["echelle"].isin(echelles)) &
+            (df["col_calculate"] == col_value),
+            ["season", "echelle", col_plot]
+        ]
+        if sub.empty:
+            ax.set_visible(False)
+            ax.set_title(f"Aucune donnée pour '{col_value}'")
+            continue
+
+        sub["season"] = sub["season"].str.upper()
+
+        # --- 2) Ordre fixe ---
+        ordre_total = [
+            "HYDRO", 
+            "SON", "DJF", "MAM", "JJA",
+            "OND", "JFM", "AMJ", "JAS",
+            "SEP", "OCT", "NOV", "DEC", "JAN", "FEV", 
+            "MAR", "AVR", "MAI", "JUI", "JUILL", "AOU"
+        ]
+        saisons_pres = [s for s in ordre_total if s in sub["season"].unique()]
+
+        # --- 3) Renommage des échelles ---
+        rename_map = {
+            "quotidien":        "Daily (1959-2022)",
+            "quotidien_reduce": "Daily (1990-2022)",
+            "horaire":          "Hourly (1990-2022)",
+        }
+
+        fr2en_month = {
+            "JAN": "JAN", "FEV": "FEB", "MAR": "MAR", "AVR": "APR",
+            "MAI": "MAY", "JUI": "JUN", "JUILL": "JUL",
+            "AOU": "AUG", "SEP": "SEP", "OCT": "OCT",
+            "NOV": "NOV", "DEC": "DEC"
+        }
+
+
+        # --- 4) Pivot ---
+        pivot = (
+            sub.pivot(index="season", columns="echelle", values=col_plot)
+               .rename(columns=rename_map)
+               .reindex(saisons_pres)
+        )
+
+        # --- 5) Colonnes dans l’ordre demandé ---
+        ordre_cols = [
+            rename_map[k] for k in ["quotidien", "quotidien_reduce", "horaire"]
+            if rename_map[k] in pivot.columns
+        ]
+        pivot = pivot[ordre_cols]
+
+        # --- 6) Couleurs ---
+        couleurs = ["black", "dimgray", "lightgray"][:pivot.shape[1]]
+
+        # --- 7) Bar chart groupé ---
+        x = np.arange(len(pivot))
+        largeur = 0.8 / pivot.shape[1]
+
+        for i, (col, couleur) in enumerate(zip(pivot.columns, couleurs)):
+
+            bars = ax.bar(
+                x + i * largeur,
+                pivot[col],
+                width=largeur,
+                color=couleur,
+                label=col
+            )
+
+        # --- 8) Axes, grille, ticks ---
+
+        # map index for display: prefer month-translation, else nice season or title-cased original
+        display_labels = []
+        for s in pivot.index:
+            if s in fr2en_month:
+                display_labels.append(fr2en_month[s])
+            else:
+                # If it's like 'JUILL' or other variants
+                if s in fr2en_month:
+                    display_labels.append(fr2en_month[s])
+                else:
+                    # fallback: capitalize first letter and lowercase the rest
+                    display_labels.append(s)
+
+        ax.set_xticks(
+            x + largeur * (pivot.shape[1] - 1) / 2,
+            pivot.index
+        )
+        ax.set_xticklabels(display_labels, rotation=45)
+        ax.set_xlabel("")
+        if col_plot=="me":
+          ax.set_ylabel("Δ (AROME - Stations) (mm/h)")
+        else:
+          ax.set_ylabel(col_plot)
+        ax.set_title(label_map.get(col_value, col_value))   # titre lisible pour chaque subplot)
+
+        if col_plot=="r":
+          ax.set_ylim(top=1)   # <-- Forcer ymax à 1
+          ax.yaxis.set_major_locator(mticker.MultipleLocator(0.1))
+          ax.yaxis.set_minor_locator(mticker.MultipleLocator(0.02))
+        else:
+          ax.yaxis.set_major_locator(mticker.MultipleLocator(0.5))
+          ax.yaxis.set_minor_locator(mticker.MultipleLocator(0.25))
+
+        ax.grid(axis="y", which="major", linestyle="--", alpha=0.8)
+        ax.grid(axis="y", which="minor", linestyle=":",  alpha=0.5)
+
+        # mémoriser les handles/labels la première fois
+        if first_handles is None:
+            first_handles, first_labels = ax.get_legend_handles_labels()
+
+        # supprimer la légende locale seulement si elle existe
+        leg = ax.get_legend()
+        if leg is not None:
+            leg.remove()
+
+
+    # ------------------------------------------------------------------
+    # 9) Légende globale (ligne en‑haut, centrée)
+    # ------------------------------------------------------------------
+    if first_handles:
+        fig.legend(
+            first_handles,
+            first_labels,
+            loc="lower center",
+            ncol=len(first_labels),
+            bbox_to_anchor=(0.5, 1.02)
+        )
+
+    fig.tight_layout()
+    fig.subplots_adjust(top=0.90)  # laisser de l’espace pour la légende globale
+
+    # ------------------------------------------------------------------
+    # 10) Sauvegarde
+    # ------------------------------------------------------------------
+    fig.savefig(f"figures/{nom_fichier}.png", dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def assemble_un(carte: Path, legend: Path, output: Path) -> str:
+    """
+    Assemble une carte SVG et sa légende à droite.
+    La légende est mise à l'échelle pour avoir exactement la même hauteur que la carte.
+    Exporte aussi un PDF à côté du SVG.
+    """
+    # Charger les SVG
+    fig_map = fromfile(str(carte))
+    fig_leg = fromfile(str(legend))
+
+    # Dimensions (en px)
+    w_map, h_map = _dims(fig_map)
+    w_leg, h_leg = _dims(fig_leg)
+    if h_map == 0 or h_leg == 0:
+        raise ValueError("Hauteur nulle détectée dans la carte ou la légende.")
+
+    # Mise à l'échelle de la légende pour égaler la hauteur de la carte
+    scale_leg = h_map / h_leg
+    w_leg_scaled = w_leg * scale_leg
+    h_leg_scaled = h_leg * scale_leg  # = h_map
+
+    # Canvas final
+    width  = w_map + w_leg_scaled
+    height = h_map
+    canvas = SVGFigure(f"{width}px", f"{height}px")
+    canvas.root.set("viewBox", f"0 0 {width} {height}")
+
+    # Racines et transformations
+    root_map = fig_map.getroot()
+    root_leg = fig_leg.getroot()
+    root_leg.scale(scale_leg, scale_leg)
+
+    # Positionnement
+    root_map.moveto(0, 0)
+    # Centrage vertical robuste en cas d'arrondis
+    y_leg = max(0, (h_map - h_leg_scaled) / 2.0)
+    root_leg.moveto(w_map, y_leg)
+
+    # Assemblage
+    canvas.append([root_map, root_leg])
+
+    # Sauvegardes
+    os.makedirs(os.path.dirname(str(output)), exist_ok=True)
+    canvas.save(str(output))
+    cairosvg.svg2pdf(url=str(output), write_to=str(output)[:-4] + ".pdf")
+    return str(output)
+
+```
+
+# Introduction and context
+
+**Climate change** is driving a warming of the planet’s surface air, with a more pronounced increase over land than over oceans [@IPCC2021]. Global warming has reached +1.1°C worldwide, +1.7°C in metropolitan France, and +2°C in the French Alps compared to the pre-industrial era. Furthermore, the Clausius-Clapeyron relation indicates that warmer air can hold more moisture (+7% per °C) [@clapeyron1834]. Due to buoyancy (Archimedes' principle), warm air surrounded by cooler air tends to rise. As warm air ascends in the atmosphere, it undergoes adiabatic cooling, leading to the condensation of water vapor and the formation of precipitation [@meteofrance]. However, under calm conditions, the central portion of the precipitation distribution does not fully capitalize on this excess moisture. Energetic constraints (radiative balance, evaporation, ocean-air exchanges) and dynamic constraints (subsidence, synoptic winds) limit the increase in mean precipitation to only 1–3% per °C [@IPCC2021]. In contrast, during intense convective events (thunderstorms, rapid cyclogenesis), rapid ascent condenses nearly all of this surplus, causing short-duration extreme rainfall to increase by 5–8% per °C—almost matching the theoretical potential. Extreme precipitation closely follows the Clausius-Clapeyron scaling, whereas mean rainfall remains influenced by numerous other energetic and dynamic factors [@ogorman2015contrasting]. Thus, climate warming theoretically leads to an increase in extreme precipitation, though this increase varies with changes in atmospheric circulation and can be locally amplified [@blanchet2021explaining].
+
+**Extreme precipitation events** are defined as intense rainfall over short durations (1 hour to 24 hours), corresponding to the upper tail of the precipitation intensity distribution. There is no consensus on what constitutes an "extreme" event. Some authors study precipitation intensities above the 99th percentile or seasonal/annual maxima, while others define extreme precipitation as events rarely or never encountered in a human lifetime (e.g., precipitation levels expected once every 10, 20, or 50 years). Extreme events are at the heart of climate and societal concerns, as they account for the majority of costs associated with flooding, landslides, and infrastructure failures [@IPCC_2022_WGIII]. In 2024, numerous such events made headlines, including in Nepal, Afghanistan, Central Europe, eastern Spain, and France [@wmo2024]. Notably, in June 2024, intense high-altitude rainfall contributed to major flooding in the Écrins massif [@Blanc2024]; in October 2024, over 600 mm of rain in 48 hours caused widespread flooding in the Ardèche department [@MeteoFrance2024_episodesArdeches]; and in May 2025, extremely intense but short-lived thunderstorms (locally exceeding 120 mm/h) caused extensive damage in southern Var [@MeteoFrance2025].
+
+**Daily precipitation extremes** have increased in intensity and frequency across more than half of the world’s land regions, at a rate close to +7% per °C of warming [@IPCC2021]. Some regional studies suggest similar trends in a significant proportion of land areas [@Donat2013, @Donat2016]. In France, however, signals are far more heterogeneous and less pronounced than for temperature, with strong regional variations. In most regions, trends remain weak or non-significant, and only in certain areas—particularly the southeast—are clear signals detected. In this region, the frequency of extreme Mediterranean episodes (cumulated rainfall > 200 mm in 24 hours) has doubled between 1961 and 2020, although interannual variability remains high [@meteofrance2024_episodesMediterraneens]. The mean intensity of daily extremes has increased by +22% between 1961 and 2015 [@Ribes2019]. At the national scale, no significant trend was detectable in annual maxima of daily precipitation until the 1990s. Since then, some studies report increases of +20% to +40%, though these estimates remain sensitive to the period and analytical method [@Donat2016]. In the southeastern Alps, the increase in 20-year return level daily precipitation in autumn (1958–2017) could reach an order of magnitude comparable to its mean value (~+100%) [@blanchet2021explaining]. Projections indicate that a +4°C warming scenario could lead to an average increase of ~+15% in daily extreme rainfall across France, and up to +20% in the northern half [@soubeyroux:hal-04991790]. There remains strong spatial and interannual variability [@IPCC2021].
+
+**Hourly extremes**, measured at 1-hour or shorter time steps, are essential for characterizing intense convective phenomena (thunderstorm downpours, stationary thunderstorms) often responsible for flash floods. Due to the lack of long, spatially dense time series, there is no systematic global analysis of sub-daily trends; available data are often sparse, short, and non-significant. Nevertheless, several regional studies detect an intensification of hourly extremes across nearly all continents, though global confidence in an overall increase remains very low [@IPCC2021]. Increases in extreme rainfall have been observed in the United States, China (summer), Australia (annually), South Africa (summer), India, Malaysia, and Italy. Depending on the method and region, studies highlight sensitivities ranging from +7% to +13% per °C—up to twice the Clausius-Clapeyron rate [@molnar2015relation]. In France, few regional studies explicitly characterize this increase in hourly extremes. Observed maximum 1-hour values now reach 40–60 mm during major Mediterranean events, compared to 30–40 mm in the 1980s–1990s [@meteofrance2024_episodesMediterraneens]. Only the study by @Berghald2025 appears to quantify trends in hourly extremes in the Alps. However, trends in hourly return levels remain weak to non-significant, with no clear spatial or seasonal coherence, contrasting with the robust signals observed at daily time scales. This suggests that hourly extremes do not yet show a clear climate signal [@Soubeyroux01022015].
+
+**The climatological observation network** developed in the late 19th century relied on manual readings, typically once per day (around 6 UTC, which still often defines the meteorological day). A nationwide network became available from the 1950s–1960s, when coverage became sufficiently dense. Hundreds of precipitation time series exist today [@meteo-france_2020_breve_observation_classique]. At the hourly scale, the first operational automatic stations (SATIN) date back to 1967. The generalization and modernization of the real-time network occurred primarily with RADOME from 1996 onward, making hourly accumulations widely available and disseminated from the 1990s–2000s. Today, the national radar mosaic provides 5-minute data at 1-km resolution, publicly accessible in archives. ANTILOPE rainfall fields (radar + rain gauges) are operationally produced at a 15-minute resolution since 2017.
+
+**Climate model simulations** of precipitation provide: 1) data preceding the observed record (pre-1990); and 2) spatially complete and physically consistent fields, particularly useful in poorly instrumented areas. Global Circulation Models (GCMs) were not suitable for this study, as convection is parameterized, leading to over-smoothed and poorly located hourly precipitation at resolutions of 12–200 km. The emergence of regional climate models with explicit convection (CPMs, Convection-Permitting Models) offers a unique opportunity: they realistically simulate the dynamics of intense precipitation at fine spatial and temporal scales over long periods. For this study, the model must be a Regional Climate Model (RCM, 1–4 km) with explicit convection (CPM) to explicitly represent the initiation, organization, and propagation of convective systems and their hourly extremes. Models meeting these criteria include: WRF (3 km), COSMO-CLM (2.8 km), AROME-Climate (2.5 km) [@cnrm_arome2007], ICON-LEM (2.5 km), UKCP CPM (2.2 km), CP4-Africa, and ensembles such as EURO-CP/FPS-Convection. A CP-RCM must be initialized (3D fields of temperature, humidity, pressure, wind, etc.) and laterally forced. Historically, these forcings used ERA-Interim (80 km / 6h / 1979–2019), now replaced by ERA5 (25–31 km / 1h / 1949–present), which dynamically drives a high-resolution regional model. As ERA5 is a reanalysis, the regional model it forces aims to reconstruct past hourly weather conditions, rather than producing prospective or stochastic climate simulations. This approach allows, for example, the characterization of convective environments [@ecmwf_era5_data_documentation], which can then be refined using a CPM to explicitly simulate convection. The AROME model (Application of Research to Operations at MEsoscale, 2.5 km / 1h), forced by ERA5 over the period 1959–2022, meets these criteria and was selected as the numerical model for this study. To our knowledge, it has not yet been evaluated for this purpose.
+
+**Goal.** While trends in daily precipitation extremes are now well-documented at global and regional scales, hourly precipitation—crucial for flash floods—still suffers from limited documentation, particularly in France. Long, homogeneous observations are rare, trends are often non-significant, and targeted studies remain few. This knowledge gap stems from both the short duration of available hourly series and the physical complexity of convective processes driving these extremes. The AROME reanalysis forced by ERA5 (1959–2022) provides a unique dataset for studying hourly precipitation extremes in France. However, the validity of simulated extremes by this model has never been evaluated, either statistically or physically. Our study addresses this gap by assessing the ability of the AROME model to reproduce observed hourly extremes, comparing modeled and observed trends over several decades. It thus makes a dual contribution: 1) methodological, by evaluating new simulations against extreme observations; and 2) climatic, by documenting—for the first time—the temporal evolution of hourly extremes in France over 60 years using a validated explicit-convection model. This work sheds light on how hourly extremes evolve in a warming climate while assessing the relevance of CPMs for hydrometeorological impact studies at the local scale.
+
+# Methodology
+
+This study focuses on metropolitan France. The primary objective is to validate the model (AROME grid points) against observations (Météo-France stations) using simple yet representative precipitation regime indicators (correlation and bias). This step is conducted under stationary conditions, meaning long-term trends or regime shifts are not yet interpreted. Once this stationary validation is established, the analysis will be extended to non-stationary contexts (trends and variability of extremes).
+
+## Data Used
+
+This work utilizes precipitation data from Météo-France observations [@meteofrance2024] at daily (1959–2022) and hourly (1990–2022) time steps, as illustrated in Figure 1. Since the 2000s, homogenization procedures (PRODIGE, followed by HOMER) have been implemented in the BDClim database [@meteo-france_2020_breve_observation_classique].
+
+<!-- FIGURE 1 -->
+```{=latex}
+\begin{figure}[htp]
+\centering
+\begin{subfigure}{0.45\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{../outputs/hist/dispo/quotidien/hydro/hist_len_years_cum.pdf}
+  \caption{\small Stations at daily time step (n = 8198)}
+\end{subfigure}%
+\hfill
+\begin{subfigure}{0.45\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{../outputs/hist/dispo/horaire/hydro/hist_len_years_cum.pdf}
+  \caption{\small Stations at hourly time step (n = 2315)}
+\end{subfigure}
+
+\caption{\small Distribution of the number of hydrological years with at most 10\% missing values for Météo-France stations at the daily (1959-2022) and hourly (1990-2022) time steps.}
+\end{figure}
+```
+
+The CP-RCM AROME model, recently forced by the ERA5 reanalysis, provides hourly precipitation data from 1959 to 2022 at a 2.5 km resolution over the computational domain shown in Figure 2 [@arome2014]. In metropolitan France, 87,536 grid points are generated. As part of a second internship supervised by Cécile Caillaud (Météo-France), Mathis Chevé conducted a joint study on the Clausius-Clapeyron relation, revealing that temperature trends in the model are twice as weak as observed trends. It is therefore important to note that the Clausius-Clapeyron-related component of extreme trends will theoretically be half as strong as observed trends.
+
+<!-- FIGURE 2 -->
+```{=latex}
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/espace_definition.pdf}
+\caption{\small Mapping of the computational domain of the AROME numerical model.}
+\end{figure}
+```
+
+At each geographical point, we calculate the proportion of missing data in the time series for each season (or month) and year. We exclude years where this proportion exceeds the 10% threshold. The number of valid remaining years is then derived. Only geographical points with at least the minimum required number of years are retained (50 years for the 1959–2022 period and 25 years for the 1990–2022 period). Subsequent analyses are restricted to this subset of stations and years. 
+
+## Indicators definitions
+
+Seasons are defined as follows: **SON**: September (SEP), October (OCT), November (NOV), **DJF**: December (DEC), January (JAN), February (FEB), **MAM**: March (MAR), April (APR), May (MAY), **JJA**: June (JUN), July (JUL), August (AUG) and **OND**: October (OCT), November (NOV), December (DEC), **JFM**: , January (JAN), February (FEB), March (MAR), **AMJ**:  April (APR), May (MAY), June (JUN), **JAS**: July (JUL), August (AUG), September (SEP). The hydrological year (**HYDRO**) is defined as the period from 1 September of year N to 31 August of year N+1. 
+
+Using data from Météo-France observations and AROME simulations, the following metrics were computed for each AROME grid point or station, year, and month/season over the periods 1959–2022 and 1990–2022: rainy days (threshold: ≥1 mm/day), cumulative precipitation, maxima of daily and hourly precipitation.
+
+While descriptive statistics provide useful summaries, they cannot: extrapolate beyond observed ranges, quantify uncertainty and significance or link observed trends to physical mechanisms. To address these limitations, we apply extreme value theory (EVT), specifically the Fisher–Tippett–Gnedenko theorem [@coles2001introduction]. This theorem states that, under general conditions, normalized sample maxima ($M_n$​) converge to the Generalized Extreme Value (GEV) distribution—the analogue of the Central Limit Theorem for sums. The GEV unifies three classical distributions Gumbel ($\xi \to 0$), Fréchet ($\xi > 0$) and Weibull ($\xi < 0$) where the shape parameter $\xi$ (automatically estimated) determines the tail behavior. We fit GEV distributions to maxima: first, under stationary conditions to validate model performance ; then, in a non-stationary framework, where GEV parameters vary with time. This approach enables: consistent comparison of return levels between observations and AROME, estimation of trends in extremes and linking trends to physical mechanisms.
+
+## Modeling equations
+
+Let $x$ denote a realization of the random variable $X$, representing the annual maximum precipitation at a given spatial point. The Generalized Extreme Value (GEV) distribution is a continuous probability distribution parameterized by the triplet $\theta = (\mu, \sigma, \xi)$ — respectively the location, scale (strictly positive), and shape—with the following cumulative distribution function:
+$$
+F(x;\mu ,\sigma ,\xi) = \exp\left\{-\left[1 + \xi\frac{x - \mu}{\sigma}\right]^{-1/\xi}\right\}, \quad 1 + \xi\frac{x - \mu}{\sigma} > 0
+$$
+
+### Temporal covariate
+
+Given a time series of $n$ annual precipitation maxima for a geographical point, we assume these maxima are independent. These observations are denoted $\{x_1, x_2, \dots, x_n\}$, where each $x_i$ is an annual maximum observed at year $t_i$ and follows a GEV distribution whose parameters depend analytically on the year $i$. The year $t_i$ is transformed into a normalized covariate denoted $\tilde{t}_i$. This transformation is performed for numerical convenience but does not alter the theoretical result. We also create a temporal covariate with a breakpoint $t_+$ such that:
+
+$$
+\tilde{t}_i = \frac{t_i - t_{\min}}{t_{\max} - t_{\min}} \quad \text{with} \quad
+\begin{cases}
+t_{\min} = \min_i t_i \\
+t_{\max} = \max_i t_i
+\end{cases} \quad \text{and} \quad
+\tilde{t}_{i}^\ast =
+\begin{cases}
+0 & \text{if } t_i < t_+ \\
+\displaystyle \frac{t_i - t_+}{t_{\max} - t_+} & \text{if } t_i \ge t_+
+\end{cases}
+$$
+
+This encoding allows applying a temporal slope only after the breakpoint date, with the covariate still normalized to $[0,1]$ in the post-breakpoint portion.
+
+### Models used
+
+Let $t \in \mathbb{N} \mid t_{\min} \leq t \leq t_{\max}$ be the temporal covariate. The stationary model is defined by $M_0(\theta_0)$ with $\theta_0 = (\mu_0, \sigma_0, \xi_0)$, where:
+
+$$
+\mu(t) = \mu_0; \quad \sigma(t) = \sigma_0; \quad \xi(t) = \xi_0.
+$$
+
+The non-stationary models are defined as follows:
+
+$$
+\begin{array}{c@{\qquad}c@{\qquad}c}
+% -------- Column 1 --------
+\begin{array}{c}
+\begin{aligned}
+M_1(\theta_1)\\[-0.2ex]
+\theta_1 = (\mu_0, \mu_1, \sigma_0, \xi_0)
+\end{aligned}\\[0.4ex]
+\begin{cases}
+\mu(t) = \mu_0 + \mu_1\, t \\
+\sigma(t) = \sigma_0 \\
+\xi(t) = \xi_0
+\end{cases}
+\end{array}
+&
+% -------- Column 2 --------
+\begin{array}{c}
+\begin{aligned}
+M_2(\theta_2)\\[-0.2ex]
+\theta_2 = (\mu_0, \sigma_0, \sigma_1, \xi_0)
+\end{aligned}\\[0.4ex]
+\begin{cases}
+\mu(t) = \mu_0 \\
+\sigma(t) = \sigma_0 + \sigma_1\, t \\
+\xi(t) = \xi_0
+\end{cases}
+\end{array}
+&
+% -------- Column 3 --------
+\begin{array}{c}
+\begin{aligned}
+M_3(\theta_3)\\[-0.2ex]
+\theta_3 = (\mu_0, \mu_1, \sigma_0, \sigma_1, \xi_0)
+\end{aligned}\\[0.4ex]
+\begin{cases}
+\mu(t) = \mu_0 + \mu_1\, t \\
+\sigma(t) = \sigma_0 + \sigma_1\, t \\
+\xi(t) = \xi_0
+\end{cases}
+\end{array}
+\end{array}
+$$
+
+When a breakpoint $t_+$ is introduced, we denote:
+
+$$
+t^\ast = t \cdot \mathbb{1}_{t > t_+} \quad \text{with} \quad t_+ \in \mathbb{N}.
+$$
+The models $M_1$, $M_2$, and $M_3$ then become $M_1^\ast$, $M_2^\ast$, and $M_3^\ast$, respectively. Under this notation, $\theta_i$ becomes $\theta^\ast_i$ with $i \in \{1, 2, 3\}$.
+
+In this study, we perform stationary and non-stationary modeling using the year as a covariate, with temporal effects on $\mu$ or $\sigma$ or both. The shape parameter $\xi$ is assumed constant. Based on the literature, we set $t_+ = 1985$. This breakpoint year is motivated by two considerations:
+1. Previous studies have shown that statistically significant trends in daily precipitation extremes in southern France began in the 1980s [@Blanchet2018].
+2. This year maximizes the log-likelihood [@Blanchet2018].
+
+Using a breakpoint allows us to minimize potential biases arising from varying observation lengths while incorporating pre-1985 data to enhance the robustness of estimates.
+
+### Return level
+
+The return level (or quantile of order $1 - \tfrac{1}{T}$) in a GEV distribution corresponds to a threshold value $z_T$ exceeded, on average, once every $T$ years. Let $X \sim \mathrm{GEV}(\mu, \sigma, \xi)$. Denoting $F^{-1}$ as the quantile function of the GEV, we obtain:
+
+$$
+\mathbb{P}(X > z_T) = \frac{1}{T}, \quad \text{or} \quad z_T = F^{-1}\left(1 - \frac{1}{T} \right) =
+\begin{cases}
+\mu + \frac{\sigma}{\xi} \left[ \left( -\log\left(1 - \frac{1}{T}\right) \right)^{-\xi} - 1 \right] & \text{if } \xi \ne 0 \\
+\mu - \sigma \log \left( -\log\left(1 - \frac{1}{T} \right) \right) & \text{if } \xi = 0 \quad \text{(Gumbel)}
+\end{cases}
+$$
+
+### Likelihood and Maximum Likelihood Estimation
+
+Let ${\mathcal{L}}(\theta; x)$ denote the likelihood function, where $\theta \mapsto f(x; \theta)$. The log-likelihood $\ell(\theta) = \log \mathcal{L}(\theta)$ is expressed as:
+
+$$
+\ell(\theta)=
+-\sum_{i=1}^n\Bigl[
+\log\sigma
++\Bigl(1+\tfrac1{\xi}\Bigr)\log y_i
++y_i^{-\frac{1}{\xi}}
+\Bigr]
+\quad \text{with} \quad  y_i(\theta)=1+\xi\;\frac{x_i-\mu}{\sigma}
+$$
+In practice, the parameters $(\mu, \sigma, \xi)$ are unknown and estimated from the data using a maximum likelihood estimator (MLE) $\hat{\theta} = (\hat{\mu}, \hat{\sigma}, \hat{\xi})$, obtained numerically via optimization such that $\hat{\theta} = \arg\max_{\theta} \, \ell(\theta)$. There is no explicit formula for the parameters; they are determined numerically by maximizing the likelihood.
+
+The return level estimator $\hat{z}_T$ is then given by $\hat{z}_{T} = F^{-1}_{\hat{\theta}}\left(1-\frac{1}{T}\right)$. While classical MLE provides a point estimate, it does not yield confidence intervals. To quantify uncertainty around $\hat{z}_T$, we use profile likelihood.
+
+### Profile likelihood and Confidence Intervals for return levels
+
+We seek the confidence interval for $z_{T,1}$. For each candidate value $z_{T,1}$ in a grid around the estimator $\hat{z}_{T,1}$, we maximize the log-likelihoods, which become profile log-likelihoods $\ell^{\,p}$. We thus seek:
+
+$$
+\hat{z}_{T,1} = \underset{z_{T,1}}{\arg\max} \; \ell_{M_\bullet}^{\,p}(z_{T,1} \ ; \hat{\theta}_{\bullet}) \quad \text{with} \quad
+\hat{\theta}_{\bullet} =
+\begin{cases}
+\hat{\theta}_{1}^{\,p} = (\hat{\mu_0}, \hat{\sigma_0}, \hat{\xi_0}) & \text{for } M_1 \\
+\hat{\theta}_2^{\,p} = (\hat{\mu_0}, \hat{\sigma_0}, \hat{\xi_0}) & \text{for } M_2 \\
+\hat{\theta}_3^{\,p} = (\hat{\mu_0}, \hat{\sigma_0}, \hat{\sigma_1}, \hat{\xi_0}) & \text{for } M_3
+\end{cases}
+$$
+For each model $M_\bullet$, we plot the function ${\displaystyle \mathcal{L}_{M_\bullet} : z_{T,1} \mapsto \ell_{M_\bullet}^{\,p}(z_{T,1} \ ; \hat{\theta}_{\bullet})}$.
+
+The $(1 - \alpha)$ confidence interval for $\hat{z}_{T,1}$ in model $M_\bullet$ is given by:
+
+$$
+\operatorname{IC}_{M_\bullet}^{(1-\alpha)}\!\bigl(\hat{z}_{T,1}\bigr)
+   = \Bigl\{\, z_{T,1}\;:\;
+        2\bigl[\ell_{M_\bullet}^{\,p}(\hat{z}_{T,1} \ ; \hat{\theta}_{\bullet})-\ell_{M_\bullet}^{\,p}(z_{T,1} \ ; \hat{\theta}_{\bullet})\bigr]
+        \le \chi^{2}_{1,\,1-\alpha} \Bigr\}
+$$
+where $\chi^2_{1,1-\alpha}$ is the $(1 - \alpha)$ quantile of a $\chi^2$ distribution with one degree of freedom. Here, we set $\alpha = 0.10$. If the confidence interval does not contain 0, then $\hat{z}_{T,1}$ is statistically significant.
+
+### Model selection
+
+At each geographical point, we consider the models $M_0, M_1, M_2, M_3, M_1^\ast, M_2^\ast$, and $M_3^\ast$. Let $k_j$ denote the number of parameters in model $M_j$. We test, for each non-stationary model $j \neq 0$, the null hypothesis $H_0$: $M_j$ does not perform better than $M_0$ (stationarity). For each non-stationary model $j \neq 0$ and each point $i$, with $p_{ij}$ denoting the $p$-value:
+
+$$
+\Lambda_{ij}=2\bigl(\ell_{ij}-\ell_{i0}\bigr) \overset{H_0}{\sim}\chi^{2}_{\;k_j-k_0} \quad \text{with} \quad p_{ij}= \mathbb{P}(\chi^{2}_{k_j-k_0}\ge \Lambda_{ij}\bigr)
+$$
+
+Let $\alpha = 0.10$ be the significance level. If either $M_3$ or $M_3^\ast$ satisfies $p_{ij} \le \alpha$, we select $j = \arg\min_{j \in \{3, 3^\ast\}} p_{ij}$. Otherwise, we compare all six non-stationary models and select $j = \arg\min_{j \in \{1, 1^\ast, 2, 2^\ast, 3, 3^\ast\}} p_{ij}$. This two-step process prioritizes models with simultaneous temporal effects on $\mu$ and $\sigma$ when statistically justified, ensuring complexity is introduced only when it provides credible information.
+
+## Trend calculation
+
+Using 10-year return levels ($T = 10$), the relative trend (in %) between 1995 and 2022 is calculated as:
+
+$$
+\text{Trend} = \frac{z_T^{2022} - z_T^{1995}}{z_T^{1995}} \cdot 100
+$$
+
+We evaluate the agreement between descriptive statistics and trends derived from AROME simulations against observed reality. Each Météo-France station is matched to the corresponding AROME grid point (2.5 km × 2.5 km) based on its geographical location. This correspondence allows calculating the Pearson correlation ($r$) and mean error ($ME$) between observed and simulated values.
+
+## Cartographic representation
+
+To homogenize extreme amplitudes between datasets (AROME and observations), we apply color saturation based on the study period. Let $P \in \{\text{HYDRO}, \text{DJF}, \text{MAM}, \text{JJA}, \text{SON}\}$ or $P \in \{\text{JAN}, \text{FEB}, \text{MAR}, \dots, \text{DEC}\}$. For each statistic (number of rainy days, cumulative precipitation, mean of maxima, relative trend) $T_j$ with $j \in P$, we calculate the $q$-th percentile of absolute values:
+
+$$
+s_j(P) = \operatorname{Quantile}_{q}\big(|T_j|\big)
+$$
+
+The common threshold for period $P$ is defined as $S(P) = \max_j s_j(P)$. We then replace, for any value $x \in T_j$, $x \leftarrow \operatorname{sign}(x)\,\min\big(|x|, S(P)\big)$.
+
+The quantile $q$ is set as follows:
+- For the number of rainy days: $q = 99.9$ for daily scales (1959–2022, 1990–2022) and hourly scales (1990–2022).
+- For cumulative precipitation and mean of precipitation maxima: $q = 99.0$ for daily scales (1959–2022, 1990–2022) and hourly scales (1990–2022).
+- For relative trends: $q = 99.0$ for daily scales (1959–2022, 1990–2022) and $q = 90.0$ for hourly scales (1990–2022).
+
+Contour lines for 400 m and 800 m elevations are represented with thin lines.
+
+# Results
+
+We begin by evaluating, grid point by grid point, the ability of AROME to reproduce the precipitation regime observed by Météo-France stations. This initial stationary evaluation serves as a quality assessment before examining the return level trends.
+
+## Evaluation of the simulated precipitation climatology by AROME
+
+To assess AROME’s ability to reproduce precipitation climatology, various indicators are compared with station observations for a given season: 1) the number of rainy days (threshold ≥ 1 mm/day); 2) the cumulative precipitation; and 3) the average of daily maximum precipitation.
+
+The spatial distribution of AROME’s indicators compared to observations allows us to: 1) validate and diagnose the model by locating biases and verifying spatial structure (gradients and orographic effects); and 2) understand physical processes (distinguishing regimes—Mediterranean, Alpine, and plain—and identifying where AROME overestimates orographic precipitation or underestimates intense convective events).
+
+
+<!-- FIGURE 3 -->
+
+```{python}
+jour_pluie = assemble_vertical(
+  "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/mod_norast.svg",
+  "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_norast.svg",
+  "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/legend.svg",
+  "figures/jour_pluie.svg"
+)
+df_jour_pluie = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "numday"), ["n", "r", "me", "delta"]]
+
+mean_pluie_jour = assemble_vertical(
+  "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/mod_norast.svg",
+  "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_norast.svg",
+  "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/legend.svg",
+  "figures/mean_pluie_jour.svg"
+)
+df_mean_pluie_jour = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "mean"), ["n", "r", "me", "delta"]]
+
+
+mean_max_pluie_jour = assemble_vertical(
+  "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/hydro/mod_norast.svg",
+  "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/hydro/obs_norast.svg",
+  "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/legend.svg",
+  "figures/mean-max_pluie_jour.svg"
+)
+df_mean_max_pluie_jour = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
+
+mean_max_pluie_horaire = assemble_vertical(
+  "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/hydro/mod_norast.svg",
+  "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/hydro/obs_norast.svg",
+  "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/legend.svg",
+  "figures/mean-max_pluie_horaire.svg"
+)
+
+df_mean_max_pluie_horaire = combined.loc[(combined["echelle"] == "horaire") & (combined["season"] == "hydro") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
+
+jour_pluie_diff = assemble_un(
+  "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_norast_diff.svg",
+  "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/legend_diff.svg",
+  "figures/jour_pluie_diff.svg"
+)
+
+mean_pluie_jour_diff = assemble_un(
+  "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_norast_diff.svg",
+  "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/legend_diff.svg",
+  "figures/mean_pluie_jour_diff.svg"
+)
+
+mean_max_pluie_jour_diff = assemble_un(
+  "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/hydro/obs_norast_diff.svg",
+  "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/legend_diff.svg",
+  "figures/mean-max_pluie_jour_diff.svg"
+)
+
+mean_max_pluie_horaire_diff = assemble_un(
+  "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/hydro/obs_norast_diff.svg",
+  "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/legend_diff.svg",
+  "figures/mean-max_pluie_horaire_diff.svg"
+)
+
+df_mean_max_pluie_horaire_avr = combined.loc[(combined["echelle"] == "horaire") & (combined["season"] == "avr") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
+
+df_mean_max_pluie_horaire_mai = combined.loc[(combined["echelle"] == "horaire") & (combined["season"] == "mai") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
+
+df_mean_max_pluie_horaire_jui = combined.loc[(combined["echelle"] == "horaire") & (combined["season"] == "jui") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
+
+```
+
+Over the period 1959–2022 (Figure 3, first column), AROME slightly overestimates the **annual frequency of precipitation days**: `{python} f'{df_jour_pluie['me'].iloc[0].item():+.2f}'` days/year (i.e., `{python} f'{df_jour_pluie['delta'].iloc[0].item():+.2f}'`%). However, significant local biases persist: over +30 days for several stations in the Massif Central and the Pyrenees, while negative biases (−10 to −30 days) are concentrated in the Northern Alps, Finistère, and Alsace. The spatial correlation is high (*r* = `{python} f'{df_jour_pluie['r'].iloc[0].item():.2f}'`), indicating that the model correctly reproduces the major regional gradients. AROME and observations agree on locating maximum frequencies over mountainous regions (Alps, Pyrenees, Massif Central, Vosges, Jura), with more than 140–160 days/year, and also high values over the Atlantic Grand Ouest (Brittany, Normandy, Pays de la Loire: 80–120 days/year). Conversely, the Mediterranean coast and the Provence region remain the driest in terms of frequency, often < 50–70 days/year.
+
+Over the period 1959–2022 (Figure 3, second column), AROME accurately estimates the **annual cumulative precipitation**: `{python} f'{df_mean_pluie_jour['me'].iloc[0].item():+.2f}'` mm/year (i.e., `{python} f'{df_mean_pluie_jour['delta'].iloc[0].item():+.2f}'`%). However, significant local biases persist: over +1.0 mm/day for all stations along the Pyrenean ridge and the Chamonix station, while negative biases (−0.5 to −1.5 mm/day) are concentrated in the Northern Alps, the Basque Coast, and Alsace. The spatial correlation is high (*r* = `{python} f'{df_mean_pluie_jour['r'].iloc[0].item():.2f}'`), indicating that the model correctly reproduces the major regional gradients. The southwestern Atlantic coast (Pyrenees, Aquitaine) and the Northern Alps receive the highest cumulative precipitation (over 5 mm/day). The Massif Central and inland reliefs (Vosges, Jura) show intermediate cumulative values (2.5–4 mm/day). The Mediterranean coast (Languedoc, Provence) remains generally drier (< 1.5 mm/day), despite occasional intense rainfall. These results are consistent with hourly data from 1990 to 2022 (Appendix 2-2.3).
+
+Over the period 1959–2022 (Figure 3, third column), AROME slightly underestimates the **average of daily maximum precipitation**: `{python} f'{df_mean_max_pluie_jour['me'].iloc[0].item():+.2f}'` mm/day (i.e., `{python} f'{df_mean_max_pluie_jour['delta'].iloc[0].item():+.2f}'`%). Significant local biases remain: deficits of −5 to less than −20 mm/day across the Cévennes, extending to the northern edge of the Northern Alps, the southeastern coast, and the Basque Coast; up to −5 mm/day over a large part of central France and Alsace; and +5 to +20 mm/day over the Pyrenean ridge, the western foothills of the Cévennes, and the Northern Alps. The spatial correlation is high (*r* = `{python} f'{df_mean_max_pluie_jour['r'].iloc[0].item():.2f}'`), indicating that the model correctly reproduces the major regional gradients. The highest average daily precipitation maxima occur in the Cévennes and, more generally, on the southeastern side of the Massif Central (approximately 100–125 mm/day). Alpine and Pyrenean reliefs also show high maxima (80–100 mm/day). The Atlantic coast and the Paris Basin exhibit more moderate maxima (30–60 mm/day), while Provence and the Côte d’Azur, despite lower frequency, can locally experience very heavy storms (40–80 mm/day on average).
+
+These initial results lead us to analyze hourly time steps (Figure 3, fourth column). Over the period 1990–2022, AROME significantly underestimates the **average of hourly maximum precipitation**: `{python} f'{df_mean_max_pluie_horaire['me'].iloc[0].item():+.2f}'` mm/h (i.e., `{python} f'{df_mean_max_pluie_horaire['delta'].iloc[0].item():+.2f}'`%). Significant biases persist: deficits of −5 to less than −10 mm/h over almost all of France, particularly in the Cévennes and the Rhône Valley. The spatial correlation remains high (*r* = `{python} f'{df_mean_max_pluie_horaire['r'].iloc[0].item():.2f}'`), confirming a good representation of the major gradients already observed at the daily scale. Regarding seasons, the bias ranges from −0.02 mm/h (DJF) to −3.75 mm/h (JJA), suggesting a marked underrepresentation of summer convective extremes.
+
+
+```{=latex}
+\newlength{\SavedTextWidthC}
+\setlength{\SavedTextWidthC}{\textwidth}
+
+\begingroup
+\providecommand{\+}{+}% neutralise \+ localement
+\renewcommand{\.}{.}% neutralise \. localement
+
+\newgeometry{left=0.1cm,right=0.1cm}
+
+\noindent
+\begin{minipage}[t]{\paperwidth}
+\centering
+\setlength{\tabcolsep}{0pt}%
+\renewcommand{\arraystretch}{1}%
+
+\begin{tabular}{>{\centering\arraybackslash}p{.24\paperwidth}
+                >{\centering\arraybackslash}p{.24\paperwidth}
+                >{\centering\arraybackslash}p{.24\paperwidth}
+                >{\centering\arraybackslash}p{.24\paperwidth}}
+\small\bfseries \shortstack{Number of days\\ per year\\ with precipitation} &
+\small\bfseries \shortstack{Annual\\ precipitation\\ total} &
+\small\bfseries \shortstack{Mean of daily\\ precipitation\\ maxima} &
+\small\bfseries \shortstack{Mean of hourly\\ precipitation\\ maxima} \\[-0.5mm]
+
+\small $r =$ `{python} f'{df_jour_pluie["r"].iloc[0].item():.2f}'` (n = `{python} f'{df_jour_pluie["n"].iloc[0].item()}'`) &
+\small $r =$ `{python} f'{df_mean_pluie_jour["r"].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_pluie_jour["n"].iloc[0].item()}'`) &
+\small $r =$ `{python} f'{df_mean_max_pluie_jour["r"].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_max_pluie_jour["n"].iloc[0].item()}'`) &
+\small $r =$ `{python} f'{df_mean_max_pluie_horaire["r"].iloc[0].item():.2f}'` (n = `{python} f'{df_mean_max_pluie_horaire["n"].iloc[0].item()}'`) \\[-0.5mm]
+
+\includegraphics[width=\linewidth]{figures/jour_pluie.pdf} &
+\includegraphics[width=\linewidth]{figures/mean_pluie_jour.pdf} &
+\includegraphics[width=\linewidth]{figures/mean-max_pluie_jour.pdf} &
+\includegraphics[width=\linewidth]{figures/mean-max_pluie_horaire.pdf} \\[-0.5mm]
+
+\small $ME = `{python} f'{df_jour_pluie["me"].iloc[0].item():+.2f}'`\,\mathrm{j}\,(`{python} f'{df_jour_pluie["delta"].iloc[0].item():+.2f}'`\%)$ &
+\small $ME = `{python} f'{df_mean_pluie_jour["me"].iloc[0].item():+.2f}'`\,\mathrm{mm/yr}\,(`{python} f'{df_mean_pluie_jour["delta"].iloc[0].item():+.2f}'`\%)$ &
+\small $ME = `{python} f'{df_mean_max_pluie_jour["me"].iloc[0].item():+.2f}'`\,\mathrm{mm/day}\,(`{python} f'{df_mean_max_pluie_jour["delta"].iloc[0].item():+.2f}'`\%)$ &
+\small $ME = `{python} f'{df_mean_max_pluie_horaire["me"].iloc[0].item():+.2f}'`\,\mathrm{mm/h}\,(`{python} f'{df_mean_max_pluie_horaire["delta"].iloc[0].item():+.2f}'`\%)$\\[-0.5mm]
+
+\includegraphics[width=\linewidth]{figures/jour_pluie_diff.pdf} &
+\includegraphics[width=\linewidth]{figures/mean_pluie_jour_diff.pdf} &
+\includegraphics[width=\linewidth]{figures/mean-max_pluie_jour_diff.pdf} &
+\includegraphics[width=\linewidth]{figures/mean-max_pluie_horaire_diff.pdf}
+\end{tabular}
+
+\bigskip
+\captionsetup{type=figure}%
+\noindent\makebox[\paperwidth][c]{%
+  \parbox{\SavedTextWidthC}{%
+    \captionof{figure}{\small Climatology between the AROME model (first row), Météo-France stations (second row) with the correlation ($r$) and the number of stations compared (n), and the AROME–Station difference (third row) with the bias ($ME$) and the associated relative deviation (\%) derived from daily data from 1959 to 2022 and hourly data from 1990 to 2022 for a hydrological year.}%
+  }%
+}
+
+
+\end{minipage}
+\restoregeometry
+\endgroup
+```
+
+<!-- FIGURE 4 -->
+
+```{python}
+selected_seasons = ["hydro", "djf", "mam", "jja", "ond", "jfm", "amj", "jas", "avr", "mai", "jui"]
+to_plot = combined[combined["season"].isin(selected_seasons)]
+plot_r_by_season(to_plot, echelles=['quotidien', 'quotidien_reduce', 'horaire'], col_values=['numday', 'mean', 'mean-max'], nom_fichier="histo_numday_mean_mean-max")
+```
+
+Regardless of the indicator (Figure 4), the AROME model faithfully reproduces observations, with a minimum correlation of 0.64. Irrespective of the temporal scale—daily (1959–2022 or 1990–2022) or hourly (1990–2022)—and the season, the simulated fields agree very well with measured data: correlation ranges from 0.92 to 0.98 for the number of rainy days and cumulative precipitation. This performance is maintained for the mean of daily maxima (periods 1959–2022 and 1990–2022) over the hydrological year, autumn, winter, and spring, but degrades in summer (**JJA**), with a correlation of 0.85. At the hourly scale, the quality of the estimation of maxima further deteriorates: correlation drops by up to 0.3 points, falling to 0.70 in spring (**MAM**) and summer (**JJA**), and to 0.64 in spring (**AMJ**). AROME under-represents summer convective extremes, especially at the hourly scale, despite a well-captured spatial structure. In April, the bias is `{python} f'{df_mean_max_pluie_horaire_avr['me'].iloc[0].item():+.2f}'` mm/h (i.e., `{python} f'{df_mean_max_pluie_horaire_avr['delta'].iloc[0].item():+.2f}'`%); in May, `{python} f'{df_mean_max_pluie_horaire_mai['me'].iloc[0].item():+.2f}'` mm/h (i.e., `{python} f'{df_mean_max_pluie_horaire_mai['delta'].iloc[0].item():+.2f}'`%) over half of France; and in June, `{python} f'{df_mean_max_pluie_horaire_jui['me'].iloc[0].item():+.2f}'` mm/h (i.e., `{python} f'{df_mean_max_pluie_horaire_jui['delta'].iloc[0].item():+.2f}'`%) across all of France. Spatial correlation remains high in April (*r* = `{python} f'{df_mean_max_pluie_horaire_avr['r'].iloc[0].item():.2f}'`). *r* = `{python} f'{df_mean_max_pluie_horaire_mai['r'].iloc[0].item():.2f}'` in May and `{python} f'{df_mean_max_pluie_horaire_jui['r'].iloc[0].item():.2f}'` in June.
+
+```{=latex}
+\begin{figure}[htp]
+\centering
+\includegraphics[width=\textwidth]{figures/histo_numday_mean_mean-max.png}
+\caption{\small Correlations of climatological data between the AROME model and Météo-France stations for each data source.}
+\end{figure}
+```
+
+## Evaluation of Extreme Precipitation Trends
+
+We now assess the trends in decadal return levels (T = 10 years) of precipitation, visualizing their spatial and seasonal heterogeneity and quantifying their magnitude and statistical significance in order to identify the regions and periods where the intensification of extremes is most pronounced. As before, we begin by analyzing the spatial distribution of AROME trends in relation to observations. We first verify that our methodology accurately reproduces the trends already established at the daily scale over 1959–2022—a long, well-documented period—in order to validate the signals before moving to the hourly scale.
+
+<!-- FIGURE 5 -->
+
+```{python}
+trend_pluie_hydro = assemble(
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/hydro/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/hydro/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/legend_signif.svg",
+  "figures/trend_pluie_hydro.svg"
+)
+df_trend_pluie_hydro = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "hydro") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+
+trend_pluie_ond = assemble(
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/ond/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/ond/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/legend_signif.svg",
+  "figures/trend_pluie_ond.svg"
+)
+df_trend_pluie_ond = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "ond") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+
+trend_pluie_jfm = assemble(
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/jfm/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/jfm/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/legend_signif.svg",
+  "figures/trend_pluie_jfm.svg"
+)
+df_trend_pluie_jfm = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "jfm") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+
+trend_pluie_amj = assemble(
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/amj/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/amj/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/legend_signif.svg",
+  "figures/trend_pluie_amj.svg"
+)
+df_trend_pluie_amj = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "amj") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+
+trend_pluie_jas = assemble(
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/jas/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/jas/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/legend_signif.svg",
+  "figures/trend_pluie_jas.svg"
+)
+df_trend_pluie_jas = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "jas") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+```
+
+The relative **daily precipitation trends** from 1995 to 2022 estimated with AROME are spatially heterogeneous for the hydrological year (Figure 5, bottom row). Only the Mercantour region stands out with a significant increase of between +20% and +30%. Stations also show a generalized positive signal along the Rhône Valley, with trends ranging from +5% to >+30%. Outside these areas, trends are weak, of variable sign, and most often not significant, which argues for a seasonal analysis. In autumn (**OND**), AROME indicates negative trends (−10% to <−30%) over the Paris Basin, the western slope of the Massif Central, and the Prealps, and a marked increase in the Mercantour, as previously observed. Stations confirm this pattern, but with a less pronounced decrease in the Prealps and a clearer signal in the Alps. The Rhône Valley is notable for increases locally reaching +40%. In winter (**JFM**), AROME highlights marked negative trends—up to −40%—in the Verdon and Haut-Var regions; more moderate decreases (−15%) also affect the Dordogne Valley, Limousin, and the northern Massif Central. Conversely, the northern tip of France, the Jura, and the Vosges show positive trends of +10% to +30%. Stations confirm this pattern, while extending the area of decrease to the Southern Alps and the French Riviera. In spring (**AMJ**), the signal is poorly structured: AROME does not isolate any clear pattern except for the Camargue coast (>+30%). Stations show a generalized increase over much of France, locally >+35%. In summer (**JAS**), AROME reveals a generalized decrease across France, particularly in the southern half, reaching <−40% in the Pyrénées-Orientales. Stations confirm this spatial pattern, accentuating it on the French Riviera. Overall, AROME reproduces the spatial distribution of observed trends, but with low correlation and sometimes reduced extent, with a mean bias ranging from `{python} f'{df_trend_pluie_jfm['me'].iloc[0].item():.2f}'`% (**JFM**) to `{python} f'{df_trend_pluie_amj['me'].iloc[0].item():.2f}'`% (**AMJ**).
+
+```{=latex}
+\begingroup
+\providecommand{\+}{+}% neutralise \+ localement
+\renewcommand{\.}{.}% neutralise \. localement
+
+% ---- Grille principale en pleine largeur (outrepasse les marges) ----
+% On réduit temporairement les marges à 0.1 cm pour cette figure uniquement
+\newgeometry{left=0.1cm,right=0.1cm}
+
+\begin{center}
+\noindent
+\begin{minipage}[t]{\paperwidth}
+  % Aucun espacement interne
+  \setlength{\tabcolsep}{0pt}      % marge horizontale nulle entre colonnes
+  \renewcommand{\arraystretch}{1}  % pas d’espacement vertical supplémentaire
+  \begin{tabularx}{\paperwidth}{
+    >{\centering\arraybackslash}m{0.49\paperwidth}
+    >{\centering\arraybackslash}m{0.49\paperwidth}
+  }
+
+    % --- Ligne 1 ---
+    \textbf{\small OND} & \textbf{\small JFM} \\[-0.5mm]
+    \small $r =$ {`{python} f'{df_trend_pluie_ond['r'].iloc[0].item():.2f}'`} (n={`{python} f'{df_trend_pluie_ond['n'].iloc[0].item()}'`}) &
+    \small $r =$ {`{python} f'{df_trend_pluie_jfm['r'].iloc[0].item():.2f}'`} (n={`{python} f'{df_trend_pluie_jfm['n'].iloc[0].item()}'`}) \\[-0.5mm]
+    \small $ME =$ {`{python} f'{df_trend_pluie_ond['me'].iloc[0].item():+.2f}'`}\% &
+    \small $ME =$ {`{python} f'{df_trend_pluie_jfm['me'].iloc[0].item():+.2f}'`}\% \\[-0.5mm]
+    \includegraphics[width=\linewidth]{figures/trend_pluie_ond.pdf} &
+    \includegraphics[width=\linewidth]{figures/trend_pluie_jfm.pdf} \\
+
+    % --- Ligne 2 ---
+    \textbf{\small AMJ} & \textbf{\small JAS} \\[-0.5mm]
+    \small $r =$ {`{python} f'{df_trend_pluie_amj['r'].iloc[0].item():.2f}'`} (n={`{python} f'{df_trend_pluie_amj['n'].iloc[0].item()}'`}) &
+    \small $r =$ {`{python} f'{df_trend_pluie_jas['r'].iloc[0].item():.2f}'`} (n={`{python} f'{df_trend_pluie_jas['n'].iloc[0].item()}'`}) \\[-0.5mm]
+    \small $ME =$ {`{python} f'{df_trend_pluie_amj['me'].iloc[0].item():+.2f}'`}\% &
+    \small $ME =$ {`{python} f'{df_trend_pluie_jas['me'].iloc[0].item():+.2f}'`}\% \\[-0.5mm]
+    \includegraphics[width=\linewidth]{figures/trend_pluie_amj.pdf} &
+    \includegraphics[width=\linewidth]{figures/trend_pluie_jas.pdf} \\
+
+    % --- Ligne 3 ---
+    \textbf{\small HYDRO} &
+    \multirow{3}{*}{
+    \begin{minipage}[c]{\linewidth}
+        \centering
+        % Légende pivotée : aligne verticalement avec HYDRO, r=, ME=
+        \includegraphics[width=0.85\linewidth,keepaspectratio]{../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/legend_horiz_signif.pdf}
+        \makebox[0.85\linewidth][c]{\small \%}
+    \end{minipage}
+    }
+    \\[-0.5mm]
+
+    \small $r =$ {`{python} f'{df_trend_pluie_hydro['r'].iloc[0].item():.2f}'`} (n={`{python} f'{df_trend_pluie_hydro['n'].iloc[0].item()}'`}) & \\[-0.5mm]
+    \small $ME =$ {`{python} f'{df_trend_pluie_hydro['me'].iloc[0].item():+.2f}'`}\% & \\[-0.5mm]
+
+    % --- ligne de la carte + caption (nouveau bloc) ---
+    \includegraphics[width=\linewidth]{figures/trend_pluie_hydro.pdf} &
+    \begin{minipage}[c]{\linewidth}
+    \centering
+    \vspace{0.5em}
+    \begin{minipage}[c]{0.90\linewidth} % <-- crée une marge interne horizontale (~5% chaque côté)
+        \setlength{\parindent}{0pt}
+        \small
+        \captionof{figure}{
+        \vspace{0.3em}
+        Seasonal analysis of relative trends from 1995 to 2022 (\%) in the 10-year return level
+        between the AROME model (left) and Météo-France stations (right), with the correlation ($r$),
+        the number of stations compared (n), and the bias ($ME$) derived from daily precipitation maxima
+        from 1959 to 2022.
+        \vspace{0.3em}
+        }
+    \end{minipage}
+    \end{minipage}
+    \\
+
+    
+  \end{tabularx}
+\end{minipage}
+\end{center}
+
+\restoregeometry
+\endgroup
+```
+
+Nous passons désormais à l’**échelle horaire** afin d’évaluer l’éventuelle intensification des extrêmes infra‑journaliers. Face à l’hétérogénéité spatiale persistante des tendances saisonnières (Figure 6), nous affinons l’analyse au pas mensuel (Figure 7).
+
+<!-- FIGURE 6 -->
+
+```{python}
+trend_horaire_pluie_hydro = assemble(
+  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/hydro/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/hydro/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/legend_signif.svg",
+  "figures/trend_horaire_pluie_hydro.svg"
+)
+df_trend_horaire_pluie_hydro = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "hydro") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+
+trend_horaire_pluie_ond = assemble(
+  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/ond/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/ond/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/legend_signif.svg",
+  "figures/trend_horaire_pluie_ond.svg"
+)
+df_trend_horaire_pluie_ond = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "ond") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+
+trend_horaire_pluie_jfm = assemble(
+  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/jfm/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/jfm/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/legend_signif.svg",
+  "figures/trend_horaire_pluie_jfm.svg"
+)
+df_trend_horaire_pluie_jfm = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "jfm") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+
+trend_horaire_pluie_amj = assemble(
+  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/amj/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/amj/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/legend_signif.svg",
+  "figures/trend_horaire_pluie_amj.svg"
+)
+df_trend_horaire_pluie_amj = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "amj") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+
+trend_horaire_pluie_jas = assemble(
+  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/jas/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/jas/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/legend_signif.svg",
+  "figures/trend_horaire_pluie_jas.svg"
+)
+df_trend_horaire_pluie_jas = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "jas") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+
+
+trend_pluie_fev = assemble(
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/fev/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/fev/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+  "figures/trend_horaire_pluie_fev.svg"
+)
+df_trend_pluie_fev = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "fev") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+
+trend_pluie_mar = assemble(
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mar/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mar/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+  "figures/trend_horaire_pluie_mar.svg"
+)
+df_trend_pluie_mar = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "mar") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+
+trend_pluie_jui = assemble(
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jui/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jui/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+  "figures/trend_horaire_pluie_jui.svg"
+)
+df_trend_pluie_jui = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "jui") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+
+trend_pluie_nov = assemble(
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/nov/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/nov/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+  "figures/trend_horaire_pluie_nov.svg"
+)
+df_trend_pluie_nov = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "nov") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+```
+
+```{=latex}
+\begingroup
+\providecommand{\+}{+}
+\renewcommand{\.}{.}
+
+% Marges réduites pour la figure pleine largeur
+\newgeometry{left=0.1cm,right=0.1cm}
+
+\begin{center}
+\noindent
+\begin{minipage}[t]{\paperwidth}
+  \setlength{\tabcolsep}{0pt}
+  \renewcommand{\arraystretch}{1}
+  \begin{tabularx}{\paperwidth}{
+    >{\centering\arraybackslash}m{0.49\paperwidth}
+    >{\centering\arraybackslash}m{0.49\paperwidth}
+  }
+
+    % --- Ligne 1 ---
+    \textbf{\small OND} & \textbf{\small JFM} \\[-0.5mm]
+    \small $r =$ {`{python} f'{df_trend_horaire_pluie_ond['r'].iloc[0].item():.2f}'`} (n={`{python} f'{df_trend_horaire_pluie_ond['n'].iloc[0].item()}'`}) &
+    \small $r =$ {`{python} f'{df_trend_horaire_pluie_jfm['r'].iloc[0].item():.2f}'`} (n={`{python} f'{df_trend_horaire_pluie_jfm['n'].iloc[0].item()}'`}) \\[-0.5mm]
+    \small $ME =$ {`{python} f'{df_trend_horaire_pluie_ond['me'].iloc[0].item():+.2f}'`}\% &
+    \small $ME =$ {`{python} f'{df_trend_horaire_pluie_jfm['me'].iloc[0].item():+.2f}'`}\% \\[-0.5mm]
+    \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_ond.pdf} &
+    \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_jfm.pdf} \\
+
+    % --- Ligne 2 ---
+    \textbf{\small AMJ} & \textbf{\small JAS} \\[-0.5mm]
+    \small $r =$ {`{python} f'{df_trend_horaire_pluie_amj['r'].iloc[0].item():.2f}'`} (n={`{python} f'{df_trend_horaire_pluie_amj['n'].iloc[0].item()}'`}) &
+    \small $r =$ {`{python} f'{df_trend_horaire_pluie_jas['r'].iloc[0].item():.2f}'`} (n={`{python} f'{df_trend_horaire_pluie_jas['n'].iloc[0].item()}'`}) \\[-0.5mm]
+    \small $ME =$ {`{python} f'{df_trend_horaire_pluie_amj['me'].iloc[0].item():+.2f}'`}\% &
+    \small $ME =$ {`{python} f'{df_trend_horaire_pluie_jas['me'].iloc[0].item():+.2f}'`}\% \\[-0.5mm]
+    \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_amj.pdf} &
+    \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_jas.pdf} \\
+
+    % --- Ligne 3 ---
+    \textbf{\small HYDRO} &
+    \multirow{3}{*}{
+    \begin{minipage}[c]{\linewidth}
+        \centering
+        \includegraphics[width=0.85\linewidth,keepaspectratio]{../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/legend_horiz_signif.pdf}
+        \makebox[0.85\linewidth][c]{\small \%}
+    \end{minipage}
+    }
+    \\[-0.5mm]
+
+    \small $r =$ {`{python} f'{df_trend_horaire_pluie_hydro['r'].iloc[0].item():.2f}'`} (n={`{python} f'{df_trend_horaire_pluie_hydro['n'].iloc[0].item()}'`}) & \\[-0.5mm]
+    \small $ME =$ {`{python} f'{df_trend_horaire_pluie_hydro['me'].iloc[0].item():+.2f}'`}\% & \\[-0.5mm]
+
+    % Carte + légende de figure
+    \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_hydro.pdf} &
+    \begin{minipage}[c]{\linewidth}
+    \centering
+    \vspace{0.5em}
+    \begin{minipage}[c]{0.90\linewidth}
+        \setlength{\parindent}{0pt}
+        \small
+        \captionof{figure}{
+        \vspace{0.3em}
+        Seasonal analysis of relative trends from 1995 to 2022 (\%) in the 10-year return level
+        between the AROME model (left) and Météo-France stations (right), with the correlation ($r$),
+        the number of stations compared (n), and the bias ($ME$) derived from hourly precipitation maxima
+        from 1990 to 2022.
+        \vspace{0.3em}
+        }
+    \end{minipage}
+    \end{minipage}
+    \\
+
+  \end{tabularx}
+\end{minipage}
+\end{center}
+
+\restoregeometry
+\endgroup
+```
+
+AROME indicates positive trends (+25% to >+150%) in the Rhône Valley and the Prealps in February (**FEB**), over the western Mediterranean arc (Roussillon–Lower Languedoc) in March (**MAR**), and the eastern arc (Azur Basin) in November (**NOV**). Station data confirm this pattern, markedly strengthening the signal in the Rhône Valley in February, with trends approximately twice as high as those estimated by AROME. In June (**JUN**), both AROME and station data show a predominantly increasing signal across the entire territory, with local trends sometimes exceeding +150%. However, the extremely low spatial correlation between the two datasets (*r* = 0.07) indicates that, while the average sign converges, the localization of trends is inconsistent/noisy. This discrepancy, combined with high summer convective variability and the short length of monthly series (1990–2022), calls for caution. 
+
+```{=latex}
+\begingroup
+\providecommand{\+}{+}
+\renewcommand{\.}{.}
+
+% Marges réduites pour la figure pleine largeur
+\newgeometry{left=0.1cm,right=0.1cm}
+
+\begin{center}
+\noindent
+\begin{minipage}[t]{\paperwidth}
+  \setlength{\tabcolsep}{0pt}
+  \renewcommand{\arraystretch}{1}
+  \begin{tabularx}{\paperwidth}{
+    >{\centering\arraybackslash}m{0.49\paperwidth}
+    >{\centering\arraybackslash}m{0.49\paperwidth}
+  }
+
+    % --- Ligne 1 ---
+    \textbf{\small FEB} & \textbf{\small MAR} \\[-0.5mm]
+    \small $r =$ {`{python} f'{df_trend_pluie_fev['r'].iloc[0].item():.2f}'`} (n={`{python} f'{df_trend_pluie_fev['n'].iloc[0].item()}'`}) &
+    \small $r =$ {`{python} f'{df_trend_pluie_mar['r'].iloc[0].item():.2f}'`} (n={`{python} f'{df_trend_pluie_mar['n'].iloc[0].item()}'`}) \\[-0.5mm]
+    \small $ME =$ {`{python} f'{df_trend_pluie_fev['me'].iloc[0].item():+.2f}'`}\% &
+    \small $ME =$ {`{python} f'{df_trend_pluie_mar['me'].iloc[0].item():+.2f}'`}\% \\[-0.5mm]
+    \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_fev.pdf} &
+    \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_mar.pdf} \\
+
+    % --- Ligne 2 ---
+    \textbf{\small JUI} & \textbf{\small NOV} \\[-0.5mm]
+    \small $r =$ {`{python} f'{df_trend_pluie_jui['r'].iloc[0].item():.2f}'`} (n={`{python} f'{df_trend_pluie_jui['n'].iloc[0].item()}'`}) &
+    \small $r =$ {`{python} f'{df_trend_pluie_nov['r'].iloc[0].item():.2f}'`} (n={`{python} f'{df_trend_pluie_nov['n'].iloc[0].item()}'`}) \\[-0.5mm]
+    \small $ME =$ {`{python} f'{df_trend_pluie_jui['me'].iloc[0].item():+.2f}'`}\% &
+    \small $ME =$ {`{python} f'{df_trend_pluie_nov['me'].iloc[0].item():+.2f}'`}\% \\[-0.5mm]
+    \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_jui.pdf} &
+    \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_nov.pdf} \\
+
+    % --- Ligne 3 ---
+    \textbf{\small } &
+    \multirow{3}{*}{
+    \begin{minipage}[c]{\linewidth}
+        \centering
+        \includegraphics[width=0.85\linewidth,keepaspectratio]{../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_horiz_signif.pdf}
+        \makebox[0.85\linewidth][c]{\small \%}
+    \end{minipage}
+    }
+    \\[-0.5mm]
+
+    \small & \\[-0.5mm]
+    \small & \\[-0.5mm]
+
+
+    % Carte + légende de figure
+     &
+    \begin{minipage}[c]{\linewidth}
+    \centering
+    \vspace{0.5em}
+    \begin{minipage}[c]{0.90\linewidth}
+        \setlength{\parindent}{0pt}
+        \small
+    \end{minipage}
+    \end{minipage}
+    \\
+
+  \end{tabularx}
+
+\bigskip
+\captionsetup{type=figure}%
+\noindent\makebox[\paperwidth][c]{%
+  \parbox{\SavedTextWidthC}{%
+    \captionof{figure}{\small Seasonal analysis of relative trends from 1995 to 2022 (\%) in the 10-year return level
+        between the AROME model (left) and Météo-France stations (right), with the correlation ($r$),
+        the number of stations compared (n), and the bias ($ME$) derived from hourly precipitation maxima
+        from 1990 to 2022.}%
+  }%
+}
+\end{minipage}
+\end{center}
+
+\restoregeometry
+\endgroup
+```
+
+<!-- FIGURE 8 -->
+
+```{python} 
+selected_seasons = ["hydro", "ond", "jfm", "amj", "jas", "jan", "fev", "mar", "avr", "mai", "jui", "juil", "aou", "sep", "oct", "nov", "dec"]
+to_plot = combined_all[combined_all["season"].isin(selected_seasons)]
+plot_r_by_season(to_plot , echelles=['quotidien', 'quotidien_reduce', 'horaire'], col_values=['z_T_p', 'z_T_p_signif'], nom_fichier="histo_z_T_p")
+```
+
+To objectify these divergences and assess the robustness of the signals, we now examine the spatial correlations between AROME and station data, by season and month, in order to identify where agreement is structural and where it is mostly noise. At the daily scale (1959–2022), trend correlations range from 0.14 (**HYDRO**) to 0.32 (**OND**) for seasons and from 0.07 (**JUN**) to 0.51 (**DEC**) for months, with several months reaching or exceeding 0.40 (**JAN**, **MAR**, **AUG**, **NOV**) (Figure 8). Over the shorter period (1990–2022), seasonal values span 0.19–0.40 and monthly values 0.02–0.47 (**JAN** 0.47; **DEC** 0.35). At the hourly scale (1990–2022), seasons exhibit weak correlations ranging from 0.00 (**JAS**) to 0.09 (**OND**), and monthly correlations extend from 0.02 (**SEP**, **OCT**) to 0.42 (**FEB**).
+
+When restricting to trends significant by profile likelihood, the daily scale (1959–2022) shows seasonal correlations from 0.13 (**AMJ**) to 0.40 (**OND**) and monthly values from 0.17 (**JUN**) to 0.77 (**DEC**), with other months also showing high correlation (**JAN** 0.70; **MAR** 0.71; **NOV** 0.68; **AUG** 0.52). For the shorter period (1990–2022), seasonal values range from 0.25 (**HYDRO**) to 0.52 (**JFM**) and monthly values from 0.17 (**JUL**) to 0.69 (**JAN**), with values above 0.60 in February, October, and December. At the hourly scale (1990–2022), seasonal values cover −0.11–0.15 and monthly values −0.01–0.66. Restricting to significant trends strongly increases daily correlations, with high monthly maxima. The gain is pronounced in winter and late summer/autumn (**JAN**, **MAR**, **NOV**, **DEC**, **AUG**). At the hourly scale, even after filtering, improvement remains partial: some months improve (**FEB**), but several periods are characterized by correlations near zero or slightly negative (**MAY**, **SEP**).
+
+
+```{=latex}
+\begin{figure}[htp]
+\centering
+\includegraphics[width=\textwidth]{figures/histo_z_T_p.png}
+\caption{\small Correlations of relative trends (all and significant) between AROME and Météo-France stations, by season and by month.}
+\end{figure}
+```
+
+# Discussion
+
+## Spatial Fidelity of Simulated Climatology and Seasonal Variability
+
+The results confirm that AROME correctly reproduces the main rainfall regimes over metropolitan France, as supported by the literature [@Fumiere2020], [@caillaud2021simulation], [@hess-28-2579-2024], [@LucasPicher2024]. There is an orographic excess over the Alps, the Pyrenees, and the Massif Central, a marked Atlantic–continental gradient in the west, and a frequency deficit around the Mediterranean basin. This consistency with measured reality indicates a satisfactory representation of dynamic forcings (moisture transport by westerly flows, orographic uplift, low-level circulation in the Mediterranean).
+
+AROME’s ability to reproduce the frequency and quantity of precipitation is maintained throughout the year, but performance declines for the average of daily maxima in summer and even more so at the hourly scale. The model underestimates high-intensity precipitation (> 40 mm/h [@Caillaud2021], [@poncet2024convection]). Summer convection remains partially under-resolved despite the 2.5 km spatial resolution. In this study, we showed (results not shown) that correlation increases when the time window is extended to 6 or 9 hours. The model may reproduce the thunderstorm cell starting too late or too early, spreading intensity over several grid points (not evaluated due to lack of stations), or underestimating maximum precipitation. The 2–3 km grid spacing is a major step forward for representing convection without parameterization, but it remains too coarse for applications sensitive to intense maxima [@Prein2015Review]. It would have been interesting to include Météo-France’s COMEPHORE data (1 km, 15 min) in this study, but radar reanalyses only begin in 1997, with poor quality over the Alps before 2007 [@Fumiere2020].
+
+## Trends in Precipitation Extremes: Consistencies, Divergences, and Limitations
+
+**Daily data.** The positive and significant trends are consistent with the global-scale study of the @IPCC2021, showing an increase in the 10-year return level. Hotspots in the Mercantour (+20 to +30%) and, in terms of stations, in the Rhône Valley (+5 to < +30%) are consistent with work showing an intensification of extremes in southeastern France and the southern Alps [@blanchet2021explaining]. In autumn, an increase in the 20-year return level could reach the order of magnitude of its mean value in the southeastern Alps. The marked upward trends of stations (> +35%) in northern France echo French projections anticipating stronger increases in daily extremes in the north under warming (+20% for +4°C) as shown by @soubeyroux:hal-04991790.
+
+**Hourly data.** The signals are much less robust at the hourly scale than at the daily scale. They show very heterogeneous trends, often weakly or not significant, and sometimes spatially inconsistent between AROME and stations (in June, *r* = 0.07). This aligns with the @IPCC2021 finding of low confidence in a global increase in sub-daily extremes, due to the lack of long, dense, and homogeneous series. The marked increases in February (Rhône Valley, Pre-Alps), March (western Mediterranean arc), and November (eastern Mediterranean arc) are compatible with dynamic and thermo-marine regimes conducive to Mediterranean/transitional episodes (end of winter, autumn interseason). The signal doubled by stations in February in the Rhône Valley highlights AROME’s smoothing and amplitude bias for hourly extremes. However, the restricted period (1990–2022) offers little statistical power, and interannual convective variability can mask or mimic a trend. In June, the widespread increase (up to +150%), but without spatial agreement between AROME and stations, shows local convective variability (very localized storms) and errors of point vs. grid representativeness become dominant. This is an example of the limits of monthly inference for convective extremes. It should be noted that this does not result from an isolated anomaly or a single extreme year. A sensitivity analysis showed that contrasts persist when the year with the maximum precipitation is excluded. They therefore reflect a structural signal linked to the succession of several marked extreme events over the last decade, reinforcing recent trends rather than a punctual temporal artifact.
+
+Regional studies highlight sub-daily sensitivities of +7 to +13%/°C, sometimes exceeding Clausius–Clapeyron, especially for brief convective storms [@molnar2015relation]. This study does not identify a clear signal with the AROME model, which strongly underestimates hourly peaks, while stations capture local spikes. This was expected given that the Clausius–Clapeyron-related trend in extremes should theoretically be half as strong as the observed trends.
+
+## Statistical Robustness of Signals
+
+A long window (1959–2022) reduces estimation uncertainties and samples several climate regimes (global dimming phase dominated by aerosols until the 1980s, then accelerated warming from the late 1980s–1990s). This mixing of regimes mechanically attenuates the average slope: part of the recent signal is drowned in multidecadal variability. Conversely, a short window (1990–2022) isolates the regime dominated by rapid warming, the decrease in sulfate aerosols in Europe, and the quasi-linear increase in water vapor content (+7%/°C), which brings out clearer positive trends. The two diagnostics are therefore complementary and must be interpreted separately to avoid confusing multidecadal noise with long-term anthropogenic forcing.
+
+As a first approximation, the monthly distributions of relative trends in the 10-year return level are centered on 0% over 1959–2022, while 1990–2022 shows a slight shift toward increases, especially in spring and early winter, in line with the literature on the recent amplification of daily extremes. Even though breakpoints were allowed when justified by the LRT, the gradual transition (about 10 years) between the dimming era and the post-1985 warm regime remains partly absorbed by long-window models, reducing the average slope compared to short-window models that fit the recent quasi-linear portion. This explains, for example, the observed national average trend of −1.6% over 1959–2022 versus +3.5% over 1990–2022.
+
+These differences are also expected from a statistical point of view: @DeGaetano2018 shows that, for trends > 0.5%/year in the location parameter μ, reducing the window from 60 to 30 years can change the estimated slope of decadal return levels by 10 to 20%. In other words, the length of the window and the (non-)stationarity of the climate strongly influence trend estimation, even when breakpoints detected by LRT are integrated.
+
+## Regional Signals
+
+**Filtering strengthens consistency, but AROME struggles with fine extremes.** By retaining only significant trends, many sites where the signal is dominated by climate noise are eliminated, improving the spatial consistency of trends and thus regional diagnostics. At the daily scale, monthly correlation values between AROME and stations range from 0.40 to 0.77 after filtering for significance, compared to less than 0.20 at the hourly scale. This jump could be related to AROME’s difficulty in explaining fine convective maxima at the hourly scale.
+
+The seasonal breakdown highlights a hierarchy dominated by winter, which systematically concentrates the strongest correlations and moderate to marked increases in return levels. In winter, precipitation in western Europe comes from Atlantic disturbances carried by westerly flows. Their intensity depends directly on the amount of water vapor in these air masses, which increases with temperature according to the Clausius–Clapeyron law. This is why milder winters can sometimes be wetter, even with identical atmospheric dynamics. Spring and early summer, by contrast, show systematic minima in correlation. This reveals the persistent difficulty, even at 2.5 km resolution, in representing weakly organized convection typical of this season. Diurnal warming mainly triggers isolated local storms. The influence of Atlantic disturbances decreases, as the jet stream and its frontal systems move northward. Vertical wind shear weakens, preventing the organization of storms into durable structures. The result is brief, highly localized, and poorly structured precipitation that the simulation–observation pair still captures poorly. In August and September, the relative convergence of distributions (close medians and correlations < 0.20) reflects high variability and a shared contribution between continental thunderstorm episodes and early Mediterranean systems. The mix of rainfall mechanisms reduces consistency between sites and AROME’s ability to reproduce the seasonality of trends.
+
+**The Rhône Valley** appears to be a “hotspot” for positive trends in return levels, consistent with the resurgence of Cévenol events in autumn and enhanced orographic disturbances in southerly flows [@Fresnay2012]. AROME under-diagnoses these increases but reproduces their location, suggesting that the dynamics (meridional channeling and orographic uplift) are correctly simulated, while convective intensity remains under-resolved. @Ribes2019 highlights that this area accumulates the strongest observed intensification in the entire Mediterranean south, with a mean intensity gain of +22% in daily extreme precipitation between 1961 and 2015. They show, in the southeastern half (including Gard, Ardèche, and Drôme), a doubling of the frequency of events >200 mm in 24 hours since 1985, with most associated with hourly peaks >50 mm. @blanchet2021explaining show that, since the 1980s, the autumn Mediterranean influence has clearly intensified and advanced in the season, with the strongest increases in return levels centered on the Rhône–Alps corridor and the Cévennes. This “hotspot” is striking at the national scale for hourly data in February. Since the early 1990s, the average winter temperature in France has increased by +0.8°C (difference between the 1961–1990 and 1991–2020 Météo-France normals)—i.e., an additional moisture retention capacity of about +6% according to the Clausius–Clapeyron relation. Three mechanisms could combine in February: 1) rain replaces snow, concentrating the water column [@ZAQOUT2024131439]; 2) there are slopes of 12%/°C for hourly extremes when T = 0–8°C—almost double the classic 7% [@Drobinski2016]; and 3) more humid southerly flows inject more vapor into a very efficient orographic corridor [@LorentePlazas2020].
+
+# Conclusion
+
+This study presents the first comprehensive evaluation of the AROME regional climate model (2.5 km resolution, 1959–2022), forced by ERA5, to reproduce precipitation extremes in France at both daily and hourly scales. By cross-referencing model simulations with dense observations from Météo-France’s network, this work addresses a critical scientific gap: the characterization of sub-daily extreme precipitation trends, which are essential for managing flash flood and severe storm risks.
+
+**Key findings.** Our analyses confirm that the AROME model accurately reproduces France’s major rainfall regimes, with high spatial correlation for daily indicators (frequency, cumulative totals, maxima). However, the representation of hourly extremes remains limited, particularly in summer, where weakly organized convection is under-resolved at 2.5 km. Systematic biases—such as the underestimation of intense peaks and the smoothing of convective events—highlight the need for even finer resolution to capture local thunderstorm variability.
+
+The analysis of decadal return level trends reveals a marked intensification of daily extremes in southeastern France (Rhône Valley, Mercantour, Cévennes), consistent with climate projections and Clausius–Clapeyron scaling. At the hourly scale, signals are more heterogeneous and less robust, with significant increases in February, March, and November, but high spatial variability and low model-observation correlation in summer. Filtering for statistically significant trends improves agreement, especially in winter and autumn, but hourly convective extremes remain poorly simulated in spring and summer due to the complexity of physical mechanisms and the short duration of available time series.
+
+**Implications and perspectives.** This study underscores the added value of explicit-convection models for extreme precipitation research, while also exposing their limitations for convective events at resolutions coarser than 1 km. The Rhône Valley is confirmed as a “hotspot” for the intensification of hourly extremes, driven by increased moisture flux, orographic enhancement, and the winter rain-snow transition. These findings provide actionable insights for adapting territories to hydrometeorological risks, particularly through improved early warning systems and urban planning.
+
+To build on this work, integrating very high-resolution radar data (1 km, 15 min) could refine the validation of convective extremes, and exploring future climate scenarios would help anticipate risk evolution. Furthermore, developing hybrid models that combine dynamic simulations with statistical approaches could enhance the representation of fine-scale extremes, especially in complex terrain.
+
+In conclusion, this research establishes a robust foundation for understanding and managing precipitation extremes in France amid accelerating climate change. It paves the way for more targeted studies that integrate both modeling advances and the operational needs of risk prevention stakeholders.
+
+# References
