@@ -227,6 +227,31 @@ stSliderTickBarMin
 #MainMenu{visibility:hidden;}
 footer{visibility:hidden;}
 header{visibility:hidden;}
+
+/* -------------------- GRADIENT TEXT -------------------- */
+.gradient-premium {
+  font-size: 2.5rem !important;             /* Titre XXL */
+  font-weight: 800 !important;              /* Plus de présence */
+  letter-spacing: -0.025em !important;      /* Ajustement espacement */
+
+  /* Dégradé en trois couleurs */
+  background: linear-gradient(
+    360deg,
+    #5A7BFF 10%,
+    #5A7BFF 100%,
+    #F0F4FF 150%
+  ) !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+
+  /* contour/glow léger */
+  text-shadow:
+    0 0 2px rgba(255,255,255,0.8)
+
+  display: inline-block;
+}
 </style>
 """
 
@@ -332,8 +357,16 @@ def show(
 if __name__ == "__main__":
     config_path = "app/config/config.yaml"
     st.markdown("""
-        <div style="text-align: center; font-size: 50px !important; font-weight: bold; margin-bottom: 20px;">
-        Analyse interactive des précipitations en France (1959–2022)
-        </div>
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <h1 style="
+          font-family: var(--font);
+          margin: 0;
+        ">
+          <span class="gradient-premium">
+            Analyse interactive des précipitations en France — 1959 – 2022
+          </span>
+        </h1>
+      </div>
     """, unsafe_allow_html=True)
+
     show(config_path)
