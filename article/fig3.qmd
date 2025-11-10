@@ -1,0 +1,380 @@
+---
+title: ""
+format:
+  pdf:
+    listings: false
+    documentclass: standalone
+    classoption: ["border=4pt"]
+    keep-tex: true
+execute:
+  echo: false
+  warning: false
+  message: false
+header-includes:
+  - \usepackage{graphicx}
+  - \usepackage{tabularx}
+  - \usepackage{array}
+  - \usepackage{makecell}
+  - \input{macros_fig3.tex}
+---
+
+
+```{python}
+#| include: false
+#| echo: false
+#| warning: false
+#| message: false
+#| error: false
+
+from __future__ import annotations
+
+import sys
+import os
+from pathlib import Path
+from typing import Tuple
+
+from svgutils.transform import fromfile, SVGFigure
+import cairosvg
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+
+def _to_px(value: str | None) -> float:
+    """
+    Convertit une longueur SVG (px, mm, cm, pt, in) en pixels (float).
+
+    Si `value` est None ou vide, retourne 0.
+    """
+    if not value:
+        return 0.0
+    value = value.strip()
+    num = ''
+    unit = ''
+    for ch in value:
+        if ch.isdigit() or ch in '.-':
+            num += ch
+        else:
+            unit += ch
+    if not num:
+        return 0.0
+    numf = float(num)
+    unit = unit.strip().lower()
+    if unit in ('', 'px'):
+        return numf
+    if unit == 'mm':
+        return numf * 3.779527559055  # 96 dpi
+    if unit == 'cm':
+        return numf * 37.79527559055
+    if unit == 'in':
+        return numf * 96
+    if unit == 'pt':
+        return numf * 1.3333333333333  # 1 pt = 1/72 in
+    # Fallback: assume pixels
+    return numf
+
+
+def _dims(fig) -> Tuple[float, float]:
+    """
+    Renvoie (width, height) de `fig` en pixels.
+
+    1) viewBox (les 2 derniers termes)
+    2) attributs width/height de la racine
+    3) fig.get_size()
+    """
+    root = fig.root  # Correction ici : on accède à la balise <svg>
+    viewbox = root.get('viewBox')
+    if viewbox:
+        parts = [p for p in viewbox.replace(',', ' ').split() if p]
+        if len(parts) == 4:
+            return float(parts[2]), float(parts[3])
+
+    # attributs width/height sur la balise <svg>
+    w_attr = root.get('width')
+    h_attr = root.get('height')
+    if w_attr and h_attr:
+        return _to_px(w_attr), _to_px(h_attr)
+
+    # fallback
+    w, h = fig.get_size()
+    return _to_px(w), _to_px(h)
+
+
+
+def assemble_vertical(arome: Path, stations: Path, legend: Path, output: Path) -> None:
+    # Charger les 3 SVG
+    fig_arome = fromfile(str(arome))
+    fig_stations = fromfile(str(stations))
+    fig_legend = fromfile(str(legend))
+
+    # Dimensions
+    w_arome, h_arome = _dims(fig_arome)
+    w_stations, h_stations = _dims(fig_stations)
+    w_leg, h_leg = _dims(fig_legend)
+
+    # Canvas global
+    w_maps = max(w_arome, w_stations)
+    h_maps = h_arome + h_stations
+    height = h_maps  # somme des deux cartes
+
+    # Facteur d'échelle pour que la légende fasse 1.5 fois la hauteur de la carte AROME
+    scale_leg = (1.5 * h_arome) / h_leg
+    w_leg_scaled = w_leg * scale_leg
+    h_leg_scaled = h_leg * scale_leg  # = 1.5 * h_arome
+
+    width = w_maps + w_leg_scaled  # légende à droite
+
+    canvas = SVGFigure(f"{width}px", f"{height}px")
+    canvas.root.set('viewBox', f"0 0 {width} {height}")
+
+    # Racines
+    root_arome = fig_arome.getroot()
+    root_stations = fig_stations.getroot()
+    root_legend = fig_legend.getroot()
+
+    # Redimensionnement de la légende
+    root_legend.scale(scale_leg, scale_leg)
+
+    # Positionnement
+    root_stations.moveto(0, h_arome)
+    # Centrage vertical de la légende sur la hauteur totale
+    y_leg = (h_maps - h_leg_scaled) / 2
+    root_legend.moveto(w_maps, y_leg)
+
+    canvas.append([root_arome, root_stations, root_legend])
+
+    os.makedirs(os.path.dirname(str(output)), exist_ok=True)
+    canvas.save(str(output))
+    pdf_path = str(output)[:-4] + ".pdf"
+    cairosvg.svg2pdf(url=str(output), write_to=pdf_path)
+    return str(output)
+
+def combined_metrics_df(name_file: str):
+    base_dir = Path("../outputs")         # dossier racine à explorer
+    csv_paths = list(base_dir.rglob(name_file))
+
+    frames = []
+    for path in csv_paths:
+        try:
+            df = pd.read_csv(path)
+            df["source"] = str(path.relative_to(base_dir))  # garder la provenance
+            frames.append(df)
+        except Exception as exc:                             # CSV illisible
+            sys.stderr.write(f"⚠️  Fichier ignoré {path}: {exc}")
+
+    if not frames:
+        raise SystemExit("Aucun metrics.csv trouvé !")
+
+    # Concaténation puis export
+    combined = pd.concat(frames, ignore_index=True)
+
+    # --- harmonisation des échelles ---
+    # cas quotidien_reduce
+    mask_q = combined["source"].str.contains("quotidien_reduce", na=False)
+    combined.loc[mask_q & (combined["echelle"] == "quotidien"), "echelle"] = "quotidien_reduce"
+
+    # cas horaire_reduce
+    mask_h = combined["source"].str.contains("horaire_reduce", na=False)
+    combined.loc[mask_h & (combined["echelle"] == "horaire"), "echelle"] = "horaire_reduce"
+
+    return combined
+
+combined = combined_metrics_df("metrics.csv")
+
+def assemble_un(carte: Path, legend: Path, output: Path) -> str:
+    """
+    Assemble une carte SVG et sa légende à droite.
+    La légende est mise à l'échelle pour avoir exactement la même hauteur que la carte.
+    Exporte aussi un PDF à côté du SVG.
+    """
+    # Charger les SVG
+    fig_map = fromfile(str(carte))
+    fig_leg = fromfile(str(legend))
+
+    # Dimensions (en px)
+    w_map, h_map = _dims(fig_map)
+    w_leg, h_leg = _dims(fig_leg)
+    if h_map == 0 or h_leg == 0:
+        raise ValueError("Hauteur nulle détectée dans la carte ou la légende.")
+
+    # Mise à l'échelle de la légende pour égaler la hauteur de la carte
+    scale_leg = h_map / h_leg
+    w_leg_scaled = w_leg * scale_leg
+    h_leg_scaled = h_leg * scale_leg  # = h_map
+
+    # Canvas final
+    width  = w_map + w_leg_scaled
+    height = h_map
+    canvas = SVGFigure(f"{width}px", f"{height}px")
+    canvas.root.set("viewBox", f"0 0 {width} {height}")
+
+    # Racines et transformations
+    root_map = fig_map.getroot()
+    root_leg = fig_leg.getroot()
+    root_leg.scale(scale_leg, scale_leg)
+
+    # Positionnement
+    root_map.moveto(0, 0)
+    # Centrage vertical robuste en cas d'arrondis
+    y_leg = max(0, (h_map - h_leg_scaled) / 2.0)
+    root_leg.moveto(w_map, y_leg)
+
+    # Assemblage
+    canvas.append([root_map, root_leg])
+
+    # Sauvegardes
+    os.makedirs(os.path.dirname(str(output)), exist_ok=True)
+    canvas.save(str(output))
+    cairosvg.svg2pdf(url=str(output), write_to=str(output)[:-4] + ".pdf")
+    return str(output)
+
+
+jour_pluie = assemble_vertical(
+  "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/mod_norast.svg",
+  "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_norast.svg",
+  "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/legend.svg",
+  "figures/jour_pluie.svg"
+)
+
+mean_pluie_jour = assemble_vertical(
+  "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/mod_norast.svg",
+  "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_norast.svg",
+  "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/legend.svg",
+  "figures/mean_pluie_jour.svg"
+)
+
+mean_max_pluie_jour = assemble_vertical(
+  "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/hydro/mod_norast.svg",
+  "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/hydro/obs_norast.svg",
+  "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/legend.svg",
+  "figures/mean-max_pluie_jour.svg"
+)
+
+mean_max_pluie_horaire = assemble_vertical(
+  "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/hydro/mod_norast.svg",
+  "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/hydro/obs_norast.svg",
+  "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/legend.svg",
+  "figures/mean-max_pluie_horaire.svg"
+)
+
+jour_pluie_diff = assemble_un(
+  "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_norast_diff.svg",
+  "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/legend_diff.svg",
+  "figures/jour_pluie_diff.svg"
+)
+
+mean_pluie_jour_diff = assemble_un(
+  "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_norast_diff.svg",
+  "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/legend_diff.svg",
+  "figures/mean_pluie_jour_diff.svg"
+)
+
+mean_max_pluie_jour_diff = assemble_un(
+  "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/hydro/obs_norast_diff.svg",
+  "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/legend_diff.svg",
+  "figures/mean-max_pluie_jour_diff.svg"
+)
+
+mean_max_pluie_horaire_diff = assemble_un(
+  "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/hydro/obs_norast_diff.svg",
+  "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/legend_diff.svg",
+  "figures/mean-max_pluie_horaire_diff.svg"
+)
+
+df_mean_max_pluie_horaire_avr = combined.loc[(combined["echelle"] == "horaire") & (combined["season"] == "avr") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
+
+df_mean_max_pluie_horaire_mai = combined.loc[(combined["echelle"] == "horaire") & (combined["season"] == "mai") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
+
+df_mean_max_pluie_horaire_jui = combined.loc[(combined["echelle"] == "horaire") & (combined["season"] == "jui") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
+
+df_jour_pluie = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "numday"), ["n", "r", "me", "delta"]]
+
+df_mean_pluie_jour = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "mean"), ["n", "r", "me", "delta"]]
+
+df_mean_max_pluie_jour = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
+
+df_mean_max_pluie_horaire = combined.loc[(combined["echelle"] == "horaire") & (combined["season"] == "hydro") & (combined["col_calculate"] == "mean-max"), ["n", "r", "me", "delta"]]
+
+r_jp  = float(df_jour_pluie["r"].iloc[0]);  n_jp  = int(df_jour_pluie["n"].iloc[0])
+r_mpj = float(df_mean_pluie_jour["r"].iloc[0]); n_mpj = int(df_mean_pluie_jour["n"].iloc[0])
+r_mmj = float(df_mean_max_pluie_jour["r"].iloc[0]); n_mmj = int(df_mean_max_pluie_jour["n"].iloc[0])
+r_mmh = float(df_mean_max_pluie_horaire["r"].iloc[0]); n_mmh = int(df_mean_max_pluie_horaire["n"].iloc[0])
+
+me_jp  = float(df_jour_pluie["me"].iloc[0]);  d_jp  = float(df_jour_pluie["delta"].iloc[0])
+me_mpj = float(df_mean_pluie_jour["me"].iloc[0]); d_mpj = float(df_mean_pluie_jour["delta"].iloc[0])
+me_mmj = float(df_mean_max_pluie_jour["me"].iloc[0]); d_mmj = float(df_mean_max_pluie_jour["delta"].iloc[0])
+me_mmh = float(df_mean_max_pluie_horaire["me"].iloc[0]); d_mmh = float(df_mean_max_pluie_horaire["delta"].iloc[0])
+```
+
+```{python}
+#| include: false
+macros = rf"""
+\newcommand{{\rJourPluie}}{{{r_jp:.2f}}}
+\newcommand{{\nJourPluie}}{{{n_jp:d}}}
+\newcommand{{\rMeanPluieJour}}{{{r_mpj:.2f}}}
+\newcommand{{\nMeanPluieJour}}{{{n_mpj:d}}}
+\newcommand{{\rMeanMaxJour}}{{{r_mmj:.2f}}}
+\newcommand{{\nMeanMaxJour}}{{{n_mmj:d}}}
+\newcommand{{\rMeanMaxHoraire}}{{{r_mmh:.2f}}}
+\newcommand{{\nMeanMaxHoraire}}{{{n_mmh:d}}}
+\newcommand{{\meJourPluie}}{{{me_jp:+.2f}}}
+\newcommand{{\dJourPluie}}{{{d_jp:+.2f}}}
+\newcommand{{\meMeanPluieJour}}{{{me_mpj:+.2f}}}
+\newcommand{{\dMeanPluieJour}}{{{d_mpj:+.2f}}}
+\newcommand{{\meMeanMaxJour}}{{{me_mmj:+.2f}}}
+\newcommand{{\dMeanMaxJour}}{{{d_mmj:+.2f}}}
+\newcommand{{\meMeanMaxHoraire}}{{{me_mmh:+.2f}}}
+\newcommand{{\dMeanMaxHoraire}}{{{d_mmh:+.2f}}}
+"""
+with open("macros_fig3.tex", "w", encoding="utf-8") as f:
+    f.write(macros)
+```
+
+```{=latex}
+\newlength{\SavedTextWidthC}
+\setlength{\SavedTextWidthC}{\textwidth}
+
+\begingroup
+\providecommand{\+}{+}% neutralise \+ localement
+\renewcommand{\.}{.}% neutralise \. localement
+
+\noindent
+\begin{minipage}[t]{\paperwidth}
+\centering
+\setlength{\tabcolsep}{0pt}%
+\renewcommand{\arraystretch}{1}%
+
+\begin{tabular}{>{\centering\arraybackslash}p{.24\paperwidth}
+                >{\centering\arraybackslash}p{.24\paperwidth}
+                >{\centering\arraybackslash}p{.24\paperwidth}
+                >{\centering\arraybackslash}p{.24\paperwidth}}
+\small\bfseries \shortstack{Number of days\\ per year\\ with precipitation} &
+\small\bfseries \shortstack{Annual\\ precipitation\\ total} &
+\small\bfseries \shortstack{Mean of daily\\ precipitation\\ maxima} &
+\small\bfseries \shortstack{Mean of hourly\\ precipitation\\ maxima} \\[-0.5mm]
+
+\small $r=\ \rJourPluie$ \ (n=\ \nJourPluie) &
+\small $r=\ \rMeanPluieJour$ \ (n=\ \nMeanPluieJour) &
+\small $r=\ \rMeanMaxJour$ \ (n=\ \nMeanMaxJour) &
+\small $r=\ \rMeanMaxHoraire$ \ (n=\ \nMeanMaxHoraire) \\[-0.5mm]
+
+\includegraphics[width=\linewidth]{figures/jour_pluie.pdf} &
+\includegraphics[width=\linewidth]{figures/mean_pluie_jour.pdf} &
+\includegraphics[width=\linewidth]{figures/mean-max_pluie_jour.pdf} &
+\includegraphics[width=\linewidth]{figures/mean-max_pluie_horaire.pdf} \\[-0.5mm]
+
+\small $ME=\ \meJourPluie\,\mathrm{j}\,(\dJourPluie\%)$ &
+\small $ME=\ \meMeanPluieJour\,\mathrm{mm/yr}\,(\dMeanPluieJour\%)$ &
+\small $ME=\ \meMeanMaxJour\,\mathrm{mm/day}\,(\dMeanMaxJour\%)$ &
+\small $ME=\ \meMeanMaxHoraire\,\mathrm{mm/h}\,(\dMeanMaxHoraire\%)$\\[-0.5mm]
+
+
+\includegraphics[width=\linewidth]{figures/jour_pluie_diff.pdf} &
+\includegraphics[width=\linewidth]{figures/mean_pluie_jour_diff.pdf} &
+\includegraphics[width=\linewidth]{figures/mean-max_pluie_jour_diff.pdf} &
+\includegraphics[width=\linewidth]{figures/mean-max_pluie_horaire_diff.pdf}
+\end{tabular}
+
+\end{minipage}
+\endgroup
+```

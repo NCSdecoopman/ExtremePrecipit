@@ -1,0 +1,317 @@
+---
+title: ""
+format:
+  pdf:
+    listings: false
+    documentclass: standalone
+    classoption: ["border=4pt"]
+    keep-tex: true
+execute:
+  echo: false
+  warning: false
+  message: false
+header-includes:
+  - \usepackage{graphicx}
+  - \usepackage{tabularx}
+  - \usepackage{array}
+  - \usepackage{makecell}
+  - \usepackage{multirow}
+  - \usepackage{caption}
+  - \input{macros_fig5.tex}
+---
+
+
+```{python}
+#| include: false
+#| echo: false
+#| warning: false
+#| message: false
+#| error: false
+
+from __future__ import annotations
+
+import sys
+import os
+from pathlib import Path
+from typing import Tuple
+
+from svgutils.transform import fromfile, SVGFigure
+import cairosvg
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+
+def _to_px(value: str | None) -> float:
+    """
+    Convertit une longueur SVG (px, mm, cm, pt, in) en pixels (float).
+
+    Si `value` est None ou vide, retourne 0.
+    """
+    if not value:
+        return 0.0
+    value = value.strip()
+    num = ''
+    unit = ''
+    for ch in value:
+        if ch.isdigit() or ch in '.-':
+            num += ch
+        else:
+            unit += ch
+    if not num:
+        return 0.0
+    numf = float(num)
+    unit = unit.strip().lower()
+    if unit in ('', 'px'):
+        return numf
+    if unit == 'mm':
+        return numf * 3.779527559055  # 96 dpi
+    if unit == 'cm':
+        return numf * 37.79527559055
+    if unit == 'in':
+        return numf * 96
+    if unit == 'pt':
+        return numf * 1.3333333333333  # 1 pt = 1/72 in
+    # Fallback: assume pixels
+    return numf
+
+
+def _dims(fig) -> Tuple[float, float]:
+    """
+    Renvoie (width, height) de `fig` en pixels.
+
+    1) viewBox (les 2 derniers termes)
+    2) attributs width/height de la racine
+    3) fig.get_size()
+    """
+    root = fig.root  # Correction ici : on accède à la balise <svg>
+    viewbox = root.get('viewBox')
+    if viewbox:
+        parts = [p for p in viewbox.replace(',', ' ').split() if p]
+        if len(parts) == 4:
+            return float(parts[2]), float(parts[3])
+
+    # attributs width/height sur la balise <svg>
+    w_attr = root.get('width')
+    h_attr = root.get('height')
+    if w_attr and h_attr:
+        return _to_px(w_attr), _to_px(h_attr)
+
+    # fallback
+    w, h = fig.get_size()
+    return _to_px(w), _to_px(h)
+
+
+def combined_metrics_df(name_file: str):
+    base_dir = Path("../outputs")         # dossier racine à explorer
+    csv_paths = list(base_dir.rglob(name_file))
+
+    frames = []
+    for path in csv_paths:
+        try:
+            df = pd.read_csv(path)
+            df["source"] = str(path.relative_to(base_dir))  # garder la provenance
+            frames.append(df)
+        except Exception as exc:                             # CSV illisible
+            sys.stderr.write(f"⚠️  Fichier ignoré {path}: {exc}")
+
+    if not frames:
+        raise SystemExit("Aucun metrics.csv trouvé !")
+
+    # Concaténation puis export
+    combined = pd.concat(frames, ignore_index=True)
+
+    # --- harmonisation des échelles ---
+    # cas quotidien_reduce
+    mask_q = combined["source"].str.contains("quotidien_reduce", na=False)
+    combined.loc[mask_q & (combined["echelle"] == "quotidien"), "echelle"] = "quotidien_reduce"
+
+    # cas horaire_reduce
+    mask_h = combined["source"].str.contains("horaire_reduce", na=False)
+    combined.loc[mask_h & (combined["echelle"] == "horaire"), "echelle"] = "horaire_reduce"
+
+    return combined
+
+combined = combined_metrics_df("metrics.csv")
+combined_signif = combined_metrics_df("metrics_signif.csv")
+combined_signif["col_calculate"] = combined_signif["col_calculate"].astype(str) + "_signif"
+combined_all = pd.concat([combined, combined_signif], ignore_index=True)
+
+def assemble(arome: Path, stations: Path, legend: Path, output: Path) -> str:
+    # Charger les 2 cartes
+    fig_arome = fromfile(str(arome))
+    fig_stations = fromfile(str(stations))
+
+    # Dimensions via _dims existant
+    w_a, h_a = _dims(fig_arome)
+    w_s, h_s = _dims(fig_stations)
+
+    # Mise à l'échelle: même hauteur que AROME
+    scale_s = h_a / h_s if h_s != 0 else 1.0
+    root_a = fig_arome.getroot()
+    root_s = fig_stations.getroot()
+    root_s.scale(scale_s)
+
+    w_s_scaled, h_s_scaled = w_s * scale_s, h_s * scale_s
+
+    # Canvas côte à côte
+    width  = w_a + w_s_scaled
+    height = max(h_a, h_s_scaled)
+
+    canvas = SVGFigure(f"{width}px", f"{height}px")
+    canvas.root.set("viewBox", f"0 0 {width} {height}")
+
+    # Positionnement: AROME à gauche, Stations à droite
+    root_a.moveto(0, 0)
+    root_s.moveto(w_a, 0)
+
+    # Pas de légende
+    canvas.append([root_a, root_s])
+
+    os.makedirs(os.path.dirname(str(output)), exist_ok=True)
+    canvas.save(str(output))
+    cairosvg.svg2pdf(url=str(output), write_to=str(output)[:-4] + ".pdf")
+    return str(output)
+
+
+trend_pluie_hydro = assemble(
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/hydro/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/hydro/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/legend_signif.svg",
+  "figures/trend_pluie_hydro.svg"
+)
+trend_pluie_ond = assemble(
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/ond/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/ond/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/legend_signif.svg",
+  "figures/trend_pluie_ond.svg"
+)
+trend_pluie_jfm = assemble(
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/jfm/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/jfm/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/legend_signif.svg",
+  "figures/trend_pluie_jfm.svg"
+)
+trend_pluie_amj = assemble(
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/amj/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/amj/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/legend_signif.svg",
+  "figures/trend_pluie_amj.svg"
+)
+trend_pluie_jas = assemble(
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/jas/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/jas/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/legend_signif.svg",
+  "figures/trend_pluie_jas.svg"
+)
+df_trend_pluie_hydro = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "hydro") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+df_trend_pluie_ond = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "ond") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+df_trend_pluie_jfm = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "jfm") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+df_trend_pluie_amj = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "amj") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+df_trend_pluie_jas = combined_all.loc[(combined_all["echelle"] == "quotidien") & (combined_all["season"] == "jas") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+```
+
+```{python}
+#| include: false
+def _first_vals(df):
+    # .item() évite les objets numpy scalaires
+    r = float(df["r"].iloc[0].item())
+    n = int(df["n"].iloc[0].item())
+    me = float(df["me"].iloc[0].item())
+    return r, n, me
+
+r_ond, n_ond, me_ond = _first_vals(df_trend_pluie_ond)
+r_jfm, n_jfm, me_jfm = _first_vals(df_trend_pluie_jfm)
+r_amj, n_amj, me_amj = _first_vals(df_trend_pluie_amj)
+r_jas, n_jas, me_jas = _first_vals(df_trend_pluie_jas)
+r_hyd, n_hyd, me_hyd = _first_vals(df_trend_pluie_hydro)
+
+macros = rf"""
+\newcommand{{\rOND}}{{{r_ond:.2f}}}
+\newcommand{{\nOND}}{{{n_ond:d}}}
+\newcommand{{\meOND}}{{{me_ond:+.2f}}}
+
+\newcommand{{\rJFM}}{{{r_jfm:.2f}}}
+\newcommand{{\nJFM}}{{{n_jfm:d}}}
+\newcommand{{\meJFM}}{{{me_jfm:+.2f}}}
+
+\newcommand{{\rAMJ}}{{{r_amj:.2f}}}
+\newcommand{{\nAMJ}}{{{n_amj:d}}}
+\newcommand{{\meAMJ}}{{{me_amj:+.2f}}}
+
+\newcommand{{\rJAS}}{{{r_jas:.2f}}}
+\newcommand{{\nJAS}}{{{n_jas:d}}}
+\newcommand{{\meJAS}}{{{me_jas:+.2f}}}
+
+\newcommand{{\rHYDRO}}{{{r_hyd:.2f}}}
+\newcommand{{\nHYDRO}}{{{n_hyd:d}}}
+\newcommand{{\meHYDRO}}{{{me_hyd:+.2f}}}
+"""
+with open("macros_fig5.tex", "w", encoding="utf-8") as f:
+    f.write(macros)
+```
+
+```{=latex}
+\begingroup
+% ---- Grille principale en pleine largeur ----
+\noindent
+\begin{minipage}[t]{\paperwidth}
+\centering
+\setlength{\tabcolsep}{0pt}
+\renewcommand{\arraystretch}{1}
+\begin{tabularx}{\paperwidth}{
+  >{\centering\arraybackslash}m{0.49\paperwidth}
+  >{\centering\arraybackslash}m{0.49\paperwidth}
+}
+
+% --- Ligne 1 ---
+\textbf{\small OND} & \textbf{\small JFM} \\[-0.5mm]
+\small $r=\ \rOND$ \ (n=\ \nOND) & \small $r=\ \rJFM$ \ (n=\ \nJFM) \\[-0.5mm]
+\small $ME=\ \meOND\%$ & \small $ME=\ \meJFM\%$ \\[-0.5mm]
+\includegraphics[width=\linewidth]{figures/trend_pluie_ond.pdf} &
+\includegraphics[width=\linewidth]{figures/trend_pluie_jfm.pdf} \\
+
+% --- Ligne 2 ---
+\textbf{\small AMJ} & \textbf{\small JAS} \\[-0.5mm]
+\small $r=\ \rAMJ$ \ (n=\ \nAMJ) & \small $r=\ \rJAS$ \ (n=\ \nJAS) \\[-0.5mm]
+\small $ME=\ \meAMJ\%$ & \small $ME=\ \meJAS\%$ \\[-0.5mm]
+\includegraphics[width=\linewidth]{figures/trend_pluie_amj.pdf} &
+\includegraphics[width=\linewidth]{figures/trend_pluie_jas.pdf} \\
+
+% --- Ligne 3 ---
+\textbf{\small HYDRO} &
+\multirow{3}{*}{
+  \begin{minipage}[c]{\linewidth}
+    \centering
+    \includegraphics[width=0.85\linewidth,keepaspectratio]{../outputs/maps/gev_z_T_p/quotidien/compare_9/sat_99.0/legend_horiz_signif.pdf}
+    \makebox[0.85\linewidth][c]{\small \%}
+  \end{minipage}
+}\\[-0.5mm]
+
+\small $r=\ \rHYDRO$ \ (n=\ \nHYDRO) & \\[-0.5mm]
+\small $ME=\ \meHYDRO\%$ & \\[-0.5mm]
+
+\includegraphics[width=\linewidth]{figures/trend_pluie_hydro.pdf} &
+\begin{minipage}[c]{\linewidth}
+  \centering
+  \vspace{0.5em}
+  \begin{minipage}[c]{0.90\linewidth}
+    \setlength{\parindent}{0pt}
+    \small
+    \setcounter{figure}{4}% prochaine légende = Figure 5
+    \captionof{figure}{
+      \vspace{0.3em}
+      Seasonal analysis of relative trends from 1995 to 2022 (\%) in the 10-year return level
+      between the AROME model (left) and Météo-France stations (right), with the correlation ($r$),
+      the number of stations compared (n), and the bias ($ME$) derived from daily precipitation maxima
+      from 1959 to 2022.
+      \vspace{0.3em}
+    }
+  \end{minipage}
+\end{minipage}
+\\
+
+\end{tabularx}
+\end{minipage}
+\endgroup
+```

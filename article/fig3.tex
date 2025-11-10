@@ -1,0 +1,220 @@
+% Options for packages loaded elsewhere
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+%
+\documentclass[
+  border=4pt]{standalone}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+% Make \paragraph and \subparagraph free-standing
+\makeatletter
+\ifx\paragraph\undefined\else
+  \let\oldparagraph\paragraph
+  \renewcommand{\paragraph}{
+    \@ifstar
+      \xxxParagraphStar
+      \xxxParagraphNoStar
+  }
+  \newcommand{\xxxParagraphStar}[1]{\oldparagraph*{#1}\mbox{}}
+  \newcommand{\xxxParagraphNoStar}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+  \let\oldsubparagraph\subparagraph
+  \renewcommand{\subparagraph}{
+    \@ifstar
+      \xxxSubParagraphStar
+      \xxxSubParagraphNoStar
+  }
+  \newcommand{\xxxSubParagraphStar}[1]{\oldsubparagraph*{#1}\mbox{}}
+  \newcommand{\xxxSubParagraphNoStar}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+\makeatother
+
+
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+
+
+
+
+
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+
+
+ 
+
+
+\usepackage{graphicx}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{makecell}
+\input{macros_fig3.tex}
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\AtBeginDocument{%
+\ifdefined\contentsname
+  \renewcommand*\contentsname{Table of contents}
+\else
+  \newcommand\contentsname{Table of contents}
+\fi
+\ifdefined\listfigurename
+  \renewcommand*\listfigurename{List of Figures}
+\else
+  \newcommand\listfigurename{List of Figures}
+\fi
+\ifdefined\listtablename
+  \renewcommand*\listtablename{List of Tables}
+\else
+  \newcommand\listtablename{List of Tables}
+\fi
+\ifdefined\figurename
+  \renewcommand*\figurename{Figure}
+\else
+  \newcommand\figurename{Figure}
+\fi
+\ifdefined\tablename
+  \renewcommand*\tablename{Table}
+\else
+  \newcommand\tablename{Table}
+\fi
+}
+\@ifpackageloaded{float}{}{\usepackage{float}}
+\floatstyle{ruled}
+\@ifundefined{c@chapter}{\newfloat{codelisting}{h}{lop}}{\newfloat{codelisting}{h}{lop}[chapter]}
+\floatname{codelisting}{Listing}
+\newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
+\makeatother
+\makeatletter
+\makeatother
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
+\makeatother
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  colorlinks=true,
+  linkcolor={blue},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+
+
+\author{}
+\date{}
+\begin{document}
+
+
+\newlength{\SavedTextWidthC}
+\setlength{\SavedTextWidthC}{\textwidth}
+
+\begingroup
+\providecommand{\+}{+}% neutralise \+ localement
+\renewcommand{\.}{.}% neutralise \. localement
+
+\noindent
+\begin{minipage}[t]{\paperwidth}
+\centering
+\setlength{\tabcolsep}{0pt}%
+\renewcommand{\arraystretch}{1}%
+
+\begin{tabular}{>{\centering\arraybackslash}p{.24\paperwidth}
+                >{\centering\arraybackslash}p{.24\paperwidth}
+                >{\centering\arraybackslash}p{.24\paperwidth}
+                >{\centering\arraybackslash}p{.24\paperwidth}}
+\small\bfseries \shortstack{Number of days\\ per year\\ with precipitation} &
+\small\bfseries \shortstack{Annual\\ precipitation\\ total} &
+\small\bfseries \shortstack{Mean of daily\\ precipitation\\ maxima} &
+\small\bfseries \shortstack{Mean of hourly\\ precipitation\\ maxima} \\[-0.5mm]
+
+\small $r=\ \rJourPluie$ \ (n=\ \nJourPluie) &
+\small $r=\ \rMeanPluieJour$ \ (n=\ \nMeanPluieJour) &
+\small $r=\ \rMeanMaxJour$ \ (n=\ \nMeanMaxJour) &
+\small $r=\ \rMeanMaxHoraire$ \ (n=\ \nMeanMaxHoraire) \\[-0.5mm]
+
+\includegraphics[width=\linewidth]{figures/jour_pluie.pdf} &
+\includegraphics[width=\linewidth]{figures/mean_pluie_jour.pdf} &
+\includegraphics[width=\linewidth]{figures/mean-max_pluie_jour.pdf} &
+\includegraphics[width=\linewidth]{figures/mean-max_pluie_horaire.pdf} \\[-0.5mm]
+
+\small $ME=\ \meJourPluie\,\mathrm{j}\,(\dJourPluie\%)$ &
+\small $ME=\ \meMeanPluieJour\,\mathrm{mm/yr}\,(\dMeanPluieJour\%)$ &
+\small $ME=\ \meMeanMaxJour\,\mathrm{mm/day}\,(\dMeanMaxJour\%)$ &
+\small $ME=\ \meMeanMaxHoraire\,\mathrm{mm/h}\,(\dMeanMaxHoraire\%)$\\[-0.5mm]
+
+
+\includegraphics[width=\linewidth]{figures/jour_pluie_diff.pdf} &
+\includegraphics[width=\linewidth]{figures/mean_pluie_jour_diff.pdf} &
+\includegraphics[width=\linewidth]{figures/mean-max_pluie_jour_diff.pdf} &
+\includegraphics[width=\linewidth]{figures/mean-max_pluie_horaire_diff.pdf}
+\end{tabular}
+
+\end{minipage}
+\endgroup
+
+
+
+
+\end{document}
