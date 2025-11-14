@@ -71,7 +71,8 @@ def plot_r_by_season(
     echelles,
     col_values,          # <-- plusieurs indicateurs (ex. ['numday', 'mean', 'mean-max'])
     nom_fichier,         # préfixe du fichier (le numéro du facet est ajouté automatiquement)
-    col_plot: str="r"
+    col_plot: str="r",
+    col_pct: str="n"  # <-- colonne contenant le % de stations
 ):
     """
     Trace un bar‑chart groupé « r » par saison, pour plusieurs indicateurs.
@@ -93,8 +94,8 @@ def plot_r_by_season(
         "numday": "Number of rainy days",
         "mean": "Total precipitation",
         "mean-max": "Mean of maxima",
-        "z_T_p": "Significant and non-significant trend",
-        "z_T_p_signif": "Significant trend"
+        "z_T_p": "Significant and non-significant trends",
+        "z_T_p_signif": "Significant trends"
     }
 
 
@@ -121,7 +122,7 @@ def plot_r_by_season(
     # Boucle sur chaque col_value demandé → un subplot par indicateur
     # ------------------------------------------------------------------
     for ax, col_value in zip(axes, col_values):
-        # --- 1) Filtrage identique ---
+        # --- 1) Filtrage identique pour la valeur à tracer ---
         sub = df.loc[
             (df["echelle"].isin(echelles)) &
             (df["col_calculate"] == col_value),
@@ -132,7 +133,19 @@ def plot_r_by_season(
             ax.set_title(f"Aucune donnée pour '{col_value}'")
             continue
 
+        # Filtrage pour le % de stations (même sous-ensemble)
+        if col_pct in df.columns:
+            sub_pct = df.loc[
+                (df["echelle"].isin(echelles)) &
+                (df["col_calculate"] == col_value),
+                ["season", "echelle", col_pct]
+            ]
+        else:
+            sub_pct = None
+
         sub["season"] = sub["season"].str.upper()
+        if sub_pct is not None:
+            sub_pct["season"] = sub_pct["season"].str.upper()
 
         # --- 2) Ordre fixe ---
         ordre_total = [
@@ -155,16 +168,26 @@ def plot_r_by_season(
             "JAN": "JAN", "FEV": "FEB", "MAR": "MAR", "AVR": "APR",
             "MAI": "MAY", "JUI": "JUN", "JUILL": "JUL",
             "AOU": "AUG", "SEP": "SEP", "OCT": "OCT",
-            "NOV": "NOV", "DEC": "DEC"
+            "NOV": "NOV", "DEC": "DEC", "HYDRO": "YEAR"
         }
 
 
-        # --- 4) Pivot ---
+        # --- 4) Pivot pour la valeur tracée ---
         pivot = (
             sub.pivot(index="season", columns="echelle", values=col_plot)
                .rename(columns=rename_map)
                .reindex(saisons_pres)
         )
+
+        # --- 4bis) Pivot pour les pourcentages ---
+        if sub_pct is not None:
+            pivot_pct = (
+                sub_pct.pivot(index="season", columns="echelle", values=col_pct)
+                      .rename(columns=rename_map)
+                      .reindex(saisons_pres)
+            )
+        else:
+            pivot_pct = None
 
         # --- 5) Colonnes dans l’ordre demandé ---
         ordre_cols = [
@@ -172,6 +195,8 @@ def plot_r_by_season(
             if rename_map[k] in pivot.columns
         ]
         pivot = pivot[ordre_cols]
+        if pivot_pct is not None:
+            pivot_pct = pivot_pct[ordre_cols]
 
         # --- 6) Couleurs ---
         couleurs = ["black", "dimgray", "lightgray"][:pivot.shape[1]]
@@ -189,6 +214,28 @@ def plot_r_by_season(
                 color=couleur,
                 label=col
             )
+
+            # -------------------------------
+            # Ajout du % de stations au-dessus
+            # -------------------------------
+            if pivot_pct is not None:
+                for j, b in enumerate(bars):
+                    pct = pivot_pct.iloc[j, i]
+                    if pd.notna(pct):
+                        # si pct est entre 0 et 1 → en %
+                        if pct <= 1.0:
+                            txt = f" {pct*100:.0f}%"
+                        else:
+                            txt = f" {pct:.0f}"
+                        ax.text(
+                            b.get_x() + b.get_width() / 2,
+                            b.get_height(),
+                            txt,
+                            rotation=90,             # vertical
+                            ha="center",
+                            va="bottom",
+                            fontsize=8
+                        )
 
         # --- 8) Axes, grille, ticks ---
 
@@ -218,7 +265,7 @@ def plot_r_by_season(
         ax.set_title(label_map.get(col_value, col_value))   # titre lisible pour chaque subplot)
 
         if col_plot=="r":
-          ax.set_ylim(top=1)   # <-- Forcer ymax à 1
+          ax.set_ylim(top=0.7)   # <-- Forcer ymax à 1
           ax.yaxis.set_major_locator(mticker.MultipleLocator(0.1))
           ax.yaxis.set_minor_locator(mticker.MultipleLocator(0.02))
         else:
@@ -259,9 +306,9 @@ def plot_r_by_season(
     fig.savefig(f"figures/{nom_fichier}.pdf", bbox_inches="tight")
     plt.close(fig)
 
-selected_seasons = ["hydro", "ond", "jfm", "amj", "jas", "jan", "fev", "mar", "avr", "mai", "jui", "juil", "aou", "sep", "oct", "nov", "dec"]
+selected_seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juil", "aou", "sep", "oct", "nov", "dec"]
 to_plot = combined_all[combined_all["season"].isin(selected_seasons)]
-plot_r_by_season(to_plot , echelles=['quotidien', 'quotidien_reduce', 'horaire'], col_values=['z_T_p', 'z_T_p_signif'], nom_fichier="histo_z_T_p")
+plot_r_by_season(to_plot , echelles=['quotidien', 'horaire'], col_values=['z_T_p', 'z_T_p_signif'], nom_fichier="histo_z_T_p")
 ```
 
 ```{=latex}

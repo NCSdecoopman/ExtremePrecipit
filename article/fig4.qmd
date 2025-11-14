@@ -152,7 +152,7 @@ def plot_r_by_season(
             "JAN": "JAN", "FEV": "FEB", "MAR": "MAR", "AVR": "APR",
             "MAI": "MAY", "JUI": "JUN", "JUILL": "JUL",
             "AOU": "AUG", "SEP": "SEP", "OCT": "OCT",
-            "NOV": "NOV", "DEC": "DEC"
+            "NOV": "NOV", "DEC": "DEC", "HYDRO": "YEAR"
         }
 
 
@@ -256,9 +256,9 @@ def plot_r_by_season(
     fig.savefig(f"figures/{nom_fichier}.pdf", bbox_inches="tight")
     plt.close(fig)
 
-selected_seasons = ["hydro", "djf", "mam", "jja", "ond", "jfm", "amj", "jas", "avr", "mai", "jui"]
+selected_seasons = ["hydro", "ond", "jfm", "amj", "jas", "avr", "mai", "jui"]
 to_plot = combined[combined["season"].isin(selected_seasons)]
-plot_r_by_season(to_plot, echelles=['quotidien', 'quotidien_reduce', 'horaire'], col_values=['numday', 'mean', 'mean-max'], nom_fichier="histo_numday_mean_mean-max")
+plot_r_by_season(to_plot, echelles=['quotidien', 'horaire'], col_values=['numday', 'mean', 'mean-max'], nom_fichier="histo_numday_mean_mean-max")
 ```
 
 ```{=latex}

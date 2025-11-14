@@ -353,21 +353,20 @@ with open("macros_fig3.tex", "w", encoding="utf-8") as f:
 \small\bfseries \shortstack{Mean of daily\\ precipitation\\ maxima} &
 \small\bfseries \shortstack{Mean of hourly\\ precipitation\\ maxima} \\[-0.5mm]
 
-\small $r=\ \rJourPluie$ \ (n=\ \nJourPluie) &
-\small $r=\ \rMeanPluieJour$ \ (n=\ \nMeanPluieJour) &
-\small $r=\ \rMeanMaxJour$ \ (n=\ \nMeanMaxJour) &
-\small $r=\ \rMeanMaxHoraire$ \ (n=\ \nMeanMaxHoraire) \\[-0.5mm]
-
 \includegraphics[width=\linewidth]{figures/jour_pluie.pdf} &
 \includegraphics[width=\linewidth]{figures/mean_pluie_jour.pdf} &
 \includegraphics[width=\linewidth]{figures/mean-max_pluie_jour.pdf} &
 \includegraphics[width=\linewidth]{figures/mean-max_pluie_horaire.pdf} \\[-0.5mm]
 
-\small $ME=\ \meJourPluie\,\mathrm{j}\,(\dJourPluie\%)$ &
-\small $ME=\ \meMeanPluieJour\,\mathrm{mm/yr}\,(\dMeanPluieJour\%)$ &
-\small $ME=\ \meMeanMaxJour\,\mathrm{mm/day}\,(\dMeanMaxJour\%)$ &
-\small $ME=\ \meMeanMaxHoraire\,\mathrm{mm/h}\,(\dMeanMaxHoraire\%)$\\[-0.5mm]
+\small $r=\ \rJourPluie$ \ (n=\ \nJourPluie) &
+\small $r=\ \rMeanPluieJour$ \ (n=\ \nMeanPluieJour) &
+\small $r=\ \rMeanMaxJour$ \ (n=\ \nMeanMaxJour) &
+\small $r=\ \rMeanMaxHoraire$ \ (n=\ \nMeanMaxHoraire) \\[-0.5mm]
 
+\small $ME=\ \meJourPluie\,\mathrm{d}\,(\mathbf{\dJourPluie}\%)$ &
+\small $ME=\ \meMeanPluieJour\,\mathrm{mm/yr}\,(\mathbf{\dMeanPluieJour}\%)$ &
+\small $ME=\ \meMeanMaxJour\,\mathrm{mm/day}\,(\mathbf{\dMeanMaxJour}\%)$ &
+\small $ME=\ \meMeanMaxHoraire\,\mathrm{mm/h}\,(\mathbf{\dMeanMaxHoraire}\%)$\\[-0.5mm]
 
 \includegraphics[width=\linewidth]{figures/jour_pluie_diff.pdf} &
 \includegraphics[width=\linewidth]{figures/mean_pluie_jour_diff.pdf} &

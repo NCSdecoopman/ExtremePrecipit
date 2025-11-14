@@ -277,7 +277,7 @@ with open("macros_fig6.tex", "w", encoding="utf-8") as f:
     \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_jas.pdf} \\
     
     % --- Ligne 3 ---
-    \textbf{\small HYDRO} &
+    \textbf{\small YEAR} &
     \multirow{3}{*}{
       \begin{minipage}[c]{\linewidth}
         \centering
@@ -290,23 +290,6 @@ with open("macros_fig6.tex", "w", encoding="utf-8") as f:
     \small $ME=\ \meHYDRO\%$ & \\[-0.5mm]
 
     \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_hydro.pdf} &
-    \begin{minipage}[c]{\linewidth}
-      \centering
-      \vspace{0.5em}
-      \begin{minipage}[c]{0.90\linewidth}
-        \setlength{\parindent}{0pt}
-        \small
-        \setcounter{figure}{5}% prochaine légende = Figure 6
-        \captionof{figure}{
-          \vspace{0.3em}
-          Seasonal analysis of relative trends from 1995 to 2022 (\%) in the 10-year return level
-          between the AROME model (left) and Météo-France stations (right), with the correlation ($r$),
-          the number of stations compared (n), and the bias ($ME$) derived from \textbf{hourly} precipitation maxima
-          from 1990 to 2022.
-          \vspace{0.3em}
-        }
-      \end{minipage}
-    \end{minipage}
     \\
 
   \end{tabularx}
