@@ -1,0 +1,269 @@
+---
+title: ""
+format:
+  pdf:
+    listings: false
+    documentclass: standalone
+    classoption: ["border=0pt"]
+    keep-tex: true
+execute:
+  echo: false
+  warning: false
+  message: false
+header-includes:
+  - \usepackage{graphicx}
+  - \usepackage{tabularx}
+  - \usepackage{array}
+  - \usepackage{makecell}
+  - \usepackage{multirow}
+  - \usepackage{caption}
+---
+
+```{python}
+import sys
+import os
+from pathlib import Path
+
+import pandas as pd
+import numpy as np
+import math
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+
+def combined_metrics_df(name_file: str):
+    base_dir = Path("../outputs")         # dossier racine à explorer
+    csv_paths = list(base_dir.rglob(name_file))
+
+    frames = []
+    for path in csv_paths:
+        try:
+            df = pd.read_csv(path)
+            df["source"] = str(path.relative_to(base_dir))  # garder la provenance
+            frames.append(df)
+        except Exception as exc:                             # CSV illisible
+            print(f"⚠️  Fichier ignoré {path}: {exc}")
+
+    if not frames:
+        raise SystemExit("Aucun metrics.csv trouvé !")
+
+    # Concaténation puis export
+    combined = pd.concat(frames, ignore_index=True)
+
+    # --- harmonisation des échelles ---
+    # cas quotidien_reduce
+    mask_q = combined["source"].str.contains("quotidien_reduce", na=False)
+    combined.loc[mask_q & (combined["echelle"] == "quotidien"), "echelle"] = "quotidien_reduce"
+
+    # cas horaire_reduce
+    mask_h = combined["source"].str.contains("horaire_reduce", na=False)
+    combined.loc[mask_h & (combined["echelle"] == "horaire"), "echelle"] = "horaire_reduce"
+
+    return combined
+
+combined = combined_metrics_df("metrics.csv")
+
+def plot_r_by_season(
+    df,
+    echelles,
+    col_values,          # <-- plusieurs indicateurs (ex. ['numday', 'mean', 'mean-max'])
+    nom_fichier,         # préfixe du fichier (le numéro du facet est ajouté automatiquement)
+    col_plot: str="r"
+):
+    """
+    Trace un bar‑chart groupé « r » par saison, pour plusieurs indicateurs.
+    Produit un seul PNG contenant un facet‑grid (nrows × ncols).
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+    echelles : list[str]
+        Sous-ensemble d'échelles à garder (ex. ['quotidien', 'horaire'])
+    col_values : list[str]
+        Liste des valeurs cibles de la colonne 'col_calculate'
+    nom_fichier : str
+        Nom de base du fichier PNG (sans extension)
+    """
+    ncols=len(col_values)
+
+    label_map = {
+        "numday": "Number of rainy days",
+        "mean": "Total precipitation",
+        "mean-max": "Mean of maxima",
+        "z_T_p": "Significant and non-significant trend",
+        "z_T_p_signif": "Significant trend"
+    }
+
+
+    # ---------------------------------------------
+    # 0) Préparation de la grille de sous‑graphes
+    # ---------------------------------------------
+    n_facets = len(col_values)
+    ncols = max(1, min(ncols, n_facets))
+    nrows = math.ceil(n_facets / ncols)
+
+    fig, axes = plt.subplots(
+        nrows=nrows,
+        ncols=ncols,
+        figsize=(12, 5 * nrows),
+        sharey=True
+    )
+    # axes → tableau 1D pour itération uniforme
+    axes = np.atleast_1d(axes).flatten()
+
+    # Pour récupérer une seule fois handles/labels de la légende
+    first_handles, first_labels = None, None
+
+    # ------------------------------------------------------------------
+    # Boucle sur chaque col_value demandé → un subplot par indicateur
+    # ------------------------------------------------------------------
+    for ax, col_value in zip(axes, col_values):
+        # --- 1) Filtrage identique ---
+        sub = df.loc[
+            (df["echelle"].isin(echelles)) &
+            (df["col_calculate"] == col_value),
+            ["season", "echelle", col_plot]
+        ]
+        if sub.empty:
+            ax.set_visible(False)
+            ax.set_title(f"Aucune donnée pour '{col_value}'")
+            continue
+
+        sub["season"] = sub["season"].str.upper()
+
+        # --- 2) Ordre fixe ---
+        ordre_total = [
+            "HYDRO", 
+            "SON", "DJF", "MAM", "JJA",
+            "OND", "JFM", "AMJ", "JAS",
+            "SEP", "OCT", "NOV", "DEC", "JAN", "FEV", 
+            "MAR", "AVR", "MAI", "JUI", "JUILL", "AOU"
+        ]
+        saisons_pres = [s for s in ordre_total if s in sub["season"].unique()]
+
+        # --- 3) Renommage des échelles ---
+        rename_map = {
+            "quotidien":        "Daily (1959-2022)",
+            "quotidien_reduce": "Daily (1990-2022)",
+            "horaire":          "Hourly (1990-2022)",
+        }
+
+        fr2en_month = {
+            "JAN": "JAN", "FEV": "FEB", "MAR": "MAR", "AVR": "APR",
+            "MAI": "MAY", "JUI": "JUN", "JUILL": "JUL",
+            "AOU": "AUG", "SEP": "SEP", "OCT": "OCT",
+            "NOV": "NOV", "DEC": "DEC", "HYDRO": "YEAR"
+        }
+
+
+        # --- 4) Pivot ---
+        pivot = (
+            sub.pivot(index="season", columns="echelle", values=col_plot)
+               .rename(columns=rename_map)
+               .reindex(saisons_pres)
+        )
+
+        # --- 5) Colonnes dans l’ordre demandé ---
+        ordre_cols = [
+            rename_map[k] for k in ["quotidien", "quotidien_reduce", "horaire"]
+            if rename_map[k] in pivot.columns
+        ]
+        pivot = pivot[ordre_cols]
+
+        # --- 6) Couleurs ---
+        couleurs = ["black", "dimgray", "lightgray"][:pivot.shape[1]]
+
+        # --- 7) Bar chart groupé ---
+        x = np.arange(len(pivot))
+        largeur = 0.8 / pivot.shape[1]
+
+        for i, (col, couleur) in enumerate(zip(pivot.columns, couleurs)):
+
+            bars = ax.bar(
+                x + i * largeur,
+                pivot[col],
+                width=largeur,
+                color=couleur,
+                label=col
+            )
+
+        # --- 8) Axes, grille, ticks ---
+
+        # map index for display: prefer month-translation, else nice season or title-cased original
+        display_labels = []
+        for s in pivot.index:
+            if s in fr2en_month:
+                display_labels.append(fr2en_month[s])
+            else:
+                # If it's like 'JUILL' or other variants
+                if s in fr2en_month:
+                    display_labels.append(fr2en_month[s])
+                else:
+                    # fallback: capitalize first letter and lowercase the rest
+                    display_labels.append(s)
+
+        ax.set_xticks(
+            x + largeur * (pivot.shape[1] - 1) / 2,
+            pivot.index
+        )
+        ax.set_xticklabels(display_labels, rotation=45)
+        ax.set_xlabel("")
+        if col_plot=="me":
+          ax.set_ylabel("Δ (AROME - Stations) (mm/h)")
+        else:
+          ax.set_ylabel(col_plot)
+        ax.set_title(label_map.get(col_value, col_value))   # titre lisible pour chaque subplot)
+
+        if col_plot=="r":
+          ax.set_ylim(top=1)   # <-- Forcer ymax à 1
+          ax.yaxis.set_major_locator(mticker.MultipleLocator(0.1))
+          ax.yaxis.set_minor_locator(mticker.MultipleLocator(0.02))
+        else:
+          ax.yaxis.set_major_locator(mticker.MultipleLocator(0.5))
+          ax.yaxis.set_minor_locator(mticker.MultipleLocator(0.25))
+
+        ax.grid(axis="y", which="major", linestyle="--", alpha=0.8)
+        ax.grid(axis="y", which="minor", linestyle=":",  alpha=0.5)
+
+        # mémoriser les handles/labels la première fois
+        if first_handles is None:
+            first_handles, first_labels = ax.get_legend_handles_labels()
+
+        # supprimer la légende locale seulement si elle existe
+        leg = ax.get_legend()
+        if leg is not None:
+            leg.remove()
+
+
+    # ------------------------------------------------------------------
+    # 9) Légende globale (ligne en‑haut, centrée)
+    # ------------------------------------------------------------------
+    if first_handles:
+        fig.legend(
+            first_handles,
+            first_labels,
+            loc="lower center",
+            ncol=len(first_labels),
+            bbox_to_anchor=(0.5, 1.02)
+        )
+
+    fig.tight_layout()
+    fig.subplots_adjust(top=0.90)  # laisser de l’espace pour la légende globale
+
+    # ------------------------------------------------------------------
+    # 10) Sauvegarde
+    # ------------------------------------------------------------------
+    fig.savefig(f"figures/{nom_fichier}.pdf", bbox_inches="tight")
+    plt.close(fig)
+
+selected_seasons = ["hydro", "ond", "jfm", "amj", "jas"]
+to_plot = combined[combined["season"].isin(selected_seasons)]
+plot_r_by_season(to_plot, echelles=['quotidien', 'horaire'], col_values=['numday', 'mean', 'mean-max'], nom_fichier="histo_numday_mean_mean-max")
+```
+
+```{=latex}
+\par\noindent
+\makebox[\linewidth][c]{%
+\includegraphics[width=\linewidth,keepaspectratio]{\detokenize{figures/histo_numday_mean_mean-max.pdf}}%
+}
+\par
+```
