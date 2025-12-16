@@ -148,15 +148,15 @@ def plot_series_station(station_id):
     values_quot_1990_2022 = df_station_quot_1990_2022[mesure_quot].to_numpy()
 
     # Calcul des tendances
-    zT_1995_1 = z_1959_2022[1995 - 1959]
+    zT_1992_1 = z_1959_2022[1992 - 1959]
     zT_2022_1 = z_1959_2022[2022 - 1959]
-    trend_1959 = ((zT_2022_1 - zT_1995_1) / zT_1995_1) * 100
-    zT_1995_2 = z_1990_2022[1995 - 1990]
+    trend_1959 = ((zT_2022_1 - zT_1992_1) / zT_1992_1) * 100
+    zT_1992_2 = z_1990_2022[1992 - 1990]
     zT_2022_2 = z_1990_2022[2022 - 1990]
-    trend_1990 = ((zT_2022_2 - zT_1995_2) / zT_1995_2) * 100
-    zT_1995_reduce = z_quot_reduce[1995 - 1990]
+    trend_1990 = ((zT_2022_2 - zT_1992_2) / zT_1992_2) * 100
+    zT_1992_reduce = z_quot_reduce[1992 - 1990]
     zT_2022_reduce = z_quot_reduce[2022 - 1990]
-    trend_reduce = ((zT_2022_reduce - zT_1995_reduce) / zT_1995_reduce) * 100
+    trend_reduce = ((zT_2022_reduce - zT_1992_reduce) / zT_1992_reduce) * 100
 
     # Création des trois facettes
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(7.5*3, 7.5), sharex=True)
@@ -168,7 +168,7 @@ def plot_series_station(station_id):
     ax1.set_title("Données journalières (1959-2022) en novembre")
     leg1 = ax1.legend(loc="upper left")
     ax1.grid(True)
-    for year in [1995, 2022]:
+    for year in [1992, 2022]:
         idx = year - 1959
         value = z_1959_2022[idx]
         ax1.annotate(
@@ -182,7 +182,7 @@ def plot_series_station(station_id):
             fontweight='bold',
             bbox=None
         )
-    ax1.scatter([1995, 2022], [z_1959_2022[1995-1959], z_1959_2022[-1]], s=40, color='blue', zorder=5)
+    ax1.scatter([1992, 2022], [z_1959_2022[1992-1959], z_1959_2022[-1]], s=40, color='blue', zorder=5)
     ax1.text(
         0.02, 0.88, f"Tendance : {trend_1959:.1f}%", transform=ax1.transAxes,
         color='blue', fontsize=12, fontweight='bold', va='top', ha='left'
@@ -196,7 +196,7 @@ def plot_series_station(station_id):
     ax3.set_title("Données horaires (1990-2022) en novembre")
     leg3 = ax3.legend(loc="upper left")
     ax3.grid(True)
-    for year in [1995, 2022]:
+    for year in [1992, 2022]:
         idx = year - 1990
         value = z_1990_2022[idx]
         ax3.annotate(
@@ -210,7 +210,7 @@ def plot_series_station(station_id):
             fontweight='bold',
             bbox=None
         )
-    ax3.scatter([1995, 2022], [z_1990_2022[1995-1990], z_1990_2022[-1]], s=40, color='red', zorder=5)
+    ax3.scatter([1992, 2022], [z_1990_2022[1992-1990], z_1990_2022[-1]], s=40, color='red', zorder=5)
     ax3.text(
         0.02, 0.88, f"Tendance : {trend_1990:.1f}%", transform=ax3.transAxes,
         color='red', fontsize=12, fontweight='bold', va='top', ha='left'
@@ -224,7 +224,7 @@ def plot_series_station(station_id):
     ax2.set_title("Données journalières (1990-2022) en novembre")
     leg2 = ax2.legend(loc="upper left")
     ax2.grid(True)
-    for year in [1995, 2022]:
+    for year in [1992, 2022]:
         idx = year - 1990
         if 0 <= idx < len(z_quot_reduce):
             value = z_quot_reduce[idx]
@@ -239,7 +239,7 @@ def plot_series_station(station_id):
                 fontweight='bold',
                 bbox=None
             )
-    ax2.scatter([1995, 2022], [z_quot_reduce[1995-1990], z_quot_reduce[-1]], s=40, color='orange', zorder=5)
+    ax2.scatter([1992, 2022], [z_quot_reduce[1992-1990], z_quot_reduce[-1]], s=40, color='orange', zorder=5)
     ax2.text(
         0.02, 0.88, f"Tendance : {trend_reduce:.1f}%", transform=ax2.transAxes,
         color='orange', fontsize=12, fontweight='bold', va='top', ha='left'

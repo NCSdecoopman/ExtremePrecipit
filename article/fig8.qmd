@@ -4,7 +4,7 @@ format:
   pdf:
     listings: false
     documentclass: standalone
-    classoption: ["border=4pt"]
+    classoption: ["border=0pt"]
     keep-tex: true
 execute:
   echo: false
@@ -17,7 +17,6 @@ header-includes:
   - \usepackage{makecell}
   - \usepackage{multirow}
   - \usepackage{caption}
-  - \input{macros_fig5.tex}
 ---
 
 ```{python}
@@ -91,11 +90,8 @@ def plot_r_by_season(
     ncols=len(col_values)
 
     label_map = {
-        "numday": "Number of rainy days",
-        "mean": "Total precipitation",
-        "mean-max": "Mean of maxima",
-        "z_T_p": "Significant and non-significant trends",
-        "z_T_p_signif": "Significant trends"
+        # "z_T_p": "Significant and non-significant trends",
+         "z_T_p_signif": "" # Significant trends
     }
 
 
@@ -152,8 +148,8 @@ def plot_r_by_season(
             "HYDRO", 
             "SON", "DJF", "MAM", "JJA",
             "OND", "JFM", "AMJ", "JAS",
-            "SEP", "OCT", "NOV", "DEC", "JAN", "FEV", 
-            "MAR", "AVR", "MAI", "JUI", "JUILL", "AOU"
+            "JAN", "FEV", "MAR", "AVR", "MAI", "JUI",
+            "JUILL", "AOU", "SEP", "OCT", "NOV", "DEC"
         ]
         saisons_pres = [s for s in ordre_total if s in sub["season"].unique()]
 
@@ -197,6 +193,22 @@ def plot_r_by_season(
         pivot = pivot[ordre_cols]
         if pivot_pct is not None:
             pivot_pct = pivot_pct[ordre_cols]
+
+        # ----------------------------------------------------
+        # PRINT des barres : valeurs r + % (si dispo)
+        # ----------------------------------------------------
+        print("\n" + "="*90)
+        print(f"[{nom_fichier}] col_value = {col_value} | echelles = {echelles} | col_plot = {col_plot}")
+        print("- Values (each bar):")
+        print(pivot.round(3).to_string())
+
+        if pivot_pct is not None:
+            print("\n- % stations (same bars):")
+            # si pct <= 1 => afficher en %
+            pct_disp = pivot_pct.copy()
+            pct_disp = pct_disp.applymap(lambda v: (v*100) if pd.notna(v) and v <= 1.0 else v)
+            print(pct_disp.round(0).to_string())
+        print("="*90 + "\n")
 
         # --- 6) Couleurs ---
         couleurs = ["black", "dimgray", "lightgray"][:pivot.shape[1]]
@@ -306,9 +318,9 @@ def plot_r_by_season(
     fig.savefig(f"figures/{nom_fichier}.pdf", bbox_inches="tight")
     plt.close(fig)
 
-selected_seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juil", "aou", "sep", "oct", "nov", "dec"]
+selected_seasons = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
 to_plot = combined_all[combined_all["season"].isin(selected_seasons)]
-plot_r_by_season(to_plot , echelles=['quotidien', 'horaire'], col_values=['z_T_p', 'z_T_p_signif'], nom_fichier="histo_z_T_p")
+plot_r_by_season(to_plot , echelles=['quotidien', 'horaire'], col_values=['z_T_p_signif'], nom_fichier="histo_z_T_p")
 ```
 
 ```{=latex}

@@ -25,11 +25,18 @@ SEASON_MONTHS = [
 ]
 
 SEASON_SEAS = [
-    "djf", "jfm",
-    "mam", "amj",
-    "jja", "jas",
-    "son", "ond"
+    "jfm",
+    "amj",
+    "jas",
+    "ond"
 ]
+
+# SEASON_SEAS = [
+#     "djf"
+#     "mam"
+#     "jja"
+#     "son"
+# ]
 
 SEASONS = SEASON_SEAS + SEASON_MONTHS
 
@@ -120,14 +127,17 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 # # Pipeline GEV
 # log(f"Lancement du traitement gev")
 
-# for setting in ["config/observed_settings.yaml", "config/modelised_settings.yaml"]: #, ""
+# for setting in ["config/observed_settings.yaml", "config/modelised_settings.yaml"]:
 
-#     for echelle in ["horaire"]: #"quotidien", 
+#     for echelle in ["quotidien", "horaire"]: #
 
-#         if echelle == "quotidien":            
-#             DIFFERENTE_PERIODE = [False, True]
+#         if echelle == "horaire":
+#             if setting == "config/modelised_settings.yaml":            
+#                 DIFFERENTE_PERIODE = [False, True]
+#             else:
+#                 DIFFERENTE_PERIODE = [False]
 #         else:            
-#             DIFFERENTE_PERIODE = [False] # True
+#             DIFFERENTE_PERIODE = [False]
             
         
 #         for diffente_periode in DIFFERENTE_PERIODE:
@@ -151,48 +161,48 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 #                     ]
 
 #             for season in SEASONS:
-#                 for model in MODELS:
+                # for model in MODELS:
                 
-#                     subprocess.run(
-#                         [
-#                             "python",
-#                             "-m",
-#                             "src.pipelines.pipeline_stats_to_gev",
-#                             "--config", setting,
-#                             "--echelle", echelle,
-#                             "--season", season,
-#                             "--model", model,
-#                             "--reduce_activate", str(diffente_periode)
-#                         ],
-#                         check=True
-#                     )
+                #     subprocess.run(
+                #         [
+                #             "python",
+                #             "-m",
+                #             "src.pipelines.pipeline_stats_to_gev",
+                #             "--config", setting,
+                #             "--echelle", echelle,
+                #             "--season", season,
+                #             "--model", model,
+                #             "--reduce_activate", str(diffente_periode)
+                #         ],
+                #         check=True
+                #     )
 
-#                 subprocess.run(
-#                     [
-#                         "python",
-#                         "-m",
-#                         "src.pipelines.pipeline_best_model",
-#                         "--config", setting,
-#                         "--echelle", echelle,
-#                         "--season", season,
-#                         "--reduce_activate", str(diffente_periode)
-#                     ],
-#                     check=True
-#                 )
+                # subprocess.run(
+                #     [
+                #         "python",
+                #         "-m",
+                #         "src.pipelines.pipeline_best_model",
+                #         "--config", setting,
+                #         "--echelle", echelle,
+                #         "--season", season,
+                #         "--reduce_activate", str(diffente_periode)
+                #     ],
+                #     check=True
+                # )
 
 
-#                 subprocess.run(
-#                     [
-#                         "python",
-#                         "-m",
-#                         "src.pipelines.pipeline_best_to_niveau_retour",
-#                         "--config", setting,
-#                         "--echelle", echelle,
-#                         "--season", season,
-#                         "--reduce_activate", str(diffente_periode)
-#                     ],
-#                     check=True
-#                 )
+                # subprocess.run(
+                #     [
+                #         "python",
+                #         "-m",
+                #         "src.pipelines.pipeline_best_to_niveau_retour",
+                #         "--config", setting,
+                #         "--echelle", echelle,
+                #         "--season", season,
+                #         "--reduce_activate", str(diffente_periode)
+                #     ],
+                #     check=True
+                # )
 
 
 
@@ -203,12 +213,12 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 # # Pipeline maps
 log(f"Lancement des générations de maps")
 
-for data_type in ["stats"]: #  "dispo", "gev"
+for data_type in ["gev"]: #  "dispo", "stats", 
                 
     if data_type == "dispo":
         COL_CALCULATE = ["n_years"]
     elif data_type == "stats":
-        COL_CALCULATE = ["mean-max"] # "numday", "mean", 
+        COL_CALCULATE = ["numday", "mean", "mean-max"] # 
     elif data_type == "gev":
         COL_CALCULATE = ["z_T_p"] # "significant", , "model"
 
@@ -223,16 +233,16 @@ for data_type in ["stats"]: #  "dispo", "gev"
         else:
             sat = 100
                 
-        for echelle in ["quotidien"]: # "horaire", 
+        for echelle in ["horaire"]: # "quotidien", 
 
             if col_calculate in ["z_T_p"]:
                 if echelle=="horaire":
                     sat = 90
 
             if echelle == "quotidien":            
-                DIFFERENTE_PERIODE = [False, True] # 
+                DIFFERENTE_PERIODE = [False] # True
             else:            
-                DIFFERENTE_PERIODE = [False] # 
+                DIFFERENTE_PERIODE = [True] # False
 
             for diffente_periode in DIFFERENTE_PERIODE:
 
@@ -240,7 +250,7 @@ for data_type in ["stats"]: #  "dispo", "gev"
                     SEASON_GENERATE = [["hydro"]]
                 elif data_type == "stats":
                     if col_calculate == "mean-max":
-                        SEASON_GENERATE = [SEASON_MONTHS] #["hydro", *SEASON_SEAS]
+                        SEASON_GENERATE = [["hydro", *SEASON_SEAS], SEASON_MONTHS] #
                     else:
                         SEASON_GENERATE = [["hydro"], SEASON_SEAS] # hydro doit être calculer séparement
                 else:

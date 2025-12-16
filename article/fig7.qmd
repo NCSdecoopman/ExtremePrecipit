@@ -4,7 +4,7 @@ format:
   pdf:
     listings: false
     documentclass: standalone
-    classoption: ["border=4pt"]
+    classoption: ["border=0pt"]
     keep-tex: true
 execute:
   echo: false
@@ -17,6 +17,7 @@ header-includes:
   - \usepackage{makecell}
   - \usepackage{multirow}
   - \usepackage{caption}
+  - \usepackage[export]{adjustbox}
   - \input{macros_fig7.tex}
 ---
 
@@ -173,34 +174,150 @@ def assemble(arome: Path, stations: Path, legend: Path, output: Path) -> str:
     cairosvg.svg2pdf(url=str(output), write_to=str(output)[:-4] + ".pdf")
     return str(output)
 
+trend_pluie_jan = assemble(
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jan/mod_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jan/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"figures/trend_horaire_pluie_jan.svg",
+)
 trend_pluie_fev = assemble(
-  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/fev/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/fev/obs_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
-  "figures/trend_horaire_pluie_fev.svg"
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/fev/mod_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/fev/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"figures/trend_horaire_pluie_fev.svg",
 )
 trend_pluie_mar = assemble(
-  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mar/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mar/obs_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
-  "figures/trend_horaire_pluie_mar.svg"
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mar/mod_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mar/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"figures/trend_horaire_pluie_mar.svg",
 )
-trend_pluie_jui = assemble(
-  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jui/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jui/obs_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
-  "figures/trend_horaire_pluie_jui.svg"
+trend_pluie_avr = assemble(
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/avr/mod_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/avr/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"figures/trend_horaire_pluie_avr.svg",
+)
+trend_pluie_mai = assemble(
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mai/mod_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mai/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"figures/trend_horaire_pluie_mai.svg",
+)
+trend_pluie_jui = assemble( # Juin, fichier FR "jui"
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jui/mod_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jui/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"figures/trend_horaire_pluie_jui.svg",
+)
+trend_pluie_juill = assemble(
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/juill/mod_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/juill/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"figures/trend_horaire_pluie_juill.svg",
+)
+trend_pluie_aou = assemble(
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/aou/mod_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/aou/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"figures/trend_horaire_pluie_aou.svg",
+)
+trend_pluie_sep = assemble(
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/sep/mod_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/sep/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"figures/trend_horaire_pluie_sep.svg",
+)
+trend_pluie_oct = assemble(
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/oct/mod_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/oct/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"figures/trend_horaire_pluie_oct.svg",
 )
 trend_pluie_nov = assemble(
-  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/nov/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/nov/obs_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
-  "figures/trend_horaire_pluie_nov.svg"
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/nov/mod_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/nov/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"figures/trend_horaire_pluie_nov.svg",
 )
-df_trend_pluie_fev = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "fev") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
-df_trend_pluie_mar = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "mar") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
-df_trend_pluie_jui = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "jui") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
-df_trend_pluie_nov = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "nov") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+trend_pluie_dec = assemble(
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/dec/mod_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/dec/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"figures/trend_horaire_pluie_dec.svg",
+)
+df_trend_pluie_jan = combined_all.loc[
+(combined_all["echelle"] == "horaire")
+& (combined_all["season"] == "jan")
+& (combined_all["col_calculate"] == "z_T_p_signif"),
+["n", "r", "me", "delta"],
+]
+df_trend_pluie_fev = combined_all.loc[
+(combined_all["echelle"] == "horaire")
+& (combined_all["season"] == "fev")
+& (combined_all["col_calculate"] == "z_T_p_signif"),
+["n", "r", "me", "delta"],
+]
+df_trend_pluie_mar = combined_all.loc[
+(combined_all["echelle"] == "horaire")
+& (combined_all["season"] == "mar")
+& (combined_all["col_calculate"] == "z_T_p_signif"),
+["n", "r", "me", "delta"],
+]
+df_trend_pluie_avr = combined_all.loc[
+(combined_all["echelle"] == "horaire")
+& (combined_all["season"] == "avr")
+& (combined_all["col_calculate"] == "z_T_p_signif"),
+["n", "r", "me", "delta"],
+]
+df_trend_pluie_mai = combined_all.loc[
+(combined_all["echelle"] == "horaire")
+& (combined_all["season"] == "mai")
+& (combined_all["col_calculate"] == "z_T_p_signif"),
+["n", "r", "me", "delta"],
+]
+df_trend_pluie_jui = combined_all.loc[
+(combined_all["echelle"] == "horaire")
+& (combined_all["season"] == "jui")
+& (combined_all["col_calculate"] == "z_T_p_signif"),
+["n", "r", "me", "delta"],
+]
+df_trend_pluie_juill = combined_all.loc[
+(combined_all["echelle"] == "horaire")
+& (combined_all["season"] == "juill")
+& (combined_all["col_calculate"] == "z_T_p_signif"),
+["n", "r", "me", "delta"],
+]
+df_trend_pluie_aou = combined_all.loc[
+(combined_all["echelle"] == "horaire")
+& (combined_all["season"] == "aou")
+& (combined_all["col_calculate"] == "z_T_p_signif"),
+["n", "r", "me", "delta"],
+]
+df_trend_pluie_sep = combined_all.loc[
+(combined_all["echelle"] == "horaire")
+& (combined_all["season"] == "sep")
+& (combined_all["col_calculate"] == "z_T_p_signif"),
+["n", "r", "me", "delta"],
+]
+df_trend_pluie_oct = combined_all.loc[
+(combined_all["echelle"] == "horaire")
+& (combined_all["season"] == "oct")
+& (combined_all["col_calculate"] == "z_T_p_signif"),
+["n", "r", "me", "delta"],
+]
+df_trend_pluie_nov = combined_all.loc[
+(combined_all["echelle"] == "horaire")
+& (combined_all["season"] == "nov")
+& (combined_all["col_calculate"] == "z_T_p_signif"),
+["n", "r", "me", "delta"],
+]
+df_trend_pluie_dec = combined_all.loc[
+(combined_all["echelle"] == "horaire")
+& (combined_all["season"] == "dec")
+& (combined_all["col_calculate"] == "z_T_p_signif"),
+["n", "r", "me", "delta"],
+]
 ```
 
 ```{python}
@@ -214,28 +331,68 @@ def _first_vals(df):
     return r, n, me
 
 # Récupération des valeurs mois par mois (échelle horaire)
+r_jan, n_jan, me_jan = _first_vals(df_trend_pluie_jan)
 r_fev, n_fev, me_fev = _first_vals(df_trend_pluie_fev)
 r_mar, n_mar, me_mar = _first_vals(df_trend_pluie_mar)
-r_jun, n_jun, me_jun = _first_vals(df_trend_pluie_jui)   # jui -> JUN
+r_avr, n_avr, me_avr = _first_vals(df_trend_pluie_avr)
+r_mai, n_mai, me_mai = _first_vals(df_trend_pluie_mai)
+r_jun, n_jun, me_jun = _first_vals(df_trend_pluie_jui) # jui -> JUN
+r_jul, n_jul, me_jul = _first_vals(df_trend_pluie_juill) # juill -> JUL
+r_aug, n_aug, me_aug = _first_vals(df_trend_pluie_aou) # aou -> AUG
+r_sep, n_sep, me_sep = _first_vals(df_trend_pluie_sep)
+r_oct, n_oct, me_oct = _first_vals(df_trend_pluie_oct)
 r_nov, n_nov, me_nov = _first_vals(df_trend_pluie_nov)
+r_dec, n_dec, me_dec = _first_vals(df_trend_pluie_dec)
 
 # Génération des macros LaTeX
 macros = rf"""
+\newcommand{{\rJAN}}{{{r_jan:.2f}}}
+\newcommand{{\nJAN}}{{{n_jan}}}
+\newcommand{{\meJAN}}{{{me_jan:+.2f}}}
+
 \newcommand{{\rFEB}}{{{r_fev:.2f}}}
-\newcommand{{\nFEB}}{{{n_fev:d}}}
+\newcommand{{\nFEB}}{{{n_fev}}}
 \newcommand{{\meFEB}}{{{me_fev:+.2f}}}
 
 \newcommand{{\rMAR}}{{{r_mar:.2f}}}
-\newcommand{{\nMAR}}{{{n_mar:d}}}
+\newcommand{{\nMAR}}{{{n_mar}}}
 \newcommand{{\meMAR}}{{{me_mar:+.2f}}}
 
+\newcommand{{\rAPR}}{{{r_avr:.2f}}}
+\newcommand{{\nAPR}}{{{n_avr}}}
+\newcommand{{\meAPR}}{{{me_avr:+.2f}}}
+
+\newcommand{{\rMAY}}{{{r_mai:.2f}}}
+\newcommand{{\nMAY}}{{{n_mai}}}
+\newcommand{{\meMAY}}{{{me_mai:+.2f}}}
+
 \newcommand{{\rJUN}}{{{r_jun:.2f}}}
-\newcommand{{\nJUN}}{{{n_jun:d}}}
+\newcommand{{\nJUN}}{{{n_jun}}}
 \newcommand{{\meJUN}}{{{me_jun:+.2f}}}
 
+\newcommand{{\rJUL}}{{{r_jul:.2f}}}
+\newcommand{{\nJUL}}{{{n_jul}}}
+\newcommand{{\meJUL}}{{{me_jul:+.2f}}}
+
+\newcommand{{\rAUG}}{{{r_aug:.2f}}}
+\newcommand{{\nAUG}}{{{n_aug}}}
+\newcommand{{\meAUG}}{{{me_aug:+.2f}}}
+
+\newcommand{{\rSEP}}{{{r_sep:.2f}}}
+\newcommand{{\nSEP}}{{{n_sep}}}
+\newcommand{{\meSEP}}{{{me_sep:+.2f}}}
+
+\newcommand{{\rOCT}}{{{r_oct:.2f}}}
+\newcommand{{\nOCT}}{{{n_oct}}}
+\newcommand{{\meOCT}}{{{me_oct:+.2f}}}
+
 \newcommand{{\rNOV}}{{{r_nov:.2f}}}
-\newcommand{{\nNOV}}{{{n_nov:d}}}
+\newcommand{{\nNOV}}{{{n_nov}}}
 \newcommand{{\meNOV}}{{{me_nov:+.2f}}}
+
+\newcommand{{\rDEC}}{{{r_dec:.2f}}}
+\newcommand{{\nDEC}}{{{n_dec}}}
+\newcommand{{\meDEC}}{{{me_dec:+.2f}}}
 """
 with open("macros_fig7.tex", "w", encoding="utf-8") as f:
     f.write(macros)
@@ -245,41 +402,65 @@ with open("macros_fig7.tex", "w", encoding="utf-8") as f:
 \begingroup
 \noindent
 \begin{minipage}[t]{\paperwidth}
-  \centering
-  \setlength{\tabcolsep}{0pt}
-  \renewcommand{\arraystretch}{1}
+\centering
+\setlength{\tabcolsep}{0pt}
+\renewcommand{\arraystretch}{1}
 
-  \begin{tabularx}{\paperwidth}{
-    >{\centering\arraybackslash}m{0.49\paperwidth}
-    >{\centering\arraybackslash}m{0.49\paperwidth}
-  }
+\begin{tabularx}{\paperwidth}{
+  @{}
+  >{\centering\arraybackslash}X
+  >{\centering\arraybackslash}X
+  @{}
+}
 
-    % --- Ligne 1 ---
-    \textbf{\small FEB} & \textbf{\small MAR} \\[-0.5mm]
-    \small $r=\ \rFEB$ \ (n=\ \nFEB) & \small $r=\ \rMAR$ \ (n=\ \nMAR) \\[-0.5mm]
-    \small $ME=\ \meFEB\%$ & \small $ME=\ \meMAR\%$ \\[-0.5mm]
-    \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_fev.pdf} &
-    \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_mar.pdf} \\
+% ---------- LIGNE 1 ----------
+\textbf{\small JAN} \small ($r=\rJAN$,\, n=\nJAN,\, ME=\meJAN\%) &
+\textbf{\small FEB} \small ($r=\rFEB$,\, n=\nFEB,\, ME=\meFEB\%) \\[-1mm]
 
-    % --- Ligne 2 ---
-    \textbf{\small JUN} & \textbf{\small NOV} \\[-0.5mm]
-    \small $r=\ \rJUN$ \ (n=\ \nJUN) & \small $r=\ \rNOV$ \ (n=\ \nNOV) \\[-0.5mm]
-    \small $ME=\ \meJUN\%$ & \small $ME=\ \meNOV\%$ \\[-0.5mm]
-    \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_jui.pdf} &
-    \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_nov.pdf} \\
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_jan.pdf} &
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_fev.pdf} \\[1mm]
 
-    % --- Ligne 3 ---
-    \mbox{} &
-    \begin{minipage}[c]{\linewidth}
-      \centering
-      \includegraphics[width=0.85\linewidth,keepaspectratio]{../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_horiz_signif.pdf}
-      \makebox[0.85\linewidth][c]{\small \%}
-    \end{minipage}
-    \\
+% ---------- LIGNE 2 ----------
+\textbf{\small MAR} \small ($r=\rMAR$,\, n=\nMAR,\, ME=\meMAR\%) &
+\textbf{\small APR} \small ($r=\rAPR$,\, n=\nAPR,\, ME=\meAPR\%) \\[-1mm]
 
-  \end{tabularx}
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_mar.pdf} &
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_avr.pdf} \\[1mm]
 
-  \vspace{0.75em}
+% ---------- LIGNE 3 ----------
+\textbf{\small MAY} \small ($r=\rMAY$,\, n=\nMAY,\, ME=\meMAY\%) &
+\textbf{\small JUN} \small ($r=\rJUN$,\, n=\nJUN,\, ME=\meJUN\%) \\[-1mm]
+
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_mai.pdf} &
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_jui.pdf} \\[1mm]
+
+% ---------- LIGNE 4 ----------
+\textbf{\small JUL} \small ($r=\rJUL$,\, n=\nJUL,\, ME=\meJUL\%) &
+\textbf{\small AUG} \small ($r=\rAUG$,\, n=\nAUG,\, ME=\meAUG\%) \\[-1mm]
+
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_juill.pdf} &
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_aou.pdf} \\[1mm]
+
+% ---------- LIGNE 5 ----------
+\textbf{\small SEP} \small ($r=\rSEP$,\, n=\nSEP,\, ME=\meSEP\%) &
+\textbf{\small OCT} \small ($r=\rOCT$,\, n=\nOCT,\, ME=\meOCT\%) \\[-1mm]
+
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_sep.pdf} &
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_oct.pdf} \\[1mm]
+
+% ---------- LIGNE 6 ----------
+\textbf{\small NOV} \small ($r=\rNOV$,\, n=\nNOV,\, ME=\meNOV\%) &
+\textbf{\small DEC} \small ($r=\rDEC$,\, n=\nDEC,\, ME=\meDEC\%) \\[-1mm]
+
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_nov.pdf} &
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_dec.pdf} \\[1mm]
+
+% ---------- LÉGENDE ----------
+\mbox{\vspace{-2mm}} & \begin{minipage}[c]{\linewidth} \centering \makebox[0.85\linewidth][c]{\small \%} \includegraphics[width=0.85\linewidth,keepaspectratio]{../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_horiz_signif.pdf}\vspace{-3mm} \end{minipage} \\
+
+\end{tabularx}
+
+\vspace{0.75em}
 \end{minipage}
 \endgroup
 ```

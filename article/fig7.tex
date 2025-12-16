@@ -5,7 +5,7 @@
 \PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
 %
 \documentclass[
-  border=4pt]{standalone}
+  border=0pt]{standalone}
 \usepackage{xcolor}
 \usepackage{amsmath,amssymb}
 \setcounter{secnumdepth}{-\maxdimen} % remove section numbering
@@ -110,6 +110,7 @@
 \usepackage{makecell}
 \usepackage{multirow}
 \usepackage{caption}
+\usepackage[export]{adjustbox}
 \input{macros_fig7.tex}
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
@@ -172,41 +173,65 @@
 \begingroup
 \noindent
 \begin{minipage}[t]{\paperwidth}
-  \centering
-  \setlength{\tabcolsep}{0pt}
-  \renewcommand{\arraystretch}{1}
+\centering
+\setlength{\tabcolsep}{0pt}
+\renewcommand{\arraystretch}{1}
 
-  \begin{tabularx}{\paperwidth}{
-    >{\centering\arraybackslash}m{0.49\paperwidth}
-    >{\centering\arraybackslash}m{0.49\paperwidth}
-  }
+\begin{tabularx}{\paperwidth}{
+  @{}
+  >{\centering\arraybackslash}X
+  >{\centering\arraybackslash}X
+  @{}
+}
 
-    % --- Ligne 1 ---
-    \textbf{\small FEB} & \textbf{\small MAR} \\[-0.5mm]
-    \small $r=\ \rFEB$ \ (n=\ \nFEB) & \small $r=\ \rMAR$ \ (n=\ \nMAR) \\[-0.5mm]
-    \small $ME=\ \meFEB\%$ & \small $ME=\ \meMAR\%$ \\[-0.5mm]
-    \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_fev.pdf} &
-    \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_mar.pdf} \\
+% ---------- LIGNE 1 ----------
+\textbf{\small JAN} \small ($r=\rJAN$,\, n=\nJAN,\, ME=\meJAN\%) &
+\textbf{\small FEB} \small ($r=\rFEB$,\, n=\nFEB,\, ME=\meFEB\%) \\[-1mm]
 
-    % --- Ligne 2 ---
-    \textbf{\small JUN} & \textbf{\small NOV} \\[-0.5mm]
-    \small $r=\ \rJUN$ \ (n=\ \nJUN) & \small $r=\ \rNOV$ \ (n=\ \nNOV) \\[-0.5mm]
-    \small $ME=\ \meJUN\%$ & \small $ME=\ \meNOV\%$ \\[-0.5mm]
-    \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_jui.pdf} &
-    \includegraphics[width=\linewidth]{figures/trend_horaire_pluie_nov.pdf} \\
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_jan.pdf} &
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_fev.pdf} \\[1mm]
 
-    % --- Ligne 3 ---
-    \mbox{} &
-    \begin{minipage}[c]{\linewidth}
-      \centering
-      \includegraphics[width=0.85\linewidth,keepaspectratio]{../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_horiz_signif.pdf}
-      \makebox[0.85\linewidth][c]{\small \%}
-    \end{minipage}
-    \\
+% ---------- LIGNE 2 ----------
+\textbf{\small MAR} \small ($r=\rMAR$,\, n=\nMAR,\, ME=\meMAR\%) &
+\textbf{\small APR} \small ($r=\rAPR$,\, n=\nAPR,\, ME=\meAPR\%) \\[-1mm]
 
-  \end{tabularx}
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_mar.pdf} &
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_avr.pdf} \\[1mm]
 
-  \vspace{0.75em}
+% ---------- LIGNE 3 ----------
+\textbf{\small MAY} \small ($r=\rMAY$,\, n=\nMAY,\, ME=\meMAY\%) &
+\textbf{\small JUN} \small ($r=\rJUN$,\, n=\nJUN,\, ME=\meJUN\%) \\[-1mm]
+
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_mai.pdf} &
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_jui.pdf} \\[1mm]
+
+% ---------- LIGNE 4 ----------
+\textbf{\small JUL} \small ($r=\rJUL$,\, n=\nJUL,\, ME=\meJUL\%) &
+\textbf{\small AUG} \small ($r=\rAUG$,\, n=\nAUG,\, ME=\meAUG\%) \\[-1mm]
+
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_juill.pdf} &
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_aou.pdf} \\[1mm]
+
+% ---------- LIGNE 5 ----------
+\textbf{\small SEP} \small ($r=\rSEP$,\, n=\nSEP,\, ME=\meSEP\%) &
+\textbf{\small OCT} \small ($r=\rOCT$,\, n=\nOCT,\, ME=\meOCT\%) \\[-1mm]
+
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_sep.pdf} &
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_oct.pdf} \\[1mm]
+
+% ---------- LIGNE 6 ----------
+\textbf{\small NOV} \small ($r=\rNOV$,\, n=\nNOV,\, ME=\meNOV\%) &
+\textbf{\small DEC} \small ($r=\rDEC$,\, n=\nDEC,\, ME=\meDEC\%) \\[-1mm]
+
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_nov.pdf} &
+\includegraphics[width=\linewidth, trim=12 12 12 12, clip]{figures/trend_horaire_pluie_dec.pdf} \\[1mm]
+
+% ---------- LÉGENDE ----------
+\mbox{\vspace{-2mm}} & \begin{minipage}[c]{\linewidth} \centering \makebox[0.85\linewidth][c]{\small \%} \includegraphics[width=0.85\linewidth,keepaspectratio]{../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_horiz_signif.pdf}\vspace{-3mm} \end{minipage} \\
+
+\end{tabularx}
+
+\vspace{0.75em}
 \end{minipage}
 \endgroup
 

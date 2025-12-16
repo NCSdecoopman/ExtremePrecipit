@@ -4,7 +4,7 @@ format:
   pdf:
     listings: false
     documentclass: standalone
-    classoption: ["border=4pt"]
+    classoption: ["border=0pt"]
     keep-tex: true
 execute:
   echo: false
@@ -174,33 +174,33 @@ def assemble(arome: Path, stations: Path, legend: Path, output: Path) -> str:
     return str(output)
 
 trend_horaire_pluie_hydro = assemble(
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/hydro/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/hydro/obs_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/legend_signif.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/hydro/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/hydro/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/legend_signif.svg",
   "figures/trend_horaire_pluie_hydro.svg"
 )
 trend_horaire_pluie_ond = assemble(
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/ond/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/ond/obs_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/legend_signif.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/ond/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/ond/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/legend_signif.svg",
   "figures/trend_horaire_pluie_ond.svg"
 )
 trend_horaire_pluie_jfm = assemble(
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/jfm/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/jfm/obs_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/legend_signif.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/jfm/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/jfm/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/legend_signif.svg",
   "figures/trend_horaire_pluie_jfm.svg"
 )
 trend_horaire_pluie_amj = assemble(
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/amj/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/amj/obs_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/legend_signif.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/amj/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/amj/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/legend_signif.svg",
   "figures/trend_horaire_pluie_amj.svg"
 )
 trend_horaire_pluie_jas = assemble(
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/jas/mod_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/jas/obs_signif_norast.svg",
-  "../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/legend_signif.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/jas/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/jas/obs_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/legend_signif.svg",
   "figures/trend_horaire_pluie_jas.svg"
 )
 df_trend_horaire_pluie_hydro = combined_all.loc[(combined_all["echelle"] == "horaire") & (combined_all["season"] == "hydro") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
@@ -281,7 +281,7 @@ with open("macros_fig6.tex", "w", encoding="utf-8") as f:
     \multirow{3}{*}{
       \begin{minipage}[c]{\linewidth}
         \centering
-        \includegraphics[width=0.85\linewidth,keepaspectratio]{../outputs/maps/gev_z_T_p/horaire/compare_9/sat_90.0/legend_horiz_signif.pdf}
+        \includegraphics[width=0.85\linewidth,keepaspectratio]{../outputs/maps/gev_z_T_p/horaire/compare_5/sat_90.0/legend_horiz_signif.pdf}
         \makebox[0.85\linewidth][c]{\small \%}
       \end{minipage}
     }\\[-0.5mm]

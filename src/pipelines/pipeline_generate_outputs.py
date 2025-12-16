@@ -395,12 +395,22 @@ def generate_maps(
     deps_metro["geometry"] = deps_metro.geometry.simplify(500)
     mask = deps_metro.union_all()
 
-    # *Les fonctions overlay/clip peuvent renvoyer des vues : on copie !*
+    # # *Les fonctions overlay/clip peuvent renvoyer des vues : on copie !*
+    # model_gdfs = [
+    #     gpd.overlay(g, deps_metro[["geometry"]], how="intersection").copy() if g is not None else None
+    #     for g in model_gdfs
+    # ]
+    # obs_gdfs = [g.clip(mask).copy() if g is not None else None for g in obs_gdfs]
+
+    # On CLIP seulement sur le contour national, sans overlay
     model_gdfs = [
-        gpd.overlay(g, deps_metro[["geometry"]], how="intersection").copy() if g is not None else None
+        g.clip(mask).copy() if g is not None else None
         for g in model_gdfs
     ]
-    obs_gdfs = [g.clip(mask).copy() if g is not None else None for g in obs_gdfs]
+    obs_gdfs = [
+        g.clip(mask).copy() if g is not None else None
+        for g in obs_gdfs
+    ]
 
     # ------------------------------------------------------------------
     # 4. Courbes de niveau
@@ -449,6 +459,15 @@ def generate_maps(
 
             max_abs = max(abs(min(all_mins)), abs(max(all_maxs)))
             vmin, vmax = -max_abs, max_abs
+
+            # --- Forçage spécifique pour horaire_reduce -----------------
+            # Condition demandée : echelle == "horaire" et reduce_activate == True
+            if "horaire_reduce" in str(dir_path):
+                seasons_lower = [t.lower() for t in (titles or [])]
+                if any("jan" in t for t in seasons_lower):
+                    vmin, vmax = -260, 260
+                if any("hydro" in t for t in seasons_lower):
+                    vmin, vmax = -153, 153
 
             norm = TwoSlopeNorm(vmin=vmin, vcenter=0.0, vmax=vmax)
 
@@ -533,11 +552,34 @@ def generate_maps(
 
             # 2. contour national épaissi
             #    mask est déjà défini plus haut comme l'union de tous les départements
-            gpd.GeoSeries(mask).boundary.plot(
+            #gpd.GeoSeries(mask).boundary.plot(
+            #     ax=ax,
+            #     edgecolor="black" ,    # couleur du contour national
+            #     linewidth=0.7,         # épaisseur plus élevée que 0.2
+            #     zorder=1               # juste au-dessus des départements
+            # )
+
+            if mask.geom_type == "MultiPolygon":
+                polys = list(mask.geoms)
+            elif mask.geom_type == "Polygon":
+                polys = [mask]
+            else:
+                # au cas où, on met tout dans une liste
+                polys = [mask]
+
+            # extraire uniquement les contours extérieurs
+            exteriors = [poly.exterior for poly in polys]
+
+            coast = gpd.GeoSeries(exteriors, crs=deps_metro.crs)
+
+            # optionnel : supprimer les petits bouts de ligne (artefacts)
+            coast = coast[coast.length > 2_000]  # 2 km, à ajuster
+
+            coast.plot(
                 ax=ax,
-                edgecolor="black" ,    # couleur du contour national
-                linewidth=0.7,         # épaisseur plus élevée que 0.2
-                zorder=1               # juste au-dessus des départements
+                edgecolor="black",
+                linewidth=0.6,
+                zorder=1,
             )
 
 
@@ -1021,26 +1063,30 @@ def main(args):
         if data_type != "dispo" and col_calculate not in ["significant", "model"]:
             for signif in SIGNIFICANT_SHOW:
 
-                datasets_diff = generate_scatter(
-                    datasets=datasets,
-                    dir_path=dir_path,
-                    col_calculate=col_calculate,
-                    echelle=e,
-                    show_signif=signif,
-                    scale=scale
-                )
-                
-                dir_path, val_col, titles, model_gdfs, obs_gdfs = calculate_data_maps(
-                    datasets_diff,
-                    echelle=e,
-                    data_type=data_type,
-                    col_calculate=col_calculate,
-                    reduce_activate=reduce_activate,
-                    show_signif=signif,
-                    titles=[s.upper() for s in season],  # titres des 4 sous-cartes
-                    saturation_col=sat,
-                    diff=True
-                )
+                # Conditions d'appel de generate_scatter :
+                # - toujours pour l'échelle "quotidien"
+                # - pour l'échelle "horaire" seulement si reduce_activate == False
+                if (e == "quotidien") or (e == "horaire" and not reduce_activate):
+                    datasets_diff = generate_scatter(
+                        datasets=datasets,
+                        dir_path=dir_path,
+                        col_calculate=col_calculate,
+                        echelle=e,
+                        show_signif=signif,
+                        scale=scale
+                    )
+                    
+                    dir_path, val_col, titles, model_gdfs, obs_gdfs = calculate_data_maps(
+                        datasets_diff,
+                        echelle=e,
+                        data_type=data_type,
+                        col_calculate=col_calculate,
+                        reduce_activate=reduce_activate,
+                        show_signif=signif,
+                        titles=[s.upper() for s in season],  # titres des 4 sous-cartes
+                        saturation_col=sat,
+                        diff=True
+                    )
 
                 generate_maps(
                     dir_path=dir_path,
@@ -1068,7 +1114,7 @@ def str2bool(v):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pipeline de génération des représentation")
     parser.add_argument("--data_type", choices=["dispo", "stats", "gev"])
-    parser.add_argument("--col_calculate", choices=["n_years", "numday", "mean", "mean-max", "z_T_p", "significant", "model"], default=None)
+    parser.add_argument("--col_calculate", choices=["n_years", "numday", "mean", "mean-max", "z_T_p", "zTpa", "significant", "model"], default=None)
     parser.add_argument("--echelle", choices=["horaire", "quotidien", "horaire_reduce"], nargs='+', default=["horaire"])
     parser.add_argument("--season", type=str, nargs='+', default=["son"])
     parser.add_argument("--reduce_activate", type=str2bool, default=False)

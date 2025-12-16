@@ -590,10 +590,10 @@ def main(config, args, T: int = 10):
         # Ajoute une colonne "z_T1" au DataFrame best_model
         df_zT1 = compute_calculate_zT1(T, best_model)
 
-        # Calcul de z_T(1995) et z_T(2022) avec normalisation sur la grille [1995, 2022]
+        # Calcul de z_T(1992) et z_T(2022) avec normalisation sur la grille [1992, 2022]
         z_levels = compute_zT_for_years(
             T,
-            np.array([1995, max_year]),
+            np.array([1992, max_year]),
             min_year,
             max_year,
             best_model,

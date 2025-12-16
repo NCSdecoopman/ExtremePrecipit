@@ -5,7 +5,7 @@
 \PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
 %
 \documentclass[
-  border=4pt]{standalone}
+  border=0pt]{standalone}
 \usepackage{xcolor}
 \usepackage{amsmath,amssymb}
 \setcounter{secnumdepth}{-\maxdimen} % remove section numbering
@@ -110,7 +110,6 @@
 \usepackage{makecell}
 \usepackage{multirow}
 \usepackage{caption}
-\input{macros_fig5.tex}
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \AtBeginDocument{%
@@ -171,7 +170,7 @@
 
 \par\noindent
 \makebox[\linewidth][c]{%
-\includegraphics[width=\linewidth,keepaspectratio]{\detokenize{figures/histo_numday_mean_mean-max.pdf}}%
+\includegraphics[width=\linewidth,keepaspectratio]{\detokenize{figures/histo_4bars_nr10.pdf}}%
 }
 \par
 
