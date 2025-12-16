@@ -34,3 +34,7 @@ __pycache__/
 # Ignorer les caches Jupyter
 .jupyter_cache/
 /.quarto/
+
+# Large rasters
+data/external/dem/*.tif
+
