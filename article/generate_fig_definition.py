@@ -10,6 +10,15 @@ from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 from matplotlib.ticker import FixedLocator
 from pathlib import Path
 
+import matplotlib as mpl
+import numpy as np
+from rasterio.features import geometry_mask
+
+# --- relief ---
+import geopandas as gpd
+import rioxarray as rxr
+
+
 # --- pour les pastilles et la légende ---
 from matplotlib.legend_handler import HandlerBase
 import matplotlib.patches as mpatches
@@ -19,33 +28,16 @@ from matplotlib.text import Text
 # 0. Dictionnaire des centres (lon, lat) : zones_centers
 # -------------------------------------------------------------------
 zones_centers = {
-    "Rhône Valley": {"coords": (4.89, 45.40)},  # plus au nord
-    "Cévennes": {"coords": (3.3797, 44.3315)},
-    "Mercantour": {"coords": (7.07, 44.19)},
-    "Pyrénées-Orientales": {"coords": (2.2291, 42.7603)},
-
-    "French Alps": {"coords": (6.39, 45.67)},
+    "Rhône Valley": {"coords": (4.60, 44.90)},
+    "French Alps": {"coords": (6.39, 44.67)},
     "Massif Central": {"coords": (3.09, 45.03)},
     "Pyrenees": {"coords": (0.7073, 42.8641)},
     "Vosges": {"coords": (6.8943, 48.7324)},
     "Jura": {"coords": (6.0455, 47.0664)},
-
-    "Grand Ouest": {"coords": (-1.55, 47.22)},
-    "Basque Coast": {"coords": (-1.5852, 43.4098)},
-    "Mediterranean coast": {"coords": (4.80, 42.95)},      # plus au sud
-    "Provence / Côte d'Azur": {"coords": (6.23, 44.09)},
-    "Roussillon–Languedoc": {"coords": (3.2629, 43.5714)},
-    "Camargue": {"coords": (4.3983, 43.4938)},
-
+    "Mediterranean coast": {"coords": (4.80, 43.50)},
     "Paris area": {"coords": (2.2328, 48.6707)},
-    "Alsace": {"coords": (7.80, 48.5730)},                 # plus à l'est
     "Brittany": {"coords": (-2.76, 48.18)},
-    "Dordogne / Limousin": {"coords": (1.1610, 45.8142)},
-
-    "Ardèche": {"coords": (4.4626, 44.7609)},
-    "Var": {"coords": (5.93, 43.12)},
 }
-
 
 # -------------------------------------------------------------------
 # 1. Domaine AROME
@@ -78,17 +70,176 @@ for i, j in border:
 u = unary_union(polys)
 
 proj_data = ccrs.PlateCarree()
-proj_map  = ccrs.LambertConformal(central_longitude=10, central_latitude=47,
-                                  standard_parallels=(30, 60))
+proj_map  = ccrs.LambertConformal(
+    central_longitude=10,
+    central_latitude=47,
+    standard_parallels=(30, 60),
+)
 
 fig = plt.figure(figsize=(6, 5))
 ax = plt.axes(projection=proj_map)
 
-ax.coastlines("10m", linewidth=0.6, zorder=10)
-ax.add_feature(cfeature.BORDERS.with_scale("10m"), linewidth=0.3,
-               edgecolor="black", zorder=11)
+# Aplatir (rasteriser) quasiment tout ce qui est dessiné dans cet axe
+# → zorder seuil élevé pour que tout soit rasterisé (courbes, DEM, etc.)
+# ax.set_rasterization_zorder(100)
 
+# -------------------------------------------------------------------
+# 1bis. DEM altitude en fond (MNT France métropolitaine & DROM)
+#      → version re-échantillonnée à ~0.1 km
+# -------------------------------------------------------------------
+from rasterio.features import geometry_mask
+
+dem_path = Path("../data/external/dem/dem.tif")
+dem = rxr.open_rasterio(dem_path).squeeze()  # (y, x)
+
+# 1) Polygone France métropolitaine
+countries_path = Path("../data/external/naturalearth/ne_10m_admin_0_countries.shp")
+gdf_countries = gpd.read_file(countries_path)
+france_poly = gdf_countries[gdf_countries["ADMIN"] == "France"]
+
+france_parts = france_poly.explode(index_parts=True)
+
+# Calcul de l'aire dans un CRS projeté
+france_parts_proj = france_parts.to_crs("EPSG:2154")
+france_parts_proj["area"] = france_parts_proj.geometry.area
+largest = france_parts_proj.sort_values("area", ascending=False).iloc[[0]]
+
+# Retour en WGS84
+metropolitan_france = largest.to_crs("EPSG:4326")
+
+# Simplification du contour (accélère fortement le masque)
+metropolitan_france_simpl = metropolitan_france.copy()
+metropolitan_france_simpl["geometry"] = (
+    metropolitan_france_simpl.geometry.simplify(0.01, preserve_topology=True)
+)
+
+# 2) Assurer le CRS du DEM
+if dem.rio.crs is None:
+    dem = dem.rio.write_crs("EPSG:4326")
+
+# 3) Bbox sur la France pour réduire la taille du raster
+minx, miny, maxx, maxy = metropolitan_france_simpl.total_bounds
+margin = 0.2  # petit débord pour être sûr de tout garder
+dem_crop = dem.sel(
+    x=slice(minx - margin, maxx + margin),
+    y=slice(maxy + margin, miny - margin),  # y décroît
+)
+
+# 4) Masque raster (au lieu de clip) → très rapide
+geom_union = metropolitan_france_simpl.geometry.union_all()
+
+mask_inside = geometry_mask(
+    [geom_union],
+    out_shape=dem_crop.shape,
+    transform=dem_crop.rio.transform(),
+    invert=True,          # True à l'intérieur de la France
+)
+
+dem_fr = dem_crop.where(mask_inside)  # → NaN en dehors de la France
+
+# Mask nodata éventuel seulement si ≠ 0
+nodata = dem.rio.nodata
+if nodata is not None and nodata != 0.0:
+    dem_fr = dem_fr.where(dem_fr != nodata)
+
+
+# 5) Sous-échantillonnage pour obtenir ~2.5 km
+dx = float(np.abs(np.diff(dem_fr["x"].values).mean()))
+dy = float(np.abs(np.diff(dem_fr["y"].values).mean()))
+
+target_deg = 2.5 / 111.0 
+step_x = max(1, int(round(target_deg / dx)))
+step_y = max(1, int(round(target_deg / dy)))
+
+dem_plot = dem_fr.isel(
+    x=slice(0, None, step_x),
+    y=slice(0, None, step_y),
+)
+
+
+# Palette discrète pour l'altitude
+from matplotlib.colors import ListedColormap, BoundaryNorm
+
+# Bornes en m
+elev_bounds = [0, 100, 200, 500, 1000, 2000, 3000, 3500, 4000, 4500]
+
+# Couleurs (≈ style de ta légende : bas clair, haut vert vif)
+elev_colors = [
+    "#f7f7f7",  # 0–100
+    "#fde0dd",  # 100–200
+    "#fcbba1",  # 200–500
+    "#fc9272",  # 500–1000
+    "#fed976",  # 1000–2000
+    "#c2e699",  # 2000–3000
+    "#78c679",  # 3000–3500
+    "#31a354",  # 3500–4000
+    "#006837",  # 4000–4500
+    "#004529",  # > 4500 (extension max)
+]
+
+elev_cmap = ListedColormap(elev_colors)
+elev_norm = BoundaryNorm(elev_bounds, elev_cmap.N, extend="max")
+
+# 6) Grille et tracé
+lons = dem_plot["x"].values
+lats = dem_plot["y"].values
+lon2d, lat2d = np.meshgrid(lons, lats)
+
+im = ax.pcolormesh(
+    lon2d,
+    lat2d,
+    dem_plot.values,
+    transform=proj_data,
+    cmap=elev_cmap,
+    norm=elev_norm,
+    shading="auto",
+    alpha=0.6,
+    zorder=0,
+)
+im.set_rasterized(True)
+
+
+
+# -------------------------------------------------------------------
+# Côtes et frontières (au-dessus du DEM)
+# -------------------------------------------------------------------
+ax.coastlines("10m", linewidth=0.6, zorder=10)
+ax.add_feature(
+    cfeature.BORDERS.with_scale("10m"),
+    linewidth=0.3,
+    edgecolor="black",
+    zorder=11,
+)
+
+# -------------------------------------------------------------------
+# 1ter. Courbes de niveau (relief) — filtrées
+# -------------------------------------------------------------------
+relief_path = Path("../data/external/niveaux/selection_courbes_niveau_france.shp")
+
+relief = (
+    gpd.read_file(relief_path)
+    .to_crs("EPSG:4326")
+)
+
+relief = relief[relief["coordonnees"] == 400].copy()
+relief["geometry"] = relief.geometry.simplify(0.01, preserve_topology=True)
+
+relief_feature = cfeature.ShapelyFeature(
+    relief.geometry,
+    proj_data,
+    edgecolor="#000000",
+    facecolor="none",
+)
+
+ax.add_feature(
+    relief_feature,
+    linewidth=0.3,
+    zorder=9,
+)
+
+# -------------------------------------------------------------------
 # tracer polygone du domaine
+# -------------------------------------------------------------------
 def plot_poly(p: Polygon):
     xs, ys = p.exterior.xy
     ax.plot(xs, ys, transform=proj_data, linewidth=2, color="black", zorder=12)
@@ -122,6 +273,8 @@ xticks = np.arange(np.floor(xmin/dx)*dx, np.ceil(xmax/dx)*dx+dx, dx)
 yticks = np.arange(np.floor(ymin/dy)*dy, np.ceil(ymax/dy)*dy+dy, dy)
 
 gl = ax.gridlines(draw_labels=True, linewidth=0.4, color="0.8", linestyle="--")
+gl.xlabel_style = {"size": 7}
+gl.ylabel_style = {"size": 7}
 gl.xlocator = FixedLocator(xticks)
 gl.ylocator = FixedLocator(yticks)
 gl.xformatter = LongitudeFormatter()
@@ -143,42 +296,35 @@ for spine in ax.spines.values():
 # -------------------------------------------------------------------
 # 2. Pastilles + lettres + légende
 # -------------------------------------------------------------------
-
-# 2.1 Construire une liste (lon, lat, name)
 entries = []
 for name, info in zones_centers.items():
     lon, lat = info["coords"]
     entries.append({"name": name, "lon": lon, "lat": lat})
 
-# 2.2 Trier N->S puis O->E
 entries_sorted = sorted(
     entries,
-    key=lambda e: (-e["lat"], e["lon"])   # lat décroissant, lon croissant
+    key=lambda e: (-e["lat"], e["lon"])
 )
 
-# 2.3 Assigner les lettres A, B, C...
 letters = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 for i, e in enumerate(entries_sorted):
     e["letter"] = letters[i]
 
 circle_color = "#1f4f7b"
 
-# 2.4 Tracer les pastilles sur la carte
 for e in entries_sorted:
     x, y = e["lon"], e["lat"]
-
     ax.scatter(
         x, y,
-        s=70,                     # taille en points^2 (ajuste si besoin)
+        s=70,
         color=circle_color,
         edgecolor="white",
-        linewidth=0.8,
-        transform=proj_data,      # très important avec Cartopy
+        linewidth=0,
+        transform=proj_data,
         zorder=15,
     )
-
     ax.text(
-        x, y,
+        x - 0.01, y - 0.025,
         e["letter"],
         fontsize=7,
         ha="center",
@@ -189,7 +335,6 @@ for e in entries_sorted:
         zorder=16,
     )
 
-# 2.5 Légende à droite avec pastille + lettre
 class LegendLetter:
     def __init__(self, letter, color):
         self.letter = letter
@@ -228,7 +373,6 @@ class HandlerLegendLetter(HandlerBase):
 
 legend_handles = []
 legend_labels = []
-
 for e in entries_sorted:
     legend_handles.append(LegendLetter(e["letter"], circle_color))
     legend_labels.append(e["name"])
@@ -237,14 +381,40 @@ ax.legend(
     legend_handles,
     legend_labels,
     handler_map={LegendLetter: HandlerLegendLetter()},
-    loc="center left",
-    bbox_to_anchor=(1.02, 0.5),   # à droite de la carte
+    loc="upper left",          # en haut à droite de l’axe
+    bbox_to_anchor=(1.02, 0.98),
     frameon=False,
     fontsize=7,
     handlelength=1.4,
     borderaxespad=0.5,
     labelspacing=0.8,
 )
+
+
+# -------------------------------------------------------------------
+# 2bis. Colorbar altitude (verticale, à droite sous la légende)
+# -------------------------------------------------------------------
+# Position de l'axe principal
+box = ax.get_position()
+
+# Axe pour la colorbar : à droite de la carte, en bas (sous la légende)
+cax = fig.add_axes([
+    box.x1 + 0.04,        # x : un peu à droite de l'axe principal
+    box.y0,               # y : bas aligné avec la carte
+    0.025,                # largeur de la barre
+    box.height * 0.45,    # hauteur : ~45 % de la carte → sous la légende
+])
+
+cbar = fig.colorbar(
+    im,
+    cax=cax,
+    orientation="vertical",
+    ticks=[100, 200, 500, 1000, 2000, 3000, 3500, 4000, 4500],
+)
+
+cbar.set_label("Elevation (m)", fontsize=7)
+cbar.ax.tick_params(labelsize=6)
+
 
 # -------------------------------------------------------------------
 # 3. Export

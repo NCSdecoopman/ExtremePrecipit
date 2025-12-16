@@ -129,54 +129,54 @@ def assemble(arome: Path, output: Path) -> str:
 
     return str(output)
 
-# trend_pluie_jan = assemble(
-# "../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/jan/mod_signif_norast.svg",
-# "figures/trend_horaire_reduce_pluie_jan.svg",
-# )
-# trend_pluie_fev = assemble(
-# "../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/fev/mod_signif_norast.svg",
-# "figures/trend_horaire_reduce_pluie_fev.svg",
-# )
-# trend_pluie_mar = assemble(
-# "../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/mar/mod_signif_norast.svg",
-# "figures/trend_horaire_reduce_pluie_mar.svg",
-# )
-# trend_pluie_avr = assemble(
-# "../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/avr/mod_signif_norast.svg",
-# "figures/trend_horaire_reduce_pluie_avr.svg",
-# )
-# trend_pluie_mai = assemble(
-# "../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/mai/mod_signif_norast.svg",
-# "figures/trend_horaire_reduce_pluie_mai.svg",
-# )
-# trend_pluie_jui = assemble( # Juin, fichier FR "jui"
-# "../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/jui/mod_signif_norast.svg",
-# "figures/trend_horaire_reduce_pluie_jui.svg",
-# )
-# trend_pluie_juill = assemble(
-# "../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/juill/mod_signif_norast.svg",
-# "figures/trend_horaire_reduce_pluie_juill.svg",
-# )
-# trend_pluie_aou = assemble(
-# "../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/aou/mod_signif_norast.svg",
-# "figures/trend_horaire_reduce_pluie_aou.svg",
-# )
-# trend_pluie_sep = assemble(
-# "../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/sep/mod_signif_norast.svg",
-# "figures/trend_horaire_reduce_pluie_sep.svg",
-# )
-# trend_pluie_oct = assemble(
-# "../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/oct/mod_signif_norast.svg",
-# "figures/trend_horaire_reduce_pluie_oct.svg",
-# )
-# trend_pluie_nov = assemble(
-# "../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/nov/mod_signif_norast.svg",
-# "figures/trend_horaire_reduce_pluie_nov.svg",
-# )
-# trend_pluie_dec = assemble(
-# "../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/dec/mod_signif_norast.svg",
-# "figures/trend_horaire_reduce_pluie_dec.svg",
-# )
+trend_pluie_jan = assemble(
+"../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/jan/mod_signif_norast.svg",
+"figures/trend_horaire_reduce_pluie_jan.svg",
+)
+trend_pluie_fev = assemble(
+"../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/fev/mod_signif_norast.svg",
+"figures/trend_horaire_reduce_pluie_fev.svg",
+)
+trend_pluie_mar = assemble(
+"../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/mar/mod_signif_norast.svg",
+"figures/trend_horaire_reduce_pluie_mar.svg",
+)
+trend_pluie_avr = assemble(
+"../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/avr/mod_signif_norast.svg",
+"figures/trend_horaire_reduce_pluie_avr.svg",
+)
+trend_pluie_mai = assemble(
+"../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/mai/mod_signif_norast.svg",
+"figures/trend_horaire_reduce_pluie_mai.svg",
+)
+trend_pluie_jui = assemble( # Juin, fichier FR "jui"
+"../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/jui/mod_signif_norast.svg",
+"figures/trend_horaire_reduce_pluie_jui.svg",
+)
+trend_pluie_juill = assemble(
+"../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/juill/mod_signif_norast.svg",
+"figures/trend_horaire_reduce_pluie_juill.svg",
+)
+trend_pluie_aou = assemble(
+"../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/aou/mod_signif_norast.svg",
+"figures/trend_horaire_reduce_pluie_aou.svg",
+)
+trend_pluie_sep = assemble(
+"../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/sep/mod_signif_norast.svg",
+"figures/trend_horaire_reduce_pluie_sep.svg",
+)
+trend_pluie_oct = assemble(
+"../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/oct/mod_signif_norast.svg",
+"figures/trend_horaire_reduce_pluie_oct.svg",
+)
+trend_pluie_nov = assemble(
+"../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/nov/mod_signif_norast.svg",
+"figures/trend_horaire_reduce_pluie_nov.svg",
+)
+trend_pluie_dec = assemble(
+"../outputs/maps/gev_z_T_p/horaire_reduce/compare_12/sat_90.0/dec/mod_signif_norast.svg",
+"figures/trend_horaire_reduce_pluie_dec.svg",
+)
 ```
 
 ```{=latex}

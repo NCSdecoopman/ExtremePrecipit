@@ -142,6 +142,7 @@ def import_data_gev(
 
     for gev_dir in [gev_dir_mod, gev_dir_obs]:
         path_dir = Path(gev_dir) / f"{echelle}{suffix_save}" / season / "niveau_retour.parquet"
+        print(path_dir)
         
         if "modelised" in str(gev_dir):
             modelised = pl.read_parquet(path_dir)
@@ -1051,20 +1052,20 @@ def main(args):
                 saturation_col=sat
             )
 
-            for show in [True, False]:
-                generate_maps(
-                    dir_path=dir_path,
-                    model_gdfs=model_gdfs,
-                    obs_gdfs=obs_gdfs,
-                    data_type=data_type,
-                    titles=titles,
-                    val_col=val_col,
-                    show_mod=show,
-                    show_obs=not show,
-                    show_signif=signif,
-                    col_calculate=col_calculate,
-                    scale=scale
-                )
+            # for show in [True, False]:
+            #     generate_maps(
+            #         dir_path=dir_path,
+            #         model_gdfs=model_gdfs,
+            #         obs_gdfs=obs_gdfs,
+            #         data_type=data_type,
+            #         titles=titles,
+            #         val_col=val_col,
+            #         show_mod=show,
+            #         show_obs=not show,
+            #         show_signif=signif,
+            #         col_calculate=col_calculate,
+            #         scale=scale
+            #     )
 
         if data_type == "dispo":
             generate_hist(res, echelle=e, season=s, reduce_activate=reduce_activate)
@@ -1093,21 +1094,21 @@ def main(args):
                     diff=True
                 )
 
-                generate_maps(
-                    dir_path=dir_path,
-                    model_gdfs=model_gdfs,
-                    obs_gdfs=obs_gdfs,
-                    data_type=data_type,
-                    titles=titles,
-                    val_col=val_col,
-                    show_mod=False,
-                    show_obs=not False,
-                    show_signif=signif,
-                    col_calculate=col_calculate,
-                    scale=scale,
-                    diff=True,
-                    mesure=mesure
-                )
+                # generate_maps(
+                #     dir_path=dir_path,
+                #     model_gdfs=model_gdfs,
+                #     obs_gdfs=obs_gdfs,
+                #     data_type=data_type,
+                #     titles=titles,
+                #     val_col=val_col,
+                #     show_mod=False,
+                #     show_obs=not False,
+                #     show_signif=signif,
+                #     col_calculate=col_calculate,
+                #     scale=scale,
+                #     diff=True,
+                #     mesure=mesure
+                # )
 
 
 def str2bool(v):

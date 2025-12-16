@@ -465,7 +465,7 @@ def generate_maps(
             if "horaire_reduce" in str(dir_path):
                 seasons_lower = [t.lower() for t in (titles or [])]
                 if any("jan" in t for t in seasons_lower):
-                    vmin, vmax = -220, 220
+                    vmin, vmax = -260, 260
                 if any("hydro" in t for t in seasons_lower):
                     vmin, vmax = -153, 153
 
@@ -1023,7 +1023,7 @@ def main(args):
                 )
                 
             if col_calculate in ["z_T_p", "model"]:
-                SIGNIFICANT_SHOW = [False] # On choisi d'afficher ou non les points significatifs 
+                SIGNIFICANT_SHOW = [True] # On choisi d'afficher ou non les points significatifs 
             else:
                 SIGNIFICANT_SHOW = [False]
 

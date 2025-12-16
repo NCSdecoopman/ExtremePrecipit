@@ -1,0 +1,412 @@
+---
+title: "La GEV"
+format:
+  html:            # ou revealjs, pdf, etc.
+    math: katex    # ou math: mathjax   (au choix)
+---
+
+<style>
+body {
+  text-align: justify;
+}
+</style>
+
+# Définition
+
+La loi des valeurs extrêmes généralisée (GEV) est une famille de distributions utilisée pour modéliser les maxima (ou minima) d’échantillons aléatoires. Elle englobe trois types classiques de distributions d’extrêmes (Gumbel, Fréchet, Weibull) selon la valeur du paramètre de forme.
+
+Soit :  
+
+- $\mu$ est le paramètre de position  
+- $\sigma > 0$ est le paramètre d’échelle  
+- $\xi$ est le paramètre de forme
+
+La fonction de densité de probabilité (pdf) de la GEV est donnée par :
+
+$$
+{\displaystyle f(x;\mu ,\sigma ,\xi )={\frac {1}{\sigma }}\left(1+\xi \left({\frac {x-\mu }{\sigma }}\right)\right)^{-{\frac {1+\xi }{\xi }}}\exp \left(-\left(1+\xi \left({\frac {x-\mu }{\sigma }}\right)\right)^{-{\frac {1}{\xi }}}\right)}
+$$
+
+Cas limite : $\xi \to 0$ (loi de Gumbel) :
+
+$$
+{\displaystyle f(x;\mu ,\sigma ,0)={\frac {1}{\sigma }}\exp \left({\frac {\mu -x}{\sigma }}\right)\exp \left(-\exp \left({\frac {\mu -x}{\sigma }}\right)\right)}
+$$
+
+Si $\xi > 0$ la loi devient une loi de Fréchet et si $\xi < 0$ la loi devient une loi de Weibull inverse.
+
+La fonction de répartition cumulative (CDF) de la GEV est définie comme suit :
+
+$$
+F(x;\mu ,\sigma ,\xi ) = \exp \left\{ -\left[ 1 + \xi \left( \frac{x - \mu}{\sigma} \right) \right]^{-\frac{1}{\xi}} \right\}
+$$
+
+## Application aux maxima de précipitations annuels
+
+Si on note $x$ une réalisation de la variable aléatoire $X$, représentant le maximum annuel de précipitation en un point spatial donné, alors la loi GEV est une loi de probabilité continue paramétrée par le triplet $\theta = (\mu, \sigma, \xi)$ — respectivement la position, l’échelle (strictement positive) et la forme — associant à chaque valeur $x \to {\displaystyle f(x;\theta )={\frac {1}{\sigma }}\left(1+\xi \left({\frac {x-\mu }{\sigma }}\right)\right)^{-{\frac {1+\xi }{\xi }}}\exp \left(-\left(1+\xi \left({\frac {x-\mu }{\sigma }}\right)\right)^{-{\frac {1}{\xi }}}\right)}$.
+
+On dispose d'une série temporelle de $n$ maximas annuels indépendants de précipitations pour un point géographique (exemple une station ou un pixel de modèle AROME 2,5 x 2,5 km). Ces observations sont notées $\{x_1, x_2, \dots, x_n\}$ où chaque $x_i$ est un maximum annuel de précipitation observé à l'année $t_i$ et qui suit une loi GEV de paramètre $\theta$.
+
+## Transformation de la covariable temporelle
+
+Pour introduire une dépendance temporelle dans les paramètres de la loi GEV, on transforme l’année $t_i$ en une covariable normalisée. Cette transformation est simplement réalisée pour des raisons numériques mais elle ne change rien au résultat théorique.
+
+$$
+\tilde{t}_i = \frac{t_i - t_{\min}}{t_{\max} - t_{\min}}
+$$
+
+- $t_i$ : l’année réelle de l’observation $x_i$ (par exemple 1980, 1981, ..., 2022)  
+- $t_{min} = \min_i t_i$  
+- $t_{max} = \max_i t_i$ 
+
+On crée également une covariable temporelle avec point de rupture noté $t_+$ tel que :
+
+$$
+\tilde{t}^\ast =
+\begin{cases}
+0 & \text{si } t_i < t_+ \\
+\displaystyle \frac{t_i - t_+}{t_{\max} - t_+} & \text{si } t_i \ge t_+
+\end{cases}
+$$
+
+Ce codage permet d’appliquer une pente temporelle seulement après la date de rupture, avec une covariable encore normalisée sur $[0,1]$ dans la portion post-rupture.
+
+# Statistiques
+
+Soit ${\displaystyle g_{k}=\Gamma (1-k\xi )}$ avec ${\displaystyle k\in \{1,2,3,4\}}$ et ${\displaystyle \Gamma }$ la fonction gamma. L'espérance, la variance et le mode d'une variable suivant la loi d'extremum généralisée peuvent s'exprimer par :  
+
+${\displaystyle \mathbb {E} (X)=\mu +{\frac {\sigma }{\xi }}(g_{1}-1)}$  
+
+${\displaystyle \mathbb {V} (X)={\frac {\sigma ^{2}}{\xi ^{2}}}(g_{2}-g_{1}^{2})}$  
+
+${\displaystyle \operatorname {Mode} (X)=\mu +{\frac {\sigma }{\xi }}[(1+\xi )^{-\xi }-1]}$
+
+# Vraisemblance
+
+Soit la fonction de vraisemblance ${\displaystyle {\mathcal {L}}(\theta ;x)} : {\displaystyle \theta \mapsto f(x;\theta )}$.
+
+Soit : 
+
+$$
+{\displaystyle \log {\mathcal {L}}(\theta ;x_{1},x_{2},\dots ,x_{n})=\sum _{i=1}^{n}\log {\mathcal {L}}(\theta ;x_{i})}
+$$
+
+Pour $1 + \xi \frac{x - \mu}{\sigma} > 0$, avec $\sigma > 0$ :
+
+$$
+\begin{aligned}
+\log \mathcal{L}(\theta)
+&= \sum_{i=1}^n \left[
+  -\log \sigma
+  - \frac{1 + \xi}{\xi} \log\left(1 + \xi \frac{x_i - \mu}{\sigma} \right)
+  - \left(1 + \xi \frac{x_i - \mu}{\sigma} \right)^{-\frac{1}{\xi}}
+\right] \\
+\log \mathcal{L}(\theta)
+&= -n \log \sigma
+- \left(1 + \frac{1}{\xi}\right) \sum_{i=1}^n \log\left(1 + \xi \frac{x_i - \mu}{\sigma} \right)
+- \sum_{i=1}^n \left(1 + \xi \frac{x_i - \mu}{\sigma} \right)^{-\frac{1}{\xi}}
+\end{aligned}
+$$
+
+
+On note :
+
+$$
+z_i(\theta)=1+\xi\;\frac{x_i-\mu}{\sigma}
+$$
+
+La log-vraisemblance $\ell(\theta) = \log \mathcal{L}(\theta)$ s’écrit alors :
+
+$$
+\boxed{\;
+\ell(\theta)=
+-\sum_{i=1}^n\Bigl[
+\log\sigma
++\Bigl(1+\tfrac1{\xi}\Bigr)\log z_i
++z_i^{-\frac{1}{\xi}}
+\Bigr]
+\;}
+\tag{1}
+$$
+
+
+# Modèles
+
+Soit $t \in \mathbb{N} \mid t_{\min} \leq t \leq t_{\max}$.
+
+## Stationnaire
+
+Le modèle stationnaire noté $M_0(\mu_0, \sigma_0)$ et $\theta_0 = (\mu_0, \sigma_0, \xi_0)$ est défini par :
+
+$$
+\left\{
+\begin{array}{l}
+\mu(t) = \mu_0 \\
+\sigma(t) = \sigma_0 \\
+\xi(t) = \xi_0
+\end{array}
+\right.
+$$
+
+
+## Non stationnaire
+
+Les modèles non stationnaires sont définis suivant la présence ou non d'un point de rupture
+
+### Sans point de rupture
+
+On note $M_1(\theta_1)$ et $\theta_1 = (\mu_0, \mu_1, \sigma_0, \xi_0)$ :
+
+$$
+\left\{
+\begin{array}{l}
+\mu(t) = \mu_0 + \mu_1 \cdot t \\
+\sigma(t) = \sigma_0 \\
+\xi(t) = \xi_0
+\end{array}
+\right.
+$$
+
+On note $M_2(\theta_2)$ et $\theta_2 = (\mu_0, \sigma_0, \sigma_1, \xi_0)$ :
+
+$$
+\left\{
+\begin{array}{l}
+\mu(t) = \mu_0 \\
+\sigma(t) = \sigma_0 + \sigma_1 \cdot t \\
+\xi(t) = \xi_0
+\end{array}
+\right.
+$$
+
+On note $M_3(\theta_3)$ et $\theta_3 = (\mu_0, \mu_1, \sigma_0, \sigma_1, \xi_0)$ :
+
+$$
+\left\{
+\begin{array}{l}
+\mu(t) = \mu_0 + \mu_1 \cdot t\\
+\sigma(t) = \sigma_0 + \sigma_1 \cdot t \\
+\xi(t) = \xi_0
+\end{array}
+\right.
+$$
+
+
+### Avec point de rupture
+
+On reprend la notation du point de rupture noté $t_+$. Cette fois :
+
+$$
+t^\ast = t \cdot \mathbb{1}_{t > t_+} \quad \text{avec } t_+ \in \mathbb{N}
+$$
+
+Les modèles $M_1$, $M_2$ et $M_3$ deviennent respectivements $M_1^\ast$, $M_2^\ast$ et $M_3^\ast$. On note sur ce même principe $\theta_i$ qui devient $\theta^\ast_i$ avec $i \in \{1, 2, 3\}$.
+
+## Vraisemblances
+
+$$
+\boxed{\;
+\begin{aligned}
+\ell_{M_0}(\mu_0, \sigma_0, \xi_0) &=
+-\sum_{i=1}^n \left[
+\log \sigma_0 +
+\left(1 + \frac{1}{\xi_0} \right) \log \left(1 + \xi_0 \frac{x_i - \mu_0}{\sigma_0} \right) +
+\left(1 + \xi_0 \frac{x_i - \mu_0}{\sigma_0} \right)^{-1/\xi_0}
+\right]\\ 
+\ell_{M_1}(\mu_0, \mu_1, \sigma_0, \xi_0) &=
+-\sum_{i=1}^n \left[
+\log \sigma_0 +
+\left(1 + \frac{1}{\xi_0} \right) \log \left(1 + \xi_0 \frac{x_i - (\mu_0 + \mu_1 \cdot \tilde{t}_i)}{\sigma_0} \right) +
+\left(1 + \xi_0 \frac{x_i - (\mu_0 + \mu_1 \cdot \tilde{t}_i)}{\sigma_0} \right)^{-1/\xi_0}
+\right]\\ 
+\ell_{M_2}(\mu_0, \sigma_0, \sigma_1, \xi_0) &=
+-\sum_{i=1}^n \left[
+\log (\sigma_0 + \sigma_1 \tilde{t}_i) +
+\left(1 + \frac{1}{\xi_0} \right) \log \left(1 + \xi_0 \frac{x_i - \mu_0}{\sigma_0 + \sigma_1 \tilde{t}_i} \right) +
+\left(1 + \xi_0 \frac{x_i - \mu_0}{\sigma_0 + \sigma_1 \tilde{t}_i} \right)^{-1/\xi_0}
+\right]\\ 
+\ell_{M_3}(\mu_0, \mu_1, \sigma_0, \sigma_1, \xi_0) &=
+-\sum_{i=1}^n \left[
+\log (\sigma_0 + \sigma_1 \tilde{t}_i) +
+\left(1 + \frac{1}{\xi_0} \right) \log \left(1 + \xi_0 \frac{x_i - (\mu_0 + \mu_1 \tilde{t}_i)}{\sigma_0 + \sigma_1 \tilde{t}_i} \right) +
+\left(1 + \xi_0 \frac{x_i - (\mu_0 + \mu_1 \tilde{t}_i)}{\sigma_0 + \sigma_1 \tilde{t}_i} \right)^{-1/\xi_0}
+\right]
+\end{aligned}
+\;}
+\tag{1'}
+$$
+
+Pour les modèles avec point de rupture, on remplace $\tilde{t}_i$ par $\tilde{t}_i^*$ :
+
+$$
+\tilde{t}_i^* =
+\begin{cases}
+0 & \text{si } t_i < t_+ \\
+\frac{t_i - t_+}{t_{\max} - t_+} & \text{si } t_i \ge t_+
+\end{cases}
+$$
+
+Les vraisemblances de $M_1^*, M_2^*, M_3^*$ sont obtenues en remplaçant $\tilde{t}_i \to \tilde{t}_i^*$ dans les expressions ci-dessus.
+
+## Maximum de vraisemblance
+
+En pratique, les paramètres $(\mu, \sigma, \xi)$ sont inconnus et estimés à partir des données par un estimateur $\hat{\theta} = (\hat{\mu}, \hat{\sigma}, \hat{\xi})$ obtenu par maximum de vraisemblance via une optimisation numérique. Il n'existe pas de formule explicite des paramètres.
+
+$$
+\hat{\theta} = \arg\max_{\theta} \, \ell(\theta)
+$$
+
+
+# Niveau de retour en loi GEV
+
+## Estimation
+
+Le niveau de retour (ou quantile d’ordre $1 - \tfrac{1}{T}$) dans une loi GEV correspond à une valeur seuil $z_T$ que l’on dépasse, en moyenne, une fois tous les $T$ ans.
+
+Soit $X \sim \mathrm{GEV}(\mu, \sigma, \xi)$, alors :
+
+$$
+\mathbb{P}(X > z_T) = \frac{1}{T}, \quad \text{soit} \quad z_T = F^{-1}\left(1 - \frac{1}{T} \right)
+$$
+
+où $F^{-1}$ est la fonction quantile de la GEV. On obtient une formule explicite selon $\xi$ :
+
+- Si $\xi \ne 0$ :
+
+$$
+z_T = \mu + \frac{\sigma}{\xi} \left[ \left( -\log\left(1 - \frac{1}{T}\right) \right)^{-\xi} - 1 \right]
+$$
+
+- Si $\xi = 0$ (cas de Gumbel) :
+
+$$
+z_T = \mu - \sigma \log \left( -\log\left(1 - \frac{1}{T} \right) \right)
+$$
+
+Ainsi, l’estimateur du niveau de retour $\hat{z}_T$ s’écrit :
+
+$$
+\hat{z}_{T}\;=\;F^{-1}_{\hat{\theta}}\!\left(1-\frac{1}{T}\right)
+$$
+
+
+Le MLE classique donne un point estimé, mais pas d’intervalle.
+
+
+- $z_{10}$ est la valeur de précipitation (ou autre variable extrême) que l’on s’attend à dépasser **en moyenne une fois tous les 10 ans**.
+- Cela **n’implique pas** que la valeur ne peut pas être dépassée plusieurs années de suite :
+  la probabilité de dépassement reste de $\frac{1}{T}$ **chaque année**, indépendamment.
+
+
+Pour $\mu = 20$, $\sigma = 5$, $\xi = 0{,}2$ et $T = 50$ ans :
+
+$$
+z_{50} = 20 + \frac{5}{0{,}2} \left[ \left( -\log\left(1 - \frac{1}{50} \right) \right)^{-0{,}2} - 1 \right]
+$$
+
+## Vraisemblance profilée
+
+On souhaite aussi connaître l’incertitude autour de l'estimation de $\hat{z}_T$. Pour cela, on utilise la vraisemblance profilée.
+
+On cherche à estimer un intervalle de confiance pour le niveau de retour $z_T$, défini par :
+
+$$
+z_T = F^{-1}_{\theta}\left(1 - \frac{1}{T}\right) = \mu + \dfrac{\sigma}{\xi} \left[ \left( -\log\left(1 - \frac{1}{T} \right) \right)^{-\xi} - 1 \right] \quad \text{si } \xi \ne 0
+$$
+
+Qui peut se réecrire sous la forme :
+
+$$
+\mu = z_T - \dfrac{\sigma}{\xi} \left[ \left( -\log\left(1 - \frac{1}{T} \right) \right)^{-\xi} - 1 \right]
+$$
+
+La combinaison des paramètres temporels de la loi GEV conduit à une expression linéaire en $t$ alors : $z_T(t) = z_{T,0} + z_{T,1} \cdot t$
+
+En développant les paramètres soumis à un effet temporel, on a :
+
+$$
+\begin{aligned}
+\mu_0 + \mu_1 t &= z_{T,0} + z_{T,1} t - \dfrac{\sigma_0 + \sigma_1 t}{\xi_0} \left[ \left( -\log\left(1 - \frac{1}{T} \right) \right)^{-\xi_0} - 1 \right]\\
+\mu_0+\mu_1\,t &= \Bigl[\,z_{T,0}
+-\dfrac{\sigma_0}{\xi_0}\Bigl(\bigl[-\log(1-\tfrac1T)\bigr]^{-\xi_0}-1\Bigr)
+\Bigr]\;+\;\Bigl[\,z_{T,1}-\dfrac{\sigma_1}{\xi_0}\Bigl(\bigl[-\log(1-\tfrac1T)\bigr]^{-\xi_0}-1\Bigr)\Bigr]\,t\\
+\end{aligned}
+$$
+
+c’est-à-dire, terme à terme :
+
+$$
+\begin{aligned}
+\mu_0 &\;=\; z_{T,0}
+-\dfrac{\sigma_0}{\xi_0}\Bigl(\bigl[-\log(1-\tfrac1T)\bigr]^{-\xi_0}-1\Bigr),\\[0.8em]
+\mu_1 &\;=\; z_{T,1}
+-\dfrac{\sigma_1}{\xi_0}\Bigl(\bigl[-\log(1-\tfrac1T)\bigr]^{-\xi_0}-1\Bigr).
+\end{aligned}
+$$
+
+On écrit : 
+
+$$
+\begin{aligned}
+\mu_1(z_{T,1}) &= z_{T,1} -\dfrac{\hat{\sigma_1}}{\hat{\xi}_0}\Bigl(\bigl[-\log(1-\tfrac1T)\bigr]^{-\hat{\xi}_0}-1\Bigr)\\
+\sigma_1(z_{T,1}) &= \dfrac{\hat{\xi}_0\,\bigl(z_{T,1}-\hat{\mu_1}\bigr)}{\bigl[-\log\!\bigl(1-\tfrac1T\bigr)\bigr]^{-\hat{\xi}_0}-1}\\
+\end{aligned}
+$$
+
+On cherche l'intervalle de confiance sur $z_{T,1}$ donc pour chaque valeur candidate $z_{T,1}$ dans une grille (autour de l’estimateur $\hat{z}_{T,1}$), on maximise les log-vraisemblances **$\text{(1$'$)}$** qui deviennent des log-vraisemblances profilées $\ell^{\,p}$ :
+
+$$
+\boxed{\;
+\begin{aligned}
+\underset{\hat{\sigma}_1 = 0}{\ell_{M_1}^{\,p}(z_{T,1} \ ; \hat{\mu}_0, \hat{\sigma}_0, \hat{\xi}_0)} &= 
+-\sum_{i=1}^n \left[
+\log \hat{\sigma}_0 +
+\left(1 + \frac{1}{\hat{\xi}_0} \right) \log \left(1 + \hat{\xi}_0 \frac{x_i - (\hat{\mu}_0 + \mu_1(z_{T,1}) \cdot \tilde{t}_i)}{\hat{\sigma}_0} \right) +
+\left(1 + \hat{\xi}_0 \frac{x_i - (\hat{\mu}_0 + \mu_1(z_{T,1}) \cdot \tilde{t}_i)}{\hat{\sigma}_0} \right)^{-1/\hat{\xi}_0}
+\right]\\
+\underset{\hat{\mu}_1 = 0}{\ell_{M_2}^{\,p}(z_{T,1} \ ; \hat{\mu}_0, \hat{\sigma}_0, \hat{\xi}_0)} &= 
+-\sum_{i=1}^n \left[
+\log (\hat{\sigma}_0 + \sigma_1(z_{T,1}) \cdot \tilde{t}_i) +
+\left(1 + \frac{1}{\hat{\xi}_0} \right) \log \left(1 + \hat{\xi}_0 \frac{x_i - \hat{\mu}_0}{\hat{\sigma}_0 + \sigma_1(z_{T,1}) \cdot \tilde{t}_i} \right) +
+\left(1 + \hat{\xi}_0 \frac{x_i - \hat{\mu}_0}{\hat{\sigma}_0 + \sigma_1(z_{T,1}) \cdot \tilde{t}_i} \right)^{-1/\hat{\xi}_0}
+\right]\\
+\ell_{M_3}^{\,p}(z_{T,1} \ ; \hat{\mu}_0, \hat{\sigma}_0, \hat{\sigma}_1, \hat{\xi}_0) &= 
+-\sum_{i=1}^n \left[
+\log (\hat{\sigma}_0 + \hat{\sigma}_1 \tilde{t}_i) +
+\left(1 + \frac{1}{\hat{\xi}_0} \right) \log \left(1 + \hat{\xi}_0 \frac{x_i - (\hat{\mu}_0 + \mu_1(z_{T,1}) \tilde{t}_i)}{\hat{\sigma}_0 + \hat{\sigma}_1 \tilde{t}_i} \right) +
+\left(1 + \hat{\xi}_0 \frac{x_i - (\hat{\mu}_0 + \mu_1(z_{T,1}) \tilde{t}_i)}{\hat{\sigma}_0 + \hat{\sigma}_1 \tilde{t}_i} \right)^{-1/\hat{\xi}_0}
+\right]\\
+\end{aligned}
+\;}
+$$
+
+On cherche donc :
+
+$$
+\hat{z}_{T,1} = \underset{z_{T,1}}{\arg\max} \; \ell_{M_\bullet}^{\,p}(z_{T,1} \ ; \hat{\theta}_{\bullet})
+$$
+
+Avec :
+
+$$
+\hat{\theta}_{\bullet} = \begin{cases}
+\hat{\theta}_{1}^{\,p} = (\hat{\mu_0}, \hat{\sigma_0}, \hat{\xi_0}) & \text{pour } M_1 \\
+\hat{\theta}_2^{\,p} = (\hat{\mu_0}, \hat{\sigma_0}, \hat{\xi_0}) & \text{pour } M_2 \\
+\hat{\theta}_3^{\,p} = (\hat{\mu_0}, \hat{\sigma_0}, \hat{\sigma_1}, \hat{\xi_0}) & \text{pour } M_3 \\
+\end{cases}
+$$
+
+On trace ainsi pour chaque modèle $M_\bullet$ la fonction ${\displaystyle \mathcal{L}_{M_\bullet} : z_{T,1} {\mapsto} \ell_{M_\bullet}^{\,p}(z_{T,1} \ ; \hat{\theta}_{\bullet})}$
+
+# Intervalle
+
+L’intervalle de confiance de $\hat{z}_{T,1}$ pour un modèle $M_\bullet$ au seuil $(1 - \alpha)$ basé sur le profil de vraisemblance est donné par :
+
+$$
+\operatorname{IC}_{M_\bullet}^{(1-\alpha)}\!\bigl(\hat{z}_{T,1}\bigr)
+   = \Bigl\{\, z_{T,1}\;:\;
+        2\bigl[\ell_{M_\bullet}^{\,p}(\hat{z}_{T,1} \ ; \hat{\theta}_{\bullet})-\ell_{M_\bullet}^{\,p}(z_{T,1} \ ; \hat{\theta}_{\bullet})\bigr]
+        \le \chi^{2}_{1,\,1-\alpha} \Bigr\}
+$$
+
+où $\chi^2_{1,1-\alpha}$ est le quantile d’ordre $1 - \alpha$ d’une loi du $\chi^2$ à un degré de liberté (≈ 2.71 pour un IC à 90 %)
