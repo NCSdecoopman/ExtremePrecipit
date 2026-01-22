@@ -51,3 +51,5 @@ __pycache__/
 .jupyter_cache/
 /.quarto/
 data/
+Miniconda3-latest-Linux-x86_64.sh
+rapport/annexes.pdf
