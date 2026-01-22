@@ -214,8 +214,12 @@ def gev_non_stationnaire(
 
     if model_name in ["ns_gev_m3", "ns_gev_m3_break_year"]: # Effet temporel sur μ et σ
         # On récupère les paramètres déjà estimés dans les modèles plus simples
-        custom_x0["mu1"] = init_params.get("mu1", 0)
-        custom_x0["sigma1"] = init_params.get("sigma1", 0)
+        if init_params:
+            custom_x0["mu1"] = init_params.get("mu1", 0)
+            custom_x0["sigma1"] = init_params.get("sigma1", 0)
+        else:
+            custom_x0["mu1"] = 0
+            custom_x0["sigma1"] = 0
 
     # Cela revient à repartir de la vraisemblance obtenue dans le cas stationnaire, 
     # sauf que dans le cas non stationnaire on autorise plus de paramètres donc la vraisemblance va augmenter.
