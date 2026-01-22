@@ -44,8 +44,8 @@ MONTHS_EN = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT
 
 # Keep default matplotlib typography to match fig4/fig8 (no custom rcParams here).
 CACHE_DIR = Path("add_fig")
-CACHE_DATA_PATH = CACHE_DIR / "boxplot_robustness_all_months_data.parquet"
-CACHE_STATS_PATH = CACHE_DIR / "boxplot_robustness_all_months_stats.json"
+CACHE_DATA_PATH = CACHE_DIR / "boxplot_robustness_all_months_data_signif.parquet"
+CACHE_STATS_PATH = CACHE_DIR / "boxplot_robustness_all_months_stats_signif.json"
 
 def get_year_norm_fit(df, min_year, max_year, model_name):
     has_break = "_break_year" in model_name
@@ -144,10 +144,22 @@ def run_boxplot():
             if not best_model_path.exists(): continue
 
             best_models_df = pl.read_parquet(best_model_path)
+            signif_path = GEV_ROOT / m_fr / "niveau_retour.parquet"
+            signif_stations = None
+            if signif_path.exists():
+                df_signif = pl.read_parquet(signif_path, columns=["NUM_POSTE", "significant"])
+                signif_stations = set(
+                    df_signif.filter(pl.col("significant") == True)
+                             .select(pl.col("NUM_POSTE").cast(pl.Utf8))
+                             .get_column("NUM_POSTE")
+                             .to_list()
+                )
             cols = ["NUM_POSTE", MESURE, "nan_ratio"]
             df = load_data(str(INPUT_ROOT), m_fr, ECHELLE, cols, MIN_YEAR_GLOBAL, MAX_YEAR_GLOBAL)
             df = cleaning_data_observed(df, ECHELLE, LEN_SERIE)
             df_pd = df.to_pandas()
+            if signif_stations is not None:
+                df_pd = df_pd[df_pd["NUM_POSTE"].astype(str).isin(signif_stations)]
             
             stations = df_pd["NUM_POSTE"].unique()
             trends_f = []
