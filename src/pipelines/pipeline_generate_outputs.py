@@ -490,7 +490,7 @@ def generate_maps(
     elif data_type=="stats":
         all_mins = [g[val_col].min() for g in model_gdfs + obs_gdfs if g is not None]
         all_maxs = [g[val_col].max() for g in model_gdfs + obs_gdfs if g is not None]
-        vmin = max(all_mins)
+        vmin = min(all_mins)
         vmax = max(all_maxs)
 
         # custom_colorscale = [

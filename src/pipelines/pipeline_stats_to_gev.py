@@ -248,6 +248,9 @@ def gev_non_stationnaire(
     for method in BOUND_COMPATIBLE_METHODS:
         optim_methods.append({"method": method, "x0": x0, "bounds": bounds})
 
+    best_params = None
+    best_log_likelihood = -np.inf
+
     for optim_kwargs in optim_methods:        
         try:
             fit = FitNsDistribution(obs, ns_distribution=ns_dist, fit_kwargs=[optim_kwargs])
@@ -264,7 +267,9 @@ def gev_non_stationnaire(
             param_values[-1] = -param_values[-1]
 
             if all(np.isfinite(param_values)):
-                return tuple(param_values) + (log_likelihood,)
+                if log_likelihood > best_log_likelihood:
+                    best_log_likelihood = log_likelihood
+                    best_params = tuple(param_values) + (log_likelihood,)
             else:
                 logger.warning(f"Fit non fini pour NUM_POSTE={df['NUM_POSTE'].iloc[0]} : {param_values}")
         except Exception as e:
@@ -278,6 +283,9 @@ def gev_non_stationnaire(
             logger.debug(f"[DEBUG] Échec avec méthode {optim_kwargs['method']} pour NUM_POSTE={df['NUM_POSTE'].iloc[0]} : {msg}")
             logger.debug(f"[DEBUG] x0 utilisés : {optim_kwargs.get('x0')}")
             logger.debug(f"[DEBUG] Bornes utilisées : {optim_kwargs.get('bounds')}")
+
+    if best_params is not None:
+        return best_params
 
     # Si tous les essais échouent
     poste = df["NUM_POSTE"].iloc[0] if "NUM_POSTE" in df.columns else "INCONNU"

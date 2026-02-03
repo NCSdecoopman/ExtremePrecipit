@@ -1052,20 +1052,20 @@ def main(args):
                 saturation_col=sat
             )
 
-            # for show in [True, False]:
-            #     generate_maps(
-            #         dir_path=dir_path,
-            #         model_gdfs=model_gdfs,
-            #         obs_gdfs=obs_gdfs,
-            #         data_type=data_type,
-            #         titles=titles,
-            #         val_col=val_col,
-            #         show_mod=show,
-            #         show_obs=not show,
-            #         show_signif=signif,
-            #         col_calculate=col_calculate,
-            #         scale=scale
-            #     )
+            for show in [True, False]:
+                generate_maps(
+                    dir_path=dir_path,
+                    model_gdfs=model_gdfs,
+                    obs_gdfs=obs_gdfs,
+                    data_type=data_type,
+                    titles=titles,
+                    val_col=val_col,
+                    show_mod=show,
+                    show_obs=not show,
+                    show_signif=signif,
+                    col_calculate=col_calculate,
+                    scale=scale
+                )
 
         if data_type == "dispo":
             generate_hist(res, echelle=e, season=s, reduce_activate=reduce_activate)
@@ -1094,21 +1094,21 @@ def main(args):
                     diff=True
                 )
 
-                # generate_maps(
-                #     dir_path=dir_path,
-                #     model_gdfs=model_gdfs,
-                #     obs_gdfs=obs_gdfs,
-                #     data_type=data_type,
-                #     titles=titles,
-                #     val_col=val_col,
-                #     show_mod=False,
-                #     show_obs=not False,
-                #     show_signif=signif,
-                #     col_calculate=col_calculate,
-                #     scale=scale,
-                #     diff=True,
-                #     mesure=mesure
-                # )
+                generate_maps(
+                    dir_path=dir_path,
+                    model_gdfs=model_gdfs,
+                    obs_gdfs=obs_gdfs,
+                    data_type=data_type,
+                    titles=titles,
+                    val_col=val_col,
+                    show_mod=False,
+                    show_obs=not False,
+                    show_signif=signif,
+                    col_calculate=col_calculate,
+                    scale=scale,
+                    diff=True,
+                    mesure=mesure
+                )
 
 
 def str2bool(v):
@@ -1122,7 +1122,7 @@ if __name__ == "__main__":
     parser.add_argument("--data_type", choices=["dispo", "stats", "gev"])
     parser.add_argument("--col_calculate", choices=["n_years", "numday", "mean", "mean-max", "z_T_p", "zTpa", "significant", "model"], default=None)
     parser.add_argument("--echelle", choices=["horaire", "quotidien", "horaire_reduce"], nargs='+', default=["horaire"])
-    parser.add_argument("--season", type=str, nargs='+', default=["son"])
+    parser.add_argument("--season", type=str, nargs='+', default=["hydro"])
     parser.add_argument("--reduce_activate", type=str2bool, default=False)
     parser.add_argument("--sat", type=float, default=100)
 
