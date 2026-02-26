@@ -27,7 +27,7 @@ st.markdown("""
             min-width: 150px !important;
         }  
                  
-        /* Masquer le header de l'app */
+        /* Hide app header */
         div[class*="stAppHeader"] {
             display: none !important;
         }
@@ -38,7 +38,7 @@ st.markdown("""
             max-width: 98% !important;
         }
 
-        /* Responsive layout des colonnes */
+        /* Responsive column layout */
         @media screen and (max-width: 1000px) {
             .element-container:has(> .stColumn) {
                 display: flex;
@@ -63,7 +63,7 @@ st.markdown("""
 option = st.sidebar.selectbox(
     "Navigation",
     ("Choisir un visuel", "Statistiques descriptives", "Variation décennale"),
-    index=0  # affiche la première valeur (chaîne vide) par défaut
+    index=0  # Default to first option
 )
 
 config_path = "app/config/config.yaml"

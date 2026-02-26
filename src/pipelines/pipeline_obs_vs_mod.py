@@ -14,13 +14,13 @@ from src.utils.config_tools import load_config
 from src.utils.logger import get_logger
 
 # ────────────────────────────────────────────────────
-# Initialiser une seule fois le transformeur
+# Initialize transformer once
 # EPSG:4326  = lat/lon WGS-84
-# EPSG:2154  = Lambert-93 (mètres)
+# EPSG:2154  = Lambert-93 (metric)
 # ────────────────────────────────────────────────────
 _TRANSFORMER = Transformer.from_crs(
     "EPSG:4326",          # src
-    "EPSG:2154",          # dst (métrique)
+    "EPSG:2154",          # dst (metric)
     always_xy=True        # (lon, lat) → (x, y)
 )
 
@@ -33,25 +33,24 @@ def find_matching_point(
     transformer: Transformer = _TRANSFORMER   # injectable pour tests
 ):
     """
-    Retourne les coordonnées (lat_mod, lon_mod) du point AROME dont le
-    centre est le plus proche de la station (lat_obs, lon_obs), en vraie
-    distance plane :
+    Returns (lat_mod, lon_mod) of the AROME point whose center is closest 
+    to the station (lat_obs, lon_obs), using projected distance:
         1. Reprojection WGS-84 ➜ Lambert-93
-        2. Distance euclidienne ⟺ ~distance au sol en mètres
+        2. Euclidean distance (m equivalence)
     """
-    # 1) Projection de la station
+    # 1) Project station
     x_obs, y_obs = transformer.transform(lon_obs, lat_obs)
 
-    # 2) Projection des centres de maille (vectorisée)
+    # 2) Project grid centers (vectorized)
     x_mod, y_mod = transformer.transform(
         df[col_mod_lon].to_numpy(),   # lons
         df[col_mod_lat].to_numpy()    # lats
     )
 
-    # 3) Distance euclidienne en mètres
+    # 3) Euclidean distance in meters
     distances = np.hypot(x_mod - x_obs, y_mod - y_obs)
 
-    # 4) Meilleur indice
+    # 4) Best index
     idx_min = distances.argmin()
 
     lat_mod = df.iloc[idx_min][col_mod_lat]
@@ -74,8 +73,8 @@ def find_matching_point(
 
 def create_commun_point(df_obs: pd.DataFrame, df_mod: pd.DataFrame) -> pd.DataFrame:
     """
-    Associe à chaque point observé (NUM_POSTE_obs) le point modélisé (NUM_POSTE_mod)
-    spatialement le plus proche.
+    Matches each observed point (NUM_POSTE_obs) with the spatially closest 
+    modeled point (NUM_POSTE_mod).
     """
     # Sélection et renommage clair des colonnes
     df_obs = df_obs[['NUM_POSTE', 'lat', 'lon']].rename(columns={
@@ -99,7 +98,7 @@ def create_commun_point(df_obs: pd.DataFrame, df_mod: pd.DataFrame) -> pd.DataFr
             (df_mod["lat_mod"] == lat_mod) & (df_mod["lon_mod"] == lon_mod)
         ]
         if match_row.empty:
-            raise ValueError(f"Aucune correspondance trouvée pour ({lat_obs}, {lon_obs})")
+            raise ValueError(f"No match found for ({lat_obs}, {lon_obs})")
 
         num_poste_mod = match_row["NUM_POSTE_mod"].values[0]
 
@@ -116,7 +115,7 @@ def create_commun_point(df_obs: pd.DataFrame, df_mod: pd.DataFrame) -> pd.DataFr
     return df_match
 
 
-# Retourne les années disponibles d'un répertoire
+# List available years from directory
 def get_available_years(path: Path) -> set:
     return {
         int(p.stem) for p in path.glob("*.zarr") if p.stem.isdigit()
@@ -143,7 +142,7 @@ def process_one_point(
     try:
         row = df_match[df_match["NUM_POSTE_obs"] == num_poste_obs]
         if row.empty:
-            raise ValueError(f"Aucune correspondance pour NUM_POSTE_obs = {num_poste_obs}")
+            raise ValueError(f"No match for NUM_POSTE_obs = {num_poste_obs}")
 
         num_poste_mod = row["NUM_POSTE_mod"].item()
         dfs = []
@@ -186,7 +185,7 @@ def process_one_point(
                 df_obs["pr_mod"] = pr_mod_agg
                 df = df_obs
             else:
-                # Fusion simple sur les timestamps pour l’échelle horaire
+                # Simple merge on timestamps for hourly scale
                 df_mod = df_mod_full
                 df = pd.merge(df_obs, df_mod, on="time", how="left")
 
@@ -207,14 +206,14 @@ def process_one_point(
             else:
                 filename = f"NUM_POSTE_{num_poste_obs}_R2_{r2:.3f}.parquet"
 
-        # Sauvegarde
+        # Save
         output_file = output_path / filename
         df_final.to_parquet(output_file, index=False)
 
         return True
 
     except Exception as e:
-        logger.error(f"Erreur pour NUM_POSTE_obs = {num_poste_obs}: {e}")
+        logger.error(f"Error for NUM_POSTE_obs = {num_poste_obs}: {e}")
         return f"{num_poste_obs} FAILED"
 
     
@@ -240,7 +239,7 @@ def pipeline_obs_vs_mod(config_obs, config_mod):
         years_mod = get_available_years(PATH_ZARR_MOD/"horaire")
         ANNEES = sorted(years_obs & years_mod)
 
-        logger.info(f"Traitement {echelle} de {min(ANNEES)} à {max(ANNEES)}")
+        logger.info(f"Processing {echelle} from {min(ANNEES)} to {max(ANNEES)}")
 
         # output_path_echelle = OUTPUT_PATH / echelle
         # output_path_echelle.mkdir(parents=True, exist_ok=True)
@@ -250,12 +249,12 @@ def pipeline_obs_vs_mod(config_obs, config_mod):
         df_obs = pd.read_csv(f"{PATH_METADATA_OBS}/postes_{echelle}.csv")  # contient lat, lon observés
         df_mod = pd.read_csv(f"{PATH_METADATA_MOD}/postes_{echelle}.csv")  # contient lat, lon observés
 
-        # Formation du fichiers de metadonnées de correspondance obs - mod
+        # Create coordinate matching metadata file
         df_match = create_commun_point(df_obs, df_mod)
         PATH_METADATA_OBS_VS_MOD.mkdir(parents=True, exist_ok=True)
         df_match.to_csv(PATH_METADATA_OBS_VS_MOD / f"obs_vs_mod_{echelle}.csv", index=False)
         print(df_match.shape[0])
-        logger.info(f"Fichier de correspondances coordonnées observées - modélisées enregistré sous {PATH_METADATA_OBS_VS_MOD}/obs_vs_mod_{echelle}.csv")
+        logger.info(f"Coordinate mapping file saved to {PATH_METADATA_OBS_VS_MOD}/obs_vs_mod_{echelle}.csv")
 
         # # Liste des stations
         # rows = list(df_match["NUM_POSTE_obs"].values)

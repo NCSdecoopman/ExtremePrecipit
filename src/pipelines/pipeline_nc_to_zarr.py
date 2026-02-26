@@ -20,7 +20,7 @@ from src.utils.logger import get_logger
 
 
 # ---------------------------------------------------------------------------
-# 1) Liste des fichiers .nc
+# 1) List .nc files
 
 def list_nc_files(directory: str) -> list:
     nc_files = [
@@ -28,7 +28,7 @@ def list_nc_files(directory: str) -> list:
         for root, _, files in os.walk(directory)
         for file in files if file.endswith('.nc')
     ]
-    logger.info(f"{len(nc_files)} fichiers .nc trouvés dans {directory}")
+    logger.info(f"{len(nc_files)} .nc files found in {directory}")
     nc_files = sorted(nc_files)
     return nc_files
 
@@ -40,32 +40,32 @@ def extract_year_from_nc(filename: str) -> Optional[str]:
     match = re.search(r'_(\d{4})\d{8}-\d{12}\.nc$', basename)
     if match:
         year = match.group(1)
-        logger.debug(f"Année {year} extraite depuis {basename}")
+        logger.debug(f"Year {year} extracted from {basename}")
         return year
     else:
-        logger.warning(f"Aucune année trouvée dans le fichier : {basename}")
+        logger.warning(f"No year found in file: {basename}")
         return None
     
 # ---------------------------------------------------------------------------
 def generate_metadata(nc_files: list, output_path: str, geom_france, alti_path: str) -> None:
-    logger.info("Début de la génération du fichier de métadonnées...")
+    logger.info("Generating metadata file...")
 
     all_coords = []
 
-    for nc_file in tqdm(nc_files, desc="Lecture des fichiers .nc"):
+    for nc_file in tqdm(nc_files, desc="Reading .nc files"):
         ds = xr.open_dataset(nc_file)
 
-        # --- Récupération des coordonnées
+        # --- Coordinates retrieval
         lat = ds["lat"]
         lon = ds["lon"]
 
-        # Cas 2D
+        # 2D case
         if lat.ndim == 2 and lon.ndim == 2:
             lat2d, lon2d = lat.values, lon.values
         elif lat.ndim == 1 and lon.ndim == 1:
             lat2d, lon2d = np.meshgrid(lat.values, lon.values, indexing="ij")
         else:
-            raise ValueError("lat/lon ne sont pas dans un format reconnu")
+            raise ValueError("lat/lon are not in a recognized format")
 
         ny, nx = lat2d.shape
         lat_flat = lat2d.ravel()
@@ -85,7 +85,7 @@ def generate_metadata(nc_files: list, output_path: str, geom_france, alti_path: 
 
         ds.close()
 
-    # --- DataFrame final
+    # --- Final DataFrame
     df = pd.DataFrame(all_coords).drop_duplicates(subset=["lat", "lon"]).reset_index(drop=True)
     df["NUM_POSTE"] = np.arange(1, len(df) + 1)
     df = df.astype({
@@ -94,30 +94,30 @@ def generate_metadata(nc_files: list, output_path: str, geom_france, alti_path: 
     })
 
 
-    # Ajout de l'altitude
+    # Altitude addition
     alti_file = xr.open_dataset(alti_path)
     lat_orog = alti_file["lat"].values
     lon_orog = alti_file["lon"].values
     orog = alti_file["orog"].values  # altitudes en mètres
 
-    # Vérification : on suppose que lat/lon/orog sont tous en 2D
+    # Verification: assume lat/lon/orog are all 2D
     assert lat_orog.ndim == 2 and lon_orog.ndim == 2 and orog.ndim == 2
 
-    # Construction d’un DataFrame pour matcher
+    # Matching DataFrame construction
     df_orog = pd.DataFrame({
         "lat": lat_orog.ravel().astype(np.float32),
         "lon": lon_orog.ravel().astype(np.float32),
         "altitude": np.rint(orog.ravel()).astype(np.int16)
     })
 
-    # Fusion sur les coordonnées exactes
+    # Merge on exact coordinates
     df = df.merge(df_orog, on=["lat", "lon"], how="left")
 
     os.makedirs(output_path, exist_ok=True)
     df.to_csv(f"{output_path}/postes_horaire.csv", index=False)
     df.to_csv(f"{output_path}/postes_quotidien.csv", index=False)
 
-    logger.info(f"Métadonnées filtrées et enregistrées sous {output_path}")
+    logger.info(f"Metadata filtered and saved to {output_path}")
     
     return df
 
@@ -129,9 +129,9 @@ def generate_metadata(nc_files: list, output_path: str, geom_france, alti_path: 
 def build_xarray_chunks(ds: xr.Dataset, chunk_config: Dict[str, Union[int, float]]) -> Dict[str, int]:
     computed_chunks = {}
     for dim in ds.dims:
-        config_key = dim  # par défaut
+        config_key = dim  # default
 
-        # Gestion spécifique de NUM_POSTE
+        # Specific NUM_POSTE handling
         if dim == "NUM_POSTE" and "NUM_POSTE" in chunk_config:
             config_key = "NUM_POSTE"
 
@@ -148,7 +148,7 @@ def build_xarray_chunks(ds: xr.Dataset, chunk_config: Dict[str, Union[int, float
 
 
 # ---------------------------------------------------------------------------
-# 4) Filtrage spatial France 
+# 4) France spatial filtering 
 
 def load_geom_france(ne_directory: str):
     shapefile_path = os.path.join(ne_directory, "ne_10m_admin_0_countries.shp")
@@ -159,31 +159,31 @@ def load_geom_france(ne_directory: str):
 
 def filter_ds_to_france(ds: xr.Dataset, geom_france) -> xr.Dataset:
     """
-    Filtre un dataset pour ne conserver que les points strictement à l'intérieur de la France
-    et remplace (y, x) par une dimension unique 'points'.
+    Filters a dataset to strictly keep points inside France
+    and replaces (y, x) with a unique dimension 'points'.
     """
     if not isinstance(geom_france, (Polygon, MultiPolygon)):
-        raise TypeError("La géométrie France n’est pas un objet Polygon/MultiPolygon Shapely.")
+        raise TypeError("France geometry is not a Shapely Polygon/MultiPolygon.")
     
-    # Gestion de la grille lat/lon
+    # lat/lon grid handling
     lat = ds["lat"]
     lon = ds["lon"]
 
-    # Cas 2D
+    # 2D case
     if lat.ndim == 2 and lon.ndim == 2:
         lat2d, lon2d = lat.values, lon.values
-    # Cas 1D (lat(y), lon(x))
+    # 1D case (lat(y), lon(x))
     elif lat.ndim == 1 and lon.ndim == 1:
         lat2d, lon2d = np.meshgrid(lat.values, lon.values, indexing="ij")
     else:
-        raise ValueError("lat/lon ne sont pas dans un format reconnu")
+        raise ValueError("lat/lon are not in a recognized format")
 
     ny, nx = lat2d.shape
     lat_flat = lat2d.ravel()
     lon_flat = lon2d.ravel()
 
     inside_mask_flat = vectorized.contains(geom_france, lon_flat, lat_flat)
-    logger.info(f"{inside_mask_flat.sum()} points conservés à l’intérieur de la France sur {len(lat_flat)}.")
+    logger.info(f"{inside_mask_flat.sum()} points kept inside France out of {len(lat_flat)}.")
 
     inside_indices = np.where(inside_mask_flat)[0]
 
@@ -206,7 +206,7 @@ def filter_ds_to_france(ds: xr.Dataset, geom_france) -> xr.Dataset:
 
 
 # ---------------------------------------------------------------------------
-# 5) Ouverture NetCDF + filtrage spatial
+# 5) NetCDF opening + spatial filtering
 
 def load_nc_file(
     nc_path: str,
@@ -214,36 +214,36 @@ def load_nc_file(
     chunk_config: Dict[str, Union[int, float]],
     geom_france
 ) -> xr.Dataset:
-    logger.info(f"--- Traitement du fichier NetCDF : {nc_path} ---")
+    logger.info(f"--- Processing NetCDF file: {nc_path} ---")
     vars_to_keep = list(variables_config.keys())
 
-    # Ouverture du dataset avec uniquement les variables demandées
+    # Open dataset with requested variables only
     ds = xr.open_dataset(nc_path, chunks="auto")[vars_to_keep]
 
-    # Arrondir les timestamps au :30:00 le plus proche
+    # Round timestamps to nearest :30:00
     if "time" in ds.coords:
         original_time = ds["time"].values
 
-        # Convertir en pandas datetime index pour pouvoir arrondir facilement
+        # Convert to pandas datetime index for easier rounding
         rounded_time = xr.DataArray(
             pd.to_datetime(original_time).round("30min"),
             dims="time"
         )
 
         ds = ds.assign_coords(time=rounded_time)
-        logger.info("Les timestamps ont été arrondis à la demi-heure la plus proche (:00 ou :30).")
+        logger.info("Timestamps rounded to nearest half-hour (:00 or :30).")
 
-    logger.info(f"Dataset ouvert avec chunks natifs. Dimensions : {dict(ds.sizes)}")
+    logger.info(f"Dataset opened with native chunks. Dimensions: {dict(ds.sizes)}")
 
-    # Filtrage spatial
+    # Spatial filtering
     ds = filter_ds_to_france(ds, geom_france)
 
     # Chunking
     computed_chunks = build_xarray_chunks(ds, chunk_config)
     ds = ds.chunk(computed_chunks)
-    logger.info(f"Dataset rechunké")
+    logger.info(f"Dataset rechunked")
 
-    # On traite uniquement les data_vars (évite de toucher aux coordonnées !)
+    # Processing only data_vars
     for var in ds.data_vars:
         var_conf = variables_config.get(var, {})
         desired_dtype = var_conf.get("dtype", None)
@@ -252,24 +252,24 @@ def load_nc_file(
         fill_value = var_conf.get("fill_value", None)
 
         if desired_dtype is not None:
-            logger.info(f"Conversion de {var} vers {desired_dtype}")
+            logger.info(f"Converting {var} to {desired_dtype}")
             if unit_conversion != 1.0:
-                logger.info(f"Conversion d’unité de {var} avec un facteur {unit_conversion}")
+                logger.info(f"Unit conversion for {var} with factor {unit_conversion}")
                 ds[var] = ds[var] * unit_conversion
 
             if scale_factor is not None:
-                logger.info(f"Application d’un facteur d’encodage {scale_factor} pour {var}")
+                logger.info(f"Encoding factor {scale_factor} applied to {var}")
                 ds[var] = ds[var] * scale_factor
 
             if fill_value is not None:
-                logger.info(f"Remplacement des NaN de {var} par la sentinelle {fill_value}")
+                logger.info(f"Replacing NaNs in {var} with sentinel {fill_value}")
                 ds[var] = ds[var].fillna(fill_value)
 
             ds[var] = ds[var].round().astype(desired_dtype)
         else:
-            logger.info(f"Aucun dtype spécifié pour {var}")
+            logger.info(f"No dtype specified for {var}")
 
-    logger.info(f"Chargement finalisé pour {nc_path}")
+    logger.info(f"Loading finalized for {nc_path}")
     return ds
 
 
@@ -281,24 +281,24 @@ def add_num_poste_to_dataset(ds: xr.Dataset, postes_df: pd.DataFrame) -> xr.Data
     lon = ds["lon"].values.astype(np.float32)
     coords_df = pd.DataFrame({"lat": lat, "lon": lon})
 
-    # Merge pour obtenir NUM_POSTE
+    # Merge to get NUM_POSTE
     merged = coords_df.merge(postes_df[["lat", "lon", "NUM_POSTE"]], on=["lat", "lon"], how="left")
 
     if merged["NUM_POSTE"].isnull().any():
-        raise ValueError("Certains points n’ont pas de correspondance dans postes_df")
+        raise ValueError("Some points have no match in postes_df")
 
     # Récupération de NUM_POSTE uniquement
     num_poste_values = merged["NUM_POSTE"].values.astype(np.int32)
 
-    # Assignation de la coordonnée
+    # Assign coordinate
     ds = ds.assign_coords(NUM_POSTE=("points", num_poste_values))
 
-    # Supprime toutes les autres coordonnées inutiles
+    # Remove all other unnecessary coordinates
     ds = ds.drop_vars(["lat", "lon", "points"], errors="ignore")
 
-    # Change la dimension principale
-    ds = ds.swap_dims({"points": "NUM_POSTE"})  # remplace 'points' par 'NUM_POSTE'
-    ds = ds.sortby("NUM_POSTE")  # optionnel mais propre
+    # Change main dimension
+    ds = ds.swap_dims({"points": "NUM_POSTE"})  # replace 'points' with 'NUM_POSTE'
+    ds = ds.sortby("NUM_POSTE")  # optional but neat
 
     return ds
 
@@ -310,14 +310,14 @@ def save_to_zarr(
     compressor_config: Dict
 ) -> None:
     
-    # --- Compression Zarr avec Blosc
+    # --- Zarr compression with Blosc
     codec = numcodecs.Blosc(
         cname=compressor_config["blosc"]["cname"],
         clevel=compressor_config["blosc"]["clevel"],
         shuffle=compressor_config["blosc"]["shuffle"]
     )
 
-    # --- Construction du dictionnaire d'encodage
+    # --- Encoding dictionary construction
     encoding = {}
 
     def get_chunk_size(dim: str) -> int:
@@ -335,11 +335,11 @@ def save_to_zarr(
 
     logger.info("Encodage appliqué")
 
-    # --- Rechunk explicite du Dataset avant export
+    # --- Explicit Dataset rechunk before export
     all_chunks = {}
     for var, enc in encoding.items():
         for dim, size in zip(ds[var].dims, enc["chunks"]):
-            all_chunks[dim] = size  # écrasement accepté
+            all_chunks[dim] = size  # overwrite accepted
 
     ds = ds.chunk(all_chunks)
 
@@ -350,7 +350,7 @@ def save_to_zarr(
     logger.info(f"Fichier Zarr sauvegardé sous {output_path}")
 
 
-# Fonction de convertion pour générer des données horaires
+# Conversion function to generate hourly data
 def convert_to_daily_precip(
     ds: xr.Dataset,
     var_name: str = "pr",
@@ -359,21 +359,21 @@ def convert_to_daily_precip(
     fill_value: int = -9999
 ) -> xr.Dataset:
     """
-    Convertit les précipitations horaires (encodées) en précipitations quotidiennes
-    (somme de 6h à 6h), avec horodatage à 00h30 du jour J+1.
+    Converts hourly (encoded) precipitation to daily precipitation
+    (sum from 6h to 6h), with timestamp at 00h30 of day J+1.
     """
     pr = ds[var_name].astype("float32")
 
-    # --- Annule le scale
-    pr = pr / scale_factor # revient à mm/h (float32)
+    # --- Cancel scale
+    pr = pr / scale_factor # returns to mm/h (float32)
 
-    # Agrégation par jour hydrologique avec resample
+    # Aggregation by hydrological day with resample
     pr_daily = pr.resample(time="1D", offset="6h").sum()
 
-    # Ajustement du timestamp à 00:30 de J+1
+    # Timestamp adjustment to 00:30 of J+1
     pr_daily["time"] = pr_daily["time"] - np.timedelta64(6, "h") + np.timedelta64(30, "m")
 
-    # Réapplication du scale
+    # Re-scale
     pr_daily = pr_daily * scale_factor
     pr_daily = pr_daily.round().fillna(fill_value).astype(final_dtype)
 
@@ -407,7 +407,7 @@ def pipeline_nc_to_zarr(config):
     for nc_file in nc_files:
         year = extract_year_from_nc(nc_file)
         if year is None:
-            logger.warning(f"Fichier ignoré (année manquante) : {nc_file}")
+            logger.warning(f"File skipped (missing year): {nc_file}")
             continue
 
         overwrite = config["zarr"].get("overwrite", False)
@@ -420,18 +420,18 @@ def pipeline_nc_to_zarr(config):
         horaire_exists = os.path.exists(output_path_horaire)
         # quotidien_exists = os.path.exists(output_path_quotidien)
 
-        # Ne pas charger inutilement
+        # Don't load unnecessarily
         if horaire_exists and not overwrite: # and quotidien_exists
-            logger.info(f"[{year}] HORAIRE déjà existant, skip sauvegarde.")
-            # Charger depuis Zarr pour permettre agrégation
+            logger.info(f"[{year}] HOURLY already exists, skipping save.")
+            # Load from Zarr to allow aggregation
             ds = xr.open_zarr(output_path_horaire)
 
         else:
-            # Chargement initial
+            # Initial loading
             ds = load_nc_file(nc_file, variables_config, chunk_config, geom_france)
             ds = add_num_poste_to_dataset(ds, postes_df)
             save_to_zarr(ds, output_path_horaire, chunk_config, compressor_config)
-            logger.info(f"[{year}] HORAIRE sauvegardé")
+            logger.info(f"[{year}] HOURLY saved")
 
 
         # # Quotidien

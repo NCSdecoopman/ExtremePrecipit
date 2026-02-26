@@ -22,7 +22,7 @@ def import_data_dispo(
     scale
 ):
     input_dir = Path(config_obs["statistics"]["path"]["outputdir"]) / echelle
-    # Paramètre de chargement des données
+    # Data loading parameters
     if reduce_activate:
         _, min_year, max_year, _ = years_to_load("reduce", season, input_dir)
     else:
@@ -31,31 +31,31 @@ def import_data_dispo(
 
     observed_load = load_data(input_dir, season, echelle, cols, min_year, max_year)
 
-    # Limite sur le ratio de NaNs
+    # NaN ratio limit
     nan_limit = 0.10
 
-    # Filtrage et agrégation
+    # Filtering and aggregation
     observed = (
         observed_load.filter(pl.col("nan_ratio") <= nan_limit)
         .group_by("NUM_POSTE")
         .agg(pl.col("year").n_unique().alias("n_years"))
     )
     
-    # Charger les metadonnées avec Polars
+    # Load metadata with Polars
     observed_meta = pl.read_csv(f"data/metadonnees/observed/postes_{echelle}.csv")
-    # Harmoniser les types des colonnes lat/lon des deux côtés
+    # Harmonize lat/lon column types
     observed_meta = observed_meta.with_columns([
         pl.col("NUM_POSTE").cast(pl.Int32),
         pl.col("lat").cast(pl.Float32),
         pl.col("lon").cast(pl.Float32),
-        pl.col("altitude").cast(pl.Int32)  # altitude en entier
+        pl.col("altitude").cast(pl.Int32)  # altitude as integer
     ])
 
-    observed = observed.with_columns([  # forcer ici aussi
+    observed = observed.with_columns([  # force cast here too
         pl.col("NUM_POSTE").cast(pl.Int32)
     ])
 
-    # Join sur NUM_POSTE
+    # Join on NUM_POSTE
     observed = observed.join(observed_meta, on=["NUM_POSTE"], how="left")
     logger.info(f"n = {observed.shape[0]}")
      
@@ -79,7 +79,7 @@ def import_data_stat(
     input_dir_mod = Path(config_mod["statistics"]["path"]["outputdir"]) / "horaire"
     input_dir_obs = Path(config_obs["statistics"]["path"]["outputdir"]) / echelle
     for input_dir in [input_dir_mod, input_dir_obs]:
-        # Paramètre de chargement des données
+        # Data loading parameters
         if reduce_activate:
             _, min_year, max_year, len_serie = years_to_load("reduce", season, input_dir)
         else:
@@ -88,16 +88,16 @@ def import_data_stat(
 
         df = load_data(input_dir, season, echelle, cols, min_year, max_year)
 
-        # Selection des stations suivant le NaN max
+        # Station selection based on max NaN
         df = cleaning_data_observed(df, echelle, len_serie)
         
-        # Gestion des NaN
+        # NaN handling
         df = df.drop_nulls(subset=[mesure])
 
-        # Calcul de la statistics
+        # Statistic computation
         df = compute_statistic_per_point(df, col_calculate)
 
-        # Ajout de l'altitude et des lat lon
+        # Add altitude, lat, lon
         if "modelised" in str(input_dir):
             modelised = add_metadata(df, scale, type='modelised')
         elif "observed" in str(input_dir):
@@ -148,7 +148,7 @@ def import_data_gev(
             modelised = pl.read_parquet(path_dir)
             modelised = add_metadata(modelised, scale, type='modelised')
         elif "observed" in str(gev_dir):
-            # Vérifie d’abord que gev_dir (ou path_dir) existe
+            # Check if directory exists
             if os.path.exists(path_dir):
                 observed = pl.read_parquet(path_dir)
                 observed = add_metadata(observed, scale, type='observed')
@@ -182,32 +182,31 @@ def calculate_data_maps(
     echelle: str,
     reduce_activate: bool,
     titles: Sequence[str] | None = None,  # ex. ['SON', 'DJF', 'MAM', 'JJA']
-    show_signif: bool = False,  # filtre significatif sur obs
+    show_signif: bool = False,  # significant filter on obs
 
     saturation_col: int = 100,
     # Grid
     side_km: float = 2.5,
     diff: bool = False
 ) -> None:
-    """Trace cartes + une légende commune (SVG)
-    La plage de la légende est calculée sur **l'ensemble** des valeurs (modèle
-    et observations), que l'on choisisse ou non de les afficher.
+    """Plot maps + shared legend (SVG).
+    The legend range is calculated globally across all values (model and obs).
     """
 
-    # S’assurer que le répertoire existe (création si nécessaire)
+    # Ensure directory exists
     suffix_reduce = "_reduce" if reduce_activate else ""
     suffix_diff = "_diff" if diff else ""
     name_dir = f"outputs_nr10/maps/{data_type}_{col_calculate}/{echelle}{suffix_reduce}/compare_{len(titles)}/sat_{saturation_col}"
     dir_path = Path(name_dir)
 
-    # # Si le dossier existe, on le supprime entièrement
+    # # If directory exists, delete it
     # if dir_path.exists() and dir_path.is_dir():
     #     shutil.rmtree(dir_path)
         
     dir_path.mkdir(parents=True, exist_ok=True)
 
     # ------------------------------------------------------------------
-    # 1. Conversion des DataFrames Polars en GeoDataFrames
+    # 1. Convert Polars DataFrames to GeoDataFrames
     # ------------------------------------------------------------------
     model_gdfs: list[Optional[gpd.GeoDataFrame]] = []
     obs_gdfs: list[Optional[gpd.GeoDataFrame]] = []
@@ -215,13 +214,13 @@ def calculate_data_maps(
     for d in datasets:
         val_col = d.get("column")
 
-        # — Modèle ----------------------------------------------------------------
+        # — Model ----------------------------------------------------------------
         df_m = d.get("modelised")
         if df_m is None:
             model_gdfs.append(None)
         else:
             if not isinstance(df_m, pl.DataFrame):
-                raise TypeError("'modelised' doit être un pl.DataFrame.")
+                raise TypeError("'modelised' must be a pl.DataFrame.")
             gdf_m = gpd.GeoDataFrame(
                 df_m.to_pandas(),
                 geometry=gpd.points_from_xy(df_m["lon"].to_list(), df_m["lat"].to_list()),
@@ -235,7 +234,7 @@ def calculate_data_maps(
             obs_gdfs.append(None)
         else:
             if not isinstance(df_o, pl.DataFrame):
-                raise TypeError("'observed_show' doit être un pl.DataFrame.")
+                raise TypeError("'observed_show' must be a pl.DataFrame.")
             obs_gdfs.append(
                 gpd.GeoDataFrame(
                     df_o.to_pandas(),
@@ -248,21 +247,21 @@ def calculate_data_maps(
 
 
 
-    # Titres par défaut -----------------------------------------------------------
+    # Default titles -----------------------------------------------------------
     if titles is None:
         titles = [str(i) for i in range(1, len(model_gdfs) + 1)]
 
     # ------------------------------------------------------------------
-    # 2. Ajout de la grille carrée autour des points modélisés
+    # 2. Add square grid around model points
     # ------------------------------------------------------------------
-    half = side_km * 500  # mètres
+    half = side_km * 500  # meters
     for gdf in (g for g in model_gdfs if g is not None):
         gdf.loc[:, "geometry"] = gdf.geometry.apply(
             lambda p: box(p.x - half, p.y - half, p.x + half, p.y + half)
         )
 
     # ------------------------------------------------------------------
-    # 5. Ajout de la colonne _val_raw (copie intacte des valeurs)
+    # 3. Add _val_raw column (intact copy)
     # ------------------------------------------------------------------
     for gdf in (g for g in model_gdfs if g is not None):
         gdf.loc[:, "_val_raw"] = gdf[val_col]
@@ -270,42 +269,42 @@ def calculate_data_maps(
         gdf.loc[:, "_val_raw"] = gdf[val_col]
 
     # ------------------------------------------------------------------
-    # 6. Saturation des valeurs extrêmes :
-    #    – seuil individuel par tableau (percentile)
-    #    – saturation au‑delà du max de ces seuils
+    # 4. Extreme value saturation:
+    #    – individual threshold per table (percentile)
+    #    – saturation beyond global threshold
     # ------------------------------------------------------------------
     if col_calculate not in ["significant", "model"]:
         seuils = []
 
-        # 1) seuil (percentile) propre à chaque tableau -----------------
+        # 1) threshold (percentile) per table -----------------
         for gdf in (g for g in model_gdfs + obs_gdfs if g is not None):
             if val_col not in gdf.columns or gdf[val_col].empty:
                 continue
             seuil = np.percentile(
-                np.abs(gdf[val_col].dropna()),    # on ignore les NaN éventuels
-                saturation_col                    # ex. 99 pour le 99e percentile
+                np.abs(gdf[val_col].dropna()),    # ignore NaN
+                saturation_col                    # ex. 99 for 99th percentile
             )
             seuils.append(seuil)
 
-        # Rien à faire s’il n’y a pas de seuil calculé
+        # Nothing to do if no threshold
         if not seuils:
             return None
 
-        # 2) seuil global = max(seuils) ---------------------------------
+        # 2) global threshold = max(seuils) ---------------------------------
         seuil_global = max(seuils)
 
-        # 3) saturation dans chaque tableau -----------------------------
+        # 3) saturation in each table -----------------------------
         for gdf in (g for g in model_gdfs + obs_gdfs if g is not None):
             if val_col not in gdf.columns or gdf[val_col].empty:
                 continue
             gdf.loc[:, val_col] = np.where(
                 np.abs(gdf[val_col]) > seuil_global,
-                np.sign(gdf[val_col]) * seuil_global,  # on garde le signe
+                np.sign(gdf[val_col]) * seuil_global,  # keep sign
                 gdf[val_col]
             )
 
     # ------------------------------------------------------------------
-    # 7. Filtrage des données significatives si demandé
+    # 5. Filter significant data if requested
     # ------------------------------------------------------------------
     # if show_signif:
 
@@ -319,7 +318,7 @@ def calculate_data_maps(
 
 
     # ------------------------------------------------------------------
-    # 7. Si demandé : on conserve tout mais on met à 0 les non-significatifs
+    # 6. If requested: keep all but zero out non-significant ones
     # ------------------------------------------------------------------
     if show_signif:
         for idx, gdf in enumerate(model_gdfs):
@@ -349,11 +348,11 @@ def generate_maps(
     val_col: str=None,
 
     show_mod: bool = True,
-    show_obs: bool = True,  # n'influence que l'affichage
-    show_signif: bool = False,  # filtre significatif sur obs
+    show_obs: bool = True,  # only influences display
+    show_signif: bool = False,  # significant filter on obs
     saturation_size: int = 100,
 
-    # Points obs
+    # Obs points
     min_pt: int = 4,
     max_pt: int = 10,
     middle_pt: int = 9,
@@ -374,7 +373,7 @@ def generate_maps(
     legend = "mm"
 
     # ------------------------------------------------------------------
-    # 3. Masque France métropolitaine
+    # 1. France Metropolitan Mask
     # ------------------------------------------------------------------
     deps = (
         gpd.read_file("https://france-geojson.gregoiredavid.fr/repo/departements.geojson")
@@ -384,14 +383,7 @@ def generate_maps(
     deps_metro["geometry"] = deps_metro.geometry.simplify(500)
     mask = deps_metro.union_all()
 
-    # # *Les fonctions overlay/clip peuvent renvoyer des vues : on copie !*
-    # model_gdfs = [
-    #     gpd.overlay(g, deps_metro[["geometry"]], how="intersection").copy() if g is not None else None
-    #     for g in model_gdfs
-    # ]
-    # obs_gdfs = [g.clip(mask).copy() if g is not None else None for g in obs_gdfs]
-
-    # On CLIP seulement sur le contour national, sans overlay
+    # CLIP on national contour
     model_gdfs = [
         g.clip(mask).copy() if g is not None else None
         for g in model_gdfs
@@ -402,7 +394,7 @@ def generate_maps(
     ]
 
     # ------------------------------------------------------------------
-    # 4. Courbes de niveau
+    # 2. Contour lines
     # ------------------------------------------------------------------
     relief = (
         gpd.read_file(Path(relief_path).resolve())
@@ -411,7 +403,7 @@ def generate_maps(
     )
     relief["geometry"] = relief.geometry.simplify(500)
     # ------------------------------------------------------------------
-    # 7. Colormap & Normalisation communes
+    # 3. Colormap & Shared Normalization
     # ------------------------------------------------------------------
     if data_type=="gev" or diff:
 
@@ -423,25 +415,25 @@ def generate_maps(
             ])
             all_cat   = all_series.cat.categories
 
-            # 2) Colormap discrète
-            #    On prend autant de couleurs que de catégories
+            # 2) Discrete Colormap
+            #    Use as many colors as categories
 
             palette = [
-                "#D55E00",  # rouille
-                "#0072B2",  # bleu foncé
-                "#8B4513",  # brun
-                "#000000",  # noir
-                "#009E73",  # vert
-                "#F0E442"  # jaune
+                "#D55E00",  # rust
+                "#0072B2",  # dark blue
+                "#8B4513",  # brown
+                "#000000",  # black
+                "#009E73",  # green
+                "#F0E442"  # yellow
             ]
 
             cmap = ListedColormap(palette)
-            # 3) Normalisation pour que chaque entier soit centré sur sa couleur
+            # 3) Normalization so each integer is centered on its color
             norm = BoundaryNorm(np.arange(len(all_cat) + 1) - 0.5,
                                 ncolors=len(all_cat))
             
         elif val_col == "zTpa" and not diff:
-            # Palette extraite de la barre de couleur
+            # Palette extracted from color bar
             colors = [
                 "#f7fdf0",
                 "#ddeed3",
@@ -466,7 +458,7 @@ def generate_maps(
             max_abs = max(abs(min(all_mins)), abs(max(all_maxs)))
             vmin, vmax = 0, max_abs
 
-            # Normalisation discrète sur [vmin, vmax] avec n_colors classes
+            # Discrete normalization on [vmin, vmax] with n_colors classes
             levels = np.linspace(vmin, vmax, n_colors + 1)
             norm = BoundaryNorm(levels, ncolors=n_colors, clip=True)
 
@@ -481,12 +473,12 @@ def generate_maps(
 
             norm = TwoSlopeNorm(vmin=vmin, vcenter=0.0, vmax=vmax)
 
-            n_colors = 15 # Choix du nombre de couleurs
-            # Charger tous les triplets R G B (entiers 0‑255)
-            rgb = np.loadtxt("src/colors/prec_div.txt") / 255.0               # 256 × 3 → 0‑1
-            # Choisir n_colors indices également espacés
+            n_colors = 15 # Number of colors
+            # Loading all R G B triplets (0-255)
+            rgb = np.loadtxt("src/colors/prec_div.txt") / 255.0               # 256 × 3 -> 0-1
+            # Choose n_colors equally spaced indices
             idx = np.linspace(0, rgb.shape[0] - 1, n_colors, dtype=int)
-            # Les convertir en codes hexadécimaux pour from_list()
+            # Convert them to hex codes for from_list()
             hex_colors = [to_hex(rgb[i]) for i in idx]
             cmap = LinearSegmentedColormap.from_list("prec_div", hex_colors, N=n_colors)
 
@@ -504,36 +496,36 @@ def generate_maps(
         vmax = max(all_maxs)
 
         # custom_colorscale = [
-        #     (0.0, "#ffffff"),  # blanc
+        #     (0.0, "#ffffff"),  # white
         #     (0.1, "lightblue"),
         #     (0.3, "blue"),
         #     (0.45, "green"),
         #     (0.6, "yellow"),
         #     (0.7, "orange"),
-        #     (0.8, "red"),      # rouge
-        #     (1.0, "black"),    # noir
+        #     (0.8, "red"),      # red
+        #     (1.0, "black"),    # black
         # ]
-        # # Extraction des couleurs (en ignorant les positions, la répartition sera uniforme)
+        # # Extract colors (ignoring positions, distribution will be uniform)
         # colors = [c for _, c in custom_colorscale]
 
-        # # Création d'un colormap à partir de ces couleurs, avec N=15 couleurs distinctes
+        # # Create a colormap from these colors, with N=15 distinct colors
         # cmap = LinearSegmentedColormap.from_list("custom_discrete", colors, N=15)
 
-        n_colors = 15 # Choix du nombre de couleurs
-        # Charger tous les triplets R G B (entiers 0‑255)
-        rgb = np.loadtxt("src/colors/prec_seq.txt") / 255.0               # 256 × 3 → 0‑1
-        # Choisir n_colors indices également espacés
+        n_colors = 15 # Number of colors
+        # Loading all R G B triplets (0-255)
+        rgb = np.loadtxt("src/colors/prec_seq.txt") / 255.0               # 256 × 3 -> 0-1
+        # Choose n_colors equally spaced indices
         idx = np.linspace(0, rgb.shape[0] - 1, n_colors, dtype=int)
-        # Les convertir en codes hexadécimaux pour from_list()
+        # Convert them to hex codes for from_list()
         hex_colors = [to_hex(rgb[i]) for i in idx]
         cmap = LinearSegmentedColormap.from_list("prec_seq", hex_colors, N=n_colors)
 
-        # Norme pour répartir les 15 tranches entre 0 et vmax
-        levels = np.linspace(vmin, vmax, 16)  # 15 intervalles → 16 niveaux de bordure
+        # Norm to distribute 15 slices between 0 and vmax
+        levels = np.linspace(vmin, vmax, 16)  # 15 intervals -> 16 boundary levels
         norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
 
     # ------------------------------------------------------------------
-    # 8. Export des cartes
+    # 4. Map export
     # ------------------------------------------------------------------
     modes = {"rast": 0, "norast": 1}
 
@@ -549,24 +541,24 @@ def generate_maps(
         }
     elif val_col == "significant":
         TRANSFO = { 
-            True:               "Significatif",
-            False:           "Non Significatif"
+            True:               "Significant",
+            False:           "Not Significant"
         }
 
     for title, gdf_m, gdf_o in zip(titles, model_gdfs, obs_gdfs):
         for mode, z in modes.items():
             fig, ax = plt.subplots(figsize=figsize)
 
-            # 1. départements avec lignes fines
+            # 1. departments with thin lines
             #deps_metro.boundary.plot(ax=ax, edgecolor="#AAAAAA", linewidth=0.2, zorder=0)
 
-            # 2. contour national épaissi
-            #    mask est déjà défini plus haut comme l'union de tous les départements
+            # 2. thickened national contour
+            #    mask is already defined above as the union of all departments
             #gpd.GeoSeries(mask).boundary.plot(
             #     ax=ax,
-            #     edgecolor="black" ,    # couleur du contour national
-            #     linewidth=0.7,         # épaisseur plus élevée que 0.2
-            #     zorder=1               # juste au-dessus des départements
+            #     edgecolor="black" ,    # national contour color
+            #     linewidth=0.7,         # thickness higher than 0.2
+            #     zorder=1               # just above departments
             # )
 
             if mask.geom_type == "MultiPolygon":
@@ -574,16 +566,16 @@ def generate_maps(
             elif mask.geom_type == "Polygon":
                 polys = [mask]
             else:
-                # au cas où, on met tout dans une liste
+                # in case, put everything in a list
                 polys = [mask]
 
-            # extraire uniquement les contours extérieurs
+            # extract only exterior contours
             exteriors = [poly.exterior for poly in polys]
 
             coast = gpd.GeoSeries(exteriors, crs=deps_metro.crs)
 
-            # optionnel : supprimer les petits bouts de ligne (artefacts)
-            coast = coast[coast.length > 2_000]  # 2 km, à ajuster
+            # optional: remove small line segments (artifacts)
+            coast = coast[coast.length > 2_000]  # 2 km, adjust as needed
 
             coast.plot(
                 ax=ax,
@@ -593,39 +585,30 @@ def generate_maps(
             )
 
 
-            # — Modèle ------------------------------------------------------
+            # — Model ------------------------------------------------------
             if show_mod and gdf_m is not None:
                 gdf_m.plot(ax=ax, column=val_col, cmap=cmap, norm=norm, linewidth=0, zorder=1)
 
             # — Observations -----------------------------------------------
             if show_obs and gdf_o is not None and not gdf_o.empty:
 
-                # Pour "significant" et "model", on force une taille fixe moyenne
+                # Force fixed average size for "significant" and "model"
                 if val_col in ["significant", "model"]:
-                    # taille linéaire = moyenne de min_pt et max_pt
+                    # linear size = average of min_pt and max_pt
                     mean_pt = middle_pt / 2
-                    # markersize attend la surface (pt^2)
+                    # markersize expects surface (pt^2)
                     gdf_o.loc[:, "_size_pt2"] = mean_pt**2
                     
                 else:
-                    # abs_vals = gdf_o["_val_raw"].abs()
-                    # abs_max = abs_vals.max()
-                    # raw_size = ((abs_vals / abs_max) * (max_pt - min_pt) + min_pt) ** 2
-                    # seuil_size = np.percentile(abs_vals, saturation_size)
-                    # sizes = raw_size.copy()
-                    # sizes[abs_vals > seuil_size] = max_pt ** 2
-
-                    # gdf_o.loc[:, "_size_pt2"] = sizes
-
-                    # 1) valeurs ABSOLUES **après** saturation (valeurs de la palette)
+                    # 1) ABSOLUTE values **after** saturation (palette values)
                     abs_vals = gdf_o[val_col].abs()
 
-                    # 2) mise à l’échelle linéaire [min_pt ; max_pt] puis surface (pt²)
-                    abs_max  = abs_vals.max() or 1                              # évite /0
+                    # 2) linear scaling [min_pt ; max_pt] then surface (pt²)
+                    abs_max  = abs_vals.max() or 1                              # avoid /0
                     sizes = ((abs_vals / abs_max) * (max_pt - min_pt) + min_pt) ** 2
 
-                    # 3) éventuelle saturation supplémentaire sur la taille
-                    if saturation_size < 100:                                   # 100 → aucune
+                    # 3) optional additional size saturation
+                    if saturation_size < 100:                                   # 100 -> none
                         seuil_size = np.percentile(abs_vals, saturation_size)
                         sizes[abs_vals > seuil_size] = max_pt ** 2
 
@@ -650,7 +633,7 @@ def generate_maps(
                     linewidth=0.1,
                 )
 
-                # 1. points à 0 (en-dessous)
+                # 1. points at 0 (bottom)
                 if not gdf_zero.empty:
                     if obs_facecolor is None:
                         gdf_zero.plot(ax=ax, column=val_col, cmap=cmap, norm=norm,
@@ -659,7 +642,7 @@ def generate_maps(
                         gdf_zero.plot(ax=ax, facecolor=obs_facecolor,
                                     zorder=2, **kw_zero)
 
-                # 2. points non nuls (par-dessus)
+                # 2. non-zero points (top)
                 if not gdf_nonzero.empty:
                     if obs_facecolor is None:
                         gdf_nonzero.plot(ax=ax, column=val_col, cmap=cmap, norm=norm,
@@ -689,7 +672,7 @@ def generate_maps(
                         shrink = 0.6,
                         aspect = 20
                     )
-                    # labels dans l’ordre de all_cat
+                    # labels in all_cat order
                     display_labels = [TRANSFO[code] for code in all_cat]
                     cb.ax.set_yticklabels(display_labels)
                 else:
@@ -701,7 +684,7 @@ def generate_maps(
                     )
                     if mesure is not None:
                         cb.ax.set_ylabel(f"{legend}", rotation=90, fontsize=10)
-                    # Forcer un chiffre après la virgule
+                    # Force integer formatting
                     cb.ax.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
 
 
@@ -719,7 +702,7 @@ def generate_maps(
             logger.info(subdir / f"{name_file}.svg")
 
     # ------------------------------------------------------------------
-    # 9. Légende seule ---------------------------------------------------
+    # 5. Legend only ---------------------------------------------------
     # ------------------------------------------------------------------
     if diff:
         mpl.rcParams.update({"font.size": 30})
@@ -742,17 +725,17 @@ def generate_maps(
             orientation="vertical"
         )
 
-        # labels dans l’ordre de all_cat
+        # labels in all_cat order
         display_labels = [TRANSFO[code] for code in all_cat]
         cb2.ax.set_yticklabels(display_labels)
     else:
-        # cas continu : on laisse matplotlib trouver lui‑même les ticks
+        # continuous case: let matplotib find ticks automatically
         cb2 = fig2.colorbar(sm2, cax=ax2, spacing = "proportional")
         if diff:
             cb2.ax.set_ylabel(f"{legend}", rotation=90, fontsize=30)
         else:
             cb2.ax.set_ylabel(f"{legend}", rotation=90, fontsize=22)
-        # Forcer un chiffre après la virgule
+        # Force integer formatting
         cb2.ax.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
 
     suffix_signif = "_signif" if show_signif else ""
@@ -763,7 +746,7 @@ def generate_maps(
     fig2.savefig(dir_path / f"{name_legend}.pdf", format="pdf", bbox_inches="tight", pad_inches=0)
     plt.close(fig2)
 
-    # --- 9bis. Légende horizontale ---------------------------------------
+    # --- 5bis. Horizontal legend ---------------------------------------
     mpl.rcParams.update({"font.size": 22})
     figh = plt.figure(figsize=(figsize[0]*1.4, 1.2))
     axh = figh.add_axes([0.08, 0.45, 0.84, 0.35])  # [left, bottom, width, height]
@@ -795,7 +778,7 @@ def generate_maps(
         #     cbh.ax.set_xlabel(f"{legend}", labelpad=6, fontsize=20)
         cbh.ax.xaxis.set_major_formatter(FormatStrFormatter('%.0f'))
 
-    # style propre
+    # clean style
     cbh.outline.set_linewidth(0.8)
     cbh.ax.tick_params(axis="x", labelsize=12, length=4, width=0.8, direction="out")
 
@@ -877,8 +860,8 @@ def generate_scatter(
             if show_signif:
                 # mod = mod.filter(pl.col("significant") == True)
                 obs = obs.filter(pl.col("significant") == True)
-                # toujours se baser sur les stations
-                # et calculer avec AROME correspondant même si non significatif
+                # always base on stations
+                # and calculate with corresponding AROME even if not significant
 
             obs_vs_mod = match_and_compare(obs, mod, col, df_obs_vs_mod)
 
@@ -899,10 +882,10 @@ def generate_scatter(
             datasets_diff.append(res)
 
             if obs_vs_mod.is_empty():
-                logger.warning(f"Aucune donnée après filtrage pour {echelle} {season} - {col_calculate} - signif {show_signif}")
+                logger.warning(f"No data after filtering for {echelle} {season} - {col_calculate} - signif {show_signif}")
                 continue
 
-            # Légende unités
+            # Legend units
             if col_calculate == "numday":
                 legend = "days"
             elif col_calculate == "mean":
@@ -924,7 +907,7 @@ def generate_scatter(
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.scatter(
                 x, y,
-                label="Données",
+                label="Data",
                 alpha=0.5,
                 s=20,
                 facecolor="black",
@@ -966,7 +949,7 @@ def generate_scatter(
             pd.DataFrame(metrics).to_csv(dir_path / f"metrics{suffix}.csv", index=False)
             logger.info(f"{dir_path}/metrics{suffix}.csv")
         else:
-            logger.warning(f"Aucun résultat significatif, fichier metrics{suffix}.csv non créé")
+            logger.warning(f"No significant results, metrics{suffix}.csv not created")
 
     return datasets_diff
 
@@ -1033,12 +1016,12 @@ def main(args):
                 )
                 
             if col_calculate in ["z_T_p", "model"]:
-                SIGNIFICANT_SHOW = [True] # On choisi d'afficher ou non les points significatifs 
+                SIGNIFICANT_SHOW = [True] # We choose whether or not to display significant points
             else:
                 SIGNIFICANT_SHOW = [False]
 
-            logger.info(f"Echelle {e} - Saison {s} données générées")
-            datasets.append(res)    # On range le résultat dans la bonne liste
+            logger.info(f"Scale {e} - Season {s} data generated")
+            datasets.append(res)    # Store the result in the correct list
      
         for signif in SIGNIFICANT_SHOW:
             dir_path, val_col, titles, model_gdfs, obs_gdfs = calculate_data_maps(
@@ -1048,7 +1031,7 @@ def main(args):
                 col_calculate=col_calculate,
                 reduce_activate=reduce_activate,
                 show_signif=signif,
-                titles=[s.upper() for s in season],  # titres des 4 sous-cartes
+                titles=[s.upper() for s in season],  # titles of the 4 sub-maps
                 saturation_col=sat
             )
 
@@ -1089,7 +1072,7 @@ def main(args):
                     col_calculate=col_calculate,
                     reduce_activate=reduce_activate,
                     show_signif=signif,
-                    titles=[s.upper() for s in season],  # titres des 4 sous-cartes
+                    titles=[s.upper() for s in season],  # titles of the 4 sub-maps
                     saturation_col=sat,
                     diff=True
                 )
@@ -1118,7 +1101,7 @@ def str2bool(v):
         return False
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Pipeline de génération des représentation")
+    parser = argparse.ArgumentParser(description="Map generation pipeline")
     parser.add_argument("--data_type", choices=["dispo", "stats", "gev"])
     parser.add_argument("--col_calculate", choices=["n_years", "numday", "mean", "mean-max", "z_T_p", "zTpa", "significant", "model"], default=None)
     parser.add_argument("--echelle", choices=["horaire", "quotidien", "horaire_reduce"], nargs='+', default=["horaire"])

@@ -9,7 +9,7 @@ import polars as pl
 from scipy.stats import chi2
 
 
-# Liste des modèles disponibles et leurs paramètres
+# Available models and their parameters
 MODEL_LIST = {
     "s_gev": ["mu0", "sigma0", "xi"],
     "ns_gev_m1": ["mu0", "mu1", "sigma0", "xi"],
@@ -24,8 +24,8 @@ NON_STATIONARY = [m for m in MODEL_LIST if m != "s_gev"]
 
 def get_model_outputs(path_dir: Path) -> dict[str, pl.DataFrame]:
     """
-    Charge les outputs parquet GEV pour chaque modèle.
-    Ne garde que les lignes ayant un log_likelihood non nul (fit réussi).
+    Loads GEV parquet outputs for each model.
+    Only keeps rows with a non-zero log_likelihood (successful fit).
     """
     outputs = {}
     for model, cols in MODEL_LIST.items():
@@ -34,27 +34,27 @@ def get_model_outputs(path_dir: Path) -> dict[str, pl.DataFrame]:
             df = pl.read_parquet(file).select(["NUM_POSTE"] + cols + ["log_likelihood"]).with_columns(
                 pl.lit(model).alias("model")
             )
-            # Filtrer ici : on ne garde que les lignes ayant un log_likelihood non null
+            # Filter: only keep rows with a valid log_likelihood
             df = df.filter(~pl.col("log_likelihood").is_null())
             if df.height > 0:
                 outputs[model] = df
             else:
-                logger.warning(f"Aucun fit valide pour le modèle: {model} ({file})")
+                logger.warning(f"No valid fit for model: {model} ({file})")
         else:
-            logger.warning(f"Modèle manquant: {model} ({file})")
+            logger.warning(f"Missing model: {model} ({file})")
     return outputs
 
 
-# ETAPE 1 : calculer les pval du likelihood ratio test des 6 modèles non stationnaires
+# STEP 1: Compute LRT p-values for the 6 non-stationary models
 def compute_lrt_pvals(outputs: dict[str, pl.DataFrame]) -> pl.DataFrame:
     """
-    Calcule la p-value du LRT pour chaque modèle non-stationnaire par rapport à s_gev.
-    Retourne un DataFrame avec colonnes: NUM_POSTE, model, pval.
+    Computes LRT p-value for each non-stationary model relative to s_gev.
+    Returns a DataFrame with columns: NUM_POSTE, model, pval.
     """
     if "s_gev" not in outputs:
-        raise ValueError("Le modèle stationnaire 's_gev' est requis.")
+        raise ValueError("Stationary model 's_gev' is required.")
 
-    # Log-likelihood du modèle stationnaire
+    # Stationary model log-likelihood
     s_log = outputs["s_gev"].select(["NUM_POSTE", "log_likelihood"])\
                         .rename({"log_likelihood": "ll_s"})
 
@@ -63,11 +63,11 @@ def compute_lrt_pvals(outputs: dict[str, pl.DataFrame]) -> pl.DataFrame:
         df = outputs.get(model)
         if df is None:
             continue
-        # nombre de degrés de liberté supplémentaires
+        # extra degrees of freedom
         k_diff = len(MODEL_LIST[model]) - len(MODEL_LIST["s_gev"])
-        # jointure avec log-likelihood stationnaire
+        # join with stationary log-likelihood
         joined = df.join(s_log, on="NUM_POSTE", how="inner")
-        # statistique LRT
+        # LRT statistic
         lrt_stat = 2 * (joined["log_likelihood"] - joined["ll_s"])
         # p-value
         pvals = chi2.sf(lrt_stat.to_numpy(), df=k_diff)
@@ -81,54 +81,50 @@ def compute_lrt_pvals(outputs: dict[str, pl.DataFrame]) -> pl.DataFrame:
     return pl.concat(results, how="vertical")
 
 
-# Pour chaque station, il regarde les p-values de tous les modèles non-stationnaires.
-# Règle 1 : Si au moins un des deux modèles complexes (ns_gev_m3, ns_gev_m3_break_year) a une p-value ≤ 0.10, il retient celui des deux qui a la plus petite p-value.
-# Règle 2 : Sinon, il retient le modèle (parmi tous) qui a la plus petite p-value.
-# Il retourne pour chaque station le nom du « meilleur » modèle selon cette logique.
+# Selection logic per station:
+# Rule 1: If at least one complex model (ns_gev_m3, ns_gev_m3_break_year) has p-value ≤ 0.10, the one with the smallest p-value is kept.
+# Rule 2: Otherwise, keep the model (among all 6) with the smallest p-value.
 
 COMPLEX_MODELS   = ["ns_gev_m3", "ns_gev_m3_break_year"]
 FALLBACK_MODELS  = [m for m in NON_STATIONARY if m not in COMPLEX_MODELS]
 
 def select_best_non_stationary(outputs: dict[str, pl.DataFrame], threshold: float = 0.10) -> pl.DataFrame:
     """
-    Pour chaque station (NUM_POSTE) choisit le « meilleur » modèle non-stationnaire :
-    1) Si au moins un des deux modèles complexes a p-value ≤ `threshold`,
-       on retient le modèle complexe ayant la plus petite p-value.
-    2) Sinon, on retient le modèle – parmi les six – ayant la plus petite p-value.
-    
-    Retourne un DataFrame Polars (colonnes : NUM_POSTE, model).
+    Chooses the "best" non-stationary model per station (NUM_POSTE):
+    1) If a complex model has p-value ≤ `threshold`, use the complex one with smallest p-value.
+    2) Otherwise, use the model (out of 6) with the smallest p-value.
     """
-    # 1. Calcul/assemblage des p-values → un seul DataFrame
+    # 1. Compute/assemble p-values
     pvals_df = compute_lrt_pvals(outputs)
 
     best_records = []
 
-    # 2. Parcours des stations
+    # 2. Iterate through stations
     for poste in tqdm(
         pvals_df["NUM_POSTE"].unique().to_list(),
-        desc="Sélection best model",
+        desc="Selecting best model",
         unit="poste"
     ):
         sub = pvals_df.filter(pl.col("NUM_POSTE") == poste)
         if sub.is_empty():
-            raise ValueError(f"Aucun résultat de LRT pour NUM_POSTE = {poste}")
+            raise ValueError(f"No LRT results for NUM_POSTE = {poste}")
 
-        # 2a. Modèles complexes significatifs pour ce poste
+        # 2a. Significant complex models for this station
         signif_complex = (
             sub
             .filter(
                 pl.col("model").is_in(COMPLEX_MODELS) &
                 (pl.col("pval") <= threshold)
             )
-            .sort("pval") # ordre croissant
+            .sort("pval") # ascending
         )
 
-        # 2b. Choix du meilleur modèle selon la règle 
+        # 2b. Best model choice according to rules
         best_row = (
-            signif_complex.head(1)                   # cas (1)
+            signif_complex.head(1)                   # case (1)
             if signif_complex.height > 0
-            else sub.sort("pval").head(1)            # cas (2)
-        ) # donne la plus petite p-value
+            else sub.sort("pval").head(1)            # case (2)
+        ) # gives the smallest p-value
 
         best_records.append(
             {
@@ -142,25 +138,25 @@ def select_best_non_stationary(outputs: dict[str, pl.DataFrame], threshold: floa
 
 def assemble_final_table(outputs: dict[str, pl.DataFrame], best: pl.DataFrame) -> pl.DataFrame:
     """
-    Pour chaque station et modèle sélectionné, récupère les paramètres associés.
-    Remplit les paramètres manquants par 0 pour standardiser les colonnes.
+    Retrieves parameters for each station and selected model.
+    Fills missing parameters with 0 to standardize columns.
     """
-    # Colonnes cibles (ordre commun à tous les modèles)
+    # Target columns (common order)
     target_cols = ["NUM_POSTE", "model", "mu0", "mu1", "sigma0", "sigma1", "xi", "log_likelihood"]
 
     records = []
-    # On itère sur les choix du meilleur modèle pour chaque station
+    # Iterate on best choices per station
     for row in best.iter_rows(named=True):
         poste = row["NUM_POSTE"]
         model = row["model"]
         df_model = outputs[model]
-        # Sélection de la ligne correspondante
+        # Matching row selection
         params = df_model.filter(pl.col("NUM_POSTE") == poste)
         if params.is_empty():
-            # Aucun fit pour ce poste avec ce modèle : on saute
+            # No fit for this station with this model
             continue
         else:
-            # On récupère les valeurs et complète les colonnes manquantes à 0
+            # Retrieve values and fill missing columns with 0
             p = params.row(0, named=True)
             rec = {
                 "NUM_POSTE": poste,
@@ -190,23 +186,22 @@ def main(config, args):
 
     for e in args.echelle:
         e = f"{e}{suffix_save}"
-        logger.info(f"--- Traitement échelle: {e.upper()} saison: {args.season}---")
+        logger.info(f"--- Processing scale: {e.upper()} season: {args.season} ---")
         path_dir = Path(gev_dir) / e / args.season
 
-        # 1. Charger les outputs bruts
+        # 1. Load raw outputs
         outputs = get_model_outputs(path_dir)
 
-        # 2. Sélection du meilleur modèle non-stationnaire
+        # 2. Select best non-stationary model
         best = select_best_non_stationary(outputs, threshold=args.threshold)
-        # `best` a 2 colonnes: NUM_POSTE, model
 
-        # 3. Assembler le tableau final avec tous les paramètres
+        # 3. Assemble final table with all parameters
         final_table = assemble_final_table(outputs, best)
 
-        # 4. Sauvegarde
+        # 4. Save
         out_path = path_dir / "gev_param_best_model.parquet"
         final_table.write_parquet(out_path)
-        logger.info(f"Tableau final enregistré: {out_path}")
+        logger.info(f"Final table saved: {out_path}")
         logger.info(final_table)
 
 
@@ -217,11 +212,11 @@ def str2bool(v):
         return False
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Pipeline de sélection du meilleur modèle GEV (LRT ou AIC)")
+    parser = argparse.ArgumentParser(description="GEV best model selection pipeline (LRT or AIC)")
     parser.add_argument("--config", type=str, default="config/observed_settings.yaml")
     parser.add_argument("--echelle", choices=["horaire", "quotidien", "quotidien_reduce"], nargs='+', default=["quotidien"])
     parser.add_argument("--season", type=str, default="son")
-    parser.add_argument("--threshold", type=float, default=0.10, help="Seuil p-value pour LRT")
+    parser.add_argument("--threshold", type=float, default=0.10, help="LRT p-value threshold")
     parser.add_argument("--reduce_activate", type=str2bool, default=False)
     args = parser.parse_args()
 

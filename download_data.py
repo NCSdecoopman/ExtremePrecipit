@@ -5,7 +5,7 @@ import traceback
 cache_path = os.path.expanduser("~/.cache/huggingface/hub")
 
 try:
-    print("Téléchargement des métadonnées...")
+    print("Downloading metadata...")
     snapshot_download(
         repo_id="ncsdecoopman/ExtremePrecipit",
         repo_type="dataset",
@@ -15,7 +15,7 @@ try:
         allow_patterns=["metadonnees/*"]
     )
 
-    print("Téléchargement des reliefs...")
+    print("Downloading relief data...")
     snapshot_download(
         repo_id="ncsdecoopman/ExtremePrecipit",
         repo_type="dataset",
@@ -26,7 +26,7 @@ try:
     )
      
     for echelle in ["quotidien", "horaire", "w3", "w6", "w9", "w12", "w24"]:
-        print(f"Téléchargement des statistiques AROMES (mod)... - Echelle {echelle}")
+        print(f"Downloading AROMES statistics (mod) - Scale {echelle}...")
         snapshot_download(
             repo_id="ncsdecoopman/ExtremePrecipit",
             repo_type="dataset",
@@ -36,7 +36,7 @@ try:
             allow_patterns=["statisticals/modelised*"]
         )
 
-        print(f"Téléchargement des statistiques STATIONS observées... - Echelle {echelle}")
+        print(f"Downloading observed STATION statistics - Scale {echelle}...")
         snapshot_download(
             repo_id="ncsdecoopman/ExtremePrecipit",
             repo_type="dataset",
@@ -46,7 +46,7 @@ try:
             allow_patterns=["statisticals/observed*"]
         )   
 
-    print("Téléchargement des GEVs AROME...")
+    print("Downloading AROME GEVs...")
     snapshot_download(
         repo_id="ncsdecoopman/ExtremePrecipit",
         repo_type="dataset",
@@ -56,7 +56,7 @@ try:
         allow_patterns=["gev/modelised*"]
     )
 
-    print("Téléchargement des GEVs STATIONS...")
+    print("Downloading STATION GEVs...")
     snapshot_download(
         repo_id="ncsdecoopman/ExtremePrecipit",
         repo_type="dataset",
@@ -67,6 +67,6 @@ try:
     )
 
 except Exception as e:
-    print("Erreur pendant le téléchargement :")
+    print("Download error:")
     traceback.print_exc()
     raise SystemExit(1)

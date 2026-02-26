@@ -22,7 +22,8 @@ def import_data_dispo(
     scale
 ):
     input_dir = Path(config_obs["statistics"]["path"]["outputdir"]) / echelle
-    # Paramètre de chargement des données
+    
+    # Set data loading parameters
     if reduce_activate:
         _, min_year, max_year, _ = years_to_load("reduce", season, input_dir)
     else:
@@ -31,31 +32,27 @@ def import_data_dispo(
 
     observed_load = load_data(input_dir, season, echelle, cols, min_year, max_year)
 
-    # Limite sur le ratio de NaNs
+    # Filter by NaN ratio and aggregate unique years
     nan_limit = 0.10
-
-    # Filtrage et agrégation
     observed = (
         observed_load.filter(pl.col("nan_ratio") <= nan_limit)
         .group_by("NUM_POSTE")
         .agg(pl.col("year").n_unique().alias("n_years"))
     )
     
-    # Charger les metadonnées avec Polars
+    # Load station metadata
     observed_meta = pl.read_csv(f"data/metadonnees/observed/postes_{echelle}.csv")
-    # Harmoniser les types des colonnes lat/lon des deux côtés
     observed_meta = observed_meta.with_columns([
         pl.col("NUM_POSTE").cast(pl.Int32),
         pl.col("lat").cast(pl.Float32),
         pl.col("lon").cast(pl.Float32),
-        pl.col("altitude").cast(pl.Int32)  # altitude en entier
+        pl.col("altitude").cast(pl.Int32)
     ])
 
-    observed = observed.with_columns([  # forcer ici aussi
+    observed = observed.with_columns([
         pl.col("NUM_POSTE").cast(pl.Int32)
     ])
 
-    # Join sur NUM_POSTE
     observed = observed.join(observed_meta, on=["NUM_POSTE"], how="left")
     logger.info(f"n = {observed.shape[0]}")
      
@@ -79,7 +76,7 @@ def import_data_stat(
     input_dir_mod = Path(config_mod["statistics"]["path"]["outputdir"]) / "horaire"
     input_dir_obs = Path(config_obs["statistics"]["path"]["outputdir"]) / echelle
     for input_dir in [input_dir_mod, input_dir_obs]:
-        # Paramètre de chargement des données
+        # Set data loading parameters
         if reduce_activate:
             _, min_year, max_year, len_serie = years_to_load("reduce", season, input_dir)
         else:
@@ -88,16 +85,16 @@ def import_data_stat(
 
         df = load_data(input_dir, season, echelle, cols, min_year, max_year)
 
-        # Selection des stations suivant le NaN max
+        # Filter stations by max NaN ratio
         df = cleaning_data_observed(df, echelle, len_serie)
         
-        # Gestion des NaN
+        # Handle null values
         df = df.drop_nulls(subset=[mesure])
 
-        # Calcul de la statistics
+        # Calculate statistics per point
         df = compute_statistic_per_point(df, col_calculate)
 
-        # Ajout de l'altitude et des lat lon
+        # Add coordinates and altitude metadata
         if "modelised" in str(input_dir):
             modelised = add_metadata(df, scale, type='modelised')
         elif "observed" in str(input_dir):
@@ -147,7 +144,7 @@ def import_data_gev(
             modelised = pl.read_parquet(path_dir)
             modelised = add_metadata(modelised, scale, type='modelised')
         elif "observed" in str(gev_dir):
-            # Vérifie d’abord que gev_dir (ou path_dir) existe
+            # Verify if path exists before reading
             if os.path.exists(path_dir):
                 observed = pl.read_parquet(path_dir)
                 observed = add_metadata(observed, scale, type='observed')
@@ -188,12 +185,11 @@ def calculate_data_maps(
     side_km: float = 2.5,
     diff: bool = False
 ) -> None:
-    """Trace cartes + une légende commune (SVG)
-    La plage de la légende est calculée sur **l'ensemble** des valeurs (modèle
-    et observations), que l'on choisisse ou non de les afficher.
+    """Plot maps and common SVG legend.
+    The legend range is calculated over all values (model and observations).
     """
 
-    # S’assurer que le répertoire existe (création si nécessaire)
+    # Ensure output directory exists
     suffix_reduce = "_reduce" if reduce_activate else ""
     suffix_diff = "_diff" if diff else ""
     name_dir = f"outputs/maps/{data_type}_{col_calculate}/{echelle}{suffix_reduce}/compare_{len(titles)}/sat_{saturation_col}"
@@ -205,16 +201,14 @@ def calculate_data_maps(
         
     dir_path.mkdir(parents=True, exist_ok=True)
 
-    # ------------------------------------------------------------------
-    # 1. Conversion des DataFrames Polars en GeoDataFrames
-    # ------------------------------------------------------------------
+    # 1. Convert Polars DataFrames to GeoDataFrames
     model_gdfs: list[Optional[gpd.GeoDataFrame]] = []
     obs_gdfs: list[Optional[gpd.GeoDataFrame]] = []
 
     for d in datasets:
         val_col = d.get("column")
 
-        # — Modèle ----------------------------------------------------------------
+        # Model
         df_m = d.get("modelised")
         if df_m is None:
             model_gdfs.append(None)
@@ -228,7 +222,7 @@ def calculate_data_maps(
             ).to_crs("EPSG:2154")
             model_gdfs.append(gdf_m)
 
-        # — Observations -----------------------------------------------------------
+        # Observations
         df_o = d.get("observed")
         if df_o is None:
             obs_gdfs.append(None)
@@ -247,64 +241,55 @@ def calculate_data_maps(
 
 
 
-    # Titres par défaut -----------------------------------------------------------
+    # Default titles
     if titles is None:
         titles = [str(i) for i in range(1, len(model_gdfs) + 1)]
 
-    # ------------------------------------------------------------------
-    # 2. Ajout de la grille carrée autour des points modélisés
-    # ------------------------------------------------------------------
-    half = side_km * 500  # mètres
+    # 2. Add square grid around model points
+    half = side_km * 500  # meters
     for gdf in (g for g in model_gdfs if g is not None):
         gdf.loc[:, "geometry"] = gdf.geometry.apply(
             lambda p: box(p.x - half, p.y - half, p.x + half, p.y + half)
         )
 
-    # ------------------------------------------------------------------
-    # 5. Ajout de la colonne _val_raw (copie intacte des valeurs)
-    # ------------------------------------------------------------------
+    # 5. Add _val_raw column (intact copy of values)
     for gdf in (g for g in model_gdfs if g is not None):
         gdf.loc[:, "_val_raw"] = gdf[val_col]
     for gdf in (g for g in obs_gdfs if g is not None):
         gdf.loc[:, "_val_raw"] = gdf[val_col]
 
-    # ------------------------------------------------------------------
-    # 6. Saturation des valeurs extrêmes :
-    #    – seuil individuel par tableau (percentile)
-    #    – saturation au‑delà du max de ces seuils
-    # ------------------------------------------------------------------
+    # 6. Saturate extreme values using percentile thresholds
     if col_calculate not in ["significant", "model"]:
         seuils = []
 
-        # 1) seuil (percentile) propre à chaque tableau -----------------
+        # 1) Calculate percentile threshold for each table
         for gdf in (g for g in model_gdfs + obs_gdfs if g is not None):
             if val_col not in gdf.columns or gdf[val_col].empty:
                 continue
             seuil = np.percentile(
-                np.abs(gdf[val_col].dropna()),    # on ignore les NaN éventuels
-                saturation_col                    # ex. 99 pour le 99e percentile
+                np.abs(gdf[val_col].dropna()),
+                saturation_col
             )
             seuils.append(seuil)
 
-        # Rien à faire s’il n’y a pas de seuil calculé
         if not seuils:
             return None
 
-        # 2) seuil global = max(seuils) ---------------------------------
+        # 2) Global threshold = max(seuils)
         seuil_global = max(seuils)
 
-        # 3) saturation dans chaque tableau -----------------------------
+        # 3) Apply saturation
         for gdf in (g for g in model_gdfs + obs_gdfs if g is not None):
             if val_col not in gdf.columns or gdf[val_col].empty:
                 continue
             gdf.loc[:, val_col] = np.where(
                 np.abs(gdf[val_col]) > seuil_global,
-                np.sign(gdf[val_col]) * seuil_global,  # on garde le signe
+                np.sign(gdf[val_col]) * seuil_global,
                 gdf[val_col]
             )
 
     # ------------------------------------------------------------------
-    # 7. Filtrage des données significatives si demandé
+    # 7. Filter significant data if requested (original commented out block)
     # ------------------------------------------------------------------
     # if show_signif:
 
@@ -318,7 +303,7 @@ def calculate_data_maps(
 
 
     # ------------------------------------------------------------------
-    # 7. Si demandé : on conserve tout mais on met à 0 les non-significatifs
+    # 7. Nullify non-significant values (optional)
     # ------------------------------------------------------------------
     if show_signif:
         for idx, gdf in enumerate(model_gdfs):
@@ -348,17 +333,17 @@ def generate_maps(
     val_col: str=None,
 
     show_mod: bool = True,
-    show_obs: bool = True,  # n'influence que l'affichage
-    show_signif: bool = False,  # filtre significatif sur obs
+    show_obs: bool = True,
+    show_signif: bool = False,
     saturation_size: int = 100,
 
-    # Points obs
+    # Obs points
     min_pt: int = 4,
     max_pt: int = 10,
     middle_pt: int = 9,
     obs_edgecolor: str = "#BFBFBF",
     obs_facecolor: Optional[str] = None,
-    # Relief
+
     relief_path: str = "data/external/niveaux/selection_courbes_niveau_france.shp",
     relief_linewidth: float = 0.3,
     relief_color: str = "#000000",
@@ -379,14 +364,12 @@ def generate_maps(
             legend = "%"
         else:
             legend = scale.replace('_', '/')
-            # normalisation des unités jour → anglais
+            # Normalize units to English
             legend = legend.replace("mm/j", "mm/d")
     else:
         legend = ""
 
-    # ------------------------------------------------------------------
-    # 3. Masque France métropolitaine
-    # ------------------------------------------------------------------
+    # 3. Metropolitan France mask
     deps = (
         gpd.read_file("https://france-geojson.gregoiredavid.fr/repo/departements.geojson")
         .to_crs("EPSG:2154")
@@ -395,14 +378,7 @@ def generate_maps(
     deps_metro["geometry"] = deps_metro.geometry.simplify(500)
     mask = deps_metro.union_all()
 
-    # # *Les fonctions overlay/clip peuvent renvoyer des vues : on copie !*
-    # model_gdfs = [
-    #     gpd.overlay(g, deps_metro[["geometry"]], how="intersection").copy() if g is not None else None
-    #     for g in model_gdfs
-    # ]
-    # obs_gdfs = [g.clip(mask).copy() if g is not None else None for g in obs_gdfs]
-
-    # On CLIP seulement sur le contour national, sans overlay
+    # Clip to national boundary
     model_gdfs = [
         g.clip(mask).copy() if g is not None else None
         for g in model_gdfs
@@ -412,18 +388,14 @@ def generate_maps(
         for g in obs_gdfs
     ]
 
-    # ------------------------------------------------------------------
-    # 4. Courbes de niveau
-    # ------------------------------------------------------------------
+    # 4. Contour lines
     relief = (
         gpd.read_file(Path(relief_path).resolve())
         .to_crs("EPSG:2154")
         .clip(mask)
     )
     relief["geometry"] = relief.geometry.simplify(500)
-    # ------------------------------------------------------------------
-    # 7. Colormap & Normalisation communes
-    # ------------------------------------------------------------------
+    # 7. Shared colormap and normalization
     if data_type=="gev" or diff:
 
         if val_col in ["significant", "model"]:
@@ -438,16 +410,16 @@ def generate_maps(
             #    On prend autant de couleurs que de catégories
 
             palette = [
-                "#D55E00",  # rouille
-                "#0072B2",  # bleu foncé
-                "#8B4513",  # brun
-                "#000000",  # noir
-                "#009E73",  # vert
-                "#F0E442"  # jaune
+                "#D55E00",  # rust
+                "#0072B2",  # dark blue
+                "#8B4513",  # brown
+                "#000000",  # black
+                "#009E73",  # green
+                "#F0E442"   # yellow
             ]
 
             cmap = ListedColormap(palette)
-            # 3) Normalisation pour que chaque entier soit centré sur sa couleur
+            # Center integer categories on colors
             norm = BoundaryNorm(np.arange(len(all_cat) + 1) - 0.5,
                                 ncolors=len(all_cat))
 
@@ -460,8 +432,7 @@ def generate_maps(
             max_abs = max(abs(min(all_mins)), abs(max(all_maxs)))
             vmin, vmax = -max_abs, max_abs
 
-            # --- Forçage spécifique pour horaire_reduce -----------------
-            # Condition demandée : echelle == "horaire" et reduce_activate == True
+            # Specific forcing for hourly_reduce
             if "horaire_reduce" in str(dir_path):
                 seasons_lower = [t.lower() for t in (titles or [])]
                 if any("jan" in t for t in seasons_lower):
@@ -471,12 +442,12 @@ def generate_maps(
 
             norm = TwoSlopeNorm(vmin=vmin, vcenter=0.0, vmax=vmax)
 
-            n_colors = 15 # Choix du nombre de couleurs
-            # Charger tous les triplets R G B (entiers 0‑255)
+            n_colors = 15 
+            # Load RGB triplets (0-255)
             rgb = np.loadtxt("src/colors/prec_div.txt") / 255.0               # 256 × 3 → 0‑1
-            # Choisir n_colors indices également espacés
+            # Select equally spaced indices
             idx = np.linspace(0, rgb.shape[0] - 1, n_colors, dtype=int)
-            # Les convertir en codes hexadécimaux pour from_list()
+            # Convert to hex for from_list()
             hex_colors = [to_hex(rgb[i]) for i in idx]
             cmap = LinearSegmentedColormap.from_list("prec_div", hex_colors, N=n_colors)
 
@@ -509,22 +480,20 @@ def generate_maps(
         # # Création d'un colormap à partir de ces couleurs, avec N=15 couleurs distinctes
         # cmap = LinearSegmentedColormap.from_list("custom_discrete", colors, N=15)
 
-        n_colors = 15 # Choix du nombre de couleurs
-        # Charger tous les triplets R G B (entiers 0‑255)
+        n_colors = 15 
+        # Load RGB triplets (0-255)
         rgb = np.loadtxt("src/colors/prec_seq.txt") / 255.0               # 256 × 3 → 0‑1
-        # Choisir n_colors indices également espacés
+        # Select equally spaced indices
         idx = np.linspace(0, rgb.shape[0] - 1, n_colors, dtype=int)
-        # Les convertir en codes hexadécimaux pour from_list()
+        # Convert to hex for from_list()
         hex_colors = [to_hex(rgb[i]) for i in idx]
         cmap = LinearSegmentedColormap.from_list("prec_seq", hex_colors, N=n_colors)
 
-        # Norme pour répartir les 15 tranches entre 0 et vmax
-        levels = np.linspace(vmin, vmax, 16)  # 15 intervalles → 16 niveaux de bordure
+        # Norma spread between 0 and vmax
+        levels = np.linspace(vmin, vmax, 16)  # 15 intervals → 16 boundary levels
         norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
 
-    # ------------------------------------------------------------------
-    # 8. Export des cartes
-    # ------------------------------------------------------------------
+    # 8. Map export
     modes = {"rast": 0, "norast": 1}
 
     if val_col == "model":
@@ -539,8 +508,8 @@ def generate_maps(
         }
     elif val_col == "significant":
         TRANSFO = { 
-            True:               "Significatif",
-            False:           "Non Significatif"
+            True:               "Significant",
+            False:           "Non Significant"
         }
 
     for title, gdf_m, gdf_o in zip(titles, model_gdfs, obs_gdfs):
@@ -572,8 +541,8 @@ def generate_maps(
 
             coast = gpd.GeoSeries(exteriors, crs=deps_metro.crs)
 
-            # optionnel : supprimer les petits bouts de ligne (artefacts)
-            coast = coast[coast.length > 2_000]  # 2 km, à ajuster
+            # Optional: remove small line artifacts
+            coast = coast[coast.length > 2_000]  # 2 km, adjustable
 
             coast.plot(
                 ax=ax,
@@ -583,11 +552,11 @@ def generate_maps(
             )
 
 
-            # — Modèle ------------------------------------------------------
+            # Model 
             if show_mod and gdf_m is not None:
                 gdf_m.plot(ax=ax, column=val_col, cmap=cmap, norm=norm, linewidth=0, zorder=1)
 
-            # — Observations -----------------------------------------------
+            # Observations
             if show_obs and gdf_o is not None and not gdf_o.empty:
 
                 # Pour "significant" et "model", on force une taille fixe moyenne
@@ -659,7 +628,7 @@ def generate_maps(
                                         zorder=3, **kw_nonzero)
 
 
-            # — Relief ------------------------------------------------------
+            # Relief
             relief.plot(ax=ax, color=relief_color, linewidth=relief_linewidth, alpha=0.8, zorder=5)
 
             ax.set_axis_off()
@@ -679,7 +648,7 @@ def generate_maps(
                         shrink = 0.6,
                         aspect = 20
                     )
-                    # labels dans l’ordre de all_cat
+                    # labels in order of all_cat
                     display_labels = [TRANSFO[code] for code in all_cat]
                     cb.ax.set_yticklabels(display_labels)
                 else:
@@ -691,7 +660,7 @@ def generate_maps(
                     )
                     if mesure is not None:
                         cb.ax.set_ylabel(f"{legend}", rotation=90, fontsize=10)
-                    # Forcer un chiffre après la virgule
+                    # Force one decimal point
                     cb.ax.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
 
 
@@ -708,9 +677,7 @@ def generate_maps(
             plt.close(fig)
             logger.info(subdir / f"{name_file}.svg")
 
-    # ------------------------------------------------------------------
-    # 9. Légende seule ---------------------------------------------------
-    # ------------------------------------------------------------------
+    # 9. Legend only
     if diff:
         mpl.rcParams.update({"font.size": 30})
     else:
@@ -867,8 +834,7 @@ def generate_scatter(
             if show_signif:
                 # mod = mod.filter(pl.col("significant") == True)
                 obs = obs.filter(pl.col("significant") == True)
-                # toujours se baser sur les stations
-                # et calculer avec AROME correspondant même si non significatif
+                # Always base on station data and calculate with corresponding AROME even if non-significant 
 
             obs_vs_mod = match_and_compare(obs, mod, col, df_obs_vs_mod)
 
@@ -889,10 +855,10 @@ def generate_scatter(
             datasets_diff.append(res)
 
             if obs_vs_mod.is_empty():
-                logger.warning(f"Aucune donnée après filtrage pour {echelle} {season} - {col_calculate} - signif {show_signif}")
+                logger.warning(f"No data after filtering for {echelle} {season} - {col_calculate} - signif {show_signif}")
                 continue
 
-            # Légende unités
+            # Unit legend
             if col_calculate == "numday":
                 legend = "days"
             elif col_calculate == "mean":
@@ -914,7 +880,7 @@ def generate_scatter(
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.scatter(
                 x, y,
-                label="Données",
+                label="Data",
                 alpha=0.5,
                 s=20,
                 facecolor="black",
@@ -956,7 +922,7 @@ def generate_scatter(
             pd.DataFrame(metrics).to_csv(dir_path / f"metrics{suffix}.csv", index=False)
             logger.info(f"{dir_path}/metrics{suffix}.csv")
         else:
-            logger.warning(f"Aucun résultat significatif, fichier metrics{suffix}.csv non créé")
+            logger.warning(f"No significant results, metrics{suffix}.csv not created")
 
     return datasets_diff
 
@@ -1023,12 +989,12 @@ def main(args):
                 )
                 
             if col_calculate in ["z_T_p", "model"]:
-                SIGNIFICANT_SHOW = [True] # On choisi d'afficher ou non les points significatifs 
+                SIGNIFICANT_SHOW = [True] # Choose whether to display significant points
             else:
                 SIGNIFICANT_SHOW = [False]
 
-            logger.info(f"Echelle {e} - Saison {s} données générées")
-            datasets.append(res)    # On range le résultat dans la bonne liste
+            logger.info(f"Scale {e} - Season {s} data generated")
+            datasets.append(res)    # Store result in dataset list
      
         for signif in SIGNIFICANT_SHOW:
             dir_path, val_col, titles, model_gdfs, obs_gdfs = calculate_data_maps(
@@ -1038,7 +1004,7 @@ def main(args):
                 col_calculate=col_calculate,
                 reduce_activate=reduce_activate,
                 show_signif=signif,
-                titles=[s.upper() for s in season],  # titres des 4 sous-cartes
+                titles=[s.upper() for s in season],  # subplot titles
                 saturation_col=sat
             )
 
@@ -1083,7 +1049,7 @@ def main(args):
                         col_calculate=col_calculate,
                         reduce_activate=reduce_activate,
                         show_signif=signif,
-                        titles=[s.upper() for s in season],  # titres des 4 sous-cartes
+                        titles=[s.upper() for s in season],  # subplot titles
                         saturation_col=sat,
                         diff=True
                     )
@@ -1112,7 +1078,7 @@ def str2bool(v):
         return False
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Pipeline de génération des représentation")
+    parser = argparse.ArgumentParser(description="Map generation pipeline")
     parser.add_argument("--data_type", choices=["dispo", "stats", "gev"])
     parser.add_argument("--col_calculate", choices=["n_years", "numday", "mean", "mean-max", "z_T_p", "zTpa", "significant", "model"], default=None)
     parser.add_argument("--echelle", choices=["horaire", "quotidien", "horaire_reduce"], nargs='+', default=["horaire"])

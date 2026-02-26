@@ -7,13 +7,13 @@ import sys
 
 def get_logger(name: str, log_to_file: bool = False, log_dir: str = "logs", level=logging.INFO) -> logging.Logger:
     """
-    Crée un logger avec sortie console, et optionnellement vers fichier log horodaté.
+    Create a logger with console output and optional timestamped log file.
 
     Args:
-        name (str): Nom du logger (souvent __name__).
-        log_to_file (bool): Si True, enregistre les logs dans un fichier.
-        log_dir (str): Répertoire de log.
-        level (int): Niveau du logger (par défaut : logging.INFO).
+        name (str): Logger name (usually __name__).
+        log_to_file (bool): If True, log messages to a file.
+        log_dir (str): Log directory.
+        level (int): Logger level (default: logging.INFO).
 
     Returns:
         logging.Logger
@@ -24,17 +24,17 @@ def get_logger(name: str, log_to_file: bool = False, log_dir: str = "logs", leve
         logger.setLevel(level)
         formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s | %(message)s')
 
-        # Console
+        # Console output
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(formatter)
         logger.addHandler(stream_handler)
 
-        # Fichier log horodaté
+        # Timestamped log file
         if log_to_file:
             os.makedirs(log_dir, exist_ok=True)
             timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
 
-            # Si c'est le script principal, utiliser le vrai nom du fichier
+            # Use script name if running as main
             if name == "__main__":
                 script_path = sys.argv[0]
                 script_name = os.path.splitext(os.path.basename(script_path))[0]
@@ -48,6 +48,6 @@ def get_logger(name: str, log_to_file: bool = False, log_dir: str = "logs", leve
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
 
-            logger.info(f"Logger initialisé avec fichier : {log_path}")
+            logger.info(f"Logger initialized with file: {log_path}")
 
     return logger

@@ -68,13 +68,13 @@ def compute_statistics_for_period(
     n_points = pr.sizes["NUM_POSTE"]
     n_time = pr.time.size
 
-    # Si l'échelle est en fenêtre glissante ou une agrégation spatiale c'est une horaire
+    # Use hourly scale for rolling windows or spatial aggregations
     if echelle_choice.startswith("w") or echelle_choice.startswith("horaire_aggregate"):  
         echelle = "horaire"
-    else:                               # Sinon on la laisse 
+    else:                                
         echelle = echelle_choice
 
-    # Initialisation des tableaux
+    # Initialize arrays
     mean_mm_h = np.full(n_points, np.nan)
     max_mm_h = np.full(n_points, np.nan)
     max_date_mm_h = np.full(n_points, np.nan, dtype=object)
@@ -86,7 +86,7 @@ def compute_statistics_for_period(
     pr = pr.chunk({"NUM_POSTE": -1})
     pr_postes = pr["NUM_POSTE"].values
 
-    # Ratio de NaNs
+    # NaN ratio
     n_nan = da.isnan(pr).sum(dim="time")
     nan_ratio = (n_nan / n_time).compute()
     nan_ratio_arr[:] = nan_ratio
@@ -111,17 +111,17 @@ def compute_statistics_for_period(
     if echelle == "horaire":
         mean_valid = pr_valid.mean(dim="time", skipna=True).compute().values
 
-        # Correction pour les fenêtres glissantes (e.g. w3, w6, etc.)
+        # Correction for rolling windows
         if echelle_choice.startswith("w"):
             window_h = int(echelle_choice[1:])
-            mean_valid /= window_h  # Convertir le cumul moyen par pas glissant en mm/h
+            mean_valid /= window_h  # Convert mean rolling accumulation to mm/h
 
         mean_mm_h[valid_idx] = mean_valid
 
         max_mm_h_valid = pr_valid.max(dim="time", skipna=True).compute().values
         if echelle_choice.startswith("w"):
             window_h = int(echelle_choice[1:])
-            max_mm_h_valid /= window_h  # pour cohérence des unités
+            max_mm_h_valid /= window_h  # for unit consistency
         max_mm_h[valid_idx] = max_mm_h_valid
 
         argmax_h = da.argmax(pr_valid.data, axis=pr_valid.get_axis_num("time"))
@@ -190,16 +190,15 @@ def process_zarr_file_seasonal(
     #     if os.path.exists(p):
     #         all_ds.append(xr.open_zarr(p).chunk({"time": 24 * 92}))
 
-    # 1) Détermine quelles années charger, en fonction des saisons qui
-    #    débordent dans l'année suivante (end > 31 décembre)
+    # Determine which years to load based on seasons crossing into next year
     years_to_load = {year - 1, year}
     for season in seasons:
         _, end = get_season_bounds(year, season)
-        # si end est en Janvier (année suivante), on ajoute year+1
+        # If end is in January (next year), add year+1
         if np.datetime64(end, "ns").astype("datetime64[Y]") > np.datetime64(f"{year}-01-01", "Y"):
             years_to_load.add(year + 1)
 
-    # 2) Charge tous les zarr correspondants
+    # Load corresponding Zarr files
     all_ds = []
     zarr_dir = os.path.dirname(zarr_path)
     for y in sorted(years_to_load):
@@ -209,7 +208,7 @@ def process_zarr_file_seasonal(
 
 
     if not all_ds:
-        logger.warning(f"Aucun fichier Zarr trouvé pour {year}")
+        logger.warning(f"No Zarr file found for {year}")
         return
 
     ds = xr.concat(all_ds, dim="time", combine_attrs="override")
@@ -235,15 +234,15 @@ def process_zarr_file_seasonal(
         out_path = os.path.join(out_dir, f"{season}.parquet")
 
         if os.path.exists(out_path) and not overwrite:
-            logger.info(f"[SKIP] {out_path} existe déjà")
-            log_status[year][season] = "Généré"
+            logger.info(f"[SKIP] {out_path} already exists")
+            log_status[year][season] = "Generated"
             continue
 
         start, end = get_season_bounds(year, season)
         ds_start = ds["time"].values[0]
         ds_end = ds["time"].values[-1]
 
-        # existe-t-il un zarr pour l'année suivante ?
+        # Does a Zarr exist for the following year?
         next_zarr = os.path.join(zarr_dir, f"{year+1}.zarr")
         next_exists = os.path.exists(next_zarr)
         
@@ -253,23 +252,23 @@ def process_zarr_file_seasonal(
         #     log_status[year][season] = f"Hors bornes {start}-{end}"
         #     continue
 
-        # pour les saisons “cross-year” (djf, hydro) : il faut start et end
+        # for "cross-year" seasons (djf, hydro): both start and end must be present
         if season in ("djf", "hydro"):
             if start < ds_start or (end > ds_end and next_exists):
-                logger.info(f"[SKIP] {season.upper()} {year} hors des bornes de {zarr_path}")
-                log_status[year][season] = f"Hors bornes {start}-{end}"
+                logger.info(f"[SKIP] {season.upper()} {year} out of bounds for {zarr_path}")
+                log_status[year][season] = f"Out of bounds {start}-{end}"
                 continue
-        # pour les autres saisons, on ne vérifie que la fin
+        # for other seasons, only end is checked
         else:
             if end > ds_end and next_exists:
-                logger.info(f"[SKIP] {season.upper()} {year} hors des bornes de {zarr_path}")
-                log_status[year][season] = f"Hors bornes {start}-{end}"
+                logger.info(f"[SKIP] {season.upper()} {year} out of bounds for {zarr_path}")
+                log_status[year][season] = f"Out of bounds {start}-{end}"
                 continue
 
-        # Si échelle glissante : appliquer le rolling immédiatement après la concaténation et AVANT la sélection temporelle
+        # Apply rolling window immediately after concatenation and before temporal selection if using rolling scale
         if echelle.startswith("w"):
             window_h = int(echelle[1:])
-            logger.info(f"[INFO] Application d’un rolling glissant {window_h}h")
+            logger.info(f"[INFO] Applying {window_h}h rolling window")
             pr_full = ds[var_name].rolling(time=window_h, center=False).sum(skipna=False)
         else:
             pr_full = ds[var_name]
@@ -277,20 +276,20 @@ def process_zarr_file_seasonal(
         # Découpage temporel de la saison (sur pr_full)
         pr_season = pr_full.sel(time=slice(start, end))
         if pr_season.time.size == 0:
-            logger.warning(f"Aucune donnée pour {season.upper()} {year}")
-            log_status[year][season] = "Absent"
+            logger.warning(f"No data for {season.upper()} {year}")
+            log_status[year][season] = "Missing"
             continue
 
         df = compute_statistics_for_period(pr_season, echelle)
 
         if df.empty:
-            logger.warning(f"Aucune statistique pour {season.upper()} {year}")
-            log_status[year][season] = "Vide"
+            logger.warning(f"No statistics for {season.upper()} {year}")
+            log_status[year][season] = "Empty"
             continue
 
         logger.info(out_path)
         df.to_parquet(out_path, index=False, engine="pyarrow", compression="zstd")
-        log_status[year][season] = f"Généré sous {out_path}"
+        log_status[year][season] = f"Generated in {out_path}"
 
 
 def safe_idxmax(x):
@@ -303,12 +302,12 @@ def compute_hydro_from_seasons(year: int, stats_dir: str, log_status: dict):
         dfs = []
         season_map = {"son": year - 1, "djf": year, "mam": year, "jja": year}
         
-        # Chargement des fichiers saisonniers
+        # Load seasonal files
         for season, y in season_map.items():
             path = os.path.join(stats_dir, str(y), f"{season}.parquet")
             if not os.path.exists(path):
-                logger.info(f"[HYDRO] Fichier manquant : {path}")
-                log_status.setdefault(year, {})["hydro"] = "Manque données"
+                logger.info(f"[HYDRO] Missing file: {path}")
+                log_status.setdefault(year, {})["hydro"] = "Missing data"
                 return
             df = pd.read_parquet(path)
             df["season"] = season
@@ -325,7 +324,7 @@ def compute_hydro_from_seasons(year: int, stats_dir: str, log_status: dict):
             "nan_ratio": lambda x: x.mean(skipna=True),
         }).reset_index()
 
-        # Initialisation colonnes de dates de max
+        # Initialize max date columns
         df_hydro["max_date_mm_h"] = np.nan
         df_hydro["max_date_mm_j"] = np.nan
 
@@ -345,17 +344,17 @@ def compute_hydro_from_seasons(year: int, stats_dir: str, log_status: dict):
             df_hydro = df_hydro.merge(max_date_mm_j, on="NUM_POSTE", how="left", suffixes=("", "_j"))
             safe_combine_first(df_hydro, "max_date_mm_j", "max_date_mm_j_j")
 
-        # Sauvegarde
+        # Save
         out_dir = os.path.join(stats_dir, str(year))
         os.makedirs(out_dir, exist_ok=True)
         df_hydro.to_parquet(os.path.join(out_dir, "hydro.parquet"), index=False, engine="pyarrow", compression="zstd")
 
-        logger.info(f"[HYDRO] Statistiques HYDRO {year} sauvegardées dans {out_dir}")
-        log_status.setdefault(year, {})["hydro"] = "Généré"
+        logger.info(f"[HYDRO] HYDRO statistics for {year} saved in {out_dir}")
+        log_status.setdefault(year, {})["hydro"] = "Generated"
 
     except Exception as e:
-        logger.error(f"[FAIL] Erreur durant l’agrégation HYDRO {year}: {e}")
-        log_status.setdefault(year, {})["hydro"] = "Erreur"
+        logger.error(f"[FAIL] Error during HYDRO aggregation for {year}: {e}")
+        log_status.setdefault(year, {})["hydro"] = "Error"
 
 
 
@@ -379,10 +378,10 @@ def process_one_file(args):
             seasons,
             logger
         )
-        logger.info(f"[OK] Traitement terminé pour {zarr_file}")
+        logger.info(f"[OK] Processing completed for {zarr_file}")
         return (zarr_file, log_status, None)
     except Exception as e:
-        logger.error(f"[FAIL] Erreur pendant le traitement de {zarr_file}: {e}")
+        logger.error(f"[FAIL] Error during processing of {zarr_file}: {e}")
         return (zarr_file, None, str(e))
 
 
@@ -397,7 +396,7 @@ def pipeline_statistics_from_zarr_seasonal(config, max_workers: int = 48):
     seasons = config.get("seasons")
 
     for echelle in echelles:
-        logger.info(f"--- Traitement pour l’échelle : {echelle.upper()}---")
+        logger.info(f"--- Processing for scale: {echelle.upper()} ---")
 
         if echelle.startswith("w"):
             echelle_trait = "horaire"
@@ -428,25 +427,25 @@ def pipeline_statistics_from_zarr_seasonal(config, max_workers: int = 48):
                     n_points_list.append(n_points)
                     valid_files += 1
                 else:
-                    logger.warning(f"{zarr_file}: Dimensions inconnues, fichier ignoré")
+                    logger.warning(f"{zarr_file}: Unknown dimensions, skipping file")
             except Exception as e:
-                logger.error(f"{zarr_file}: Erreur de lecture ({e})")
+                logger.error(f"{zarr_file}: Read error ({e})")
 
         if valid_files > 0:
-            logger.info(f"Nombre de fichiers valides : {valid_files}")
+            logger.info(f"Number of valid files: {valid_files}")
 
-            # Vérifie si tous les fichiers ont le même nombre de points
+            # Check if all files have the same number of points
             if all(p == n_points_list[0] for p in n_points_list):
-                logger.info(f"Tous les fichiers ont le même nombre de points : {n_points_list[0]}")
+                logger.info(f"All files have the same number of points: {n_points_list[0]}")
             else:
-                logger.warning("Les fichiers n'ont pas tous le même nombre de points.")
-                logger.warning(f"Valeurs uniques : {sorted(set(n_points_list))}")
+                logger.warning("Files do not all have the same number of points.")
+                logger.warning(f"Unique values: {sorted(set(n_points_list))}")
         else:
-            logger.warning("Aucun fichier valide n'a été traité.")
+            logger.warning("No valid files processed.")
 
 
         if not zarr_files:
-            logger.warning(f"Aucun fichier Zarr trouvé pour l’échelle '{echelle}' dans {zarr_dir}")
+            logger.warning(f"No Zarr files found for scale '{echelle}' in {zarr_dir}")
             continue
 
         args_list = [
@@ -466,7 +465,7 @@ def pipeline_statistics_from_zarr_seasonal(config, max_workers: int = 48):
                     year = int(os.path.basename(zarr_file).split(".")[0])
                     status_log[year] = log_status.get(year, {})
 
-        # Post-traitement HYDRO pour toutes les échelles
+        # HYDRO post-processing for all scales
         if "hydro" in seasons:
             with ProcessPoolExecutor(max_workers=max_workers) as executor:
                 futures = {
@@ -479,14 +478,14 @@ def pipeline_statistics_from_zarr_seasonal(config, max_workers: int = 48):
                     try:
                         future.result()
                     except Exception as e:
-                        logger.error(f"[ERROR] Error processing lors du traitement de l'année {year}: {e}")
+                        logger.error(f"[ERROR] Error processing year {year}: {e}")
 
         log_df = pd.DataFrame.from_dict(status_log, orient="index").sort_index()
-        logger.info(f"[{echelle.upper()}] Résumé final :\n" + log_df.to_string())
+        logger.info(f"[{echelle.upper()}] Final summary:\n" + log_df.to_string())
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Pipeline statistiques saisonnières à partir de fichiers Zarr.")
+    parser = argparse.ArgumentParser(description="Seasonal statistics pipeline from Zarr files.")
     parser.add_argument("--config", type=str, default="config/modelised_settings.yaml")
     parser.add_argument("--echelle", 
                         type=str, 

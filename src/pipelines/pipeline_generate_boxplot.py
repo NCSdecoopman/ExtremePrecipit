@@ -71,10 +71,10 @@ def generate_violin(
             obs_vs_mod = match_and_compare(obs, mod, col, df_obs_vs_mod)
 
             if obs_vs_mod.is_empty():
-                logger.warning(f"Aucune donnée après filtrage pour {echelle} {season} - {col_calculate} - signif {show_signif}")
+                logger.warning(f"No data after filtering for {echelle} {season} - {col_calculate} - signif {show_signif}")
                 continue
 
-            # ----- COLLECTE POUR VIOLIN PLOT -----
+            # ----- COLLECTION FOR VIOLIN PLOT -----
             arome_vals = obs_vs_mod["AROME"].to_numpy()
             station_vals = obs_vs_mod["Station"].to_numpy()
 
@@ -101,13 +101,13 @@ def generate_violin(
         # Toujours 6 saisons/mois par ligne
         max_saisons_par_ligne = 6
         n_saisons = len(seasons)
-        # Gestion insertion bloc vide entre jja et jan si besoin
+        # Handling empty block insertion between jja and jan if needed
         saisons_liste = list(seasons)
         if 'jja' in saisons_liste and 'jan' in saisons_liste:
             idx_jja = saisons_liste.index('jja')
             idx_jan = saisons_liste.index('jan')
             if idx_jan == idx_jja + 1:
-                # On insère un bloc vide entre jja et jan
+                # Insert empty block between jja and jan
                 saisons_liste.insert(idx_jja + 1, '__VIDE__')
         n_saisons_mod = len(saisons_liste)
         n_rows = (n_saisons_mod + max_saisons_par_ligne - 1) // max_saisons_par_ligne
@@ -117,7 +117,7 @@ def generate_violin(
             ncols=1,
             figsize=(max(12, max_saisons_par_ligne*2.2), 3.5*n_rows),
             squeeze=False
-            # sharey=True supprimé
+            # sharey=True removed
         )
 
         for row in range(n_rows):
@@ -135,23 +135,23 @@ def generate_violin(
             ax = axes[row, 0]
             data_row = df_violin[df_violin['season'].isin([s for s in saisons_ligne if s != '__VIDE__'])]
 
-            # Ajouter explicitement des groupes vides pour les blocs __VIDE__
+            # Explicitly add empty groups for __VIDE__ blocks
             for s in saisons_ligne:
                 if s == '__VIDE__':
                     for e in echelles:
-                        # Ajoute une ligne vide pour ce groupe
+                        # Add empty row for this group
                         data_row = pd.concat([
                             data_row,
                             pd.DataFrame([{
                                 'season': s,
                                 'echelle': e,
-                                'source': df_violin['source'].unique()[0],  # n'importe laquelle, ne sera pas affichée
+                                'source': df_violin['source'].unique()[0],  # any source, won't be displayed
                                 'value': np.nan,
                                 'saison_echelle': f"{s} - {e}"
                             }])
                         ], ignore_index=True)
 
-            # Adapter l'axe y à chaque ligne (ymin fixé à -120, ymax à 400)
+            # Adapt y-axis for each row (ymin fixed at -200, ymax at 400)
             ymin_ligne = -200
             ymax_ligne = 400
 
@@ -166,18 +166,18 @@ def generate_violin(
             )
             ax.set_ylim(ymin_ligne, ymax_ligne)
 
-            # Traits pleins entre chaque saison
+            # Solid lines between seasons
             for i in range(1, len(saisons_ligne)):
                 ax.axvline(i*len(echelles) - 0.5, color='grey', linestyle='-', linewidth=1.5, alpha=0.7, zorder=0)
-            # Traits pointillés entre chaque échelle à l'intérieur d'une saison
+            # Dotted lines between scales within a season
             for i in range(len(saisons_ligne)):
                 for j in range(1, len(echelles)):
                     ax.axvline(i*len(echelles) + j - 0.5, color='grey', linestyle=':', linewidth=1, alpha=0.7, zorder=0)
-            # Grille horizontale pointillée sur les y
+            # Dotted horizontal grid
             ax.yaxis.grid(True, which='major', linestyle=':', linewidth=1, color='grey', alpha=0.7)
-            # Ligne horizontale sur 0
+            # Horizontal line at 0
             ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=1, zorder=5)
-            # Légende (seulement sur la première ligne)
+            # Legend (only on the first row)
             if row == 0:
                 handles, labels = ax.get_legend_handles_labels()
                 leg = ax.legend(handles, labels, title='', loc='upper right', bbox_to_anchor=(0.99, 0.99), borderaxespad=0, frameon=True)
@@ -186,14 +186,14 @@ def generate_violin(
                 leg.get_frame().set_facecolor('white')
             else:
                 ax.get_legend().remove()
-            # Annotations n (un seul n= par sous-groupe saison-échelle, total des deux sources)
+            # n annotations (one n= per season-scale subgroup, total from both sources)
             for i, s in enumerate(saisons_ligne):
                 if s == '__VIDE__':
                     continue
                 for j, e in enumerate(echelles):
                     x_pos = i*len(echelles) + j
                     subset = data_row[(data_row['season'] == s) & (data_row['echelle'] == e)]
-                    n = int(len(subset)/2)  # données AROME et obs
+                    n = int(len(subset)/2)  # AROME and obs data
                     n_sup_400 = (subset['value'] > 400).sum()
                     n_inf_m200 = (subset['value'] < -200).sum()
                     if n > 0:
@@ -204,22 +204,22 @@ def generate_violin(
                         if n_inf_m200 > 0:
                             txt += f"\n{n_inf_m200}↓"
                         ax.text(x_pos, y_n, txt, ha='center', va='top', fontsize='x-small', rotation=90, color='black')
-            # Ajout des labels d'échelle juste au-dessus de l'axe x
-            echelle_labels = {'quotidien': 'J', 'quotidien_reduce': 'J*', 'horaire': 'H'}
+            # Add scale labels just above x-axis
+            echelle_labels = {'quotidien': 'D', 'quotidien_reduce': 'D*', 'horaire': 'H'}
             for i, s in enumerate(saisons_ligne):
                 if s == '__VIDE__':
                     continue
                 for j, e in enumerate(echelles):
                     x_pos = i*len(echelles) + j
                     label = echelle_labels.get(e, e)
-                    # Positionne le texte juste au-dessus de l'axe x
+                    # Position text just above x-axis
                     ax.text(x_pos, ymin_ligne + 0.03 * (ymax_ligne - ymin_ligne), label, ha='center', va='bottom', fontsize='medium', fontweight='bold')
-            # Adapter les labels x pour n'afficher que la saison sous chaque triplet
+            # Adapt x labels to show only season under each triplet
             xticks = [i*len(echelles) + 1 for i in range(len(saisons_ligne))]
             xticklabels = [s.upper() if s != '__VIDE__' else '' for s in saisons_ligne]
             ax.set_xticks(xticks)
             ax.set_xticklabels(xticklabels, rotation=0, ha='center')
-            legend_texte = "Tendance relative" if "z_T_p" in col_calculate else col_calculate
+            legend_texte = "Relative trend" if "z_T_p" in col_calculate else col_calculate
             legend = "%" if "z_T_p" in col_calculate else ""
             ax.set_xlabel("")
             ax.set_ylabel(f"{legend_texte} ({legend})")
@@ -231,7 +231,7 @@ def generate_violin(
         logger.info(dir_path / f"violin{suffix}.svg")
 
     else:
-        logger.warning("Pas de données pour le violin plot.")
+        logger.warning("No data for violin plot.")
 
 
 def main(args):
@@ -266,8 +266,8 @@ def main(args):
                     scale=scale
                 )
                 
-            logger.info(f"Echelle {e} - Saison {s} données générées")
-            datasets[e].append(res)    # On range le résultat dans la bonne liste
+            logger.info(f"Scale {e} - Season {s} data generated")
+            datasets[e].append(res)    # Store result in the correct list
     
     generate_violin(
         datasets=datasets,
@@ -285,7 +285,7 @@ def str2bool(v):
         return False
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Pipeline de génération des représentation")
+    parser = argparse.ArgumentParser(description="Representation generation pipeline")
     parser.add_argument("--data_type", choices=["gev"], default="gev")
     parser.add_argument("--col_calculate", choices=["z_T_p"], default="z_T_p")
     parser.add_argument("--season", type=str, nargs='+', default=[

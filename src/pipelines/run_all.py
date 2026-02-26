@@ -2,7 +2,7 @@
 import subprocess
 import logging
 
-# Configuration du logger
+# Logger configuration
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
@@ -45,8 +45,8 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 # ------------------------- ZARR -------------------------
 ############################################################
 
-# # Pipeline des données AROME
-# log(f"Lancement du traitement .nc to .zarr (echelle horaire obligatoire)")
+# # AROME data pipeline
+# log(f"Starting .nc to .zarr processing (hourly scale mandatory)")
 # subprocess.run(
 #     ["python", 
 #       "-m", 
@@ -55,7 +55,7 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 # )
 
 # for echelle in ["horaire, "quotidien""]: 
-#     log(f"Lancement du traitement obs (.csv) to .zarr pour l’échelle : {echelle}")
+#     log(f"Starting obs (.csv) to .zarr processing for scale: {echelle}")
 #     subprocess.run(
 #         ["python",
 #             "-m",
@@ -69,7 +69,7 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 # ------------------------- METADONNES ---------------------
 ############################################################
 
-# log(f"Lancement des metadonnées obs vs mod")
+# log(f"Starting obs vs mod metadata generation")
 # for echelle in ["horaire", "quotidien"]:
 #     subprocess.run(
 #         ["python", 
@@ -84,8 +84,8 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 # ------------------------- AGGREGATION SPATIALE -----------
 ############################################################
 
-# log("Lancement des aggrégations spatiales")
-# for n_aggregate in [3, 5]: # nombre impair
+# log("Starting spatial aggregations")
+# for n_aggregate in [3, 5]: # odd number
 #     subprocess.run(
 #         ["python", 
 #          "-m", 
@@ -100,14 +100,14 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 
 # for config in ["config/modelised_settings.yaml", "config/observed_settings.yaml"]:
        
-#     if config == "config/observed_settings.yaml": # Pas de temps horaire uniquement pour AROME
+#     if config == "config/observed_settings.yaml": # Hourly time steps only for AROME
 #         ECHELLES  = ["horaire", "quotidien"] # "w3", "w6", "w9", "w12", "w24", 
 #     else:
 #         ECHELLES  = ["horaire"] # "w3", "w6", "w9", "w12", "w24"
 
 #     for echelle in ECHELLES:
 #         for season in SEASONS:
-#             log(f"Lancement du traitement .zarr to stats {config} - {echelle} -{season}")
+#             log(f"Starting .zarr to stats {config} - {echelle} -{season}")
 #             subprocess.run(
 #                 ["python",
 #                 "-m",
@@ -124,8 +124,8 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 # # -------------------------- GEV --------------------------
 # ############################################################
 
-# # Pipeline GEV
-# log(f"Lancement du traitement gev")
+# # GEV Pipeline
+# log(f"Starting GEV processing")
 
 # for setting in ["config/observed_settings.yaml", "config/modelised_settings.yaml"]:
 
@@ -144,9 +144,9 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
         
 #             if echelle == "quotidien" and not diffente_periode:
 #                 MODELS = [
-#                     "s_gev", # Stationnaire
-#                     "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
-#                     "ns_gev_m1_break_year", "ns_gev_m2_break_year", "ns_gev_m3_break_year" # Non stationnaire avec point de rupture
+#                     "s_gev", # Stationary
+#                     "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non-stationary
+#                     "ns_gev_m1_break_year", "ns_gev_m2_break_year", "ns_gev_m3_break_year" # Non-stationary with break point
 #                     ]
 #             elif echelle == "horaire" and diffente_periode:
 #                 MODELS = [
@@ -210,8 +210,8 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 # -------------------------- MAPPING -----------------------
 ############################################################
 
-# # Pipeline maps
-log(f"Lancement des générations de maps")
+# Map pipeline
+log(f"Starting map generation")
 
 for data_type in ["gev"]: #  "dispo", "stats", 
                 
@@ -250,9 +250,9 @@ for data_type in ["gev"]: #  "dispo", "stats",
                     SEASON_GENERATE = [["hydro"]]
                 elif data_type == "stats":
                     if col_calculate == "mean-max":
-                        SEASON_GENERATE = [["hydro", *SEASON_SEAS], SEASON_MONTHS] #
+                        SEASON_GENERATE = [["hydro", *SEASON_SEAS], SEASON_MONTHS] 
                     else:
-                        SEASON_GENERATE = [["hydro"], SEASON_SEAS] # hydro doit être calculer séparement
+                        SEASON_GENERATE = [["hydro"], SEASON_SEAS] # Hydro must be calculated separately
                 else:
                     SEASON_GENERATE = [["hydro", *SEASON_SEAS], SEASON_MONTHS]
 

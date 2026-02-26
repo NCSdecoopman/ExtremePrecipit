@@ -3,26 +3,27 @@ import polars as pl
 
 
 def years_to_load(echelle: str, season: str, input_dir: str):
-    # Fixation de l'échelle pour le choix des colonnes à lire
+    # Determine column mapping based on scale
     mesure = "max_mm_h" if "horaire" in echelle else "max_mm_j"
     
-    # Liste des années disponibles
+    # List available years
     years = [
         int(name) for name in os.listdir(input_dir)
         if os.path.isdir(os.path.join(input_dir, name)) and name.isdigit() and len(name) == 4
     ]
 
     if years:
-        min_year = min(years) if echelle in ["quotidien", "horaire_reduce"] else 1990 # Année minimale
+        min_year = min(years) if echelle in ["quotidien", "horaire_reduce"] else 1990
         max_year = max(years)
     else:
-        print("Aucune année valide trouvée.")
+        print("No valid years found.")
 
-    len_serie = 50 if echelle in ["quotidien", "horaire_reduce"] else 25 # Longueur minimale d'une série valide
+    # Set minimum series length
+    len_serie = 50 if echelle in ["quotidien", "horaire_reduce"] else 25
 
     if season in ["hydro", "djf"]:
-        min_year+=1 # On commence en 1960
-
+        min_year+=1 # Data starts in 1960
+    
     return mesure, min_year, max_year, len_serie
 
 
@@ -30,10 +31,9 @@ def years_to_load(echelle: str, season: str, input_dir: str):
 def load_season(year: int, cols: tuple, season_key: str, base_path: str) -> pl.DataFrame:
     filename = f"{base_path}/{year:04d}/{season_key}.parquet"
     if cols is None:
-        # pas de filtrage : on ne passe pas l'argument columns
         return pl.read_parquet(filename)
     else:
-        # filtrage sur les colonnes spécifiées
+        # Filter by specified columns
         return pl.read_parquet(filename, columns=cols)
 
 def load_data(intputdir: str, season: str, echelle: str, cols: tuple, min_year: int, max_year: int) -> pl.DataFrame:
@@ -54,10 +54,10 @@ def load_data(intputdir: str, season: str, echelle: str, cols: tuple, min_year: 
 
     if errors:
         for err in errors:
-            raise ValueError(f"Erreur : {err}")
+            raise ValueError(f"Error: {err}")
 
     if not dataframes:
-        raise ValueError("Aucune donnée chargée.")
+        raise ValueError("No data loaded.")
 
     return pl.concat(dataframes, how="vertical")
 
@@ -69,29 +69,28 @@ def cleaning_data_observed(
     nan_limit: float = 0.10
 ) -> pl.DataFrame:
     """
-    Filtre les maxima par deux critères :
-      1) on annule les valeurs d’une année si nan_ratio > nan_limit
-      2) on ne garde que les stations ayant au moins n années valides :
-         n = 25   si echelle == "horaire"
-         n = 50   si echelle == "quotidien"
+    Filter data based on two criteria:
+      1) Invalidate years if nan_ratio > nan_limit
+      2) Keep only stations with at least n valid years:
+         n = 25 for "horaire"
+         n = 50 for "quotidien"
     """
-    # ——— règles dépendant de l’échelle ———
     if len_serie is None:
-        raise ValueError('Paramètre len_serie à préciser')
+        raise ValueError('len_serie must be specified')
     
-    # Selection des saisons avec nan_limit au maximum
+    # Filter seasons within NaN limit
     df_filter = df.filter(pl.col("nan_ratio") <= nan_limit)
 
-    # Calcul du nombre d'années valides par station NUM_POSTE
+    # Calculate valid years per station (NUM_POSTE)
     station_counts = (
         df_filter.group_by("NUM_POSTE")
         .agg(pl.col("year").n_unique().alias("num_years"))
     )
 
-    # Sélection des NUM_POSTE avec au moins len_serie d'années valides
+    # Select stations with at least len_serie valid years
     valid_stations = station_counts.filter(pl.col("num_years") >= len_serie)
 
-    # Jointure pour ne garder que les stations valides
+    # Filter for valid stations
     df_final = df_filter.filter(
         pl.col("NUM_POSTE").is_in(valid_stations["NUM_POSTE"])
     )
@@ -111,8 +110,8 @@ def export_station_month_series_to_csv(
     var_name: str = "pr",
 ):
     """
-    Exporte la série temporelle d'une station pour un mois donné (toutes années)
-    vers un CSV trié par temps.
+    Export a station's time series for a given month (all years) 
+    to a time-sorted CSV.
     """
     import yaml
     import numpy as np
@@ -124,13 +123,13 @@ def export_station_month_series_to_csv(
         if isinstance(value, int):
             if 1 <= value <= 12:
                 return value
-            raise ValueError(f"Mois invalide: {value}")
+            raise ValueError(f"Invalid month: {value}")
         text = str(value).strip().lower()
         if text.isdigit():
             num = int(text)
             if 1 <= num <= 12:
                 return num
-            raise ValueError(f"Mois invalide: {value}")
+            raise ValueError(f"Invalid month: {value}")
         mapping = {
             "janvier": 1, "janv": 1, "jan": 1,
             "fevrier": 2, "fev": 2, "feb": 2,
@@ -154,7 +153,7 @@ def export_station_month_series_to_csv(
 
     zarr_base = Path(zarr_dir) / echelle
     if not zarr_base.exists():
-        raise FileNotFoundError(f"Zarr introuvable: {zarr_base}")
+        raise FileNotFoundError(f"Zarr not found: {zarr_base}")
 
     years = sorted(
         int(p.stem) for p in zarr_base.glob("*.zarr")
@@ -165,7 +164,7 @@ def export_station_month_series_to_csv(
     if end_year is not None:
         years = [y for y in years if y <= end_year]
     if not years:
-        raise ValueError("Aucune année trouvée dans la plage demandée.")
+        raise ValueError("No years found in the requested range.")
 
     scale_factor = 1.0
     unit_conversion = 1.0
@@ -184,7 +183,7 @@ def export_station_month_series_to_csv(
         ds = xr.open_zarr(zarr_base / f"{year}.zarr", chunks=None)
         try:
             if "NUM_POSTE" not in ds.coords:
-                raise ValueError(f"Coordonnée NUM_POSTE absente dans {year}.zarr")
+                raise ValueError(f"NUM_POSTE coordinate missing in {year}.zarr")
             poste_values = ds["NUM_POSTE"].values
             if poste_values.dtype.kind in "iu":
                 try:
@@ -215,7 +214,7 @@ def export_station_month_series_to_csv(
             ds.close()
 
     if not frames:
-        raise ValueError("Aucune donnée trouvée pour cette station/mois.")
+        raise ValueError("No data found for this station/month.")
 
     df_final = pd.concat(frames, ignore_index=True).sort_values("time")
     df_final = df_final.rename(columns={var_name: "pr"})
@@ -241,8 +240,8 @@ def export_station_monthly_maxima_to_csv(
     nan_limit: float = 0.10,
 ):
     """
-    Exporte la série des maxima mensuels (une valeur par année) utilisée pour la GEV,
-    avant normalisation.
+    Export monthly maxima series (one value per year) used for GEV,
+    before normalization.
     """
     from pathlib import Path
     import pandas as pd
@@ -254,7 +253,7 @@ def export_station_monthly_maxima_to_csv(
                 7: "juill", 8: "aou", 9: "sep", 10: "oct", 11: "nov", 12: "dec",
             }
             if value not in mapping:
-                raise ValueError(f"Mois invalide: {value}")
+                raise ValueError(f"Invalid month: {value}")
             return mapping[value]
         text = str(value).strip().lower()
         mapping = {
@@ -288,7 +287,7 @@ def export_station_monthly_maxima_to_csv(
     df = df.filter(pl.col("NUM_POSTE") == station_key)
 
     if df.is_empty():
-        raise ValueError("Aucune donnée trouvée pour cette station/mois.")
+        raise ValueError("No data found for this station/month.")
 
     df_out = (
         df.select(["year", "NUM_POSTE", mesure])

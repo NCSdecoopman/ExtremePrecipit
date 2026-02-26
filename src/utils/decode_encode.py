@@ -2,7 +2,7 @@ import xarray as xr
 import numpy as np
 
 def decode_var(arr: xr.DataArray, var_conf: dict) -> xr.DataArray:
-    """Renvoie un DataArray float32 en vraies unités, NaN pour les valeurs manquantes."""
+    """Returns a float32 DataArray in actual units, with NaN for missing values."""
     arr = arr.astype("float32")
 
     fill_val = var_conf.get("fill_value", None)
@@ -17,11 +17,11 @@ def decode_var(arr: xr.DataArray, var_conf: dict) -> xr.DataArray:
 
 
 def encode_var(arr: xr.DataArray, var_conf: dict) -> xr.DataArray:
-    """Ré-applique scale, fill_value et dtype avant écriture."""
+    """Applies scale, fill_value, and dtype before writing."""
     fill_val = var_conf.get("fill_value", -9999)
     scale = var_conf.get("scale_factor", 1.0)
 
-    arr = arr * scale         # retour aux ‘pas physiques encodés’
+    arr = arr * scale         # revert to encoded physical steps
     arr = arr.round()
     arr = arr.fillna(fill_val)
 

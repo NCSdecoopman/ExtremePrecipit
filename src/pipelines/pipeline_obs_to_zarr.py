@@ -18,20 +18,20 @@ from src.utils.config_tools import load_config
 from src.utils.logger import get_logger
 
 # ================================================================
-# Fonctions de téléchargement
+# Download functions
 # ================================================================
 
 def download_utils(dep: int, echelle: str, output_file: Path, full_url: str, logger) -> str | None:
     if output_file.exists():
-        logger.info(f"Fichier échelle {echelle} déjà présent pour le département {dep:02d}")
+        logger.info(f"Scale {echelle} file already present for department {dep:02d}")
         try:
             with gzip.open(output_file, 'rb') as f:
                 f.read()
         except Exception:
-            logger.warning(f"Fichier corrompu détecté : {output_file.name}, suppression et re-téléchargement.")
+            logger.warning(f"Corrupted file detected: {output_file.name}, removing and re-downloading.")
             output_file.unlink()
         else:
-            return None  # tout est bon
+            return None  # everything is fine
 
     try:
         r = requests.get(full_url, stream=True)
@@ -39,29 +39,29 @@ def download_utils(dep: int, echelle: str, output_file: Path, full_url: str, log
             with open(output_file, "wb") as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
-            logger.info(f"Téléchargement terminé pour {output_file.name}")
+            logger.info(f"Download completed for {output_file.name}")
         else:
-            logger.warning(f"Impossible de DL {full_url} (status={r.status_code})")
+            logger.warning(f"Could not download {full_url} (status={r.status_code})")
             return full_url
     except Exception as e:
-        logger.warning(f"Erreur lors du téléchargement de {full_url} : {e}")
+        logger.warning(f"Error while downloading {full_url}: {e}")
         return full_url
 
     try:
         with gzip.open(output_file, 'rb') as f:
             f.read()
     except Exception:
-        logger.error(f"Fichier téléchargé corrompu : {output_file.name} — suppression.")
+        logger.error(f"Downloaded file corrupted: {output_file.name} — deleting.")
         output_file.unlink()
         return full_url
 
-    logger.info(f"Fichier validé : {output_file.name}")
-    return None  # tout est OK
+    logger.info(f"File validated: {output_file.name}")
+    return None  # all OK
 
 
 def download_quotidien_zip(dep: int, output_dir: Path, logger) -> str | None:
     """
-    Télécharge les fichiers quotidiens pour un département donné selon :
+    Downloads daily files for a given department according to:
     - https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/QUOT/Q_XX_previous-1950-2023_RR-T-Vent.csv.gz
     """
     file_name = f"Q_{dep:02d}_previous-1950-2023_RR-T-Vent.csv.gz"
@@ -72,8 +72,8 @@ def download_quotidien_zip(dep: int, output_dir: Path, logger) -> str | None:
 
 def download_horaire_zip(dep: int, output_dir: Path, logger) -> None:
     """
-    Télécharge les fichiers horaires pour un département donné selon :
-    1950-1959, ..., 2010-2019 ainsi que 2020-2023
+    Downloads hourly files for a given department according to:
+    1950-1959, ..., 2010-2019 and 2020-2023
     """
     base_url = "https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/HOR"
     dep_str = f"{dep:02d}"
@@ -101,8 +101,8 @@ def download_horaire_zip(dep: int, output_dir: Path, logger) -> None:
 
 def download_all_zips(activate: bool, echelle: str, logger, max_workers: int = 48) -> dict:
     """
-    Téléchargement parallèle des fichiers horaires/quotidiens pour tous les départements.
-    Retourne un dictionnaire avec les chemins des répertoires par échelle.
+    Parallel download of hourly/daily files for all departments.
+    Returns a dictionary with directory paths per scale.
     """
     dirs = {}
     if echelle == "horaire":
@@ -115,7 +115,7 @@ def download_all_zips(activate: bool, echelle: str, logger, max_workers: int = 4
         dirs["quotidien"] = quotidien_dir
 
     if activate:
-        logger.info("[ETAPE 1] Téléchargement des fichiers depuis Météo-France")
+        logger.info("[STEP 1] Downloading files from Météo-France")
         tasks = []
 
         for dep in range(1, 96):
@@ -143,9 +143,9 @@ def download_all_zips(activate: bool, echelle: str, logger, max_workers: int = 4
                         else:
                             failed_all.append(result)
                 except Exception as e:
-                    logger.warning(f"Erreur pendant un téléchargement : {e}")
+                    logger.warning(f"Error during a download: {e}")
 
-        logger.info("Téléchargement des fichiers terminé")
+        logger.info("File download completed")
 
         if failed_all:
             failed_file = Path(f"logs/observed/failed_downloads.txt")
@@ -154,17 +154,17 @@ def download_all_zips(activate: bool, echelle: str, logger, max_workers: int = 4
             with open(failed_file, "w") as f:
                 for url in failed_all:
                     f.write(url + "\n")
-            logger.warning(f"[FIN] {len(failed_all)} fichiers manquants ou corrompus :")
+            logger.warning(f"[FINISH] {len(failed_all)} files missing or corrupted:")
             for url in failed_all:
                 logger.warning(f"  - {url}")
         else:
-            logger.info("[FIN] Tous les fichiers ont été téléchargés et validés.")
+            logger.info("[FINISH] All files downloaded and validated.")
 
     return dirs
 
 
 # ================================================================
-# Fonctions de formations du dataset
+# Dataset formation functions
 # ================================================================
 
 def read_csv_file_polars(f, 
@@ -181,12 +181,12 @@ def read_csv_file_polars(f,
             has_header=True,
             columns=cols,
             encoding="utf8-lossy",
-            null_values=["", "NaN", "NA"],  # étendre selon besoin
+            null_values=["", "NaN", "NA"],  # extend as needed
         )
         if "LAT" in df.columns and "LON" in df.columns and "ALTI" in df.columns:
             df = df.rename({"LAT": "lat", "LON": "lon", "ALTI": "altitude"})
         else:
-            logger.warning(f"[WARN] Fichier {f.name} ne contient pas LAT/LON/ALTI")
+            logger.warning(f"[WARN] File {f.name} does not contain LAT/LON/ALTI")
 
         # Nettoyage RR : remplacer ',' par '.' si RR est de type str
         if df.schema.get(var_col) == pl.Utf8:
@@ -199,7 +199,7 @@ def read_csv_file_polars(f,
                 .to_list()
             )
             if bad_values:
-                logger.warning(f"[COL VAL] Fichier {f.name} → {var_col} contient valeurs non standard : {bad_values}")
+                logger.warning(f"[COL VAL] File {f.name} → {var_col} contains non-standard values: {bad_values}")
             
             df = df.with_columns(
                 pl.col(var_col)
@@ -208,7 +208,7 @@ def read_csv_file_polars(f,
                 .alias(var_col)
             )
 
-        # Forçage global des types pour tout le monde
+        # Global type enforcement for all columns
         df = df.with_columns([
             pl.col(id_col).cast(pl.Utf8),
             pl.col(lat_col).cast(pl.Float64, strict=False),
@@ -220,7 +220,7 @@ def read_csv_file_polars(f,
             df = df.with_columns([
                 (pl.col(date_col).cast(pl.Utf8)
                 .str.strptime(pl.Datetime, format="%Y%m%d")
-                .dt.offset_by("30m")  # Ajoute +30 min
+                .dt.offset_by("30m")  # Add +30 min
                 .alias("time"))
             ])
 
@@ -229,7 +229,7 @@ def read_csv_file_polars(f,
                 (
                     (pl.col(date_col).cast(pl.Utf8) + "00")  # Ex: "2024010117" + "00" → "202401011700"
                     .str.strptime(pl.Datetime, format="%Y%m%d%H%M")
-                    .dt.offset_by("-30m")  # Décale à HH-0.5h → ex: 17:00 → 16:30
+                    .dt.offset_by("-30m")  # Shift to HH-0.5h → ex: 17:00 → 16:30
                     .alias("time")
                 )
             ])
@@ -245,7 +245,7 @@ def delete_artefact_coord(df,
                           lat_col: str = "lat", 
                           lon_col: str = "lon",
                           alti_col: str = "altitude"):
-    # Calculer la fréquence de chaque (id, lat, lon)
+    # Calculate frequency of each (id, lat, lon)
     coord_counts = (
         df
         .select([id_col, lat_col, lon_col, alti_col])
@@ -254,7 +254,7 @@ def delete_artefact_coord(df,
         .sort(by=[id_col, "len"], descending=True)
     )
 
-    # Garder la coordonnée la plus fréquente par identifiant
+    # Keep the most frequent coordinate par identifier
     coord_mode = (
         coord_counts
         .group_by(id_col)
@@ -262,7 +262,7 @@ def delete_artefact_coord(df,
         .drop("len")
     )
 
-    # Fusionner avec les données d'origine (après avoir retiré les colonnes à corriger)
+    # Merge with original data (after removing columns to correct)
     df_correct = (
         df.drop([lat_col, lon_col, alti_col])
         .join(coord_mode, on=id_col, how="left")
@@ -277,14 +277,14 @@ def concat_csv_temp(csv_dir: str, cols: str, var_col: str, date_col: str, max_wo
 
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(read_csv_file_polars, f, cols, var_col, date_col): f for f in files}
-        for future in tqdm(as_completed(futures), total=len(futures), desc="Lecture des fichiers (.csv.gz)"):
+        for future in tqdm(as_completed(futures), total=len(futures), desc="Reading files (.csv.gz)"):
             result = future.result()
             if result is not None:
                 df_list.append(result)
 
     if df_list:
         df_all = pl.concat(df_list, how="vertical", rechunk=True)
-        # Selection de la période d'étude
+        # Study period selection
         df_all = df_all.filter(
             df_all[date_col]
             .cast(str)
@@ -311,25 +311,25 @@ def group_df_by_year(df_all: pl.DataFrame) -> dict[int, pl.DataFrame]:
 
 
 # ================================================================
-# Fonctions utilitaires
+# Utility functions
 # ================================================================
 
 def get_time_axis(annee: int, echelle: str) -> pd.DatetimeIndex:
     """
-    Génère un axe de temps aligné sur les fichiers .nc (origine 00:30)
+    Generates a time axis aligned with .nc files (00:30 origin)
     """
     if echelle == "horaire":
-        # Alignement sur 00:30 comme dans les fichiers CNRM-AROME
+        # Alignment at 00:30 as in CNRM-AROME files
         start = f"{annee}-01-01 00:30:00"
         end = f"{annee}-12-31 23:30:00"
         freq = "h"
     elif echelle == "quotidien":
-        # Alignement sur 00:30 pour cohérence (on pourrait aussi mettre 12:00 pour daily center)
+        # Alignment at 00:30 for consistency
         start = f"{annee}-01-01 00:30:00"
         end = f"{annee}-12-31 00:30:00"
         freq = "D"
     else:
-        raise ValueError(f"Échelle inconnue: {echelle}")
+        raise ValueError(f"Unknown scale: {echelle}")
 
     return pd.date_range(start=start, end=end, freq=freq)
 
@@ -337,24 +337,24 @@ def get_time_axis(annee: int, echelle: str) -> pd.DatetimeIndex:
 
 def generate_zarr_structure(zarr_dir, echelle, coords_df, config):
     """
-    Crée une structure Zarr vide pour chaque année de 1959 à 2022
-    et y stocke un Dataset (time, points):
-    - pr : précipitation
+    Creates an empty Zarr structure for each year from 1959 to 2022
+    and stores a Dataset (time, points):
+    - pr: precipitation
     """
     zarr_dir.mkdir(parents=True, exist_ok=True)
 
     lat = coords_df["lat"]
     lon = coords_df["lon"]
     if lat.len() != lon.len():
-        logger.warning(f"La taille de LAT/LON diffère : lat {len(lat)} et lon {len(lon)}")
+        logger.warning(f"LAT/LON size differs: lat {len(lat)} and lon {len(lon)}")
 
     fill_value = config["zarr"]["variables"]["pr"]["fill_value"]
     dtype_str = config["zarr"]["variables"]["pr"]["dtype"]
     dtype = np.dtype(dtype_str)
 
-    # Création pour chaque année
+    # Create for each year
     for year in range(1959, 2023):
-        # Génère l'axe de temps
+        # Generate time axis
         time = get_time_axis(year, echelle)
 
         ds = xr.Dataset(
@@ -363,7 +363,7 @@ def generate_zarr_structure(zarr_dir, echelle, coords_df, config):
             },
             coords={
                 "time": time,
-                "points": np.arange(len(lat))  # index station
+                "points": np.arange(len(lat))  # station index
             }
         )
         num_poste = coords_df["NUM_POSTE"]
@@ -371,7 +371,7 @@ def generate_zarr_structure(zarr_dir, echelle, coords_df, config):
         ds = ds.swap_dims({"points": "NUM_POSTE"})
         ds = ds.drop_vars("points")
 
-        # Configuration du compresseur
+        # Compressor configuration
         codec = numcodecs.Blosc(**config["zarr"]["compressor"]["blosc"])
         encoding = {
             "pr": {"chunks": (len(time), 100), "compressor": codec, "dtype": dtype},
@@ -382,7 +382,7 @@ def generate_zarr_structure(zarr_dir, echelle, coords_df, config):
         output_path.parent.mkdir(exist_ok=True, parents=True)
         ds.to_zarr(output_path, mode="w", encoding=encoding)
 
-        logger.info(f"[DATASET VIDE GENERE] Année {year}")
+        logger.info(f"[EMPTY DATASET GENERATED] Year {year}")
 
         logger.debug(f"[DATASET STRUCTURE] Année {year}")
         logger.debug(f"  Dimensions : {dict(ds.sizes)}")
@@ -404,18 +404,18 @@ def generate_metadata(meta_dir: str, echelle: str, df: pl.DataFrame):
     )
 
     unique_coords_df.write_csv(postes_path)
-    logger.info(f"{unique_coords_df['NUM_POSTE'].n_unique()} stations générées")
+    logger.info(f"{unique_coords_df['NUM_POSTE'].n_unique()} stations generated")
     return unique_coords_df
 
 
 
 # ================================================================
-# Fonctions de remplissage du zarr
+# Zarr filling functions
 # ================================================================
 
-# Correspondance NUM_POSTE - points
+# NUM_POSTE - points matching
 def get_poste_to_point_map(postes_df: pl.DataFrame, logger) -> dict:
-    # Mapping NUM_POSTE -> index dans la dimension NUM_POSTE du Zarr (ds.NUM_POSTE.values)
+    # Mapping NUM_POSTE -> index in Zarr NUM_POSTE dimension (ds.NUM_POSTE.values)
     return {v: i for i, v in enumerate(postes_df["NUM_POSTE"])}
 
 # Mapping time - index
@@ -431,27 +431,27 @@ def fill_zarr_for_year(year: int,
                        fill_col: str,
                        config):
     """
-    Remplit un fichier Zarr pour une année donnée avec les précipitations à partir d'un DataFrame Polars.
-    Utilise une indexation NumPy directe (chunks=None) pour contourner les limites de Dask.
+    Fills a Zarr file for a given year with precipitation from a Polars DataFrame.
+    Uses direct NumPy indexing to bypass Dask limitations.
     """
-    # Chargement des correspondances
+    # Load mappings
     poste_map = get_poste_to_point_map(postes_df, logger)
     time_map = get_time_to_index_map(zarr_path)
 
-    # Ouverture du Zarr en désactivant Dask
+    # Open Zarr disabling Dask
     store = zarr.DirectoryStore(str(zarr_path))
     ds = xr.open_zarr(store, chunks=None)
 
-    # Extraction des colonnes nécessaires
+    # Necessary columns extraction
     values = df_year[fill_col].to_numpy()
     times = df_year["time"].to_numpy()
     postes = df_year["NUM_POSTE"].to_numpy()
 
-    # Conversion des temps et correspondances
+    # Time and matching conversions
     time_idx = np.array([time_map.get(pd.Timestamp(t)) for t in times])
     point_idx = np.array([poste_map.get(p) for p in postes])
 
-    # Filtrage des lignes valides
+    # Valid lines filtering
     valid_mask = (
         (time_idx != None) &
         (point_idx != None) &
@@ -462,29 +462,29 @@ def fill_zarr_for_year(year: int,
     point_idx = point_idx[valid_mask].astype(int)
     values = values[valid_mask]
 
-    # Récupération des paramètres depuis la config
+    # Config parameters retrieval
     scale_factor = config["zarr"]["variables"]["pr"]["scale_factor"]
     unit_conversion = config["zarr"]["variables"]["pr"]["unit_conversion"]
     fill_value = config["zarr"]["variables"]["pr"]["fill_value"]
     dtype_str = config["zarr"]["variables"]["pr"]["dtype"]
     dtype = np.dtype(dtype_str)
 
-    # Application conversion d'unité + échelle
+    # Unit conversion + scaling
     scaled_values = np.round(values * unit_conversion * scale_factor)
 
-    # Remplacement des NaN par fill_value et cast au bon type
+    # NaN to fill_value replacement and cast
     scaled_values = np.where(np.isnan(scaled_values), fill_value, scaled_values).astype(dtype)
 
-    # Écriture directe dans la variable Zarr (NumPy)
+    # Direct write to Zarr variable (NumPy)
     ds["pr"].data[time_idx, point_idx] = scaled_values
     ds.to_zarr(zarr_path, mode="a", append_dim=None)
 
-    logger.info(f"[REMPLISSAGE] Année {year} — {len(values)} valeurs insérées sur {len(df_year)} lignes")
+    logger.info(f"[FILLING] Year {year} — {len(values)} values inserted out of {len(df_year)} lines")
 
 
 
 # ================================================================
-# Fonctions principales
+# Main functions
 # ================================================================
 
 def fill_zarr_task(year_df_tuple, zarr_base_path, postes_df, val_col, config):
@@ -492,7 +492,7 @@ def fill_zarr_task(year_df_tuple, zarr_base_path, postes_df, val_col, config):
     zarr_path = zarr_base_path / f"{year}.zarr"
     
     if not zarr_path.exists():
-        logger.warning(f"[SKIP] {year} (Zarr non trouvé)")
+        logger.warning(f"[SKIP] {year} (Zarr not found)")
         return f"[SKIPPED] {year}"
 
     fill_zarr_for_year(year, zarr_path, postes_df, df_year, val_col, config)
@@ -512,17 +512,17 @@ def pipeline_csv_to_zarr(config, max_workers: int = 48):
     # Étape 2 : Formation des datasets
     for echelle in echelles:
         dirs = download_all_zips(activate_download_data, echelle, logger)
-        input_dir = dirs[echelle] # répertoire des temp_data
+        input_dir = dirs[echelle] # temp_data directory
         val_col = "RR1" if echelle == "horaire" else "RR"
         date_col = "AAAAMMJJHH" if echelle == "horaire" else "AAAAMMJJ"
         all_cols = ["NUM_POSTE", "LAT", "LON", "ALTI", date_col, val_col]
 
-        logger.info(f"[CONCATENATION] Téléversement des datasets de {input_dir}")
+        logger.info(f"[CONCATENATION] Uploading datasets from {input_dir}")
         df_all = concat_csv_temp(input_dir, all_cols, val_col, date_col, max_workers)
         logger.info(df_all)
         df_all_years = group_df_by_year(df_all)
 
-        # Vérification des doublons
+        # Duplicate check
         dupes = (
             df_all
             .select(["NUM_POSTE", "lat", "lon"])
@@ -533,27 +533,27 @@ def pipeline_csv_to_zarr(config, max_workers: int = 48):
         )
         n_stations_diff_latlon = dupes.height
         if n_stations_diff_latlon == 0:
-            logger.info(f"[OK] Toutes les stations n'ont que un LAT/LON")
+            logger.info(f"[OK] All stations have only one LAT/LON")
         else:
-            logger.warning(f"Nombre de stations avec plusieurs LAT/LON : {n_stations_diff_latlon}")
+            logger.warning(f"Number of stations with multiple LAT/LON: {n_stations_diff_latlon}")
 
 
         overwrite = config["zarr"].get("overwrite", False)
         if overwrite:
-            # Étape 2 : Génération des zarr vides
-            logger.info("[GENERATION] Générations des métadonnées associées")
+            # Step 2: Empty zarr generation
+            logger.info("[GENERATION] Generating associated metadata")
             postes_df = generate_metadata(meta_dir, echelle, df_all)
 
 
-            logger.info(f"[GENERATION] Génération des zarr vides")
+            logger.info(f"[GENERATION] Generating empty zarr files")
             generate_zarr_structure(zarr_dir, echelle, postes_df, config)
 
             n_missing_alt = postes_df.filter(pl.col("altitude").is_null()).height
             if n_missing_alt > 0:
-                    logger.warning(f"{n_missing_alt} stations sans altitude renseignée.")
+                    logger.warning(f"{n_missing_alt} stations without height info.")
 
-            # Étape 3 : Remplissage des fichiers Zarr
-            logger.info("[REMPLISSAGE] Début du remplissage des Zarr")
+            # Step 3: Zarr filling
+            logger.info("[FILLING] Beginning Zarr filling")
             zarr_base_path = zarr_dir / echelle
 
             with ProcessPoolExecutor(max_workers=max_workers) as executor:
@@ -566,7 +566,7 @@ def pipeline_csv_to_zarr(config, max_workers: int = 48):
                     if msg is not None:
                         logger.info(msg)
         else:
-            logger.info(["[SKIP] Pas de réécriture des zarr"])
+            logger.info(["[SKIP] No zarr rewrite"])
 
 
 

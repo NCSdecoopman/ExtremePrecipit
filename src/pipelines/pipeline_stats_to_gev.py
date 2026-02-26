@@ -31,40 +31,40 @@ def suppress_stdout():
         finally:
             sys.stdout = old_stdout
 
-# Paramètres globaux de bounds et x0
+# Global parameters for bounds and x0
 PARAM_DEFAULTS = {
-    # μ0 est défini par vraisemblance obtenue dans le cas stationnaire (cf init_gev_params_from_moments)
+    # mu0 is defined by likelihood obtained in the stationary case (cf init_gev_params_from_moments)
     "mu0": {
-        "bounds": (-np.inf, np.inf) #(0, 500)  # borne large pour s'adapter à différentes régions
+        "bounds": (-np.inf, np.inf) #(0, 500)  # large bound to adapt to different regions
     },
 
-    # μ1 : pente temporelle, initialisée à 0 (pas de tendance au départ)
+    # mu1: temporal slope, initialized at 0 (no initial trend)
     "mu1": {
         "bounds": (-np.inf, np.inf) #(-100, 100)
     },
 
-    # σ0 : écart-type initial estimé dynamiquement (cf. init_gev_params_from_moments)
+    # sigma0: dynamically estimated initial standard deviation (cf. init_gev_params_from_moments)
     "sigma0": {
         "bounds": (-np.inf, np.inf) #(0.1, 100)
     },
 
-    # σ1 : variation temporelle de l’écart-type, fixée à 0 au départ
+    # sigma1: temporal variation of standard deviation, fixed at 0 initially
     "sigma1": {
         "bounds": (-np.inf, np.inf) #(-50, 50)
     },
 
-    # ξ : paramètre de forme, fixé initialement à 0.1
+    # xi: shape parameter, fixed at 0.1 initially
     "xi": {
-        "bounds": (-0.5, 0.5) # ξ est défini comme constante avec xi_init = 0.1 dans le code
+        "bounds": (-0.5, 0.5) # xi is defined as constant with xi_init = 0.1 in the code
     }
 }
 
 
 
 MODEL_REGISTRY = {
-    # --------------------------------------------------------------------------------------------- STATIONNAIRE
-    # μ(t) = μ₀ ; σ(t) = σ₀ ; ξ(t) = ξ
-    "s_gev": (ns_gev_m1, ["mu0", "mu1", "sigma0", "xi"]), # Stationnaire via μ₁ fixée toujours à 0
+    # --------------------------------------------------------------------------------------------- STATIONARY
+    # mu(t) = mu0 ; sigma(t) = sigma0 ; xi(t) = xi
+    "s_gev": (ns_gev_m1, ["mu0", "mu1", "sigma0", "xi"]), # Stationary via mu1 fixed at 0
 
     # --------------------------------------------------------------------------------------------- NON STATIONNAIRE
     # μ(t) = μ₀ + μ₁·t ; σ(t) = σ₀ ; ξ(t) = ξ
@@ -85,66 +85,62 @@ MODEL_REGISTRY = {
     "ns_gev_m3_break_year":  (ns_gev_m3,  ["mu0", "mu1", "sigma0", "sigma1", "xi"])
 }
 
-# Initialisation des modèles :
+# Model initialization:
 # 
-# - s_gev (stationnaire) :
-#     μ₀, σ₀, ξ initialisés par les moments empiriques (moyenne et écart-type).
+# - s_gev (stationary):
+#     mu0, sigma0, xi initialized from empirical moments (mean and standard deviation).
 #
-# - ns_gev_m1 (effet sur μ) :
-#     μ₀, σ₀, ξ initialisés par s_gev ; μ₁ initialisé à 0.
-#     → Hypothèse : pas de tendance sur σ.
+# - ns_gev_m1 (mu effect):
+#     mu0, sigma0, xi initialized from s_gev; mu1 initialized at 0.
 #
-# - ns_gev_m2 (effet sur σ) :
-#     μ₀, σ₀, ξ initialisés par s_gev ; σ₁ initialisé à 0.
-#     → Hypothèse : pas de tendance sur μ.
+# - ns_gev_m2 (sigma effect):
+#     mu0, sigma0, xi initialized from s_gev; sigma1 initialized at 0.
 #
-# - ns_gev_m3 (effet sur μ et σ) :
-#     Initialisation hybride basée sur la performance de ns_gev_m1 et ns_gev_m2 :
-#       • Si log-vraisemblance(ns_gev_m1) > log-vraisemblance(ns_gev_m2) :
-#           μ₀, μ₁, σ₀, ξ initialisés depuis ns_gev_m1 ; σ₁ initialisé à 0.
-#       • Sinon :
-#           μ₀, σ₀, σ₁, ξ initialisés depuis ns_gev_m2 ; μ₁ initialisé à 0.
-#     → On repart du meilleur modèle unidimensionnel pour estimer l’autre effet.
+# - ns_gev_m3 (mu and sigma effect):
+#     Hybrid initialization based on ns_gev_m1 and ns_gev_m2 performance:
+#       • If log-likelihood(ns_gev_m1) > log-likelihood(ns_gev_m2):
+#           mu0, mu1, sigma0, xi initialized from ns_gev_m1; sigma1 initialized at 0.
+#       • Else:
+#           mu0, sigma0, sigma1, xi initialized from ns_gev_m2; mu1 initialized at 0.
 
 
 
 
-# Soit Γ une loi gamma, notons gₖ = Γ(1 - kξ) avec k dans {1, 2, 3, 4}
-# --- Calcul de l'espérance de la GEV ---
-# E(X) = μ + (σ / ξ) * (g₁ - 1)
-# ⇒ μ = E(X) − (σ / ξ) × (g₁ - 1)
-# --- Calcul de l'écart-type de la GEV ---
-# V(X) = (σ² / ξ²) * (g₂ - g₁²)
-# Ecart-type = = √V(X) = (σ / ξ) * √(g₂ - g₁²)
-# ⇒ σ = Écart-type × ξ / √(g₂ - g₁²)
+# Let Gamma be the gamma function, g_k = Gamma(1 - k*xi) for k in {1, 2, 3, 4}
+# --- GEV Expected Value ---
+# E(X) = mu + (sigma / xi) * (g1 - 1)
+# ⇒ mu = E(X) - (sigma / xi) * (g1 - 1)
+# --- GEV Standard Deviation ---
+# V(X) = (sigma^2 / xi^2) * (g2 - g1^2)
+# sigma = Standard Deviation * xi / sqrt(g2 - g1^2)
 def init_gev_params_from_moments(mean_emp: float, std_emp: float, xi: float) -> Tuple[float, float]:
     """
-    mean_emp = moyenne empirique (calculée à partir des données)
-    std_emp = écart-type empirique
-    xi = paramètre de forme (on le fixe ici à 0.1)
-    Retourne : (mu, sigma) — les paramètres initiaux estimés
+    mean_emp = empirical mean
+    std_emp = empirical standard deviation
+    xi = shape parameter (fixed at 0.1)
+    Returns: (mu, sigma) - estimated initial parameters
     """
-    gamma1 = gamma(1 - xi)                                  # g₁ = Γ(1 - ξ)
-    gamma2 = gamma(1 - 2*xi)                                # g₂ = Γ(1 - 2ξ)
-    sigma = std_emp * xi / np.sqrt(gamma2 - gamma1**2)      # σ = Écart-type × ξ / √(g₂ - g₁²)
-    mu = mean_emp - sigma / xi * (gamma1 - 1)               # μ = E(X) − (σ / ξ) × (g₁ - 1)
-    return mu, sigma                                        # μ et σ
+    gamma1 = gamma(1 - xi)                                  # g1 = Gamma(1 - xi)
+    gamma2 = gamma(1 - 2*xi)                                # g2 = Gamma(1 - 2*xi)
+    sigma = std_emp * xi / np.sqrt(gamma2 - gamma1**2)      # sigma = STD * xi / sqrt(g2 - g1^2)
+    mu = mean_emp - sigma / xi * (gamma1 - 1)               # mu = E(X) - (sigma / xi) * (g1 - 1)
+    return mu, sigma                                        # mu and sigma
      
 
 # Sécurise le cas non stationnaire
 def postprocess_s_gev_results(results: list[Tuple]) -> Tuple[list[str], list[Tuple]]:
-    """Vérifie que mu1 est bien nul pour le modèle s_gev, et retourne les paramètres sans suppression."""
+    """Verify mu1 is zero for stationary GEV and return filtered parameters."""
     for res in results:
-        if len(res) != 6:  # NUM_POSTE + 4 paramètres + loglikehood
-            raise ValueError(f"Résultat inattendu dans s_gev : longueur différent de 6")
+        if len(res) != 6:  # NUM_POSTE + 4 parameters + log-likelihood
+            raise ValueError(f"Unexpected result length in s_gev: {len(res)}")
 
-    mu1_values = [res[2] for res in results]  # mu1 = 3e élément (res = NUM_POSTE, mu0, mu1, sigma0, xi, loglik)
+    mu1_values = [res[2] for res in results]  # mu1 is the 3rd element
     if any(not (np.isnan(v) or v == 0) for v in mu1_values):
-        raise ValueError("Erreur : le modèle 's_gev' est censé fixer mu1 = 0. Une valeur estimée est différente de 0.")
+        raise ValueError("Error: 's_gev' model must have mu1 = 0.")
     
-    param_names = ["mu0", "sigma0", "xi"] # pour ne pas enregistrer mu1
+    param_names = ["mu0", "sigma0", "xi"] 
     filtered_results = [(res[0], res[1], res[3], res[4], res[5]) for res in results]  
-    # garde NUM_POSTE, mu0, sigma0, xi, loglik (supprime mu1)
+    # keep NUM_POSTE, mu0, sigma0, xi, loglik (remove mu1)
     
     return param_names, filtered_results
 
@@ -177,39 +173,39 @@ def gev_non_stationnaire(
 
     model_struct, param_names = MODEL_REGISTRY[model_name]
 
-    # === Initialisation personnalisée basée sur les moments empiriques d'un GEV stationnaire ===
-    # Étape 1 : calcul des moments empiriques (moyenne et écart-type) des maxima observés
+    # === Custom initialization based on empirical moments of a stationary GEV ===
+    # Step 1: Calculate empirical moments (mean and standard deviation) of observed maxima
     mean_emp = values.mean()
     std_emp = values.std()
 
-    # Étape 2 : on fixe xi à 0.1 pour éviter les comportements extrêmes (queue trop courte ou trop lourde)
-    xi_init = 0.1 # ξ physique initial voulu
+    # Step 2: Fix xi at 0.1 to avoid extreme tail behavior
+    xi_init = 0.1 
 
-    # Étape 3 : on utilise les formules inversées de l'espérance et de la variance de la GEV
-    # pour retrouver mu et sigma de manière à ce que la GEV initialisée ait la même moyenne et écart-type
+    # Step 3: Use inverted GEV formulas for expected value and variance
+    # to find mu and sigma such that the initial GEV matches mean and standard deviation
     mu_init, sigma_init = init_gev_params_from_moments(mean_emp, std_emp, xi=xi_init)
 
-    # Covariable temporelle : l'année normalisée
+    # Temporal covariate: normalized year
     covar = pd.DataFrame({"x": df["year_norm"]}, index=df.index)
 
     obs = ObsWithCovar(values, covar)
-    ns_dist = NsDistribution("gev", model_struct) # model_struct peut être None (stationnaire)
+    ns_dist = NsDistribution("gev", model_struct) # model_struct can be None (stationary)
     bounds = [PARAM_DEFAULTS[param]["bounds"] for param in param_names]
 
-    # On récupère les initiations déjà trouvées issues de modèles plus simples
+    # Retrieve initial parameters from simpler models if available
     if init_params:
-        # μ₀, σ₀ et ξ viennent soit des moments empiriques, soit d’un modèle stationnaire précédent
+        # mu0, sigma0 and xi come from empirical moments or previous stationary model
         mu_init = init_params.get("mu0", mu_init)
         sigma_init = init_params.get("sigma0", sigma_init)
         xi_init = init_params.get("xi", xi_init)
 
     custom_x0 = {
-        "mu0": mu_init,         # μ₀
-        "mu1": 0,               # μ₁ = 0 pour commencer et le définir
-        "sigma0": sigma_init,   # σ₀
-        "sigma1": 0,            # σ₁ = 0 pour commencer et le définir
-        # Attention ! inversion car to_params_ts() retourne -xi
-        "xi": -xi_init          # ξ = constante choisie dès le début
+        "mu0": mu_init,         # mu0
+        "mu1": 0,               # mu1 starts at 0
+        "sigma0": sigma_init,   # sigma0
+        "sigma1": 0,            # sigma1 starts at 0
+        # NOTE: inversion because to_params_ts() returns -xi
+        "xi": -xi_init          # initial fixed xi
     }
 
     if model_name in ["ns_gev_m3", "ns_gev_m3_break_year"]: # Effet temporel sur μ et σ
@@ -226,22 +222,21 @@ def gev_non_stationnaire(
 
     x0 = [custom_x0[param] for param in param_names]
 
-    # METHODES D'OPTIMISATION
-    # BFGS libre uniquement pour les modèles non-stationnaires, L-BFGS-B sinon (pour fixer mu1 = 0 permanent)
-    # L-BFGS-B (et co) avec bornes pour tous les modèles, y compris s_gev
+    # OPTIMIZATION METHODS
+    # BFGS for non-stationary models, L-BFGS-B with bounds for others (to keep mu1 = 0)
     
     optim_methods = []
 
     if model_name == "s_gev":
-        # Fixe mu1 à 0 via les bornes et laisse les autres comme paramétrées
+        # Fix mu1 to 0 via bounds
         bounds = [
             (0, 0) if param == "mu1" else PARAM_DEFAULTS[param]["bounds"]
             for param in param_names
         ]
     else:
-        bounds = [PARAM_DEFAULTS[param]["bounds"] for param in param_names] # comme paramétrées
-        # Méthode sans borne pour les modèles non stationnaires
-        optim_methods.append({"method": "BFGS", "x0": x0}) # pas de 'bounds' ici
+        bounds = [PARAM_DEFAULTS[param]["bounds"] for param in param_names]
+        # Unbounded method for non-stationary models
+        optim_methods.append({"method": "BFGS", "x0": x0}) 
 
     # Ajoute d'autres méthodes d’optimisation avec bornes si échecs
     BOUND_COMPATIBLE_METHODS = ["L-BFGS-B", "TNC", "SLSQP", "Powell", "Nelder-Mead"]
@@ -257,13 +252,13 @@ def gev_non_stationnaire(
             with suppress_stdout():
                 fit.fit()
 
-            log_likelihood = -fit.nllh() # nllh() retourne la négative log-vraisemblance
+            log_likelihood = -fit.nllh() # nllh() returns negative log-likelihood
             p = fit.ns_distribution.to_params_ts()
             param_names = fit.ns_distribution.par_names
             param_values = list(p)
 
-            # Corrige xi : to_params_ts() retourne -xi, nous on veut xi
-            # xi est toujours le dernier paramètre de la liste param_names générée par NsDistribution
+            # Fix xi: to_params_ts() returns -xi, we want xi
+            # xi is always the last parameter in the param_names list generated by NsDistribution
             param_values[-1] = -param_values[-1]
 
             if all(np.isfinite(param_values)):
@@ -312,8 +307,8 @@ def fit_ns_gev_for_point(
         )
         return (num_poste,) + result
     except Exception as e:
-        logger.error(f"Erreur pour NUM_POSTE={num_poste} : {type(e).__name__} - {e}")
-        return (num_poste,) + (np.nan,) * len(MODEL_REGISTRY[model_name][1]) + (np.nan,) # toujours param + log_likelihood
+        logger.error(f"Error for NUM_POSTE={num_poste}: {type(e).__name__} - {e}")
+        return (num_poste,) + (np.nan,) * len(MODEL_REGISTRY[model_name][1]) + (np.nan,) 
 
 def fit_gev_par_point(
     df_pl: pl.DataFrame,
@@ -338,14 +333,14 @@ def fit_gev_par_point(
 
     if break_year is not None:
         if max_year == break_year:
-            raise ValueError("`break_year` ne peut pas être égal à `max_year` (division par zéro).")
+            raise ValueError("`break_year` cannot be equal to `max_year` (division by zero).")
 
         df["year_norm"] = np.where(
             df["year"] < break_year,
             0,
-            (df["year"] - break_year) / (max_year - break_year) # t₊ = (t - 1985) / (max_year - 1985) = (t − t₀) ⋅ 𝟙{t > t₀}
+            (df["year"] - break_year) / (max_year - break_year) # Piecewise linear trend with breakpoint
         )
-        logger.info(f"Covariable temporelle créée avec rupture à {break_year}")
+        logger.info(f"Temporal covariate created with breakpoint at {break_year}")
     else:
         df["year_norm"] = (df["year"] - min_year) / (max_year - min_year) # t_norm = (t - min_year) / (max_year - min_year)
 
@@ -472,7 +467,7 @@ def fit_gev_par_point(
 
     n_total = len(df_result)
     n_failed = df_result[param_names].isna().all(axis=1).sum()
-    logger.info(f"NS-GEV fitting terminé : {n_total - n_failed} réussites, {n_failed} échecs.")
+    logger.info(f"NS-GEV fitting completed: {n_total - n_failed} successes, {n_failed} failures.")
     return df_result
 
 def pipeline_gev_from_statisticals(config, max_workers: int=48, n_bootstrap: int=100):
@@ -501,11 +496,11 @@ def pipeline_gev_from_statisticals(config, max_workers: int=48, n_bootstrap: int
 
         if model_path_name == "observed_settings.yaml":
             input_dir = Path(config["statistics"]["path"]["outputdir"]) / echelle
-            logger.info(f"Source STATION détectée → lecture dans : {input_dir}")
+            logger.info(f"STATION source detected → reading from: {input_dir}")
 
         elif model_path_name == "modelised_settings.yaml":
             input_dir = Path(config["statistics"]["path"]["outputdir"]) / "horaire"
-            logger.info(f"Source AROME détectée → lecture dans : {input_dir}")
+            logger.info(f"AROME source detected → reading from: {input_dir}")
 
         else:
             logger.error(f"Nom de fichier de configuration non reconnu : {model_path_name}")
