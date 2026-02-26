@@ -31,21 +31,18 @@ def load_trends(source, echelle, periods):
                 if df_sig.is_empty():
                     continue
                 trends = df_sig[TREND_COL].to_numpy()
+                
                 # Label logic
                 if s == "hydro":
                     label = "YEAR"
                 else:
                     label = s.upper()
                 
-                # Determine type label correctly
-                is_restricted = "reduce" in echelle or (echelle == "horaire" and source == "observed")
-                type_label = "Restricted" if is_restricted else "Full"
-
+                # Type label based on timeframe (simplified logic)
                 for t in trends:
                     all_data.append({
                         "Period": label,
-                        "Trend": t,
-                        "Type": type_label
+                        "Trend": t
                     })
             except Exception as e:
                 print(f"Error reading {p}: {e}")
@@ -60,7 +57,7 @@ def plot_robustness(ax, df_full, df_reduce, labels, rotation=0):
     data_f = [df_full[df_full["Period"] == s]["Trend"] if not df_full.empty else [] for s in labels]
     data_r = [df_reduce[df_reduce["Period"] == s]["Trend"] if not df_reduce.empty else [] for s in labels]
 
-    # Boxplots
+    # Boxplots: Full (Black, 1959-2022) vs Reduce (Gray, 1990-2022)
     box_f = ax.boxplot(
         data_f,
         positions=pos - width / 2,
@@ -116,14 +113,20 @@ def run_plot(periods, labels, output_filename, fig_width=18, rotation=0):
         for col, source_name in enumerate(sources):
             source_key = "observed" if source_name.upper() == "STATIONS" else "modelised"
             
-            # Special case for Hourly Stations: only restricted period exists
-            if echelle == "horaire" and source_key == "observed":
-                df_full = pd.DataFrame()
-                df_reduce = load_trends(source_key, echelle, periods)
+            # Application de la logique de périodes
+            if echelle == "quotidien":
+                # Noir = 1959-2022 (dossier standard) | Gris = 1990-2022 (dossier _reduce)
+                df_full = load_trends(source_key, "quotidien", periods)
+                df_reduce = load_trends(source_key, "quotidien_reduce", periods)
             else:
-                df_full = load_trends(source_key, echelle, periods)
-                df_reduce = load_trends(source_key, f"{echelle}_reduce", periods)
+                # Horaire: Noir = 1959-2022 (dossier _reduce) | Gris = 1990-2022 (dossier standard)
+                df_full = load_trends(source_key, "horaire_reduce", periods)
+                df_reduce = load_trends(source_key, "horaire", periods)
             
+            print(f"Echelle: {echelle}, Source: {source_key}")
+            print(f"  Full (1959-2022): {len(df_full)} points")
+            print(f"  Reduce (1990-2022): {len(df_reduce)} points")
+
             ax = axes[row, col]
             plot_robustness(ax, df_full, df_reduce, labels, rotation=rotation)
             ax.set_title(f"{source_name}")
@@ -132,7 +135,7 @@ def run_plot(periods, labels, output_filename, fig_width=18, rotation=0):
 
     # Global legend
     legend_elements = [
-        Patch(facecolor="black", label="Complete series (1959-2022)"),
+        Patch(facecolor="black", label="Full period (1959-2022)"),
         Patch(facecolor="lightgray", label="Restricted period (1990-2022)")
     ]
     fig.legend(handles=legend_elements, loc="upper center", ncol=2, bbox_to_anchor=(0.5, 0.98))

@@ -10,18 +10,18 @@ logging.basicConfig(
 log = logging.getLogger(__name__).info
 
 SEASON_MONTHS = [
-    "jan",
-    "fev",
-    "mar",
-    "avr",
-    "mai",
-    "jui",
-    "juill",
-    "aou",
-    "sep",
-    "oct",
-    "nov",
-    "dec"
+    # "jan",
+    # "fev",
+    # "mar",
+    # "avr",
+    # "mai",
+    # "jui",
+    # "juill",
+    # "aou",
+    # "sep",
+    # "oct",
+    # "nov",
+    # "dec"
 ]
 
 SEASON_SEAS = [
@@ -233,14 +233,14 @@ for data_type in ["gev"]: #  "dispo", "stats",
         else:
             sat = 100
                 
-        for echelle in ["horaire"]: # "quotidien", 
+        for echelle in ["quotidien"]: # "horaire", 
 
             if col_calculate in ["z_T_p"]:
                 if echelle=="horaire":
                     sat = 90
 
             if echelle == "quotidien":            
-                DIFFERENTE_PERIODE = [False] # True
+                DIFFERENTE_PERIODE = [True] # False
             else:            
                 DIFFERENTE_PERIODE = [True] # False
 
