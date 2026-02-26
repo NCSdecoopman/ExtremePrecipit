@@ -57,6 +57,9 @@
 \linenumbers
 \modulolinenumbers[5]
 
+\usepackage{setspace}
+\doublespacing
+
 % --- DEBUT ---
 \begin{document}
 \title{Climatology and trends of extreme precipitation in France: evaluation of an explicit-convection regional climate model}
@@ -85,7 +88,7 @@ pre-industrial era. Furthermore, the Clausius-Clapeyron relationship
 indicates that warmer air can hold more moisture (+7\% per °C)
 \parencite{clapeyron1834}. Due to buoyancy (Archimedes' principle), warm air surrounded by cooler air tends to rise. As warm air ascends in the
 atmosphere, it undergoes adiabatic cooling, leading to the condensation
-of water vapor and the formation of precipitation \parencite{meteofrance}.
+of water vapor and the formation of precipitation \parencite{Lin08082022}.
 However, under calm conditions, the central portion of the precipitation
 distribution does not fully capitalize on this excess moisture.
 Energetic constraints (radiative balance, evaporation, ocean-air
@@ -124,17 +127,8 @@ suggest similar trends in a significant proportion of land areas \parencite{Dona
 heterogeneous and less pronounced than for temperature, with strong
 regional variations. In most regions, trends remain weak or
 non-significant, and only in certain areas---particularly the
-southeast---are signals detected. In this region, the frequency of
-extreme Mediterranean episodes (cumulated rainfall \textgreater{} 200 mm
-in 24 hours) has doubled between 1961 and 2020, although interannual
-variability remains high \parencite{meteofrance2024}. The mean intensity of
-daily extremes has increased by +22\% between 1961 and 2015 \parencite{Ribes2019,Blanchet2018,blanchet-creutin-2022}. In southeastern France, no significant trend in annual maxima of daily precipitation was detected before the early 1990s; since then, studies report increases on the order of ~20\% (with estimates reaching ~40\% depending on the metric and uncertainty range) \parencite{Ribes2019}. In the southeastern Alps, the increase in 20-year return
-level daily precipitation in autumn (1958--2017) could reach an order of
-magnitude comparable to its mean value (\textasciitilde+100\%) \parencite{blanchet2021explaining}. Projections indicate that a +4°C
-warming scenario could lead to an average increase of
-\textasciitilde+15\% in daily extreme rainfall across France, and up to
-+20\% in the northern half \parencite{Soubeyroux01022015}. There remains
-strong spatial and interannual variability \parencite{IPCC2021}.
+southeast---are signals detected. In southeastern France, no significant trend in annual maxima of daily precipitation was detected before the early 1990s \parencite{blanchet-creutin-2022}. Since then, studies report increases on the order of ~20\% (with estimates reaching up to ~+40\% depending on the metric and uncertainty range) \parencite{Ribes2019,Blanchet2018,blanchet-creutin-2022}. In the southeastern Alps, the increase in 20-year return
+level daily precipitation in autumn reaches up to +100\% between 1958 and 2017 \parencite{blanchet2021explaining}. 
 
 \textbf{Hourly extremes} are
 essential for characterizing intense convective phenomena (thunderstorm
@@ -157,18 +151,22 @@ However, trends in hourly return levels remain weak to non-significant,
 with no clear spatial or seasonal coherence, contrasting with the robust
 signals observed at daily time scales \parencite{Soubeyroux01022015}. This suggests that hourly extremes do not yet show a clear climate signal, possibly because the signal is still emerging but cannot be robustly detected given the short length of available series and the high year-to-year variability.
 
-\textbf{In France}, a nationwide network of daily precipitation with good spatial coverage became available from the 1950–1960s, while most hourly records only begin in the 1990–2000s. In parallel, climate models forced by reanalyses provide complementary advantages of: 1) precipitation series that potentially go back further in time than raingauge records; and 2) spatially complete and
+\textbf{In France}, a nationwide network of daily precipitation with good spatial coverage became available from the 1950–1960s, while most hourly records only begin in the 1990–2000s \parencite{meteofrance2024}. In parallel, regional climate models (RCMs) forced by reanalyses provide complementary advantages of: 1) precipitation series that potentially go back further in time than raingauge records; and 2) spatially complete and
 physically consistent fields, particularly useful in poorly instrumented
-areas. Global Circulation Models (GCMs) are not suitable for studying convective extremes, as convection is parameterized, leading to over-smoothed and
-poorly located hourly precipitation at resolutions of 12--200 km \parencite{KilometerScaleClimateModelsProspectsandChallenges}. 
-The emergence of regional climate models with convection-permitting offers a unique opportunity, as they realistically simulate the dynamics of intense precipitation at fine spatial and temporal scales over long periods. Recent multi-model convection-premitting ensembles further show that such simulations provide more certain projections of local changes in extreme rainfall, by substantially reducing model-related uncertainty compared to coarser-resolution RCMs \parencite{Fosser2024}. In France, the convection-permitting RCM AROME model (2.5 km) forced by ERA-Interim (1979–2019) has been evaluated by \cite{Caillaud2021,Cortes-Hernandez2024}, who show that AROME realistically reproduces the location, intensity, frequency, and interannual variability of northwestern Mediterranean heavy precipitation events at daily and especially hourly scales, with clear added value compared to the coarser RCM ALADIN. However, the study also reports persistent regional biases, notably an overestimation of rainfall intensity in mountainous areas and an underestimation over coastal plains. These biases are accompanied by timing and spatial-distribution errors in some events, highlighting remaining limitations for the most extreme convective episodes. A new generation of simulation is now available, where AROME is forced by ERA5 (25-31km) from 1959 to 2022. This provides a unique dataset with sufficiently long series (63 years) to study precipitation extremes in France and their trends. However, the validity of the extremes simulated by this model has never been evaluated. Our study
-addresses this gap by assessing the ability of the AROME model to reproduce the climatology and trends of daily and hourly precipitation in France.
+areas. They are however not suitable for studying convective extremes, as convection is parameterized, leading to over-smoothed and
+poorly located hourly precipitation at 12 km resolution \parencite{KilometerScaleClimateModelsProspectsandChallenges}. 
+The emergence of RCMs at kilometer-scale resolution allowing the explicit resolution of deep convection  offers a unique opportunity, as they realistically simulate the dynamics of intense precipitation at fine spatial and temporal scales over long periods. Recent multi-model convection-permitting ensembles have been shown to better represent heavy precipitation  compared to 12km resolution RCMs, in particular at hourly scale  \parencite{ban-etal-2021,pichelli-etal-2021}. Such simulations also provide more certain projections of local changes in extreme rainfall, by substantially reducing model-related uncertainty compared to coarser-resolution RCMs \parencite{Fosser2024}. The convection-permitting RCM model developed by CNRM (CNRM-AROME model, 2.5 km) forced by the global reanalysis ERA-Interim (80 km) has been evaluated by \cite{Caillaud2021} over the Pan-Alpine domain (1981-2018) and by \cite{Cortes-Hernandez2024} over Corsica island (2000-2018). \cite{Caillaud2021} show a generally good representation of heavy precipitation events, but the model tends to underestimate the highest values (>200 mm/d and >40 mm/h).
+
+Recently, a new hindcast simulation using the latest version of the CNRM-AROME model and forced by the most recent global reanalysis, ERA5 (25-31km), has been performed, covering the period from 1959 to 2022. This provides a unique dataset with sufficiently long series (63 years) to study precipitation extremes in France and their trends. However, the validity of the extremes simulated by this model has never been evaluated. Our study
+aims at addressing this gap. 
+ In addition to evaluating new simulations, an added-value of our analysis compared to \cite{Caillaud2021}, \cite{ban-etal-2021} or \cite{pichelli-etal-2021} lies in the fact that we focus here on extremes, i.e. precipitation amounts observed only a few times in a lifetime (e.g. the 10-year return level, which is the level exceeded on average once every ten years), rather than heavy precipitation corresponding to high but non-extreme quantiles (e.g. the 99th percentile of daily precipitation considered in \cite{ban-etal-2021} is exceeded on average 3.6 times9 a year, while the 99.9th percentile of hourly precipitation is exceeded on average once in 40 days). Finally, another added-value of our analysis is that we evaluate trends in extreme precipitation, whereas \cite{Caillaud2021}, \cite{ban-etal-2021} or \cite{pichelli-etal-2021}  looked at the climatology. Based on non-stationary Extreme Value Theory, our analysis is able to evaluate trends in 10-year return level in CNRM-AROME at both daily and hourly scale in France.
+
 
 \section{Data used}\label{data-used}
 
 \subsection{Stations}\label{stations}
 
-In order to evaluate the AROME model, this study uses precipitation data from Météo-France stations
+In order to evaluate the CNRM-AROME model, this study uses precipitation data from Météo-France stations
 \parencite{meteofrance2024} at daily (1959--2022) and hourly (1990--2022) time
 steps. There is a strong contrast between daily and hourly observational records available in France. Daily stations provide long, dense time series: more than half of the 8 198 daily records have over 40 years of data with limited missing values, and several exceed 60 years. In contrast, hourly stations remain much shorter: most of the 2 315 hourly stations offer only 15–30 years of data, reflecting the later deployment of automatic networks. This disparity underscores why long-term trends in sub-daily extremes have been little studied in France so far due to the lack of long records.  
 %Figure 1 shows the number of stations maintained by Météo-France as well as the length of the series at different timestep. As illustrated in this figure, there is a strong contrast between daily and hourly observational records available in France. Daily stations (left) provide long, dense time series: more than half of the 8 198 stations have over 40 years of data with limited missing values, and several exceed 60 years. In contrast, hourly stations (right) remain much shorter: most of the 2 315 stations offer only 15–30 years of reliable data, reflecting the later deployment of automatic networks. This disparity underscores why long-term trends in sub-daily extremes are more difficult to detect than at the daily scale. 
@@ -176,12 +174,18 @@ steps. There is a strong contrast between daily and hourly observational records
 Station selection is based on a double criteria: at each station, we compute the proportion of missing data for each year/season/month. A year/season/month is considered as missing if it contains more than 10\% of missing values. Then only the stations with at least the required number of nonmissing years/seasons/months are retained: 50 years for the daily station (1959--2022) and 25 years for hourly stations (1990--2022). Subsequent
 analyses are restricted to this subset of stations and years/seasons/months. These criteria, applied over the complete hydrological reference period, lead us to select 1583 daily stations and 574 hourly stations.
 
-\subsection{AROME model}\label{arome-model}
+\subsection{CNRM-AROME model}\label{arome-model}
 
-The convection-permitting RCM AROME model, forced by the ERA5 reanalysis, provides
-gap-free hourly precipitation data from 1959 to 2022 at a 2.5 km resolution over
-the western Europe and northwestern Mediterranean region in Figure \ref{fig:map_domain} (Centre National de
-Recherches Météorologiques 2014). This results in 87,536 regularly spaced grid cells over metropolitan France.
+%The convection-permitting RCM CNRM-AROME model (hereafter referred to as AROME), forced by the ERA5 reanalysis, provides
+%gap-free hourly precipitation data from 1959 to 2022 at a 2.5 km resolution over
+%the western Europe and northwestern Mediterranean region in Figure~\ref{fig:map_domain}. This results %in 87,536 regularly spaced grid cells over metropolitan France.
+
+CNRM-AROME model (hereafter referred to as AROME) is the Convection-Permitting Regional Climate Model (CP-RCM) developped at CNRM (Centre National de Recherches Météorologiques). Based on the limited-area mesoscale AROME model (Seity et al. 2011) used for National Weather Prediction at Météo-France since 2008, AROME is also used in climate mode since 2014 (Caillaud et al. 2021; Lucas-Picher et al. 2024).
+AROME combines the non-hydrostatic dynamical ALADIN bi-spectral core and physical parameterisations coming from the research model Meso-NH. At the kilometer-scale resolution, deep convection is no longer a sub-grid process but shallow convection still need to be parametrised. A new version of AROME is used in this study, with improvements mainly concerning surface schemes. Over the nature tiles, the soil is modelled by 14 soil layers instead of 3 in the previous version and 3 vegetation types are now taken into account, whereas only one was chosen previously, allowing a better representation of sub-grid heterogeneities. A new version of the snow model enables 12 snow layers (instead of one in the previous version). Over town, the existing Town Energy Balance (TEB) (Masson 2000) now allows for gardens within the urban canyon and is complemented by a building energy module that takes heating and air conditioning into account.
+
+The studied simulation is a 63-year AROME evaluation simulation from 1959 to 2022 directly driven by the ERA5 global reanalysis (Hersbach et al. 2020) at 2.5 km resolution. This simulation is performed over the domain ALPX-3, covering extended metropolitan France (cf. Figure~\ref{fig:map_domain}). The domain includes 687 × 847 grid-points, approximatively 1700 km × 2100 km, with 87,536 regularly spaced grid cells over metropolitan France. The evaluation simulation is directly driven at the domain boundaries by the ERA5 reanalysis at 50 km every hour. The sea surface temperatures (SSTs) are also given by the ERA5 reanalysis at 30 km resolution. Aerosols are monthly evolving and come from the ALDERA reanalysis, a CNRM-ALADIN simulation at 12 km driven by ERA5 with an interactive aerosol scheme (Nabat et al. 2020). Green House Gases are evolving annualy.
+
+More information on the model version and the evaluation simulation can be found in Quenum et al. in prep and in the technical note Caillaud et al. 2026.
 
 \begin{figure}
 \begin{center}
@@ -192,9 +196,16 @@ Recherches Météorologiques 2014). This results in 87,536 regularly spaced grid
 \end{center}
 \end{figure}
 
-\cite{Caillaud2021} have evaluated the AROME model forced by ERA-Interim. They show a generally good representation of heavy precipitation events, but several systematic biases are documented. The model tends to underestimate the most intense daily and hourly extremes, particularly for the highest values (>200 mm/d and >40 mm/h). AROME also exhibits seasonal temperature biases: a cold bias in winter–spring, and a warm bias in summer associated with an excess of incoming short-wave radiation linked to underestimated cloud cover. In mountainous areas, the model is too cold and too wet, and snow cover tends to persist unrealistically above roughly 2000 m. Some precipitation-system properties (extent, duration, volume) also remain biased when compared with reference products. 
+%\cite{Caillaud2021} have evaluated the previous version of AROME model forced by ERA-Interim. They show a generally good representation of heavy precipitation events, but several systematic biases are documented. The model tends to underestimate the most intense daily and hourly extremes, particularly for the highest values (>200 mm/d and >40 mm/h). AROME also exhibits seasonal temperature biases: a cold bias in winter–spring, and a warm bias in summer associated with an excess of incoming short-wave radiation linked to underestimated cloud cover. In mountainous areas, the model is too cold and too wet, and snow cover tends to persist unrealistically above roughly 2000 m. Some precipitation-system properties (extent, duration, volume) also remain biased when compared with reference products. 
 
-It should be noted that temperature trends with the AROME model forced by ERA5 are twice as weak as observed trends (personnal communication with CNRM researchers). This implies a dampening of the Clausius–Clapeyron–related component of extreme precipitation trends, which is expected to influence the magnitude of the trends we can detect.
+\begin{figure}
+\begin{center}
+  \includegraphics[width=\linewidth]{Trend_TM_ARO_OBS_yea_1959-2022.png}
+  \caption{Temporal evolution of the annual mean temperature between 1959 and 2022. For the observations, the time-series are computed from the French thermal indicator, i.e. the mean of a given set of 30 stations with homogenised data, which are the reference temperature stations in France (Gibelin et al. 2014). For the model, the time-series are computed over the mean of the 30 grid-points that are the closest to the stations. For each time-series, the trend is computed using a linear regression.}\label{fig:trend_tempe}
+\end{center}
+\end{figure}
+
+It should be noted that temperature trends (cf. Figure~\ref{fig:tren_tempe}) with the AROME model forced by ERA5 are about one-third weaker than observed trends. This implies a dampening of the Clausius–Clapeyron–related component of extreme precipitation trends, which is expected to influence the magnitude of the trends we can detect.
 
 \section{Methodology}\label{methodology}
 
@@ -307,8 +318,8 @@ M_3(\theta_3)\\[-0.2ex]
 \]
 
 
-Furthermore, based on previous studies of trends in extremes in France
-\parencite{Blanchet2018,Ribes2019}, we consider the case of a
+Furthermore, based on previous studies that showed trends in extremes in France emerging in the mid-80s
+\parencite{Blanchet2018,Ribes2019,blanchet-creutin-2022}, we consider the case of a
 trend starting at year $t_{+}=1985$, leading to the three models
 $M_{1}^{*}$, $M_{2}^{*}$, and $M_{3}^{*}$. For example, in $M_{1}^{*}$:
 
@@ -320,7 +331,15 @@ $M_{1}^{*}$, $M_{2}^{*}$, and $M_{3}^{*}$. For example, in $M_{1}^{*}$:
 \end{cases}
 \]
 
-This gives six non-stationary models, in addition to the stationary model denoted ($M_0$), which corresponds to $\mu(t)=\mu_0$, $\sigma(t)=\sigma_0$, and $\xi(t)=\xi_0$.
+Figure \ref{fig:illustrGEV} illustrates the case of a non stationary GEV with trends in $\mu$ and $\sigma$ starting in 1985 (corresponding to $M_3^*$), with the corresponding GEV densities and associated return level plots for several years.
+
+This gives in total six non-stationary models, in addition to the stationary model denoted ($M_0$), which corresponds to $\mu(t)=\mu_0$, $\sigma(t)=\sigma_0$, and $\xi(t)=\xi_0$. Although the starting year $t_{+}=1985$ will be hold fixed below, considering starting year a few years before or after does not change the main results of this study (not shown).
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{annexe3.pdf}
+    \caption{Influence of a trend in the $\mu$ and $\sigma$ parameters for a time series of annual maxima (Example: Station 45330001 located at 48.09° N, 1.94° E). (a) Time series (black dots) with the 10-year return level (red line); (b) GEV densities for selected years between 1970 (purple) and 2020 (yellow); (c) Associated return level curves.}\label{fig:illustrGEV}
+\end{figure}
 
 \subsubsection{Model selection}\label{model-selection}
 
@@ -333,8 +352,7 @@ At each spatial point, we thus have seven estimated models
 
 This two-step process prioritizes models with simultaneous temporal
 effects on \(\mu\) and \(\sigma\) when statistically justified, ensuring
-complexity is introduced only when it provides plus-value. In the rest of the article, only the selected model is considered at each location (grid point or station).
-
+complexity is introduced only when it provides plus-value. In the rest of the article, only the selected model is considered at each location (grid point or station). However, for the evaluation of 10-year return levels as a climatological metric, we consistently rely on the stationary model ($M_0$). 
 
 \subsubsection{Trend in return level}\label{return-level}
 
@@ -373,7 +391,7 @@ for models $M_{1}^{*}$, $M_{2}^{*}$, $M_{3}^{*}$,
 confidence intervals for the trend coefficient $\mathrm{RL}_{T,1}$ are obtained
 by profiling the likelihood with respect to $\mathrm{RL}_{T,1}$ \parencite{coles2001introduction}. If
 the $90\%$ confidence interval of $\mathrm{RL}_{T,1}$ does not contain $0$, the
-$T$-year return level trend is not significant at level $10\%$.
+$T$-year return level trend is significant at level $10\%$.
 
 
 
@@ -400,40 +418,35 @@ Figure~\ref{fig:map_clim} provides a spatial comparison of the precipitation cli
     \centering
     \includegraphics[width=\textwidth]{fig3.pdf}
     %\setcounter{figure}{2}
-    \caption{Climatology between the AROME model (first row), Météo-France stations (second row) with the correlation ($r$) and the number of stations compared (n), and the AROME–Station difference (third row) with the bias ($ME$) and the associated relative deviation (\%) derived from daily data from 1959 to 2022 and hourly data from 1990 to 2022 for a hydrological year. The contour lines show the 400 and 800 m isolines. To ease visualization, colour scales are symmetrically saturated. Depending on the statistic, we apply a saturation threshold (99.9\% for the number of days and 99\% for annual and 10-year return level precipitation). All maps are clipped to this common percentile range.}\label{fig:map_clim}
+    \caption{Climatology of the AROME model (first row), Météo-France stations (second row), and the AROME–Station difference (third row), with the spatial correlation between the stations and their closest grid points ($r$), the bias ($ME$) and the number of stations compared (n). The statistics of the three first columns are derived from daily data from 1959 to 2022. The last columns uses hourly data from 1990 to 2022. The contour lines show the 400 and 800 m isolines. To ease visualization, colour scales are symmetrically saturated above the 99.9th percentile for the number of days and the 99th percentile for annual and 10-year return level precipitation).}\label{fig:map_clim}
 \end{figure}
 
-Despite this overall agreement, the difference maps reveal structured regional biases. For precipitation frequency, AROME shows little mean bias (+6 days/year) but local excesses above +30 days/year in the Massif Central and Pyrenees, while negative biases (-10 to -30 days/year) appear in the Northern Alps, Brittany, and the Vosges. For annual cumulative precipitation, the mean bias is very small (+11 mm/year) but regional discrepancies reach more than +300 mm per year along the Pyrenean ridge and Northern Alps, and -100 to -400 mm per year from the Northern Pré-Alps to the Vosges. For daily 10-year return level, AROME shows almost no mean bias (-2 mm) but it spreads the extremes too widely around the Massif Central ridge, giving local deficits of -10 to -20 mm along the ridge where the station extremes are the largest and +10 - +30 mm over the Massif Central Plateau. Overestimation is also visible in Northern Alps and the Pyrenees.  At the hourly scale, AROME strongly underestimates the 10-year return levels (\(-6.37\) mm, \(-23.30\)\,\%), with widespread deficits \(-5\) to \(-20\) mm over most of France, especially the southern Massif Central and the Rhône Valley.
+Despite this overall agreement, the difference maps reveal structured regional biases. For precipitation frequency, AROME shows little mean bias (+6 days/year) but local excesses above +30 days/year in the Massif Central and Pyrenees, while negative biases (-10 to -30 days/year) appear in the Northern Alps, Brittany, and the Vosges. For annual cumulative precipitation, the mean bias is very small (+11 mm/year) but regional discrepancies reach more than +300 mm per year along the Pyrenean ridge and Northern Alps, and -100 to -400 mm per year from the Northern Pré-Alps to the Vosges. For daily 10-year return level, AROME shows almost no mean bias (-2 mm) but it spreads the extremes too widely around the Massif Central ridge, giving local deficits of -10 to -20 mm along the ridge where the station extremes are the largest and +10 to +30 mm over the Massif Central Plateau. Overestimation is also visible in Northern Alps and the Pyrenees.  At the hourly scale, AROME strongly underestimates the 10-year return levels (\(-6.37\) mm, \(-23.30\)\,\%), with widespread deficits \(-5\) to \(-20\) mm over most of France, especially the southern Massif Central and the Rhône Valley.
 
-The good performance of AROME for the frequency of wet days, the annual precipitation and the daily extremes is found across all seasons (see Figure \ref{fig:correlation_clim}), despite a slight loss in performance in spring and summer for the extremes (AMJ to JAS, correlation around $0.9$). Performance is lower for hourly extremes across all seasons and particularly in spring where correlation drops to 0.38.
-
-%\paragraph{Correlation analysis (Figure~4).}
-%Each Météo-France station is matched to its nearest AROME grid point (2.5~km~$\times$~2.5~km), which enables the computation of the Pearson correlation (\emph{r}) between observed and simulated values. Regardless of the indicator (Figure~4), the AROME model faithfully reproduces the station-based statistics, with correlations never falling below 0.38.
-
-%Irrespective of the temporal scale---daily (1959--2022 or 1990--2022) or hourly (1990--2022)---and the season, the agreement between AROME and the raingauge data is very strong for the number of rainy days and for cumulative precipitation. As shown in the first two panels of Figure~4, correlations systematically reach 0.92--0.98 for \textbf{YEAR}, \textbf{OND}, \textbf{JFM}, \textbf{AMJ} and \textbf{JAS}. This high performance is maintained for the 10-year return level of daily precipitation (\textbf{YEAR}, \textbf{OND}, \textbf{JFM}, \textbf{AMJ}), but decreases in summer (\textbf{JAS}), where the correlation drops to 0.90.
-
-%The degradation is more pronounced at the hourly scale. Correlation decreases by up to 0.5 points compared with the daily estimates, falling to 0.78--0.88 (\textbf{YEAR}, \textbf{OND}, \textbf{JFM}, \textbf{AMJ}), and to 0.38 in summer (\textbf{JAS}). This reflects AROME’s tendency to under-represent convective extremes during the warm season, despite a well-captured spatial structure.
+The good performance of AROME for the frequency of wet days, the annual precipitation and the daily extremes is found across all seasons (see Figures~\ref{fig:correlation_clim}, \ref{fig:map_clim_seasd} and \ref{fig:map_clim_seash}), despite a slight loss in performance in spring and summer for the extremes (AMJ to JAS, correlation around $0.9$). Performance is lower for hourly extremes across all seasons and particularly in spring where correlation drops to 0.38.
 
 \begin{figure}[htp]
 \centering
     \includegraphics[width=0.85\textwidth]{fig4.pdf}
     %\captionsetup{type=figure}
     %\setcounter{figure}{3}% prochaine légende = Figure 4
-    \caption{Correlations of climatological indices between the AROME model and Météo-France stations at daily and hourly scales.}\label{fig:correlation_clim}
+    \caption{Spatial correlations of climatological indices between the AROME model and Météo-France stations at daily and hourly scales depending on the season.}\label{fig:correlation_clim}
 \end{figure}
+
+In summary, AROME shows a good representation of the climatology of precipitation extremes that encourages us to continue evaluation on trends, keeping however in mind that hourly extremes are poorly represented in spring.
 
 \subsection{Evaluation of extreme precipitation
 trends}\label{evaluation-of-extreme-precipitation-trends}
 
 \subsubsection{Daily}
 
-At the daily scale, station-based trends in the 10-year return level (Figure~\ref{fig:map_daily_trend}) show spatially coherent but region-dependent signals across France over 1959--2022. For the hydrological year (YEAR), trends are predominantly positive, with a clear reinforcement along the Rhône Valley (+5\% to \(>+30\%\)) and in the southern Alps (+20\% to +30\%). Elsewhere, trends are weak, of mixed sign, and often not significant, supporting a seasonal breakdown. Autumn (OND) shows a similar pattern in trends as the annual scale, with the exception of the Paris area that shows a decrease (-5 to -20\%). In winter (JFM), France is cut in three with a diagonal of decrease from the Mediterranean coast to the Atlantic coast (-10 to -40\%) and mainly increases elsewhere. Spring (AMJ) is characterized by a more spatially uniform positive trend over much of the country, with local increases exceeding +35\%. Ssummer (JAS), shows predominantly negative trends in the southern half of France, apart in the Rhône valley, with an accentuated decrease along the Mediterranean coast (up to -40\%) and mainly positive trends in the northern half.
+At the daily scale, station-based trends in the 10-year return level (Figure~\ref{fig:map_daily_trend}) show spatially coherent but region-dependent signals across France over 1959--2022. For the hydrological year (YEAR), we see a clear reinforcement along the Rhône Valley (+5\% to \(>+30\%\)) and in the southern Alps (+20\% to +30\%). Elsewhere, trends are weak, of mixed sign, and often not significant, supporting a seasonal breakdown. Autumn (OND) shows a similar pattern in trends as the annual scale, with the exception of the Paris area that shows a decrease (-5 to -20\%). In winter (JFM), France is cut in three with a diagonal of decrease from the Mediterranean coast to the Atlantic coast (-10 to -40\%) and mainly increases elsewhere. Spring (AMJ) is characterized by a more spatially uniform positive trend over much of the country, with local increases exceeding +35\%. Summer (JAS), shows predominantly negative trends in the southern half of France, apart in the Rhône valley, with an accentuated decrease along the Mediterranean coast (up to -40\%) and mainly positive trends in the northern half.
 
-AROME reproduces the broad spatial organization of these daily-scale patterns but generally underestimates their amplitudes. For the hydrological year, the model captures the significant increase in the Southern Alps, albeit with weaker intensities, and does not reproduces the Rhône Valley reinforcement observed in the stations. Autumn is the season when trends are best represented. AROME correctly identifies the negative anomalies in northern and western France and the positive signal in the Rhône valley and southern Alps, but it underestimates the strength of decreases in the northern Alps. In winter, the model retrieves the north-negative / northeast-positive configuration but all trends are less marked and it misses the decrease over the Alps. In spring, AROME produces weak and poorly organized signals and fails to reproduce the widespread positive trends measured by the stations. In summer, the model correctly identifies a general negative tendency over the souther half of France but he does not see the increase over the Rhône valley and the northern half of France. These discrepancies are consistent with the seasonal performance metrics, which show low correlations and mean biases ranging from $ME = -0.52\%$ (winter) to $ME = -6.24\%$ (spring). Overall, AROME captures the large-scale signs and structure of daily return-level trends but tends to underestimate both their intensity and spatial coherence.
+AROME reproduces the broad spatial organization of these daily-scale patterns but generally underestimates their amplitudes (negative $ME$). For the hydrological year, the model partly captures the significant increase in the Southern Alps, albeit with weaker intensities, and does not reproduces the Rhône Valley reinforcement observed in the stations. Autumn is the season when trend patterns are best represented ($r=0.40$). AROME correctly identifies the positive signal in the Rhône valley and the negative trends in the Paris area, although it barely sees the decrease in the northern Alps. In winter, the model barely retrieves the diagonal of decrease from the Mediterranean to the Atlantic coast and it misses the decrease over the Alps. All the largest trends are anyway less marked. In spring, AROME produces weak and poorly organized signals and fails to reproduce the widespread positive trends measured by the stations. In summer, the model correctly identifies a general negative tendency over the souther half of France but does not see the increase over the Rhône valley and the northern half of France. Overall, AROME captures the large-scale signs and structure of daily return-level trends but tends to underestimate both their intensity and spatial coherence.
 
 \begin{figure}[htbp]
 \includegraphics[width=0.85\textwidth]{fig5.pdf}
-\caption{Relative trends over the last thirty years ending in 2022 (\%) in the 10-year return level of daily precipitation for AROME (left) and Météo-France stations (right), with the correlation ($r$), the number of stations compared (n), and the bias ($ME$). These results are derived by fitting, at each location, the selected GEV model to daily precipitation maxima from 1959 to 2022. The contour lines show the 400 and 800 m isolines. To ease visualization, colour scales are symmetrically saturated using a 99\% threshold. All maps are clipped to this common percentile range. Only statistically significant trends are shown, non-significant trends are set to zero.}\label{fig:map_daily_trend}
+\caption{Relative trends over the last thirty years ending in 2022 (\%) in the 10-year return level of daily precipitation for AROME (left) and Météo-France stations (right). The correlation ($r$), the number of stations compared (n), and the bias ($ME$) are computed on the stations with significant trends. These results are derived by fitting, at each location, the selected GEV model to daily precipitation maxima from 1959 to 2022. The contour lines show the 400 and 800 m isolines. To ease visualization, colour scales are symmetrically saturated using a 99\% threshold. All maps are clipped to this common percentile range. Only statistically significant trends are shown, non-significant trends are set to zero.}\label{fig:map_daily_trend}
 %  \centering
 %  \nolinenumbers
 %  %\setcounter{figure}{5}
@@ -455,13 +468,21 @@ AROME reproduces the broad spatial organization of these daily-scale patterns bu
 
 \subsubsection{Hourly}
 
-At the hourly scale (Figure~\ref{fig:map_hourly_trend}), station-based trends in the 10-year return level over 1990--2022 are markedly more heterogeneous, noisy, and locally more extreme than their daily counterparts (Figure~\ref{fig:map_daily_trend}), with significant trends ranging $[-50\%, +100\%]$ versus $[-30\%, +30\%]$ at the daily scale. Most of the significant trends are highly positive although often isolated.  Over the hydrological year, almost no trend is found apart in few isolated stations where trends reach $\pm 50\%$ and occasionally exceed $+100\%$. Seasonally, the signals remain highly contrasted. In autumn, a pronounced positive pattern emerges along the Mediterranean coast, locally approaching $+100\%$. In winter, intense increases of $+80\%$ to $+100\%$ are found over western France, the eastern Pyrenees, and the Rhône Valley. Spring is the only season when a quite coherent pattern is found. Stations exhibit widespread and very strong increases across much of the country, frequently above $+60\%$ and locally approaching $+100\%$. In summer, spatial variability reaches its maximum, with trends spanning the full range from $-100\%$ to $+100\%$, particularly in the Rhône Valley. These patterns reflect both the strong local variability of convective extremes and the limited length of the hourly record, which jointly hinder the emergence of a clear regional-scale climate signal.
+At the hourly scale (Figure~\ref{fig:map_hourly_trend}), station-based trends in the 10-year return level over 1990--2022 are markedly more heterogeneous, noisy, and locally more extreme than their daily counterparts (Figure~\ref{fig:map_daily_trend}), with significant trends ranging $[-50\%, +100\%]$ versus $[-30\%, +30\%]$ at the daily scale. Most of the significant trends are highly positive.  Though noisier than at daily scale, these trends are robust in the sense that they are not produced by a single year. Removing the overall maxima of each station and fitting the GEV distributions on these new series gives slightly lower trends for the positive trends and slightly larger trends for the negative ones (Figure \ref{fig:comparaison_trend}) - which was expected since the largest value is omitted - but the magitudes and patterns remain close. Over the hydrological year, almost no trend is found apart in few isolated stations where trends reach $\pm 50\%$ and occasionally exceed $+100\%$. Seasonally, the signals remain highly contrasted. In autumn, a pronounced positive pattern emerges along the Mediterranean coast, locally approaching $+100\%$. In winter, no trend is found apart at some isolated stations spread over western France, the eastern Pyrenees and the Rhône valley, where strong increases of up to $+100\%$ are found. Spring is the only season when a quite coherent pattern is found. Stations exhibit widespread and very strong increases across much of the country, frequently above $+60\%$ and locally approaching $+100\%$. In summer, spatial variability reaches its maximum, with trends spanning the full range from $-100\%$ to $+100\%$, particularly in the Rhône Valley. These patterns reflect both the strong local variability of convective extremes and the limited length of the hourly record, which jointly hinder the emergence of a clear regional-scale climate signal.
+
+\begin{figure}[htp]
+\centering
+    \includegraphics[width=\textwidth]{fig9.pdf}
+    %\captionsetup{type=figure}
+    %\setcounter{figure}{9}% prochaine légende = Figure 9
+    \caption{Relative trends over the last thirty years ending in 2022 (\%) in the 10‑year return level of hourly precipitation for Météo‑France stations when considering the complete series (left) and when discarding the overall maximum (right). Only the the stations with significant trends (for the complete series) are used. The numbers written above each month indicate the Pearson correlation (r) between trends of the complete series and trends of the series without the overall maximum.}\label{fig:comparaison_trend}
+\end{figure}
 
 AROME only partially reproduces these hourly-scale patterns. Across all seasons, the model simulates weak and spatially inconsistent signals and fails to capture the most pronounced positive trends seen in the station data. For the hydrological year, spatial correlation between AROME and stations remains low ($r \approx 0.12$), and seasonal correlations are close to zero for several seasons. Mean biases are substantial and of varying sign, with values reaching $ME = +84.7\%$ in spring and $ME = -28.4\%$ in summer. While AROME occasionally recovers the sign of the observed trends in some regions, it generally does not reproduce their fine-scale spatial organization or amplitude. 
 
 \begin{figure}[htbp]
 \includegraphics[width=0.85\textwidth]{fig6.pdf}
-\caption{Relative trends over the last thirty years ending in 2022 (\%) in the 10-year return level of hourly precipitation for AROME (left) and Météo-France stations (right), with the correlation ($r$), the number of stations compared (n), and the bias ($ME$). These results are derived by fitting, at each location, the selected GEV model to hourly precipitation maxima from 1990 to 2022. The contour lines show the 400 and 800 m isolines. To ease visualization, colour scales are symmetrically saturated using a 90\% threshold. All maps are clipped to this common percentile range. Only statistically significant trends are shown, non-significant trends are set to zero.}\label{fig:map_hourly_trend}
+\caption{Relative trends over the last thirty years ending in 2022 (\%) in the 10-year return level of hourly precipitation for AROME (left) and Météo-France stations (right), with the correlation ($r$), the number of stations compared (n), and the bias ($ME$), filtering on the stations with significant trends. These results are derived by fitting, at each location, the selected GEV model to hourly precipitation maxima from 1990 to 2022. The contour lines show the 400 and 800 m isolines. To ease visualization, colour scales are symmetrically saturated using a 90\% threshold. All maps are clipped to this common percentile range. Only statistically significant trends are shown, non-significant trends are set to zero.}\label{fig:map_hourly_trend}
 %  \centering
 %  \nolinenumbers
 %  %\setcounter{figure}{6}
@@ -486,7 +507,7 @@ AROME only partially reproduces these hourly-scale patterns. Across all seasons,
 %\paragraph{Spatial representation (Figure~7).} 
 The monthly analysis (Figure~\ref{fig:map_monthly_trend}) further highlights the specificity of convective regimes and the strong temporal concentration of some signals. Station data show that hourly 10-year return level trends are not uniformly distributed throughout the year but cluster in a few key months. In late winter, strong increases emerge over the Rhône Valley and the Mediterranean coast in February, while March extends these trends all along the western Mediterranean arc. In late autumn, November exhibits substantial increases on the eastern Mediterranean coast (Azur region). In early summer, June displays the clearest signal with widespread positive trends over almost all of France, with local values exceeding $+150\%$. 
 
-AROME reproduces partly the enhanced activity of some months but it underestimates their magnitude and misplaces some of the spatial structures. The model reproduces the existence of positive signals in February, March, November, and June, consistent with the station-based identification of convectively active months. However, the simulated trends are often weaker by a factor of two and display inconsistent spatial localization compared with observations, as reflected by very low spatial correlations for some months (e.g.\ $r = 0.08$ in June).
+AROME reproduces partly the enhanced activity of some months but it underestimates their magnitude. The model reproduces the existence of positive signals in February, March, November, and June, consistent with the station-based identification of convectively active months. However, the simulated trends are often weaker by a factor of two and display inconsistent spatial localization compared to observations, as reflected by very low spatial correlations for some months (e.g.\ $r = 0.08$ in June).
 
 \begin{figure}[htp]
 \centering
@@ -498,7 +519,7 @@ AROME reproduces partly the enhanced activity of some months but it underestimat
 \end{figure}
 
 %\paragraph{Correlation analysis (Figure~8).} 
-Figure~\ref{fig:correlation_trend} summarizes the spatial correlations between AROME and station-based monthly trends, confirming an overall better representation at the daily than at the hourly scale, with strong month-to-month variability. At the daily scale (1959–2022), correlations span from 0.07 to 0.62 depending on the month, peaking in early winter (December: 0.616; January: 0.569; November: 0.557) and remaining high in late summer (August: 0.512) and early spring (March: 0.526). Agreement weakens markedly in spring and early summer, with correlations dropping to 0.193 in April and reaching a minimum of 0.070 in June. Hourly trends (1990–2022) are generally lower and less consistent, ranging from −0.004 to 0.445: correlations exceed 0.25 only in February (0.445), November (0.256), and December (0.258), while they remain near zero in March (0.039) and May (0.022) and become negligible in September (−0.004). Overall, these results indicate that AROME captures part of the large-scale structure of monthly trend patterns—more clearly at the daily scale—whereas its representation at the hourly scale remains limited, consistent with the stronger local and convective variability affecting sub-daily extremes.
+Figure~\ref{fig:correlation_trend} summarizes the spatial correlations between AROME and station-based monthly trends, confirming an overall better representation at the daily than at the hourly scale, with strong month-to-month variability. At the daily scale (1959–2022), correlations span from 0.07 to 0.62 depending on the month, peaking in early winter (December: 0.616; January: 0.569; November: 0.557) and remaining high in late summer (August: 0.512) and early spring (March: 0.526). Agreement weakens markedly in spring and early summer, with correlations dropping to 0.193 in April and reaching a minimum of 0.070 in June. July exhibits only weak agreement at the daily scale (0.313) and virtually no correlation at the hourly scale (−0.003), highlighting the limitations of the model during the core summer convective period. Hourly trends (1990–2022) are generally lower and less consistent, ranging from −0.004 to 0.445: correlations exceed 0.25 only in February (0.445), November (0.256), and December (0.258), while they remain near zero in March (0.039) and May (0.022) and become negligible in September (−0.004). Overall, these results indicate that AROME captures part of the large-scale structure of monthly trend patterns—more clearly at the daily scale—whereas its representation at the hourly scale remains limited, consistent with the stronger local and convective variability affecting sub-daily extremes.
 
 \begin{figure}[htp]
 \centering
@@ -525,7 +546,29 @@ Values above each bar indicate the number of stations used in the calculation.}\
 
 \section{Discussion}\label{discussion}
 
-\subsection{Climatology: consistencies, divergence and limitations}\label{climatology-consistencies-divergence-and-limitations}
+\subsection{Limitations of the study}
+
+
+The evaluation of the AROME model is based on a comparison with rain gauge data, which are considered here as the reference. This evaluation do has certain limitations that we list below.
+
+First, station precipitation measurements are frequently affected by undercatch errors, which are particularly pronounced in cold and mountainous regions with strong winds. They can also show heterogeneity, although the data used here have been quality-controlled by Météo-France.
+
+Second, raingauges provide measurement over short periods, particularly the hourly data that are available since the 1990s only. This is particularly problematic when studying extremes within a GEV framework, as only one value (the maximum value) is used per year. In some cases, isolated outliers can significantly influence estimates of the return level \parencite{Zeder2024}. 
+For example, in Figure \ref{fig:map_hourly_trend}, some individual points stand out from their surroundings, which is probably due to sampling bias and not to differences in climate. To make the estimation more robust, other solutions include taking into account threshold exceedances within a generalized Pareto distribution (GPD) framework, or using a distribution modeling all precipitation values, such as the recent extended generalized Pareto distribution \parencite{haruna-etal-2025}, or using a neighborhood or region-of-influence approach \parencite{blanchet2021explaining} to reduce sampling bias by using more data.
+All these methods have their advantages and disadvantages. Our general advice is not to interpret trends at an individual point, but to look for consistent trends across regions, to avoid over-interpretation.
+
+Third, the stations are not evenly distributed across the country. In particular, hourly stations are lacking in the Alps, the Pyrenees and, to a lesser extent, the Massif Central. This naturally has an impact on our evaluation measures (correlation and bias) and prevents us from fully evaluating AROME in mountainous regions.
+
+Finally, a limitation of the evaluation is that it compares point-scale raingauge measurements with 2.5 km × 2.5 km AROME grid-box averages. This mismatch in spatial support is relatively modest for daily accumulations, but it becomes a major limitation at the hourly scale: a single convective core may affect only part of a grid cell, so that local station extremes can be much higher (or lower) than the corresponding AROME value even when the event is realistically simulated at the grid-box scale. A high-resolution gridded observational product would therefore be better suited to evaluating hourly extremes than individual stations. In this respect, Météo-France’s COMEPHORE product – a 1 km, hourly radar–gauge precipitation reanalysis over metropolitan France – would be particularly valuable \parencite{MeteoFrance_COMEPHORE_dataGouv}. It would have been interesting to include COMEPHORE in this study, but the reanalyses only begin in 1997 with lower quality over moutainous regions \parencite{Fumiere2020} and the method for calculating the rainfall fields changed in 2007, which could affect trend estimation.
+
+%Finally a limitation of the comparison at hourly scale is that it is done over 1990-2022 to fit the data availability. It could be argued that 
+
+Another limitation stems from the modeling framework. We have applied a non-stationary GEV framework to estimate trends in extremes. This requires more parameters to be estimated and additional assumptions to be made about the shape of the trends. Here, we have assumed that the distribution of parameters, and therefore return levels, evolve linearly over time. This is obviously a simplification, as i) there is no physical reason for the evolution to be linear, ii) there is no direct physical dependence between return levels and time. The linearity assumption could be relaxed by considering non-linear transfer functions (e.g. power functions), with the risk of over-fitting and increased uncertainty if more parameters have to be estimated. Here, as in many other studies based on GEV distributions, we prefer to use a rigid (linear) relationship to increase robustness. Previous studies analyzing the relationship between temperature and precipitation \parencite{DaSilva2025} lead us to believe that temperature might be a more appropriate covariate.
+However, which temperature to choose and at which scale (e.g. local temperature at the time of the event, annual region-mean temperature, sea-surface temperature)  is a matter of debate in itself \parencite{Schroeer2018, Dash2023, Zeder2020}, which is why we chose to keep time as the simplest covariate. Temperature change over the recent past is anyway close to linear in time, so we believe that the results of this study would be barely affected.
+
+
+
+\subsection{Climatology: consistencies and divergence}\label{climatology-consistencies-divergence-and-limitations}
 
 The results confirm that AROME correctly reproduces the main rainfall
 regimes over metropolitan France, as supported by the literature \parencites{Fumiere2020,Caillaud2021,hess-28-2579-2024,LucasPicher2024,Cortes-Hernandez2024}. It is able to reproduce the climatological orographic intensification of precipitation over the Alps,
@@ -536,42 +579,43 @@ flows, orographic uplift, low-level circulation in the Mediterranean).
 
 AROME's ability to reproduce the frequency and quantity of precipitation and the 10-year return level of daily precipitation
 is maintained throughout the year. Performance declines for the
-10-year return level hourly precipitation specialy in summer.
-The model underestimates high-intensity precipitation (\textgreater{} 40
+10-year return level hourly precipitation specialy in spring ($r$ = 0.38).
+Studies with the previous version of the model show that AROME underestimates high-intensity precipitation (\textgreater{} 40
 mm/h \parencite{Caillaud2021,poncet2024convection}). Summer
 convection remains partially under-resolved despite the 2.5 km spatial
-resolution. In this study, we showed (results not shown) that
-correlation increases (+30\%) when the time window is extended to 6 or 9 hours.
+resolution. Running AROME at finer resolution might improve this, as it was shown that a 1.3 km resolution results in a better representation of maximum intensities \parencite{brousseau-etal-2016}. A separate analysis (not shown) shows that
+correlation increases (+30\%) for 6- and 9-hour precipitation.
 One can hypothesize that AROME spreads convective precipitation too widely in time and in space over nearby grid points, giving underestimated local peak precipitation. Unfortunately this hypothesis cannot be fully evaluated given the sparse station network. 
 %The 2--3
 %km grid spacing of AROME is a major step forward for representing convection
 %without parameterization, but it remains too coarse for applications
 %sensitive to intense maxima \parencite{prein2015regional}. 
-A limitation of the evaluation performed in this study is indeed that it compares point-scale raingauge measurements with 2.5 km × 2.5 km AROME grid-box averages. This mismatch in spatial support is relatively modest for daily accumulations, but it becomes a major limitation at the hourly scale: a single convective core may affect only part of a grid cell, so that local station extremes can be much higher (or lower) than the corresponding AROME value even when the event is realistically simulated at the grid-box scale. A high-resolution gridded observational product would therefore be better suited to evaluating hourly extremes than individual stations. In this respect, Météo-France’s COMEPHORE product – a 1 km, hourly radar–gauge precipitation reanalysis over metropolitan France – would be particularly valuable \parencite{MeteoFrance_COMEPHORE_dataGouv}. It would have been interesting to include COMEPHORE in this study, but the reanalyses only begin in 1997, with poor quality over the Alps before 2007 \parencite{Fumiere2020}.
 
-\subsection{Trends in precipitation extremes: consistencies,
-divergences, and
-limitations}\label{trends-in-precipitation-extremes-consistencies-divergences-and-limitations}
+
+\subsection{Trends in precipitation extremes: consistencies and
+divergence}\label{trends-in-precipitation-extremes-consistencies-divergences-and-limitations}
 
 \subsubsection{Daily data: confirmation of known patterns and model–observation consistencies}
 
 The daily trends derived from Météo-France stations confirm and refine previously documented spatial structures of extreme-precipitation evolution in France. The significant increases in the Rhône Valley and the southern Alps (+5 to +30\%) are fully consistent with earlier regional analyses reporting an intensification of daily extremes in southeastern France \parencites{Blanchet2018,blanchet2021explaining,Ribes2019}. The marked increases detected in northern France (locally up to +35\%) also agree with national-scale projections indicating a northward-shifted reinforcement of daily extremes under strong warming scenarios \parencite{soubeyroux:hal-04991790}. The weak or non-significant trends observed across large parts of western and central France likewise corroborate the high spatial variability highlighted in the IPCC report \parencite{IPCC2021}.
 
-Overall, AROME reproduces the main spatial structures and magnitudes reasonably well when compared with the station-based climatology. The model correctly identifies regions of positive change (southern Alps, Rhône Valley, parts of northern France) and regions with weak or negative signals (western France, the Paris area), indicating an overall ability to capture the pattern of daily return-level evolution. However, AROME systematically underestimates the amplitude of the trends. This reduced magnitude is consistent with documented biases in the representation of extreme precipitation in AROME \parencite{caillaud2021simulation} and with the smoothing inherent to 2.5~km grid-box values.
+Overall, AROME reproduces the main spatial structures and magnitudes reasonably well when compared with the station-based climatology. The model correctly identifies regions of positive change (southern Alps, Rhône Valley, parts of northern France) and regions with weak or negative signals (western France, the Paris area), indicating an overall ability to capture the pattern of daily return-level evolution. However, AROME systematically underestimates the amplitude of the trends. This reduced magnitude is consistent with the underestimation of temperature trends in AROME that is twice as weak as observed trends, and with the smoothing inherent to 2.5~km grid-box values.
 
 \subsubsection{Hourly data: new national-scale findings and limited model–observation consistency}
 
 Unlike the daily scale, no national mapping of hourly 10-year return-level trends has previously been available for France. The present work therefore provides the first nationwide characterization of hourly extreme-precipitation trends, offering new insight into their spatial organisation.
 
-The station-based hourly trends exhibit far greater spatial heterogeneity and local variability than their daily counterparts. Over 1990–2022, trend magnitudes frequently reach $\pm 50\%$ and can exceed +100\%, with strong seasonal dependence. Coherent monthly signals emerge nonetheless: February trends in the Rhône Valley, March trends along the western Mediterranean arc, November increases in the eastern Mediterranean arc, and widespread June increases across most of France. These patterns, though noisier than daily trends, indicate that hourly extremes do exhibit structured temporal and spatial signatures, even within the constraints of a relatively short observational period.
+The station-based hourly trends exhibit far greater spatial heterogeneity than their daily counterparts. The shorter period of hourly precipitation (1990-2022 versus 1959-2022) does not explain this greater heterogeneity since restricting the daily analysis to 1990-2022 gives similar patterns of trends (not shown). Over 1990–2022, trend magnitudes in hourly extremes frequently reach $\pm 50\%$ and can exceed +100\%, with strong seasonal dependence. Coherent monthly signals emerge nonetheless: February trends in the Rhône Valley, March trends along the western Mediterranean arc, November increases in the eastern Mediterranean arc, and widespread June increases across most of France. These patterns, though noisier than daily trends, are robust in the sense that they are not produced by a single year (Figure \ref{fig:comparaison_trend}). This indicates the start of an emerging trend in hourly extremes even within the constraints of a relatively short observational period.
 
-AROME reproduces part of the structure of these hourly signals—particularly it concords in the months associated with enhanced extreme activity—but does not capture their spatial organization nor magnitude. Model–observation correlations remain low or near zero for most seasons and months, and the model substantially underestimates the amplitude of station-based trends. Even where stations show widespread enhancements (e.g.\ February, March, June), AROME simulates much weaker and spatially inconsistent changes. 
-This limited agreement reflects the difficulty of reproducing localized convective extremes at 2.5~km resolution and the sensitivity of hourly diagnostics to spatial representativeness issues between point measurements and grid boxes.
+AROME reproduces part of the structure of these hourly signals—particularly it concords in the months associated with enhanced extreme activity—but does not capture their spatial organization nor magnitude. Model–observation correlations remain low or near zero for most seasons and months, and the model substantially underestimates the amplitude of station-based trends. Even where stations show widespread enhancements (e.g.\ February, March, June), AROME simulates much weaker and spatially inconsistent changes. Part of this was expected: the trend magnitude underestimation is consistent with the strong underestimation of temperature trends in AROME. It is also partly due to the mismatch between point-scale raingauge measurements and 2.5 x 2.5 km AROME grid box averages. Inconsistencies in the trend spatial localization were also expected since AROME runs freely on the domain without data assimilation. Thus, depending on the weather situations - and particularly for the convective months -, precipitation zones can be shifted. 
 
 Overall, the hourly results highlight two major conclusions: i) the station-derived hourly trends presented in this study constitute a new contribution to the climatology of French precipitation extremes, revealing structured yet highly localized patterns; ii) AROME currently shows limited skill in representing both the magnitude and spatial heterogeneity of hourly return-level trends, even when significant signals are isolated, underscoring the challenges of simulating sub-daily extremes.
 
 %\subsection{Effect of record length on the detection of trends}
 %Daily and hourly trends are estimated over different periods (1959--2022 for daily data, 1990--2022 for hourly data), which could suggest that the weaker and noisier hourly signals merely reflect the shorter hourly record. To assess this, we performed two complementary sensitivity checks (results not shown). First, when the daily analysis is restricted to 1990--2022, the spatial organisation and the sign of the 10-year return level trends remain very similar to those obtained over 1959--2022, with only a modest reduction in amplitude. This indicates that the main daily-scale signals identified in southeastern and northern France are not an artefact of the longer daily record. Second, AROME-only hourly trends computed over the full 1959--2022 simulation period (Figures~Y--Z) remain weak and spatially incoherent compared with the daily trends, even when the longer model record is used. Together, these sensitivity tests suggest that the contrast between well-structured daily trends and much less robust hourly trends is not solely due to differences in record length, but also reflects the greater intermittency of convective extremes and the current limitations of AROME in representing their temporal evolution at the hourly scale.
+
+
+
 
 
 \section{Conclusion}\label{conclusion}
@@ -584,11 +628,34 @@ This study evaluated the ability of the convection-permitting regional climate m
 
 %For hourly extremes, the station-based trends derived over 1990--2022 are much more heterogeneous and locally extreme than at the daily scale, reflecting both the intrinsic intermittency of convective precipitation and the limited length of hourly records. Despite this noise, the monthly analysis reveals recurrent windows of enhanced change (notably in late winter, early spring, late autumn, and June), suggesting that hourly extremes can exhibit seasonally concentrated signals rather than uniform annual changes. AROME captures part of the timing of these monthly windows but shows limited skill in reproducing the spatial organization and the magnitude of hourly return-level trends, with correlations close to zero for several seasons and months. These results highlight that, at 2.5\,km resolution, the representation of the temporal evolution of highly localized convective extremes remains challenging, and that point-to-grid representativeness issues strongly limit model--station consistency at the hourly scale.
 
-Overall, the AROME model provides clear added value for the climatology and the spatial organization of daily extremes, and it can support national-scale analyses of daily extreme-precipitation changes, provided that trend magnitudes are interpreted cautiously. In contrast, the evaluation indicates that hourly return levels and especially their trends are less well reproduced, with hourly trends almost inexistent in AROME. However our evaluation shows limitation at hourly scale due to spatial support mismatch between stations and grid points, and short observational record length of stations that prevented us from making the comparison at hourly scale over the full 1959--2022 simulation period. Future work should rely on high-resolution gridded reference datasets (e.g.\ radar--gauge reanalyses) to reduce representativeness errors, investigate the sensitivity of results to temporal aggregation (multi-hour maxima, intensity-duration-frequency curves), and exploit the full 1959--2022 AROME record to explore the emergence of signals beyond the short observational hourly period. These steps are needed to better constrain sub-daily extreme precipitation changes relevant to flash-flood hazard in France.
+Overall, the AROME model provides clear added value for the climatology and the spatial organization of daily extremes, and it can support national-scale analyses of daily extreme-precipitation changes, provided that trend magnitudes are interpreted cautiously. In contrast, the evaluation indicates that hourly return levels and especially their trends are less well reproduced, with hourly trends almost inexistent in AROME. However our evaluation shows limitation at hourly scale due to spatial support mismatch between stations and grid points, and short observational record length of stations that prevented us from making the comparison over the full 1959--2022 simulation period. Future work should rely on high-resolution gridded reference datasets (e.g.\ radar--gauge reanalyses) to reduce representativeness errors and investigate the sensitivity of results to temporal and spatial aggregation (multi-hour maxima, intensity-duration-area-frequency curves, \cite{haruna-etal-2024}). These steps are necessary to assess the reliability of the AROME model's representation of extremes, and to pave the way for its use in studying extremes in climate projections.
+
+\paragraph{Acknowledgments}
+This work is the result of N. Decoopman's Master thesis in collaboration between the Institute of Geosciences of the Environnement (IGE) and Office National des Forêts (ONF) - Service Restauration des Terrains en Montagne (RTM) de l'Isère. This study has received funding from Agence Nationale de la Recherche - France 2030 as part of the PEPR TRACCS programme under grant numbers ANR-22-EXTR-0005 and ANR-22-EXTR-0011. The study was also funded by the European Union through the HORIZON-EUROPE IMPETUS4CHANGE project. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union. Neither the European Union nor the granting authority can be held responsible for them. We would like to thank Météo-France for providing their precipitation data as well as the decades of work and dedication invested in maintaining their observational networks.
 
 \section*{References}\label{references}
 \printbibliography[heading=none]
-%\bibliographystyle{apalike}
+%\bibliographystyle{copernicus}
 %\bibliography{references}
+
+\section{Annexes}\label{annexes}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{annexe1.pdf}
+    \caption{10-year return level of daily precipitation of the AROME model (first row), Météo-France stations (second row), and the AROME–Station difference (third row), with the spatial correlation between the stations and their closest grid points ($r$), the bias ($ME$) and the number of stations compared (n). The statistics are derived from daily data from 1959 to 2022. The contour lines show the 400 and 800 m isolines. To ease visualization, colour scales are symmetrically saturated above the 99th percentile.}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{annexe2.pdf}
+    \caption{10-year return level of hourly precipitation of the AROME model (first row), Météo-France stations (second row), and the AROME–Station difference (third row), with the spatial correlation between the stations and their closest grid points ($r$), the bias ($ME$) and the number of stations compared (n). The statistics are derived from daily data from 1990 to 2022. The contour lines show the 400 and 800 m isolines. To ease visualization, colour scales are symmetrically saturated above the 99th percentile.}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{annexe3.pdf}
+    \caption{Influence of a trend in the $\mu$ and $\sigma$ parameters for a time series of annual maxima (Example: Station 45330001 located at 48.09° N, 1.94° E). (a) Time series (black dots) with the 10-year return level (red line); (b) GEV densities for selected years between 1970 (purple) and 2020 (yellow); (c) Associated return level curves.}
+\end{figure}
 
 \end{document}
