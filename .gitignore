@@ -1,20 +1,21 @@
-# --- gros dossiers / artefacts à ne jamais versionner ---
-data/**
-app/**
-outputs/**
-outputs_nr10/**
-logs/**
+# Dossiers volumineux ou artefacts
+data/
+app/
+outputs/
+outputs_nr10/
+logs/
 Miniconda3*/
 Miniconda3-*.sh
 
-# ne pas versionner les workflows/CI
-.github/**
+# Workflows CI
+.github/
 
-# Exceptions utiles
+# Exceptions
 !data/**/.keep
 !.github/.keep
+!/.streamlit/*
 
-# Ignorer les fichiers de cache Python
+# Caches et fichiers temporaires
 __pycache__/
 *.py[cod]
 *.parquet
@@ -24,32 +25,18 @@ __pycache__/
 *.db
 *.sqlite
 *.json
+*.tmp
+*.bak
+*.DS_Store
+*.pyc
+*.cache
+*.log
+.jupyter_cache/
+.quarto/
+rapport/annexes.pdf
 
-outputs/*
-
-# Ignore tout dans airflow sauf certains fichiers
+# Airflow
 airflow/*
 !airflow/airflow.cfg
 !airflow/webserver_config.py
 !airflow/dags/*.py
-
-# On garde les .keep
-!data/**/.keep
-# Ajouter les config streamlit au git
-!/.streamlit/*
-
-# Ignore aussi d'éventuels fichiers temporaires et artefacts
-*.tmp
-*.bak
-*.DS_Store
-__pycache__/
-*.pyc
-*.cache
-*.log
-
-# Ignorer les caches Jupyter
-.jupyter_cache/
-/.quarto/
-data/
-Miniconda3-latest-Linux-x86_64.sh
-rapport/annexes.pdf
