@@ -5,6 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Framework: Streamlit](https://img.shields.io/badge/framework-Streamlit-FF4B4B.svg)](https://streamlit.io/)
 [![Data: Zarr/Dask](https://img.shields.io/badge/storage-Zarr%2FDask-orange.svg)](https://zarr.readthedocs.io/)
+[![Dataset: Hugging Face](https://img.shields.io/badge/Dataset-Hugging%20Face-FFD21E.svg?logo=huggingface&logoColor=black)](https://huggingface.co/datasets/ncsdecoopman/ExtremePrecipit_sauv)
 
 ---
 
@@ -56,8 +57,8 @@ Whether analyzing observed station data or high-resolution model outputs (AROME)
 
 ## Quick start
 
-### 1. Data ingestion
-Retrieve the pre-processed datasets and metadata from Hugging Face:
+### 1. Application data setup
+Download the required pre-processed results and metadata for the dashboard:
 ```bash
 python download_data.py
 ```
@@ -82,7 +83,7 @@ streamlit run main.py
 ```text
 ExtremePrecipit/
 ├── main.py                 # Streamlit application entry point
-├── download_data.py        # automated data acquisition script
+├── download_data.py        # application data setup script
 ├── config/                 # global pipeline configuration (YAML)
 ├── data/                   # data repository (raw, Zarr, statisticals, GEV)
 ├── logs/                   # detailed pipeline execution logs
@@ -92,6 +93,20 @@ ExtremePrecipit/
 │   └── utils/              # infrastructure helpers (logging, config, data I/O)
 └── app/                    # Streamlit-specific modules and internal config
 ```
+
+---
+
+## Data access
+
+The complete dataset, including raw outputs and backup files, is hosted on Hugging Face:
+
+> [!NOTE]
+> **Primary Dataset**: [ncsdecoopman/ExtremePrecipit_sauv](https://huggingface.co/datasets/ncsdecoopman/ExtremePrecipit_sauv)
+
+This repository includes:
+*   Raw AROME-forecast and station data.
+*   Intermediary Zarr and Parquet files.
+*   Historical backups of statistical extractions.
 
 ---
 

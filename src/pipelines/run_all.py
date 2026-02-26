@@ -31,13 +31,6 @@ SEASON_SEAS = [
     "ond"
 ]
 
-# SEASON_SEAS = [
-#     "djf"
-#     "mam"
-#     "jja"
-#     "son"
-# ]
-
 SEASONS = SEASON_SEAS + SEASON_MONTHS
 
 
@@ -45,78 +38,78 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 # ------------------------- ZARR -------------------------
 ############################################################
 
-# # AROME data pipeline
-# log(f"Starting .nc to .zarr processing (hourly scale mandatory)")
-# subprocess.run(
-#     ["python", 
-#       "-m", 
-#       "src.pipelines.pipeline_nc_to_zarr"],
-#     check=True
-# )
+# AROME data pipeline
+log(f"Starting .nc to .zarr processing (hourly scale mandatory)")
+subprocess.run(
+    ["python", 
+      "-m", 
+      "src.pipelines.pipeline_nc_to_zarr"],
+    check=True
+)
 
-# for echelle in ["horaire, "quotidien""]: 
-#     log(f"Starting obs (.csv) to .zarr processing for scale: {echelle}")
-#     subprocess.run(
-#         ["python",
-#             "-m",
-#             f"src.pipelines.pipeline_obs_to_zarr",
-#             "--echelle", f"{echelle}"],
-#         check=True
-#     )
+for echelle in ["horaire" "quotidien"]: 
+    log(f"Starting obs (.csv) to .zarr processing for scale: {echelle}")
+    subprocess.run(
+        ["python",
+            "-m",
+            f"src.pipelines.pipeline_obs_to_zarr",
+            "--echelle", f"{echelle}"],
+        check=True
+    )
 
 
 ############################################################
 # ------------------------- METADONNES ---------------------
 ############################################################
 
-# log(f"Starting obs vs mod metadata generation")
-# for echelle in ["horaire", "quotidien"]:
-#     subprocess.run(
-#         ["python", 
-#         "-m", 
-#         "src.pipelines.pipeline_obs_vs_mod",
-#         "--echelle", echelle],
-#         check=True
-#     )
+log(f"Starting obs vs mod metadata generation")
+for echelle in ["horaire", "quotidien"]:
+    subprocess.run(
+        ["python", 
+        "-m", 
+        "src.pipelines.pipeline_obs_vs_mod",
+        "--echelle", echelle],
+        check=True
+    )
 
 
 ############################################################
 # ------------------------- AGGREGATION SPATIALE -----------
 ############################################################
 
-# log("Starting spatial aggregations")
-# for n_aggregate in [3, 5]: # odd number
-#     subprocess.run(
-#         ["python", 
-#          "-m", 
-#          "src.pipelines.pipeline_aggregate_to_zarr",
-#          "--n_aggregate", str(n_aggregate)],
-#         check=True
-#     )
+log("Starting spatial aggregations")
+for n_aggregate in [3, 5]: # odd number
+    subprocess.run(
+        ["python", 
+         "-m", 
+         "src.pipelines.pipeline_aggregate_to_zarr",
+         "--n_aggregate", str(n_aggregate)],
+        check=True
+    )
 
 ############################################################
 # ------------------------- STATS -------------------------
 ############################################################
 
-# for config in ["config/modelised_settings.yaml", "config/observed_settings.yaml"]:
+for config in ["config/modelised_settings.yaml", "config/observed_settings.yaml"]:
        
-#     if config == "config/observed_settings.yaml": # Hourly time steps only for AROME
-#         ECHELLES  = ["horaire", "quotidien"] # "w3", "w6", "w9", "w12", "w24", 
-#     else:
-#         ECHELLES  = ["horaire"] # "w3", "w6", "w9", "w12", "w24"
+    if config == "config/observed_settings.yaml": # Hourly time steps only for AROME
+        ECHELLES  = ["horaire", "quotidien"] # "w3", "w6", "w9", "w12", "w24", 
+    else:
+        ECHELLES  = ["horaire"] # "w3", "w6", "w9", "w12", "w24"
 
-#     for echelle in ECHELLES:
-#         for season in SEASONS:
-#             log(f"Starting .zarr to stats {config} - {echelle} -{season}")
-#             subprocess.run(
-#                 ["python",
-#                 "-m",
-#                 "src.pipelines.pipeline_zarr_to_stats",
-#                 "--config", config,
-#                 "--echelle", echelle,
-#                 "--season", season],
-#             check=True
-#         )
+    for echelle in ECHELLES:
+        for season in SEASONS:
+            log(f"Starting .zarr to stats {config} - {echelle} -{season}")
+            subprocess.run(
+                ["python",
+                "-m",
+                "src.pipelines.pipeline_zarr_to_stats",
+                "--config", config,
+                "--echelle", echelle,
+                "--season", season],
+            check=True
+        )
 
 
 
@@ -124,85 +117,85 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 # # -------------------------- GEV --------------------------
 # ############################################################
 
-# # GEV Pipeline
-# log(f"Starting GEV processing")
+# GEV Pipeline
+log(f"Starting GEV processing")
 
-# for setting in ["config/observed_settings.yaml", "config/modelised_settings.yaml"]:
+for setting in ["config/observed_settings.yaml", "config/modelised_settings.yaml"]:
 
-#     for echelle in ["quotidien", "horaire"]: #
+    for echelle in ["quotidien", "horaire"]: #
 
-#         if echelle == "horaire":
-#             if setting == "config/modelised_settings.yaml":            
-#                 DIFFERENTE_PERIODE = [False, True]
-#             else:
-#                 DIFFERENTE_PERIODE = [False]
-#         else:            
-#             DIFFERENTE_PERIODE = [False]
+        if echelle == "horaire":
+            if setting == "config/modelised_settings.yaml":            
+                DIFFERENTE_PERIODE = [False, True]
+            else:
+                DIFFERENTE_PERIODE = [False]
+        else:            
+            DIFFERENTE_PERIODE = [False]
             
         
-#         for diffente_periode in DIFFERENTE_PERIODE:
+        for diffente_periode in DIFFERENTE_PERIODE:
         
-#             if echelle == "quotidien" and not diffente_periode:
-#                 MODELS = [
-#                     "s_gev", # Stationary
-#                     "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non-stationary
-#                     "ns_gev_m1_break_year", "ns_gev_m2_break_year", "ns_gev_m3_break_year" # Non-stationary with break point
-#                     ]
-#             elif echelle == "horaire" and diffente_periode:
-#                 MODELS = [
-#                     "s_gev", # Stationnaire
-#                     "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
-#                     "ns_gev_m1_break_year", "ns_gev_m2_break_year", "ns_gev_m3_break_year" # Non stationnaire avec point de rupture
-#                     ]
-#             else:
-#                 MODELS = [
-#                     "s_gev", # Stationnaire
-#                     "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
-#                     ]
+            if echelle == "quotidien" and not diffente_periode:
+                MODELS = [
+                    "s_gev", # Stationary
+                    "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non-stationary
+                    "ns_gev_m1_break_year", "ns_gev_m2_break_year", "ns_gev_m3_break_year" # Non-stationary with break point
+                    ]
+            elif echelle == "horaire" and diffente_periode:
+                MODELS = [
+                    "s_gev", # Stationnaire
+                    "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
+                    "ns_gev_m1_break_year", "ns_gev_m2_break_year", "ns_gev_m3_break_year" # Non stationnaire avec point de rupture
+                    ]
+            else:
+                MODELS = [
+                    "s_gev", # Stationnaire
+                    "ns_gev_m1", "ns_gev_m2", "ns_gev_m3", # Non stationnaire
+                    ]
 
-#             for season in SEASONS:
-                # for model in MODELS:
+            for season in SEASONS:
+                for model in MODELS:
                 
-                #     subprocess.run(
-                #         [
-                #             "python",
-                #             "-m",
-                #             "src.pipelines.pipeline_stats_to_gev",
-                #             "--config", setting,
-                #             "--echelle", echelle,
-                #             "--season", season,
-                #             "--model", model,
-                #             "--reduce_activate", str(diffente_periode)
-                #         ],
-                #         check=True
-                #     )
+                    subprocess.run(
+                        [
+                            "python",
+                            "-m",
+                            "src.pipelines.pipeline_stats_to_gev",
+                            "--config", setting,
+                            "--echelle", echelle,
+                            "--season", season,
+                            "--model", model,
+                            "--reduce_activate", str(diffente_periode)
+                        ],
+                        check=True
+                    )
 
-                # subprocess.run(
-                #     [
-                #         "python",
-                #         "-m",
-                #         "src.pipelines.pipeline_best_model",
-                #         "--config", setting,
-                #         "--echelle", echelle,
-                #         "--season", season,
-                #         "--reduce_activate", str(diffente_periode)
-                #     ],
-                #     check=True
-                # )
+                subprocess.run(
+                    [
+                        "python",
+                        "-m",
+                        "src.pipelines.pipeline_best_model",
+                        "--config", setting,
+                        "--echelle", echelle,
+                        "--season", season,
+                        "--reduce_activate", str(diffente_periode)
+                    ],
+                    check=True
+                )
 
 
-                # subprocess.run(
-                #     [
-                #         "python",
-                #         "-m",
-                #         "src.pipelines.pipeline_best_to_niveau_retour",
-                #         "--config", setting,
-                #         "--echelle", echelle,
-                #         "--season", season,
-                #         "--reduce_activate", str(diffente_periode)
-                #     ],
-                #     check=True
-                # )
+                subprocess.run(
+                    [
+                        "python",
+                        "-m",
+                        "src.pipelines.pipeline_best_to_niveau_retour",
+                        "--config", setting,
+                        "--echelle", echelle,
+                        "--season", season,
+                        "--reduce_activate", str(diffente_periode)
+                    ],
+                    check=True
+                )
 
 
 
@@ -213,14 +206,14 @@ SEASONS = SEASON_SEAS + SEASON_MONTHS
 # Map pipeline
 log(f"Starting map generation")
 
-for data_type in ["gev"]: #  "dispo", "stats", 
+for data_type in ["dispo", "stats", "gev"]: 
                 
     if data_type == "dispo":
         COL_CALCULATE = ["n_years"]
     elif data_type == "stats":
-        COL_CALCULATE = ["numday", "mean", "mean-max"] # 
+        COL_CALCULATE = ["numday", "mean", "mean-max"]
     elif data_type == "gev":
-        COL_CALCULATE = ["z_T_p"] # "significant", , "model"
+        COL_CALCULATE = ["significant", "model", "z_T_p"]
 
     for col_calculate in COL_CALCULATE:
 
@@ -233,16 +226,16 @@ for data_type in ["gev"]: #  "dispo", "stats",
         else:
             sat = 100
                 
-        for echelle in ["quotidien"]: # "horaire", 
+        for echelle in ["horaire", "quotidien"]: 
 
             if col_calculate in ["z_T_p"]:
                 if echelle=="horaire":
                     sat = 90
 
             if echelle == "quotidien":            
-                DIFFERENTE_PERIODE = [True] # False
+                DIFFERENTE_PERIODE = [True, False]
             else:            
-                DIFFERENTE_PERIODE = [True] # False
+                DIFFERENTE_PERIODE = [True, False]
 
             for diffente_periode in DIFFERENTE_PERIODE:
 
