@@ -17,27 +17,27 @@ We thank referee #2 for their constructive and detailed review of our manuscript
 
 _There is a 10-year return period chosen for both daily and hourly data, even though 10-year return period for hourly is much more extreme compared to daily given the amount of hourly data in a 10-year period compared to daily. Has a lower return value been tested? Given the noisy result, and the shorter period of data a better justification for the high return period for hourly data should be given, and it is of interest to show a lower return period._
 
-* **Response:** We thank the reviewer for this comment. We agree that estimating a 10-year return period ($RL_{10y}$) at the hourly scale from a 33-year series (1990-2022) introduces significant sampling noise. As a sensitivity check, we have computed the trends for the 2-year and 5-year return levels ($RL_{2y}$ and $RL_{5y}$), which are closer to the center of the annual maxima distribution and thus more robustly estimated.
+* **Response:** We thank the reviewer for this comment. We agree that estimating a 10-year return level ($RL_{10}$) at the hourly scale from a 33-year series (1990–2022) is more uncertain than at lower return periods, because each hourly annual maximum carries less information about the tail of the distribution.
 
-As shown in @fig-rl2-daily and @fig-rl5-daily (daily) and @fig-rl2-hourly and @fig-rl5-hourly (hourly), the spatial patterns of the $RL_{2y}$ and $RL_{5y}$ trends are very consistent with those of the $RL_{10y}$, with the same regional signals. Additionally, as shown in the response to Reviewer #1 (Comment 1), the GEV-estimated $RL_{2y}$ trend across all 1,558 daily stations is highly consistent with a simple linear regression on the annual maxima (Pearson $r = 0.88$ for relative trends), confirming that the trend patterns are not driven by GEV fitting uncertainty.
+As a sensitivity check, we computed relative trends in $RL_2$ and $RL_5$ using the same non-stationary GEV models and the same 1992–2022 trend window as for $RL_{10}$ (@fig-rl-daily, @fig-rl-hourly). Quantitative comparisons (hydrological year, all stations with a selected GEV model) show that the **spatial patterns are robust to the choice of return period**, while trend **magnitudes** increase with $T$, as expected for higher quantiles:
 
-We have added a justification for the choice of the 10-year return period in the revised manuscript. The 10-year return level is retained as the primary metric because it is a standard design threshold in hydrology and because our daily series (63 years) and hourly series (33 years) provide sufficient data for its robust estimation. We chose not to include these lower-return-period maps as an additional appendix in order to keep the manuscript focused, but present them here for the reviewer's assessment.
+**Daily (1,583 stations; 704 with significant $RL_{10}$ trends, 44.5%).** Among significant stations, pairwise Pearson correlations of relative trends are $r=0.99$ between $RL_5$ and $RL_{10}$, $r=0.86$ between $RL_2$ and $RL_{10}$, and $r=0.92$ between $RL_2$ and $RL_5$. Median absolute trends are similar across return periods (9.3%, 10.9%, and 11.3% for $RL_2$, $RL_5$, and $RL_{10}$, respectively). The same regional signals appear on all three maps—notably positive trends in the southern Alps and Mediterranean arc, and weaker or negative trends in parts of western France—with $RL_5$ virtually indistinguishable from $RL_{10}$ at the national scale.
 
-\clearpage
+**Hourly (574 stations; 193 with significant trends, 33.6%).** Correlations remain high but are lower than for daily data, reflecting the shorter records and higher convective variability: $r=0.98$ ($RL_5$ vs.\ $RL_{10}$), $r=0.79$ ($RL_2$ vs.\ $RL_{10}$), and $r=0.87$ ($RL_2$ vs.\ $RL_5$) among significant stations. Median absolute trends increase from 31% ($RL_2$) to 42% ($RL_5$) and 45% ($RL_{10}$), confirming that $RL_{10}$ amplifies tail trends but does not create spurious regional structures: the same broad patterns are present at $RL_2$ and $RL_5$, with reduced amplitude and less spatial coherence, as expected for a lower quantile on a 33-year record.
 
-![Relative GEV trends of the 2-year return level ($\mathrm{RL}_2$) for daily precipitation (hydrological year): AROME (left) and Météo-France stations (right). Non-significant trends are shown in grey.](Figures/rl2_trends_daily.png){#fig-rl2-daily width=90%}
+**AROME** shows the same behaviour: $r=0.99$ between $RL_5$ and $RL_{10}$ trends (daily and hourly, significant grid points) and $r=0.83$–$0.86$ between $RL_2$ and $RL_{10}$, consistent with the station-based analysis.
 
-\clearpage
+We note that significance is assessed from the $RL_{10}$ trend uncertainty (10% level); the same 704 daily and 193 hourly stations are therefore flagged across return periods. This is conservative for $RL_2$ and $RL_5$, which are less noisy than $RL_{10}$ at the hourly scale. Together with the annual-maxima vs.\ $RL_2$ check in our response to Reviewer #1 ($r=0.88$ for relative trends across 1,558 daily stations), these results indicate that the trend maps (Figures 6 and 7) are not driven by GEV fitting artefacts or by the choice of a high return period alone.
 
-![Relative GEV trends of the 5-year return level ($\mathrm{RL}_5$) for daily precipitation (hydrological year): AROME (left) and Météo-France stations (right). Non-significant trends are shown in grey.](Figures/rl5_trends_daily.png){#fig-rl5-daily width=90%}
-
-\clearpage
-
-![Relative GEV trends of the 2-year return level ($\mathrm{RL}_2$) for hourly precipitation (hydrological year): AROME (left) and Météo-France stations (right). Non-significant trends are shown in grey.](Figures/rl2_trends_hourly.png){#fig-rl2-hourly width=90%}
+We retain $RL_{10}$ as the primary metric because it is a standard hydrological design threshold and because our daily (63-year) and hourly (33-year) records are sufficient for its estimation; $RL_2$ and $RL_5$ confirm the robustness of the detected spatial patterns. We present the lower-return-period maps here for the reviewer's assessment rather than as an additional manuscript appendix, to keep the main text focused.
 
 \clearpage
 
-![Relative GEV trends of the 5-year return level ($\mathrm{RL}_5$) for hourly precipitation (hydrological year): AROME (left) and Météo-France stations (right). Non-significant trends are shown in grey.](Figures/rl5_trends_hourly.png){#fig-rl5-hourly width=90%}
+![Relative GEV trends of $\mathrm{RL}_2$ (first row) and $\mathrm{RL}_5$ (second row) for daily precipitation (hydrological year): columns are AROME (left) and Météo-France stations (right), with a separate colour scale for each row. Same display conventions as Figures 6 and 7: open circles for non-significant stations ; filled grey for significant near-zero trends; coloured markers for significant trends (uniform size); non-significant AROME grid cells not displayed.](Figures/rl2_rl5_trends_daily.png){#fig-rl-daily width=95%}
+
+\clearpage
+
+![Relative GEV trends of $\mathrm{RL}_2$ (first row) and $\mathrm{RL}_5$ (second row) for hourly precipitation (hydrological year): columns are AROME (left) and Météo-France stations (right), with a separate colour scale for each row. Same display conventions as Figures 6 and 7: open circles for non-significant stations ; filled grey for significant near-zero trends; coloured markers for significant trends (uniform size); non-significant AROME grid cells not displayed.](Figures/rl2_rl5_trends_hourly.png){#fig-rl-hourly width=95%}
 
 \clearpage
 
@@ -45,7 +45,7 @@ We have added a justification for the choice of the 10-year return period in the
 
 - In `Section 3.2.3 (Trend in return level)`, we have added the justification for using the 10-year return level as the main indicator, while noting the consistency with lower return periods:
 
-  > _"In this study, we focus on the 10-year return level ($\mathrm{RL}_{10}$) as the primary metric for extreme precipitation, as it represents a standard design threshold in hydrology. Our daily series (63 years) and hourly series (33 years) provide sufficient data for its robust estimation. As a sensitivity check, the trends of the 2-year and 5-year return levels ($\mathrm{RL}_{2}$ and $\mathrm{RL}_{5}$) show consistent spatial patterns, confirming that the detected signals are robust and not driven by GEV fitting uncertainty."_
+  > _"In this study, we focus on the 10-year return level ($\mathrm{RL}_{10}$) as the primary metric for extreme precipitation, as it represents a standard design threshold in hydrology. Our daily series (63 years) and hourly series (33 years) provide sufficient data for its robust estimation. As a sensitivity check, trends in $\mathrm{RL}_{2}$ and $\mathrm{RL}_{5}$ show the same regional patterns as $\mathrm{RL}_{10}$ (daily: $r=0.86$–$0.99$ among significant stations; hourly: $r=0.79$–$0.98$), confirming that the detected signals are robust and not driven by GEV fitting uncertainty."_
 
 
 ### Comment 2: Introduction & Physical Processes
@@ -89,19 +89,25 @@ _Figure 2 and Figure 3: How much of the temperature trend could be caused by aer
 
 _For the maps with stations, setting non-significant trends to zeros makes it difficult to differentiate with stations that have close to zero or zero significant trends and stations with strong trends that are non-significant. The authors should consider not showing the stations at all or choosing another marker. The size of the marker also seems to vary with the trend, which can make it look like the stations with strong trends are more numerous than they are._
 
-* **Response:** We agree with the reviewer. Representing non-significant trends as zero makes it difficult to distinguish between a significant trend of 0% and a non-significant trend of 50%. To improve readability:
+* **Response:** We agree with the reviewer. Representing non-significant trends as zero makes it difficult to distinguish between a significant trend of 0% and a non-significant trend of 50%. For the climatology maps (Figure 4), we only adopted uniform marker size and a clearly visible grey for zero bias (no significance coding). For the trend maps (Figures 6 and 7, and Appendix C), we adopted the following display conventions (also detailed in our response to Reviewer #1, Comment 7):
 
-1. We represent non-significant stations using a small, neutral, light-grey dot to keep them visible as part of the network but clearly distinguish them from stations with significant trends.
-2. As also requested by Reviewer 1, we keep the marker size constant for all stations to prevent visual bias towards larger circles, relying solely on color to represent the trend magnitude.
+| Type | Display |
+|------|---------|
+| **Non-significant** (stations) | Open circle: white fill, light grey outline  |
+| **Significant ≈ 0** (stations) | Filled grey disk, dark outline |
+| **Significant coloured** (stations) | Trend colour on the map scale; **uniform marker size** |
+| **AROME grid** | Non-significant grid points **not displayed** |
+
+This keeps the station network visible on hourly maps (where only about one third of stations are significant) while clearly separating non-significant locations from significant near-zero and coloured trends.
 
 **Manuscript modifications:**
 
-- In `Figures 6 and 7` (trend maps), we have changed the visualization: (i) all station markers now have a uniform size (instead of scaling with trend magnitude), and (ii) stations with non-significant trends are shown as small light-grey dots instead of being set to zero. This avoids confusing truly zero significant trends with large non-significant trends.
+- In `Figures 5, 6 and 7` (trend maps), we have changed the visualization according to the table above.
+- The caption of Figure 5 has been updated. Original caption: _"Relative GEV trends over 1959–2022 in the 10-year return level of daily precipitation [...]."_ Updated caption adds the display conventions (open circles for non-significant stations, filled grey for significant near-zero trends, coloured markers for significant trends, uniform size; non-significant AROME grid cells not displayed).
 
-- The caption of Figure 6 has been updated. Original caption: _"Relative GEV trends over 1959–2022 in the 10-year return level of daily precipitation [...]."_ Updated caption adds: _"Only statistically significant trends (at the 10% level) are colored; stations with non-significant trends are represented by small light-grey dots."_
+- The same changes have been applied to the captions of Figures 6 and 7 (hourly trends) and the monthly trend maps (Appendix C, Figure C1).
 
-- The same changes have been applied to the caption of Figure 7 (hourly trends) and the monthly trend maps (Appendix C, Figure C1).
-
+The Figure 4 caption has been updated for uniform marker size and zero-bias display; captions for Figures 6 and 7 and Appendix C describe the significance conventions above. The revised maps are shown in our response to Reviewer #1 (Comment 7): Figure 4 (climatology) and Figures 6 and 7 (trends).
 
 ## Minor Comments
 

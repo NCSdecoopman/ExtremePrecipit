@@ -266,10 +266,12 @@ def calculate_data_maps(
         for gdf in (g for g in model_gdfs + obs_gdfs if g is not None):
             if val_col not in gdf.columns or gdf[val_col].empty:
                 continue
-            seuil = np.percentile(
-                np.abs(gdf[val_col].dropna()),
-                saturation_col
-            )
+            vals = gdf[val_col].dropna()
+            if show_signif and "significant" in gdf.columns:
+                vals = gdf.loc[gdf["significant"], val_col].dropna()
+            if vals.empty:
+                continue
+            seuil = np.percentile(np.abs(vals), saturation_col)
             seuils.append(seuil)
 
         if not seuils:
@@ -301,22 +303,6 @@ def calculate_data_maps(
     #         if gdf is not None and "significant" in gdf.columns:
     #             obs_gdfs[idx] = gdf.loc[gdf["significant"] == True].copy()     
 
-
-    # ------------------------------------------------------------------
-    # 7. Nullify non-significant values (optional)
-    # ------------------------------------------------------------------
-    if show_signif:
-        for idx, gdf in enumerate(model_gdfs):
-            if gdf is not None and "significant" in gdf.columns and val_col in gdf.columns:
-                gdf = gdf.copy()
-                gdf.loc[gdf["significant"] == False, val_col] = 0
-                model_gdfs[idx] = gdf
-
-        for idx, gdf in enumerate(obs_gdfs):
-            if gdf is not None and "significant" in gdf.columns and val_col in gdf.columns:
-                gdf = gdf.copy()
-                gdf.loc[gdf["significant"] == False, val_col] = 0
-                obs_gdfs[idx] = gdf
 
     return dir_path, val_col, titles, model_gdfs, obs_gdfs
 
@@ -427,10 +413,18 @@ def generate_maps(
                                 ncolors=len(all_cat))
 
         else:
-            all_mins = [g[val_col].min() for g in model_gdfs if g is not None]
-            all_mins += [g[val_col].min() for g in obs_gdfs if g is not None]
-            all_maxs = [g[val_col].max() for g in model_gdfs if g is not None]
-            all_maxs += [g[val_col].max() for g in obs_gdfs if g is not None]
+            def _vals_for_norm(g):
+                if g is None or val_col not in g.columns or g[val_col].empty:
+                    return None
+                if show_signif and "significant" in g.columns:
+                    v = g.loc[g["significant"], val_col]
+                    return v if not v.empty else None
+                return g[val_col]
+
+            all_mins = [v.min() for g in model_gdfs if (v := _vals_for_norm(g)) is not None]
+            all_mins += [v.min() for g in obs_gdfs if (v := _vals_for_norm(g)) is not None]
+            all_maxs = [v.max() for g in model_gdfs if (v := _vals_for_norm(g)) is not None]
+            all_maxs += [v.max() for g in obs_gdfs if (v := _vals_for_norm(g)) is not None]
 
             max_abs = max(abs(min(all_mins)), abs(max(all_maxs)))
             vmin, vmax = -max_abs, max_abs
@@ -556,56 +550,78 @@ def generate_maps(
             )
 
 
-            # Model 
+            # Model
             if show_mod and gdf_m is not None:
-                gdf_m.plot(ax=ax, column=val_col, cmap=cmap, norm=norm, linewidth=0, zorder=1)
+                gdf_m_plot = gdf_m
+                if show_signif and "significant" in gdf_m.columns:
+                    gdf_m_plot = gdf_m.loc[gdf_m["significant"]].copy()
+                if not gdf_m_plot.empty:
+                    gdf_m_plot.plot(ax=ax, column=val_col, cmap=cmap, norm=norm, linewidth=0, zorder=1)
 
             # Observations
             if show_obs and gdf_o is not None and not gdf_o.empty:
 
-                # Reviewer request: uniform dot size for all stations
+                # Reviewer request: uniform dot size for all displayed stations
                 mean_pt = middle_pt / 2
                 gdf_o.loc[:, "_size_pt2"] = mean_pt**2
 
-                # split near-zero vs non-zero (5% of max |value| or one color bin)
-                vals = gdf_o[val_col]
-                max_abs = float(vals.abs().max()) or 1.0
-                span = float(vals.max() - vals.min()) or max_abs
-                threshold = max(0.05 * max_abs, span / 15, 1e-5)
-                gdf_zero = gdf_o[vals.abs() <= threshold]
-                gdf_nonzero = gdf_o[vals.abs() > threshold]
-
-                kw_zero = dict(
+                kw_hollow = dict(
                     markersize="_size_pt2",
                     marker="o",
-                    edgecolor="#333333",
+                    color="white",
+                    edgecolor=obs_edgecolor,
                     linewidth=0.5,
                 )
 
-                kw_nonzero = dict(
-                    markersize="_size_pt2",
-                    marker="o",
-                    edgecolor="face",
-                    linewidth=0.1,
-                )
+                if show_signif and "significant" in gdf_o.columns:
+                    gdf_nonsig = gdf_o.loc[~gdf_o["significant"]]
+                    gdf_plot = gdf_o.loc[gdf_o["significant"]].copy()
+                else:
+                    gdf_nonsig = gdf_o.iloc[0:0]
+                    gdf_plot = gdf_o
 
-                # 1. near-zero points (below)
-                if not gdf_zero.empty:
-                    if obs_facecolor is None:
-                        gdf_zero.plot(ax=ax, color="#808080",
-                                    zorder=2, **kw_zero)
-                    else:
-                        gdf_zero.plot(ax=ax, color=obs_facecolor,
-                                    zorder=2, **kw_zero)
+                if not gdf_nonsig.empty:
+                    gdf_nonsig.plot(ax=ax, zorder=2, **kw_hollow)
 
-                # 2. points non nuls (par-dessus)
-                if not gdf_nonzero.empty:
-                    if obs_facecolor is None:
-                        gdf_nonzero.plot(ax=ax, column=val_col, cmap=cmap, norm=norm,
-                                        zorder=3, **kw_nonzero)
-                    else:
-                        gdf_nonzero.plot(ax=ax, color=obs_facecolor,
-                                        zorder=3, **kw_nonzero)
+                if not gdf_plot.empty:
+                    # split near-zero vs non-zero among significant stations only
+                    vals = gdf_plot[val_col]
+                    max_abs = float(vals.abs().max()) or 1.0
+                    span = float(vals.max() - vals.min()) or max_abs
+                    threshold = max(0.05 * max_abs, span / 15, 1e-5)
+                    gdf_zero = gdf_plot[vals.abs() <= threshold]
+                    gdf_nonzero = gdf_plot[vals.abs() > threshold]
+
+                    kw_zero = dict(
+                        markersize="_size_pt2",
+                        marker="o",
+                        edgecolor="#333333",
+                        linewidth=0.5,
+                    )
+
+                    kw_nonzero = dict(
+                        markersize="_size_pt2",
+                        marker="o",
+                        edgecolor="face",
+                        linewidth=0.1,
+                    )
+
+                    if not gdf_zero.empty:
+                        if obs_facecolor is None:
+                            gdf_zero.plot(ax=ax, color="#808080", zorder=3, **kw_zero)
+                        else:
+                            gdf_zero.plot(ax=ax, color=obs_facecolor, zorder=3, **kw_zero)
+
+                    if not gdf_nonzero.empty:
+                        if obs_facecolor is None:
+                            gdf_nonzero.plot(
+                                ax=ax, column=val_col, cmap=cmap, norm=norm,
+                                zorder=4, **kw_nonzero,
+                            )
+                        else:
+                            gdf_nonzero.plot(
+                                ax=ax, color=obs_facecolor, zorder=4, **kw_nonzero,
+                            )
 
 
             # Relief
@@ -706,8 +722,8 @@ def generate_maps(
 
     # --- 9bis. Légende horizontale ---------------------------------------
     mpl.rcParams.update({"font.size": 22})
-    figh = plt.figure(figsize=(figsize[0]*1.4, 1.2))
-    axh = figh.add_axes([0.08, 0.45, 0.84, 0.35])  # [left, bottom, width, height]
+    figh = plt.figure(figsize=(figsize[0] * 1.4, 1.2))
+    axh = figh.add_axes([0.08, 0.45, 0.84, 0.35])
 
     smh = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
     smh.set_array([])
@@ -732,11 +748,8 @@ def generate_maps(
             spacing="proportional",
             orientation="horizontal"
         )
-        # if mesure is not None:
-        #     cbh.ax.set_xlabel(f"{legend}", labelpad=6, fontsize=20)
         cbh.ax.xaxis.set_major_formatter(FormatStrFormatter('%.0f'))
 
-    # style propre
     cbh.outline.set_linewidth(0.8)
     cbh.ax.tick_params(axis="x", labelsize=12, length=4, width=0.8, direction="out")
 

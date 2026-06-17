@@ -144,34 +144,43 @@ _I suggest to substitute 3rd row or add a 4th row with relative biases. For all 
 
 1. We have added a fourth row to the climatology maps (Figure 4) to present the relative bias (%) alongside the absolute difference in the third row, making the regional comparisons clearer while preserving the absolute magnitude information.
 
-2. We have used a uniform dot size for all stations across all maps so that larger dots do not obscure adjacent stations.
+2. We have used a uniform dot size for all displayed stations so that larger dots do not obscure adjacent stations.
 
-3. We have modified the color scale so that a zero bias is represented by a clearly visible, distinct neutral color rather than a light color that blends into the background.
+3. For the climatology maps (Figure 4), we have modified the color scale so that a zero bias is represented by a clearly visible grey fill.
+
+4. For trend maps (Figures 6 and 7, and the monthly maps in Appendix C), we adopted the following display conventions (also requested by Reviewer #2, “choosing another marker”):
+
+| Type | Display |
+|------|---------|
+| **Non-significant** (stations) | Open circle: white fill, light grey outline  |
+| **Significant ≈ 0** (stations) | Filled grey disk, dark outline |
+| **Significant coloured** (stations) | Trend colour on the map scale; **uniform marker size** |
+| **AROME grid** | Non-significant grid points **not displayed** |
 
 **Manuscript modifications:**
 
-- In `Section 4.1 (Evaluation of the precipitation climatology of AROME)`, the climatology maps (Figure 4) have been updated to present the absolute difference (mean error, $ME$) in the third row and the relative bias ($RB$, in %) in the fourth row. We also used uniform-sized station markers across all maps and a clearly visible dark-grey outline for zero-bias points.
-- In `Section 4.2 (Spatial distribution of precipitation trends)` and `Section 4.3 (Seasonal variations of hourly trends)`, the trend maps (Figures 6, 7 and 8) have been updated to also use uniform-sized station markers and a neutral grey color with a dark-grey outline for zero-trend points.
+- In `Section 4.1 (Evaluation of the precipitation climatology of AROME)`, the climatology maps (Figure 4) have been updated to present the absolute difference (mean error, $ME$) in the third row and the relative bias ($RB$, in %) in the fourth row. Station markers have uniform size; zero bias is shown as a clearly visible grey fill.
+- In `Section 4.2 (Spatial distribution of precipitation trends)` and `Section 4.3 (Seasonal variations of hourly trends)`, the trend maps (Figures 6 and 7, and Appendix C) follow the conventions in point 4 above: open circles (white fill, grey outline) for non-significant stations, filled grey for significant near-zero trends, coloured markers for significant trends (uniform size), and masked non-significant AROME grid cells.
 
 \clearpage
 
 ![](fig3.pdf){#fig-map-clim width=100%}
-_*Figure 4.* Climatology of the AROME model (first row), Météo-France stations (second row), the AROME–Station absolute difference (third row), and the relative bias (fourth row), with the spatial correlation between the stations and their closest grid points ($r$), the bias ($ME$ or relative bias $RB$ in bold) and the number of stations compared ($n$). The statistics of the three first columns are derived from daily data from 1959 to 2022. The last column uses hourly data from 1990 to 2022. The contour lines show the 400 and 800 m elevation isolines. Colour scales are symmetrically saturated._ 
+_*Figure 4.* Climatology of the AROME model (first row), Météo-France stations (second row), the AROME–Station absolute difference (third row), and the relative bias (fourth row), with the spatial correlation between the stations and their closest grid points ($r$), the bias ($ME$ or relative bias $RB$ in bold) and the number of stations compared ($n$). The statistics of the three first columns are derived from daily data from 1959 to 2022. The last column uses hourly data from 1990 to 2022. The contour lines show the 400 and 800 m elevation isolines. Colour scales are symmetrically saturated. Station markers have uniform size; zero bias is shown as a clearly visible grey fill._
 
 \clearpage
 
 ![](fig5.pdf){width=100%}
-_*Figure 6.*_
+_*Figure 6 (daily GEV trends, $\mathrm{RL}_{10}$).* Relative trends over 1959–2022 (%) in the 10-year return level of daily precipitation for AROME (left) and Météo-France stations (right). Display conventions: non-significant stations as open circles (white fill) ; significant trends close to zero as filled grey (dark outline); significant non-zero trends coloured on the map scale (uniform marker size); non-significant AROME grid cells not displayed. Metrics ($r$, $n$, $ME$) are computed on significant trends only._
 
 \clearpage
 
 ![](fig6.pdf){width=100%}
-_*Figure 7.*_
+_*Figure 7 (hourly GEV trends, seasonal).* Same display conventions as Figure 6 for hourly data (1990–2022), with 90% colour-scale saturation._
 
 \clearpage
 
 ![](fig7.pdf){width=100%}
-_*Figure 8.*_
+_*Appendix C, Figure C1 (hourly GEV trends, monthly).* Same display conventions as Figures 6 and 7 for monthly hourly trends (1990–2022)._
 
 \clearpage
 

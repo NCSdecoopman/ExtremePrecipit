@@ -1,7 +1,7 @@
 """
-Generate RL2 trend maps for daily and hourly data (observed + AROME).
-Produces figures similar to Figures 6 and 7 of the manuscript but for T=2.
-Uses existing GEV best-model parameters and niveau_retour significance.
+Generate RL_T trend maps for daily and hourly data (observed + AROME).
+Produces combined figures (RL2 + RL5) with AROME | Stations panels and a
+shared colour scale, similar to Figures 4, 6 and 7 layout.
 """
 import os
 import numpy as np
@@ -9,7 +9,10 @@ import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from concurrent.futures import ThreadPoolExecutor
+from matplotlib.colorbar import ColorbarBase
 from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm, to_hex
+from matplotlib.gridspec import GridSpec
 from pathlib import Path
 
 # ---- Paths (relative to repo root) ----
@@ -51,25 +54,48 @@ CONFIGS = {
 }
 
 
+def _read_maxima_year(path, mesure):
+    df = pd.read_parquet(path, columns=["NUM_POSTE", mesure, "nan_ratio"])
+    df["year"] = int(path.parent.name)
+    return df
+
+
 def load_maxima_years(maxima_dir, season, mesure, min_year, max_year, len_serie):
     """Load maxima data and return df with NUM_POSTE and year columns (filtered)."""
-    dfs = []
-    for y in range(min_year, max_year + 1):
-        p = Path(maxima_dir) / f"{y:04d}" / f"{season}.parquet"
-        if p.exists():
-            df = pd.read_parquet(p, columns=["NUM_POSTE", mesure, "nan_ratio"])
-            df["year"] = y
-            dfs.append(df)
-    if not dfs:
+    maxima_dir = Path(maxima_dir)
+    paths = [
+        maxima_dir / f"{y:04d}" / f"{season}.parquet"
+        for y in range(min_year, max_year + 1)
+        if (maxima_dir / f"{y:04d}" / f"{season}.parquet").exists()
+    ]
+    if not paths:
         return None
+
+    with ThreadPoolExecutor() as pool:
+        dfs = list(pool.map(lambda p: _read_maxima_year(p, mesure), paths))
     df = pd.concat(dfs, ignore_index=True)
     df["NUM_POSTE"] = df["NUM_POSTE"].astype(str)
     df = df[df["nan_ratio"] <= 0.10].dropna(subset=[mesure])
-    # Filter stations with enough years
-    counts = df.groupby("NUM_POSTE")["year"].nunique()
+    counts = df.groupby("NUM_POSTE", sort=False)["year"].nunique()
     valid = counts[counts >= len_serie].index
-    df = df[df["NUM_POSTE"].isin(valid)]
-    return df[["NUM_POSTE", "year"]].drop_duplicates()
+    return df.loc[df["NUM_POSTE"].isin(valid), ["NUM_POSTE", "year"]].drop_duplicates()
+
+
+def _time_norm_table(maxima_years_df, min_year, max_year, a_year, b_year):
+    """Per-station normalized time for return-level endpoints (vectorized)."""
+    my = maxima_years_df[["NUM_POSTE", "year"]].copy()
+    my["t_raw"] = (my["year"] - min_year) / (max_year - min_year)
+    agg = my.groupby("NUM_POSTE", sort=False)["t_raw"].agg(["min", "max"])
+    agg = agg[agg["min"] < agg["max"]]
+    agg["span"] = agg["max"] - agg["min"]
+    my = my.join(agg[["span"]], on="NUM_POSTE")
+    my["res0"] = my["t_raw"] / my["span"]
+    dx = my.groupby("NUM_POSTE", sort=False)["res0"].min() + 0.5
+    norm = agg.join(dx.rename("dx"))
+    for y, col in ((a_year, "t_a"), (b_year, "t_b")):
+        t_raw_y = (y - min_year) / (max_year - min_year)
+        norm[col] = t_raw_y / norm["span"] - norm["dx"]
+    return norm.reset_index()[["NUM_POSTE", "t_a", "t_b"]]
 
 
 def compute_rl_trend(gev_df, maxima_years_df, min_year, max_year, T=2):
@@ -78,44 +104,26 @@ def compute_rl_trend(gev_df, maxima_years_df, min_year, max_year, T=2):
     using the same normalization as pipeline_best_to_niveau_retour.compute_zT_for_years.
     """
     a_year, b_year = 1992, max_year
-    results = []
-    for _, row in gev_df.iterrows():
-        poste = row["NUM_POSTE"]
-        mu0, mu1 = row["mu0"], row["mu1"]
-        sigma0, sigma1 = row["sigma0"], row["sigma1"]
-        xi = row["xi"]
+    norm = _time_norm_table(maxima_years_df, min_year, max_year, a_year, b_year)
+    df = gev_df.merge(norm, on="NUM_POSTE", how="inner")
 
-        sub = maxima_years_df[maxima_years_df["NUM_POSTE"] == poste]
-        if len(sub) == 0:
-            continue
-        years_obs = sub["year"].values
+    xi = df["xi"].to_numpy()
+    CT = (-np.log(1 - 1 / T)) ** (-xi) - 1
+    t_a = df["t_a"].to_numpy()
+    t_b = df["t_b"].to_numpy()
+    mu0 = df["mu0"].to_numpy()
+    mu1 = df["mu1"].to_numpy()
+    sigma0 = df["sigma0"].to_numpy()
+    sigma1 = df["sigma1"].to_numpy()
 
-        # Same normalization as compute_zT_for_years
-        t_tilde_obs_raw = (years_obs - min_year) / (max_year - min_year)
-        t_min_ret = t_tilde_obs_raw.min()
-        t_max_ret = t_tilde_obs_raw.max()
-        if t_max_ret == t_min_ret:
-            continue
-        res0_obs = t_tilde_obs_raw / (t_max_ret - t_min_ret)
-        dx = res0_obs.min() + 0.5
+    zTa = mu0 + mu1 * t_a + (sigma0 + sigma1 * t_a) / xi * CT
+    zTb = mu0 + mu1 * t_b + (sigma0 + sigma1 * t_b) / xi * CT
+    valid = (zTa != 0) & np.isfinite(zTa) & np.isfinite(zTb)
+    z_T_p = np.full(len(df), np.nan)
+    z_T_p[valid] = (zTb[valid] - zTa[valid]) / zTa[valid] * 100
 
-        # Compute t_tilde for years a and b
-        t_tilde_retour = []
-        for y in [a_year, b_year]:
-            t_raw = (y - min_year) / (max_year - min_year)
-            res0 = t_raw / (t_max_ret - t_min_ret)
-            t_tilde = res0 - dx
-            t_tilde_retour.append(t_tilde)
-
-        CT = (-np.log(1 - 1 / T)) ** (-xi) - 1
-        zTa = mu0 + mu1 * t_tilde_retour[0] + (sigma0 + sigma1 * t_tilde_retour[0]) / xi * CT
-        zTb = mu0 + mu1 * t_tilde_retour[1] + (sigma0 + sigma1 * t_tilde_retour[1]) / xi * CT
-        if zTa == 0 or np.isnan(zTa) or np.isnan(zTb):
-            continue
-        z_T_p = (zTb - zTa) / zTa * 100
-
-        results.append({"NUM_POSTE": poste, "z_T_p": z_T_p})
-    return pd.DataFrame(results)
+    out = pd.DataFrame({"NUM_POSTE": df["NUM_POSTE"].values, "z_T_p": z_T_p})
+    return out.dropna(subset=["z_T_p"]).reset_index(drop=True)
 
 
 def build_map_elements():
@@ -147,107 +155,171 @@ def build_map_elements():
     return coast, relief, mask, cmap
 
 
+def _significant_only(gdf):
+    if gdf is None or gdf.empty:
+        return gdf
+    if "significant" in gdf.columns:
+        return gdf.loc[gdf["significant"]].copy()
+    return gdf
+
+
+def _split_zero_nonzero(gdf, col):
+    if gdf is None or gdf.empty:
+        return gdf, gdf
+    vals = gdf[col]
+    max_abs = float(vals.abs().max()) or 1.0
+    span = float(vals.max() - vals.min()) or max_abs
+    threshold = max(0.05 * max_abs, span / 15, 1e-5)
+    return gdf[vals.abs() <= threshold], gdf[vals.abs() > threshold]
+
+
 def plot_trend_map(ax, gdf, col, coast, relief, cmap, norm, title, is_grid=False):
     """Plot a single trend map panel."""
     coast.plot(ax=ax, edgecolor="black", linewidth=0.6, zorder=1)
 
+    if gdf is None or gdf.empty:
+        relief.plot(ax=ax, color="black", linewidth=0.3, alpha=0.8, zorder=5)
+        ax.set_axis_off()
+        ax.set_title(title, fontsize=10, fontweight="bold")
+        return
+
     if is_grid:
-        # AROME grid: plot as small squares
-        from shapely.geometry import box as shapely_box
-        half = 2500 / 2  # 2.5 km grid -> 1.25 km half-side
-        gdf = gdf.copy()
-        gdf["geometry"] = gdf.geometry.apply(
-            lambda p: shapely_box(p.x - half, p.y - half, p.x + half, p.y + half)
-        )
-        # Separate near-zero
-        vals = gdf[col]
-        max_abs = float(vals.abs().max()) or 1.0
-        span = float(vals.max() - vals.min()) or max_abs
-        threshold = max(0.05 * max_abs, span / 15, 1e-5)
-        gdf_zero = gdf[vals.abs() <= threshold]
-        gdf_nonzero = gdf[vals.abs() > threshold]
-        if not gdf_zero.empty:
-            gdf_zero.plot(ax=ax, color="#808080", linewidth=0, zorder=2)
-        if not gdf_nonzero.empty:
-            gdf_nonzero.plot(ax=ax, column=col, cmap=cmap, norm=norm, linewidth=0, zorder=2)
+        gdf_sig = _significant_only(gdf)
+        if gdf_sig is not None and not gdf_sig.empty:
+            from shapely.geometry import box as shapely_box
+            half = 2500 / 2
+            gdf_sig = gdf_sig.copy()
+            gdf_sig["geometry"] = gdf_sig.geometry.apply(
+                lambda p: shapely_box(p.x - half, p.y - half, p.x + half, p.y + half)
+            )
+            gdf_zero, gdf_nonzero = _split_zero_nonzero(gdf_sig, col)
+            if not gdf_zero.empty:
+                gdf_zero.plot(ax=ax, color="#808080", linewidth=0, zorder=2)
+            if not gdf_nonzero.empty:
+                gdf_nonzero.plot(ax=ax, column=col, cmap=cmap, norm=norm, linewidth=0, zorder=2)
     else:
-        # Observations: uniform dots
         pt_size = 4.5 ** 2
-        vals = gdf[col]
-        max_abs = float(vals.abs().max()) or 1.0
-        span = float(vals.max() - vals.min()) or max_abs
-        threshold = max(0.05 * max_abs, span / 15, 1e-5)
-        gdf_zero = gdf[vals.abs() <= threshold]
-        gdf_nonzero = gdf[vals.abs() > threshold]
-        if not gdf_zero.empty:
-            gdf_zero.plot(ax=ax, color="#808080", markersize=pt_size, marker="o",
-                         edgecolor="#333333", linewidth=0.5, zorder=2)
-        if not gdf_nonzero.empty:
-            gdf_nonzero.plot(ax=ax, column=col, cmap=cmap, norm=norm,
-                           markersize=pt_size, marker="o", edgecolor="face",
-                           linewidth=0.1, zorder=3)
+        if "significant" in gdf.columns:
+            gdf_nonsig = gdf.loc[~gdf["significant"]]
+            gdf_sig = gdf.loc[gdf["significant"]]
+            if not gdf_nonsig.empty:
+                gdf_nonsig.plot(
+                    ax=ax, color="white", markersize=pt_size, marker="o",
+                    edgecolor="#BFBFBF", linewidth=0.5, zorder=2,
+                )
+        else:
+            gdf_sig = gdf
+
+        if gdf_sig is not None and not gdf_sig.empty:
+            gdf_zero, gdf_nonzero = _split_zero_nonzero(gdf_sig, col)
+            if not gdf_zero.empty:
+                gdf_zero.plot(
+                    ax=ax, color="#808080", markersize=pt_size, marker="o",
+                    edgecolor="#333333", linewidth=0.5, zorder=3,
+                )
+            if not gdf_nonzero.empty:
+                gdf_nonzero.plot(
+                    ax=ax, column=col, cmap=cmap, norm=norm,
+                    markersize=pt_size, marker="o", edgecolor="face",
+                    linewidth=0.1, zorder=4,
+                )
 
     relief.plot(ax=ax, color="black", linewidth=0.3, alpha=0.8, zorder=5)
     ax.set_axis_off()
     ax.set_title(title, fontsize=10, fontweight="bold")
 
 
-def make_figure(
-    gdf_mod, gdf_obs, coast, relief, mask, cmap,
-    title_mod, title_obs, output_name, echelle_label
-):
-    """Generate a 1x2 figure: AROME (left) vs Observations (right)."""
-    # Apply significance: set non-significant to 0
-    if "significant" in gdf_obs.columns:
-        gdf_obs = gdf_obs.copy()
-        gdf_obs.loc[gdf_obs["significant"] == False, "z_T_p"] = 0
-    if gdf_mod is not None and "significant" in gdf_mod.columns:
-        gdf_mod = gdf_mod.copy()
-        gdf_mod.loc[gdf_mod["significant"] == False, "z_T_p"] = 0
+def _sig_values(gdf, col="z_T_p"):
+    if gdf is None or gdf.empty:
+        return []
+    g = _significant_only(gdf)
+    return list(g[col].dropna()) if g is not None and not g.empty else []
 
-    # Clip to mask
-    gdf_obs = gdf_obs.clip(mask)
-    if gdf_mod is not None:
-        gdf_mod = gdf_mod.clip(mask)
 
-    # Shared norm
-    all_vals = list(gdf_obs["z_T_p"].dropna())
-    if gdf_mod is not None:
-        all_vals += list(gdf_mod["z_T_p"].dropna())
+def _shared_norm(gdfs, col="z_T_p"):
+    all_vals = []
+    for gdf in gdfs:
+        all_vals.extend(_sig_values(gdf, col))
     max_abs = max(abs(min(all_vals)), abs(max(all_vals))) if all_vals else 50
-    norm = TwoSlopeNorm(vmin=-max_abs, vcenter=0.0, vmax=max_abs)
+    return TwoSlopeNorm(vmin=-max_abs, vcenter=0.0, vmax=max_abs)
 
-    # Compute statistics
-    n_obs = len(gdf_obs)
 
-    fig, axs = plt.subplots(1, 2, figsize=(12, 6.5), dpi=300)
+def make_combined_figure(
+    panels,
+    coast,
+    relief,
+    mask,
+    cmap,
+    output_name,
+    col_header=("AROME", "Stations"),
+):
+    """
+    panels: list of (T, gdf_mod, gdf_obs) — one row per return period.
+    Layout: 2 columns (AROME | Stations), one shared colour bar per RL row.
+    """
+    clipped = []
+    for T, gdf_mod, gdf_obs in panels:
+        gobs = gdf_obs.clip(mask)
+        gmod = gdf_mod.clip(mask) if gdf_mod is not None else None
+        clipped.append((T, gmod, gobs))
 
-    if gdf_mod is not None:
-        plot_trend_map(axs[0], gdf_mod, "z_T_p", coast, relief, cmap, norm,
-                      title_mod, is_grid=True)
-    else:
-        axs[0].set_visible(False)
+    n_rows = len(clipped)
+    fig_h = 5.5 * n_rows + 0.35
+    fig = plt.figure(figsize=(12, fig_h), dpi=300)
+    height_ratios = []
+    for _ in range(n_rows):
+        height_ratios.extend([1.0, 0.045])
+    gs = GridSpec(
+        n_rows * 2, 2,
+        figure=fig,
+        height_ratios=height_ratios,
+        hspace=0.08,
+        wspace=0.05,
+        left=0.07,
+        right=0.98,
+        top=0.96,
+        bottom=0.03,
+    )
 
-    plot_trend_map(axs[1], gdf_obs, "z_T_p", coast, relief, cmap, norm,
-                  title_obs, is_grid=False)
+    fig.text(0.28, 0.985, col_header[0], ha="center", va="top", fontsize=10, fontweight="bold")
+    fig.text(0.74, 0.985, col_header[1], ha="center", va="top", fontsize=10, fontweight="bold")
 
-    # Colorbar
-    fig.subplots_adjust(bottom=0.18, wspace=0.05)
-    cbar_ax = fig.add_axes([0.25, 0.08, 0.5, 0.03])
-    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])
-    cbar = fig.colorbar(sm, cax=cbar_ax, orientation="horizontal")
-    cbar.set_label(f"Relative trend (%)", fontsize=10)
-    cbar.ax.xaxis.set_major_formatter(mpl.ticker.FormatStrFormatter("%.0f"))
+    for i, (T, gdf_mod, gdf_obs) in enumerate(clipped):
+        map_gs_row = i * 2
+        cbar_gs_row = i * 2 + 1
+        row_gdfs = [g for g in (gdf_mod, gdf_obs) if g is not None]
+        norm = _shared_norm(row_gdfs)
 
-    # Save
+        ax_mod = fig.add_subplot(gs[map_gs_row, 0])
+        ax_obs = fig.add_subplot(gs[map_gs_row, 1])
+
+        if gdf_mod is not None and not gdf_mod.empty:
+            plot_trend_map(
+                ax_mod, gdf_mod, "z_T_p", coast, relief, cmap, norm,
+                title="", is_grid=True,
+            )
+        else:
+            ax_mod.set_visible(False)
+
+        plot_trend_map(
+            ax_obs, gdf_obs, "z_T_p", coast, relief, cmap, norm,
+            title="", is_grid=False,
+        )
+
+        cbar_gs = gs[cbar_gs_row, :].subgridspec(1, 3, width_ratios=[0.14, 0.72, 0.14])
+        cax = fig.add_subplot(cbar_gs[0, 1])
+        cb = ColorbarBase(cax, cmap=cmap, norm=norm, orientation="horizontal")
+        cax.xaxis.set_major_formatter(mpl.ticker.FormatStrFormatter("%.0f"))
+        cax.tick_params(labelsize=7, length=2, width=0.5, direction="out", pad=1)
+        cb.outline.set_linewidth(0.5)
+
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     out_png = OUTPUT_DIR / f"{output_name}.png"
     out_pdf = OUTPUT_DIR / f"{output_name}.pdf"
     fig.savefig(out_png, bbox_inches="tight", dpi=300)
     fig.savefig(out_pdf, bbox_inches="tight", format="pdf")
     plt.close(fig)
-    print(f"Saved {out_png}")
+    print(f"Saved {out_png} ({n_rows} RL row(s): {[T for T, _, _ in clipped]})")
 
 
 def process_scale(scale_key, T=2):
@@ -336,34 +408,29 @@ def process_scale(scale_key, T=2):
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="Generate RL_T trend maps")
-    parser.add_argument("--T", type=int, default=2, help="Return period (default: 2)")
+    parser = argparse.ArgumentParser(description="Generate RL_T trend maps (combined RL2 + RL5)")
+    parser.add_argument(
+        "--T", type=int, nargs="+", default=[2, 5],
+        help="Return periods on separate rows (default: 2 5 — run once, not separately)",
+    )
     args = parser.parse_args()
-    T = args.T
+    periods = sorted(set(args.T))
+    if len(periods) == 1:
+        print(
+            f"WARNING: single T={periods[0]} — figure will have one row only. "
+            "For RL2+RL5 combined layout, run: uv run python .../generate_rl2_trend_maps.py"
+        )
 
     coast, relief, mask, cmap = build_map_elements()
 
-    # Daily
-    gdf_mod_d, gdf_obs_d = process_scale("daily", T=T)
-    make_figure(
-        gdf_mod_d, gdf_obs_d, coast, relief, mask, cmap,
-        title_mod=f"(a) AROME — Daily $RL_{{{T}}}$ trend",
-        title_obs=f"(b) Stations — Daily $RL_{{{T}}}$ trend",
-        output_name=f"rl{T}_trends_daily",
-        echelle_label="Daily"
-    )
+    for scale_key, output_name in [("daily", "rl2_rl5_trends_daily"), ("hourly", "rl2_rl5_trends_hourly")]:
+        panels = []
+        for T in periods:
+            gdf_mod, gdf_obs = process_scale(scale_key, T=T)
+            panels.append((T, gdf_mod, gdf_obs))
+        make_combined_figure(panels, coast, relief, mask, cmap, output_name)
 
-    # Hourly
-    gdf_mod_h, gdf_obs_h = process_scale("hourly", T=T)
-    make_figure(
-        gdf_mod_h, gdf_obs_h, coast, relief, mask, cmap,
-        title_mod=f"(a) AROME — Hourly $RL_{{{T}}}$ trend",
-        title_obs=f"(b) Stations — Hourly $RL_{{{T}}}$ trend",
-        output_name=f"rl{T}_trends_hourly",
-        echelle_label="Hourly"
-    )
-
-    print(f"\nDone! Figures saved to {OUTPUT_DIR}/rl{T}_trends_*.png")
+    print(f"\nDone! Figures saved to {OUTPUT_DIR}/rl2_rl5_trends_*.png")
 
 
 if __name__ == "__main__":
