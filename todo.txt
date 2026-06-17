@@ -1,0 +1,6 @@
+# 1. Générer le fichier LaTeX de différences (sans --flatten : évite la corruption de la biblio)
+docker run --rm -v "${pwd}:/work" -w /work/perso/v2_modifs texlive/texlive:latest sh -c "latexdiff ../v1_1_preprint/main.tex main.tex > diff.tex"
+
+# 2. Compiler main.tex et diff.tex
+docker run --rm -v "${pwd}:/work" -w /work/perso/v2_modifs texlive/texlive:latest latexmk -pdf -interaction=nonstopmode main.tex
+docker run --rm -v "${pwd}:/work" -w /work/perso/v2_modifs texlive/texlive:latest latexmk -pdf -interaction=nonstopmode diff.tex

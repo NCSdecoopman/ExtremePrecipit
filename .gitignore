@@ -6,6 +6,7 @@ outputs_nr10/
 logs/
 Miniconda3*/
 Miniconda3-*.sh
+venv/
 
 # Workflows CI
 .github/

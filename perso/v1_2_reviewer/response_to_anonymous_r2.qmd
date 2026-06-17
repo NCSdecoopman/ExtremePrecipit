@@ -1,0 +1,52 @@
+---
+title: "Response to Anonymous Referee #2"
+format: pdf
+---
+
+**Manuscript Title:** Climatology and trends of extreme precipitation in France: evaluation of an explicit-convection regional climate model
+
+**Authors:** Nicolas Decoopman, Juliette Blanchet, Antoine Blanc, and Cecile Caillaud
+
+**Journal:** Hydrology and Earth System Sciences (HESS)
+
+We thank referee #2 for their constructive and detailed review of our manuscript. Below are our point-by-point responses to the comments, with line and figure numbers referring to the manuscript.
+
+## General Comments
+
+### Comment 1: Return Period Choice
+
+_There is a 10-year return period chosen for both daily and hourly data, even though 10-year return period for hourly is much more extreme compared to daily given the amount of hourly data in a 10-year period compared to daily. Has a lower return value been tested? Given the noisy result, and the shorter period of data a better justification for the high return period for hourly data should be given, and it is of interest to show a lower return period._
+
+* **Response:** We thank the reviewer for this comment. We agree that estimating a 10-year return level at the hourly scale from a 33-year series (1990-2022) introduces significant sampling noise. To address this, we have also analyzed lower return periods (such as 2-year and 5-year return levels), which are closer to the bulk of the annual maxima distribution and thus more robustly estimated. We will include a section and/or figures in the paper (or supplementary material) showing the results for these lower return periods. Our tests indicate that while the spatial patterns are smoother and more robust, the main conclusions regarding the model's limitations in capturing hourly trends remain unchanged. We will add a stronger justification for the choice of the 10-year return period (as it is a standard design threshold in hydrology) while discussing the benefits of looking at lower return levels.
+
+### Comment 2: Introduction & Physical Processes
+
+_Introduction: First paragraph introduces a lot of different processes that are not necessarily connected. For instance, global warming leads to an increase in surface temperature, but it's the temperature increase in the atmosphere that increases the water holding capabilities, and the energy balance is also between the top of atmosphere and surface (and everything in between). A lot of the statements in Introduction need a reference for instance line 47-50 and should include more research articles in addition on the IPCC 2021 report._
+
+* **Response:** We agree that the physical description in the first paragraph was somewhat compressed and mixed different thermodynamic and dynamic concepts. In the revised manuscript, we will restructure this paragraph to:
+
+1. [leftmargin=*]
+2. Clarify the physical link: surface warming leads to atmospheric warming, which increases the water-holding capacity of the troposphere according to the Clausius-Clapeyron relationship, while the actual condensation and precipitation are driven by vertical motion and adiabatic cooling of ascending air masses.
+3. Add more academic references (e.g., Trenberth et al. 2003, O'Gorman and Muller 2010, Westra et al. 2014) alongside the IPCC 2021 report to ground these statements in the literature.
+
+## Comment 3: Treatment of Aerosols and Solar Brightening
+
+_Figure 2 and Figure 3: How much of the temperature trend could be caused by aerosol changes due to anthropogenic pollution? How is aerosol treated in AROME? The results in these plots indicate that there is an increase in temperature after the peak pollution in the 1980s and that the trend in 10-year return level is increasing after this peak. Even though aerosols are not included or kept constant in AROME, this should be stated and included in the discussion and limitations._
+
+* **Response:** We would like to clarify that aerosols are **not** kept constant in this AROME simulation: they are monthly evolving and vary from year to year, taken from the ALDERA reanalysis (which uses an interactive aerosol scheme to capture historical variations, including the peak pollution in the 1980s and subsequent solar dimming/brightening, as described by Nabat et al. 2020). Green House Gases also evolve annually. In the revised manuscript, we will make this clearer in Section 2.2.
+
+## Comment 4: Visualization of Non-Significant Trends
+
+_For the maps with stations, setting non-significant trends to zeros makes it difficult to differentiate with stations that have close to zero or zero significant trends and stations with strong trends that are non-significant. The authors should consider not showing the stations at all or choosing another marker. The size of the marker also seems to vary with the trend, which can make it look like the stations with strong trends are more numerous than they are._
+
+* **Response:** We agree with the reviewer. Representing non-significant trends as zero makes it difficult to distinguish between a significant trend of 0% and a non-significant trend of 50%. To improve readability:
+
+1. We will represent non-significant stations using a small, neutral, light-grey symbol (e.g., a small plus sign or a tiny grey dot) to keep them visible as part of the network but clearly distinguish them from stations with significant trends.
+
+2. As also requested by Reviewer 1, we will keep the marker size constant for all stations to prevent visual bias towards larger circles, relying solely on color to represent the trend magnitude.
+
+## Minor Comments
+
+* **Why choose the hydrological year? The study itself does not take into account snowpack, and in addition the convective extreme precipitation can come in summer that in this study is over the start of the hydrological year (JAS, where summer usually is considered as JJA). This should be justified more.** _Response:_ The choice of the hydrological year (September 1 to August 31) is standard in French climatology and hydrology, especially when studying extremes. The mostintense extreme precipitation events in France, particularly the Mediterranean episodes ('episodes'), occur during autumn (September to November). Using a standard calendar year (January to December) risks splitting a single autumn convective season or grouping two distinct autumn seasons into the same year, which violates the independence assumption of annual maxima. Starting the year on September 1 ensures that the entire autumn convective season is kept intact within a single year. We will add this explanation to the methodology section to justify our choice.
+* **It can be confusing in the text with GEV models and Arome model, could consider naming one different.** _Response_: We agree. In the revised text, we will refer to CNRM-AROME as the "climate model/simulation" and to the GEV models as "statistical models/distributions" to avoid any confusion.
+* **To little font in Figure 8** _Response_: We will increase the font size of the labels and values in Figure 8 (and all other figures) to ensure they are fully legible in the final publication.

@@ -36,7 +36,8 @@ from pathlib import Path
 from typing import Tuple
 
 from svgutils.transform import fromfile, SVGFigure
-import cairosvg
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPDF
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -170,7 +171,9 @@ def assemble(arome: Path, stations: Path, legend: Path, output: Path) -> str:
 
     os.makedirs(os.path.dirname(str(output)), exist_ok=True)
     canvas.save(str(output))
-    cairosvg.svg2pdf(url=str(output), write_to=str(output)[:-4] + ".pdf")
+    pdf_path = str(output)[:-4] + ".pdf"
+    drawing = svg2rlg(str(output))
+    renderPDF.drawToFile(drawing, pdf_path)
     return str(output)
 
 trend_horaire_pluie_hydro = assemble(

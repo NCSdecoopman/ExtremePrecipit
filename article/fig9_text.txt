@@ -1,0 +1,20 @@
+JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC
+100
+0
+100
+200
+300
+Relative trends (%) in 10-year return level
+.95
+.93
+.92
+.94
+.94
+.91
+.95
+.96
+.98
+.96
+.88
+.96
+Complete series Series without maximum value

@@ -1,0 +1,25 @@
+HYDRO OND JFM AMJ JAS
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0Spatial correlation (r)
+(a) Spatial correlation between AROME and Météo-France stations
+HYDRO OND JFM AMJ JAS
+−25
+−20
+−15
+−10
+−5
+0
+5
+10
+Relative bias (%)
+(b) Relative bias between AROME and Météo-France stations
+Number of rainy days T otal precipitation 10-year daily return level 10-year hourly return level

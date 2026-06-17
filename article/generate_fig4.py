@@ -1,0 +1,164 @@
+import sys
+import os
+from pathlib import Path
+
+import pandas as pd
+import numpy as np
+import math
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+
+plt.rcParams.update({
+    'font.family': 'sans-serif',
+    'font.size': 10,
+    'axes.labelsize': 10,
+    'axes.titlesize': 11,
+    'xtick.labelsize': 9,
+    'ytick.labelsize': 9
+})
+
+def combined_metrics_df(name_file: str, base_dir: Path = Path("../outputs")):
+    csv_paths = list(base_dir.rglob(name_file))
+
+    frames = []
+    for path in csv_paths:
+        try:
+            df = pd.read_csv(path)
+            df["source"] = str(path.relative_to(base_dir))  # garder la provenance
+            frames.append(df)
+        except Exception as exc:                             # CSV illisible
+            print(f"⚠️  Fichier ignoré {path}: {exc}")
+
+    if not frames:
+        raise SystemExit("Aucun metrics.csv trouvé !")
+
+    # Concaténation puis export
+    combined = pd.concat(frames, ignore_index=True)
+
+    # --- harmonisation des échelles ---
+    # cas quotidien_reduce
+    mask_q = combined["source"].str.contains("quotidien_reduce", na=False)
+    combined.loc[mask_q & (combined["echelle"] == "quotidien"), "echelle"] = "quotidien_reduce"
+
+    # cas horaire_reduce
+    mask_h = combined["source"].str.contains("horaire_reduce", na=False)
+    combined.loc[mask_h & (combined["echelle"] == "horaire"), "echelle"] = "horaire_reduce"
+
+    return combined
+
+combined_stats = combined_metrics_df("metrics.csv")
+combined_nr = combined_metrics_df("metrics.csv", Path("../outputs_nr10"))
+combined = pd.concat([combined_stats, combined_nr], ignore_index=True)
+
+def plot_4bars_by_season(
+    df: pd.DataFrame,
+    seasons: list[str],
+    nom_fichier: str,
+):
+    """
+    Two-panel plot (vertical stack):
+      Panel (a): Spatial correlation (r)
+      Panel (b): Relative bias (%)
+    """
+    ordre_saisons = ["HYDRO", "OND", "JFM", "AMJ", "JAS"]
+    saisons_pres = [s.upper() for s in seasons]
+    saisons_pres = [s for s in ordre_saisons if s in saisons_pres]
+
+    # --- Extract series for 'r' ---
+    sub_r = df.loc[df["season"].isin(seasons), ["season", "echelle", "col_calculate", "r"]].copy()
+    sub_r["season"] = sub_r["season"].str.upper()
+
+    def pick_one_r(col_calc: str, echelle: str, label: str) -> pd.Series:
+        s = (
+            sub_r.loc[(sub_r["col_calculate"] == col_calc) & (sub_r["echelle"] == echelle)]
+              .set_index("season")["r"]
+              .reindex(saisons_pres)
+        )
+        s.name = label
+        return s
+
+    s_rainy_r = pick_one_r("numday", "quotidien", "Number of rainy days")
+    s_total_r = pick_one_r("mean",   "quotidien", "Total precipitation")
+    s_rl10d_r = pick_one_r("zTpa",   "quotidien", "10-year daily return level")
+    s_rl10h_r = pick_one_r("zTpa",   "horaire",   "10-year hourly return level")
+    plot_df_r = pd.concat([s_rainy_r, s_total_r, s_rl10d_r, s_rl10h_r], axis=1)
+
+    # --- Extract series for 'delta' (relative bias %) ---
+    sub_d = df.loc[df["season"].isin(seasons), ["season", "echelle", "col_calculate", "delta"]].copy()
+    sub_d["season"] = sub_d["season"].str.upper()
+
+    def pick_one_d(col_calc: str, echelle: str, label: str) -> pd.Series:
+        s = (
+            sub_d.loc[(sub_d["col_calculate"] == col_calc) & (sub_d["echelle"] == echelle)]
+              .set_index("season")["delta"]
+              .reindex(saisons_pres)
+        )
+        s.name = label
+        return s
+
+    s_rainy_d = pick_one_d("numday", "quotidien", "Number of rainy days")
+    s_total_d = pick_one_d("mean",   "quotidien", "Total precipitation")
+    s_rl10d_d = pick_one_d("zTpa",   "quotidien", "10-year daily return level")
+    s_rl10h_d = pick_one_d("zTpa",   "horaire",   "10-year hourly return level")
+    plot_df_d = pd.concat([s_rainy_d, s_total_d, s_rl10d_d, s_rl10h_d], axis=1)
+
+    # --- Grouped bars plotting ---
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.5))
+
+    x = np.arange(len(saisons_pres))
+    n = plot_df_r.shape[1]
+    width = 0.8 / n
+
+    couleurs = ["black", "dimgray", "gray", "lightgray"][:n]
+
+    # Panel A: Spatial correlation
+    for i, (col, c) in enumerate(zip(plot_df_r.columns, couleurs)):
+        ax1.bar(x + i * width, plot_df_r[col], width=width, color=c, label=col)
+
+    ax1.set_ylabel("Spatial correlation ($r$)")
+    ax1.set_ylim(0, 1.05)
+    ax1.yaxis.set_major_locator(mticker.MultipleLocator(0.1))
+    ax1.yaxis.set_minor_locator(mticker.MultipleLocator(0.02))
+    ax1.grid(axis="y", which="major", linestyle="--", alpha=0.8)
+    ax1.grid(axis="y", which="minor", linestyle=":",  alpha=0.5)
+    ax1.set_title("(a) Spatial correlation between AROME and Météo-France stations", loc="left")
+
+    # Panel B: Relative bias (%)
+    for i, (col, c) in enumerate(zip(plot_df_d.columns, couleurs)):
+        ax2.bar(x + i * width, plot_df_d[col], width=width, color=c, label=col)
+
+    ax2.set_ylabel("Relative bias (%)")
+    ax2.grid(axis="y", which="major", linestyle="--", alpha=0.8)
+    ax2.grid(axis="y", which="minor", linestyle=":",  alpha=0.5)
+    ax2.set_title("(b) Relative bias between AROME and Météo-France stations", loc="left")
+    
+    # Tick formatting for both panels
+    for ax in (ax1, ax2):
+        ax.set_xticks(x + width * (n - 1) / 2)
+        ax.set_xticklabels(saisons_pres, rotation=0)
+
+    # Global legend with default matplotlib frame styling
+    handles, labels = ax1.get_legend_handles_labels()
+    fig.legend(
+        handles,
+        labels,
+        loc="upper center",
+        ncol=4,
+        bbox_to_anchor=(0.5, 1.02),
+        frameon=True,
+    )
+
+    fig.tight_layout()
+    fig.subplots_adjust(top=0.88)
+    fig.savefig(f"figures/{nom_fichier}.pdf", bbox_inches="tight")
+    plt.close(fig)
+
+selected_seasons = ["hydro", "ond", "jfm", "amj", "jas"]
+to_plot = combined[combined["season"].isin(selected_seasons)]
+
+plot_4bars_by_season(
+    to_plot,
+    seasons=selected_seasons,
+    nom_fichier="histo_4bars_nr10"
+)
+print("Figure 4 PDF component generated successfully.")

@@ -171,7 +171,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.colors import BoundaryNorm, TwoSlopeNorm, LinearSegmentedColormap, ListedColormap, to_hex
 from matplotlib.colorbar import ColorbarBase
-from matplotlib.ticker import FormatStrFormatter
+from matplotlib.ticker import FormatStrFormatter, FuncFormatter
 
 def calculate_data_maps(
     datasets: Sequence[Mapping[str, pl.DataFrame]],
@@ -364,6 +364,7 @@ def generate_maps(
     relief_color: str = "#000000",
     figsize: Tuple[int, int] = (6, 6),
     diff: bool = False,
+    rdiff: bool = False,
     mesure: str = None
 ) -> None:
     
@@ -371,6 +372,10 @@ def generate_maps(
         min_pt, max_pt = 0.5, 3
 
     legend = "mm"
+    if rdiff:
+        legend = "%"
+    elif diff:
+        legend = "mm"
 
     # ------------------------------------------------------------------
     # 1. France Metropolitan Mask
@@ -480,6 +485,7 @@ def generate_maps(
             idx = np.linspace(0, rgb.shape[0] - 1, n_colors, dtype=int)
             # Convert them to hex codes for from_list()
             hex_colors = [to_hex(rgb[i]) for i in idx]
+            hex_colors[len(hex_colors) // 2] = "#808080"
             cmap = LinearSegmentedColormap.from_list("prec_div", hex_colors, N=n_colors)
 
     elif data_type == "dispo":
@@ -592,38 +598,24 @@ def generate_maps(
             # — Observations -----------------------------------------------
             if show_obs and gdf_o is not None and not gdf_o.empty:
 
-                # Force fixed average size for "significant" and "model"
-                if val_col in ["significant", "model"]:
-                    # linear size = average of min_pt and max_pt
-                    mean_pt = middle_pt / 2
-                    # markersize expects surface (pt^2)
-                    gdf_o.loc[:, "_size_pt2"] = mean_pt**2
-                    
-                else:
-                    # 1) ABSOLUTE values **after** saturation (palette values)
-                    abs_vals = gdf_o[val_col].abs()
-
-                    # 2) linear scaling [min_pt ; max_pt] then surface (pt²)
-                    abs_max  = abs_vals.max() or 1                              # avoid /0
-                    sizes = ((abs_vals / abs_max) * (max_pt - min_pt) + min_pt) ** 2
-
-                    # 3) optional additional size saturation
-                    if saturation_size < 100:                                   # 100 -> none
-                        seuil_size = np.percentile(abs_vals, saturation_size)
-                        sizes[abs_vals > seuil_size] = max_pt ** 2
-
-                    gdf_o.loc[:, "_size_pt2"] = sizes
+                # Reviewer request: uniform dot size for all stations
+                mean_pt = middle_pt / 2
+                gdf_o.loc[:, "_size_pt2"] = mean_pt**2
 
 
-                # split 0 vs non-0
-                gdf_zero = gdf_o[gdf_o[val_col] == 0]
-                gdf_nonzero = gdf_o[gdf_o[val_col] != 0]
+                # split near-zero vs non-zero (5% of max |value| or one color bin)
+                vals = gdf_o[val_col]
+                max_abs = float(vals.abs().max()) or 1.0
+                span = float(vals.max() - vals.min()) or max_abs
+                threshold = max(0.05 * max_abs, span / 15, 1e-5)
+                gdf_zero = gdf_o[vals.abs() <= threshold]
+                gdf_nonzero = gdf_o[vals.abs() > threshold]
 
                 kw_zero = dict(
                     markersize="_size_pt2",
                     marker="o",
-                    edgecolor=obs_edgecolor,
-                    linewidth=0.1,
+                    edgecolor="#333333",
+                    linewidth=0.5,
                 )
 
                 kw_nonzero = dict(
@@ -633,13 +625,13 @@ def generate_maps(
                     linewidth=0.1,
                 )
 
-                # 1. points at 0 (bottom)
+                # 1. near-zero points (bottom)
                 if not gdf_zero.empty:
                     if obs_facecolor is None:
-                        gdf_zero.plot(ax=ax, column=val_col, cmap=cmap, norm=norm,
+                        gdf_zero.plot(ax=ax, color="#808080",
                                     zorder=2, **kw_zero)
                     else:
-                        gdf_zero.plot(ax=ax, facecolor=obs_facecolor,
+                        gdf_zero.plot(ax=ax, color=obs_facecolor,
                                     zorder=2, **kw_zero)
 
                 # 2. non-zero points (top)
@@ -648,7 +640,7 @@ def generate_maps(
                         gdf_nonzero.plot(ax=ax, column=val_col, cmap=cmap, norm=norm,
                                         zorder=3, **kw_nonzero)
                     else:
-                        gdf_nonzero.plot(ax=ax, facecolor=obs_facecolor,
+                        gdf_nonzero.plot(ax=ax, color=obs_facecolor,
                                         zorder=3, **kw_nonzero)
 
 
@@ -691,7 +683,7 @@ def generate_maps(
             suffix_obs = "obs" if show_obs else ""
             suffix_mod = "mod" if show_mod else ""
             suffix_signif = "_signif" if show_signif else ""
-            suffix_diff = "_diff" if diff else ""
+            suffix_diff = "_rdiff" if rdiff else ("_diff" if diff else "")
             name_file = f"{suffix_mod}{suffix_obs}{suffix_signif}_{mode}{suffix_diff}"
 
             subdir = dir_path / title.lower() 
@@ -706,10 +698,12 @@ def generate_maps(
     # ------------------------------------------------------------------
     if diff:
         mpl.rcParams.update({"font.size": 30})
+        fig2 = plt.figure(figsize=(2.0, figsize[1] * 2))
+        ax2 = fig2.add_axes([0.08, 0.05, 0.32, 0.9])
     else:
         mpl.rcParams.update({"font.size": 22})
-    fig2 = plt.figure(figsize=(1, figsize[1] * 2))
-    ax2 = fig2.add_axes([0.25, 0.05, 0.5, 0.9])
+        fig2 = plt.figure(figsize=(1, figsize[1] * 2))
+        ax2 = fig2.add_axes([0.25, 0.05, 0.5, 0.9])
     sm2 = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm2.set_array([])
 
@@ -733,15 +727,17 @@ def generate_maps(
         cb2 = fig2.colorbar(sm2, cax=ax2, spacing = "proportional")
         if diff:
             cb2.ax.set_ylabel(f"{legend}", rotation=90, fontsize=30)
+            cb2.ax.yaxis.set_major_formatter(
+                FuncFormatter(lambda x, _: f"{int(round(x)):+4.0f}")
+            )
         else:
             cb2.ax.set_ylabel(f"{legend}", rotation=90, fontsize=22)
-        # Force integer formatting
-        cb2.ax.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
+            cb2.ax.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
 
     suffix_signif = "_signif" if show_signif else ""
-    suffix_diff = "_diff" if diff else ""
+    suffix_diff = "_rdiff" if rdiff else ("_diff" if diff else "")
     name_legend = f"legend{suffix_signif}{suffix_diff}"
-    
+
     fig2.savefig(dir_path / f"{name_legend}.svg", format="svg", bbox_inches="tight", pad_inches=0)
     fig2.savefig(dir_path / f"{name_legend}.pdf", format="pdf", bbox_inches="tight", pad_inches=0)
     plt.close(fig2)
@@ -783,7 +779,7 @@ def generate_maps(
     cbh.ax.tick_params(axis="x", labelsize=12, length=4, width=0.8, direction="out")
 
     suffix_signif = "_signif" if show_signif else ""
-    suffix_diff = "_diff" if diff else ""
+    suffix_diff = "_rdiff" if rdiff else ("_diff" if diff else "")
     name_legend_h = f"legend_horiz{suffix_signif}{suffix_diff}"
 
     figh.savefig(dir_path / f"{name_legend_h}.svg", format="svg", bbox_inches="tight", pad_inches=0)
@@ -848,6 +844,7 @@ def generate_scatter(
 
         metrics = []
         datasets_diff = []
+        datasets_rdiff = []
 
         df_obs_vs_mod = pl.read_csv(f"data/metadonnees/obs_vs_mod/obs_vs_mod_{echelle}.csv")
 
@@ -865,6 +862,7 @@ def generate_scatter(
 
             obs_vs_mod = match_and_compare(obs, mod, col, df_obs_vs_mod)
 
+            # Absolute diff (ME)
             obs_vs_mod_diff = obs_vs_mod.select([
                 pl.Series("NUM_POSTE", range(1, obs_vs_mod.height + 1)),
                 pl.col("lat"),
@@ -872,14 +870,26 @@ def generate_scatter(
                 (pl.col("AROME") - pl.col("Station")).alias(col)
             ])
 
-            res = {
+            # Relative diff (RB %)
+            obs_vs_mod_rdiff = obs_vs_mod.select([
+                pl.Series("NUM_POSTE", range(1, obs_vs_mod.height + 1)),
+                pl.col("lat"),
+                pl.col("lon"),
+                ((pl.col("AROME") - pl.col("Station")) / pl.col("Station").abs().clip(lower_bound=1e-6) * 100).alias(col)
+            ])
+
+            datasets_diff.append({
                 "modelised": None,
                 "observed": obs_vs_mod_diff,
                 "column": col,
                 "season": season
-            }
-
-            datasets_diff.append(res)
+            })
+            datasets_rdiff.append({
+                "modelised": None,
+                "observed": obs_vs_mod_rdiff,
+                "column": col,
+                "season": season
+            })
 
             if obs_vs_mod.is_empty():
                 logger.warning(f"No data after filtering for {echelle} {season} - {col_calculate} - signif {show_signif}")
@@ -926,12 +936,12 @@ def generate_scatter(
             logger.info(season_dir / "scatter.svg")
 
             # ----- METRICS -----
-            me = np.mean(x - y)
+            me = np.median(x - y)
             corr = np.corrcoef(x, y)[0, 1] if len(x) > 1 else np.nan
             n = len(x)
-            mean_mod = obs_vs_mod.select(pl.col("AROME").mean()).item()
-            mean_obs = obs_vs_mod.select(pl.col("Station").mean()).item()
-            delta = me / np.mean([mean_mod, mean_obs])*100
+            mean_mod = obs_vs_mod.select(pl.col("AROME").median()).item()
+            mean_obs = obs_vs_mod.select(pl.col("Station").median()).item()
+            delta = me / np.median([mean_mod, mean_obs])*100
 
             metrics.append({
                 "echelle": echelle,
@@ -940,7 +950,9 @@ def generate_scatter(
                 "n": n,
                 "r": corr,
                 "me": me,
-                "delta": delta
+                "delta": delta,
+                "mean_mod": mean_mod,
+                "mean_obs": mean_obs
             })
 
 
@@ -951,7 +963,7 @@ def generate_scatter(
         else:
             logger.warning(f"No significant results, metrics{suffix}.csv not created")
 
-    return datasets_diff
+    return datasets_diff, datasets_rdiff
 
 def main(args):
     global logger
@@ -959,6 +971,7 @@ def main(args):
 
     data_type = args.data_type
     col_calculate = args.col_calculate
+    no_maps = getattr(args, "no_maps", False)
     echelle = args.echelle
     season = args.season
     reduce_activate = args.reduce_activate
@@ -1035,20 +1048,21 @@ def main(args):
                 saturation_col=sat
             )
 
-            for show in [True, False]:
-                generate_maps(
-                    dir_path=dir_path,
-                    model_gdfs=model_gdfs,
-                    obs_gdfs=obs_gdfs,
-                    data_type=data_type,
-                    titles=titles,
-                    val_col=val_col,
-                    show_mod=show,
-                    show_obs=not show,
-                    show_signif=signif,
-                    col_calculate=col_calculate,
-                    scale=scale
-                )
+            if not no_maps:
+                for show in [True, False]:
+                    generate_maps(
+                        dir_path=dir_path,
+                        model_gdfs=model_gdfs,
+                        obs_gdfs=obs_gdfs,
+                        data_type=data_type,
+                        titles=titles,
+                        val_col=val_col,
+                        show_mod=show,
+                        show_obs=not show,
+                        show_signif=signif,
+                        col_calculate=col_calculate,
+                        scale=scale
+                    )
 
         if data_type == "dispo":
             generate_hist(res, echelle=e, season=s, reduce_activate=reduce_activate)
@@ -1056,7 +1070,7 @@ def main(args):
         if data_type != "dispo" and col_calculate not in ["significant", "model"]:
             for signif in SIGNIFICANT_SHOW:
 
-                datasets_diff = generate_scatter(
+                datasets_diff, datasets_rdiff = generate_scatter(
                     datasets=datasets,
                     dir_path=dir_path,
                     col_calculate=col_calculate,
@@ -1065,33 +1079,66 @@ def main(args):
                     scale=scale
                 )
                 
-                dir_path, val_col, titles, model_gdfs, obs_gdfs = calculate_data_maps(
+                # --- Absolute diff maps (ME) ---
+                dir_path_d, val_col_d, titles_d, model_gdfs_d, obs_gdfs_d = calculate_data_maps(
                     datasets_diff,
                     echelle=e,
                     data_type=data_type,
                     col_calculate=col_calculate,
                     reduce_activate=reduce_activate,
                     show_signif=signif,
-                    titles=[s.upper() for s in season],  # titles of the 4 sub-maps
+                    titles=[s.upper() for s in season],
                     saturation_col=sat,
                     diff=True
                 )
 
-                generate_maps(
-                    dir_path=dir_path,
-                    model_gdfs=model_gdfs,
-                    obs_gdfs=obs_gdfs,
+                if not no_maps:
+                    generate_maps(
+                        dir_path=dir_path_d,
+                        model_gdfs=model_gdfs_d,
+                        obs_gdfs=obs_gdfs_d,
+                        data_type=data_type,
+                        titles=titles_d,
+                        val_col=val_col_d,
+                        show_mod=False,
+                        show_obs=True,
+                        show_signif=signif,
+                        col_calculate=col_calculate,
+                        scale=scale,
+                        diff=True,
+                        mesure=mesure
+                    )
+
+                # --- Relative diff maps (RB %) ---
+                dir_path_r, val_col_r, titles_r, model_gdfs_r, obs_gdfs_r = calculate_data_maps(
+                    datasets_rdiff,
+                    echelle=e,
                     data_type=data_type,
-                    titles=titles,
-                    val_col=val_col,
-                    show_mod=False,
-                    show_obs=not False,
-                    show_signif=signif,
                     col_calculate=col_calculate,
-                    scale=scale,
-                    diff=True,
-                    mesure=mesure
+                    reduce_activate=reduce_activate,
+                    show_signif=signif,
+                    titles=[s.upper() for s in season],
+                    saturation_col=sat,
+                    diff=True
                 )
+
+                if not no_maps:
+                    generate_maps(
+                        dir_path=dir_path_r,
+                        model_gdfs=model_gdfs_r,
+                        obs_gdfs=obs_gdfs_r,
+                        data_type=data_type,
+                        titles=titles_r,
+                        val_col=val_col_r,
+                        show_mod=False,
+                        show_obs=True,
+                        show_signif=signif,
+                        col_calculate=col_calculate,
+                        scale=scale,
+                        diff=True,
+                        rdiff=True,
+                        mesure=mesure
+                    )
 
 
 def str2bool(v):
@@ -1108,6 +1155,7 @@ if __name__ == "__main__":
     parser.add_argument("--season", type=str, nargs='+', default=["hydro"])
     parser.add_argument("--reduce_activate", type=str2bool, default=False)
     parser.add_argument("--sat", type=float, default=100)
+    parser.add_argument("--no_maps", action="store_true", help="Do not generate map figures")
 
     args = parser.parse_args()  
     main(args)
