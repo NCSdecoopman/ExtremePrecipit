@@ -17,23 +17,41 @@ We thank referee #1 for their constructive and detailed review of our manuscript
 
 _Considering that you are not looking at very rare extremes (10-yr return level), I suggest to look also at trend in Annual Maxima, that is not affected by uncertainty in fitting a 3-parameters distribution like GEV, in order to compare/confirm your patterns._
 
-* **Response:** We thank the reviewer for this constructive suggestion. We agree that comparing the trend of annual maxima with GEV-based return level trends is a useful check. However, a direct comparison between the trend of the annual maxima and that of the 10-year return level ($RL_{10y}$) is not fully consistent because they represent different quantiles and do not necessarily share the same trend. Instead, to perform a directly comparable analysis, we compare the trend of the annual maxima (obtained via a simple linear regression) with the trend of the GEV-estimated 2-year return level ($RL_{2y}$), since the average annual maximum corresponds approximately to a 2-year return period.
+* **Response:** We thank the reviewer for this constructive suggestion. We agree that comparing the trend of annual maxima with GEV-based return level trends is a useful check. However, a direct comparison between the trend of the annual maxima and that of the 10-year return level ($RL_{10y}$) is not fully consistent because they represent different quantiles and do not necessarily share the same trend. Instead, to perform a directly comparable analysis, we compare the trend of the annual maxima (obtained via a simple linear regression) with the trend of the GEV-estimated mean, since the mean of a GEV is an analytical function of its parameters ($\mu$, $\sigma$, $\xi$) and can be compared directly to the linear regression.
 
-We have performed this consistency check across all 1,558 daily stations (hydrological year, 1960–2022). For the GEV $RL_{2y}$, we computed the return levels at the start and end of the record using the selected best model parameters. For the annual maxima, we fitted a simple linear regression. 
+We have performed this consistency check across all 1,558 daily stations (hydrological year, 1960–2022). For the GEV mean, we computed the mean at the start and end of the record using the selected best model parameters. For the annual maxima, we fitted a simple linear regression. 
 
 Both the spatial patterns (regional trends) and magnitude/sign of the trends show an extremely strong agreement across the stations, with some minor differences to note:
 
-- **Spatial patterns**: The maps of observed annual maxima trend (@fig-maxima-gev-maps a) and GEV-estimated $\mathrm{RL}_2$ trend (@fig-maxima-gev-maps b) show identical regional patterns, with the strongest positive trends concentrated in the Southern Alps and the Mediterranean arc.
-- **Marker Sizing**: Following the paper's visual style, the size of each dot is proportional to the absolute magnitude of its relative trend, using a shared scale between both maps to ensure direct visual comparability.
+- **Spatial patterns**: The maps of observed annual maxima trend (@fig-maxima-gev-maps-daily a) and GEV-estimated mean trend (@fig-maxima-gev-maps-daily b) show identical regional patterns, with the strongest positive trends concentrated in the Southern Alps and the Rhone valley.
+- **Quantitative agreement**: The Pearson correlation coefficient is **$r = 0.86$** for absolute trends (mm/decade, @fig-maxima-gev-scatter-daily a) and **$r = 0.88$** for relative trends (%, @fig-maxima-gev-scatter-daily b). The regression fit line (red) is very close to the 1:1 diagonal (grey dashed), confirming that the GEV-estimated trends are highly robust and not significantly affected by parameter fitting uncertainty.
+- **Dampening / Smoothing**: The regression slope for the relative trends is **$0.80$** (@fig-maxima-gev-scatter-daily b), indicating that GEV-estimated trends are on average slightly smaller (dampened by about 20%) than those obtained by simple linear regression. This difference is expected because non-stationary GEV parameters are estimated via maximum likelihood over the entire distribution of annual maxima, allowing extreme values to be modeled by the scale and shape parameters. This makes the GEV mean trend less sensitive to individual extreme outliers (especially at the boundaries of the series) than Ordinary Least Squares (OLS) linear regression, which minimizes squared residuals.
 
-![Comparison of the spatial distribution of relative trends (%) over 1960–2022 across all 1,558 daily stations (excluding Corsica): (a) observed annual maxima trend obtained by simple linear regression; (b) GEV-estimated 2-year return level ($\mathrm{RL}_2$) trend.](Figures/comparison_maxima_gev_maps.png){#fig-maxima-gev-maps width=70%}
+We have also extended this consistency check to the hourly scale across all 562 hourly stations (hydrological year, 1990–2022). Despite the much shorter record length (33 years vs 63 years) and the higher spatial and temporal noise typical of sub-daily convective extremes, the hourly GEV mean trends show a strong agreement with the raw annual maxima trends:
 
-- **Quantitative agreement**: The Pearson correlation coefficient is **$r = 0.85$** for absolute trends (mm/decade, @fig-maxima-gev-scatter a) and **$r = 0.88$** for relative trends (%, @fig-maxima-gev-scatter b). The regression fit line (red) is very close to the 1:1 diagonal (grey dashed), confirming that the GEV-estimated trends are highly robust and not significantly affected by parameter fitting uncertainty.
-- **Dampening / Smoothing**: The regression slope for the relative trends is **$0.75$** (@fig-maxima-gev-scatter b), indicating that GEV-estimated trends are on average slightly smaller (dampened by about 25%) than those obtained by simple linear regression. This difference is expected because GEV parameter estimation uses the entire block maxima distribution tail, making it less sensitive to individual sampling outliers at the boundaries of the series (which can artificially inflate or deflate simple linear regression trends).
+- **Spatial patterns**: The maps of observed hourly annual maxima trend (@fig-maxima-gev-maps-hourly a) and GEV-estimated hourly mean trend (@fig-maxima-gev-maps-hourly b) show highly consistent spatial patterns.
+- **Quantitative agreement**: The Pearson correlation coefficient is **$r = 0.72$** for absolute trends (mm/decade, @fig-maxima-gev-scatter-hourly a) and **$r = 0.70$** for relative trends (%, @fig-maxima-gev-scatter-hourly b).
+- **Dampening / Smoothing**: The regression slope is **$0.71$** (@fig-maxima-gev-scatter-hourly b), showing a moderate dampening (about 30%) for GEV-estimated trends. This is again expected due to the robustness of GEV maximum likelihood estimation against individual outlier years in short records.
 
-![Scatter plots of GEV-estimated 2-year return level ($\mathrm{RL}_2$) trend vs. observed annual maxima trend across all 1,558 daily stations (excluding Corsica): (a) absolute trends in mm/decade; (b) relative trends in %. The 1:1 line is shown in dashed grey, and the linear regression fit is in red, with Pearson correlation coefficients ($r$) indicated.](Figures/comparison_maxima_gev_scatter.png){#fig-maxima-gev-scatter width=95%}
+**Manuscript modifications:** In the revised manuscript, we have added the following introductory paragraphs to `Section 4.2.1 (Daily)` and `Section 4.2.2 (Hourly)`:
 
-**Manuscript modifications:** We have added a brief discussion of this consistency check in `Section 4.2.1 (Daily)` of the revised manuscript.
+- In `Section 4.2.1 (Daily)` (at the very beginning):
+  > _"Before analyzing trends in daily return levels, we verified the consistency of GEV-estimated trends against those obtained via a simple linear regression on observed annual maxima. This preliminary check shows a very strong spatial and quantitative agreement (Pearson correlation $r = 0.86$ for absolute trends, $r = 0.88$ for relative trends), confirming the robustness of the statistical fits."_
+
+- In `Section 4.2.2 (Hourly)` (at the very beginning):
+  > _"Similarly to the daily scale, we verified the consistency of GEV hourly trends by comparing GEV-estimated mean trends to linear regression trends of observed annual maxima. Despite the shorter record length and the higher noise level of sub-daily extremes, we find a robust agreement (Pearson correlation $r = 0.72$ for absolute trends, $r = 0.70$ for relative trends)."_
+
+\clearpage
+
+![Comparison of the spatial distribution of relative daily trends (%) over 1960–2022 across all 1,558 daily stations: (a) observed annual maxima trend obtained by simple linear regression; (b) GEV-estimated mean trend.](Figures/comparison_maxima_gev_maps_daily.png){#fig-maxima-gev-maps-daily width=62%}
+
+![Scatter plots of GEV-estimated daily mean trend vs. observed daily annual maxima trend across all 1,558 daily stations: (a) absolute trends in mm/decade; (b) relative trends in %. The 1:1 line is shown in dashed grey, and the linear regression fit is in red, with Pearson correlation coefficients ($r$) indicated.](Figures/comparison_maxima_gev_scatter_daily.png){#fig-maxima-gev-scatter-daily width=60%}
+
+\clearpage
+
+![Comparison of the spatial distribution of relative hourly trends (%) over 1990–2022 across all 562 hourly stations: (a) observed annual maxima trend obtained by simple linear regression; (b) GEV-estimated mean trend.](Figures/comparison_maxima_gev_maps_hourly.png){#fig-maxima-gev-maps-hourly width=62%}
+
+![Scatter plots of GEV-estimated hourly mean trend vs. observed hourly annual maxima trend across all 562 hourly stations: (a) absolute trends in mm/decade; (b) relative trends in %. The 1:1 line is shown in dashed grey, and the linear regression fit is in red, with Pearson correlation coefficients ($r$) indicated.](Figures/comparison_maxima_gev_scatter_hourly.png){#fig-maxima-gev-scatter-hourly width=60%}
 
 \clearpage
 
@@ -41,40 +59,44 @@ Both the spatial patterns (regional trends) and magnitude/sign of the trends sho
 
 _Hourly data mostly starts in 1990. Thus, the $M$ models are applied just to the daily case, right? Do you really need 6 non-stationary models? In how many cases the $M^*$ models resulted better than the $M$ ones?_
 
-* **Response:** We appreciate this comment. Indeed, for the hourly case (1990-2022), because the records begin after 1985, the breakpoint models ($M^{*}$) are mathematically equivalent to the standard linear models ($M$) since all observations lie after the breakpoint ($t\geq 1985$). For the daily case (1959-2022), the $M^{*}$ models represent a physical hypothesis of trend acceleration starting in the mid-1980s.
+* **Response:** We appreciate this comment. Indeed, for the hourly case (1990-2022), because the records begin after 1985, the breakpoint models ($M^{*}$) are mathematically equivalent to the standard linear models ($M$) since all observations lie after the breakpoint ($t\geq 1985$). For the daily case (1959-2022), the $M^{*}$ models represent a physical hypothesis of a trend emerging in the mid-1980s.
 
-To show how many times the $M^*$ models were selected over the standard linear ($M$) or stationary ($M_0$) models for the daily case, we computed the selection percentages for all seasons and the hydrological year, presented in @tbl-mstar-selection.
+To address this comment, we present the table below (@tbl-mstar-selection) showing the full breakdown of selected models: the stationary model ($M_0$, representing no significant trend at the 10% significance level), standard linear trend models ($M$), and breakpoint models ($M^*$). In this way, the percentages for each dataset sum to 100%.
+
+For the grid point percentages (AROME), the statistics are calculated over the entire domain of mainland France. To ensure this does not introduce spatial representation biases, we also computed these statistics restricted only to the grid points closest to the daily stations ($N = 7,486$). The results are highly consistent: for the Annual period, selection rates at matched grid points are 75.6% for $M_0$, 11.3% for $M$, and 13.0% for $M^*$ (compared to 75.5%, 11.8%, and 12.7% over all mainland grid points). We therefore present the full-grid statistics in the table to reflect the complete spatial support of the model.
 
 ::: {#tbl-mstar-selection}
 
 \centering
-\begin{tabular}{lcc}
+\begin{tabular}{lcccccc}
 \hline
-\textbf{Period} & \textbf{Stations (Obs.)} & \textbf{Grid Points (AROME)} \\
+\textbf{Period} & \multicolumn{3}{c}{\textbf{Stations (Obs.)}} & \multicolumn{3}{c}{\textbf{Grid Points (AROME)}} \\
+\cline{2-4} \cline{5-7}
+ & \textbf{$M_0$} & \textbf{$M$} & \textbf{$M^*$} & \textbf{$M_0$} & \textbf{$M$} & \textbf{$M^*$} \\
 \hline
-\textbf{Annual} (YEAR) & 16.0\% & 12.7\% \\
-\textbf{Autumn} (OND)  & 21.0\% & 18.6\% \\
-\textbf{Winter} (JFM)  & 12.8\% & 11.9\% \\
-\textbf{Spring} (AMJ)  & 21.1\% & 13.2\% \\
-\textbf{Summer} (JAS)  & 17.1\% & 23.8\% \\
+\textbf{Annual} (YEAR) & 66.1\% & 17.8\% & 16.0\% & 75.5\% & 11.8\% & 12.7\% \\
+\textbf{Autumn} (OND)  & 62.8\% & 16.2\% & 21.0\% & 73.5\% & 7.9\%  & 18.6\% \\
+\textbf{Winter} (JFM)  & 64.5\% & 22.6\% & 12.9\% & 65.6\% & 22.5\% & 11.9\% \\
+\textbf{Spring} (AMJ)  & 62.1\% & 16.6\% & 21.3\% & 75.0\% & 11.7\% & 13.3\% \\
+\textbf{Summer} (JAS)  & 68.8\% & 14.2\% & 17.1\% & 65.6\% & 10.5\% & 24.0\% \\
 \hline
 \end{tabular}
 
-Percentage of locations where an $M^*$ model (trend starting in 1985) is selected as the best fit for the 10-year return level of daily precipitation.
+Percentage of locations where each model category is selected as the best fit for daily precipitation extremes ($M_0$ representing no trend, $M$ a linear trend, and $M^*$ a breakpoint trend starting in 1985). All percentages sum to 100\% for each dataset.
 :::
 
 
 **Manuscript modifications:** 
 
 - In `Section 3.2.2 (Model selection)`, we have explicitly clarified that the model selection procedure defaults to the standard linear models ($M$) for the hourly series.
-- In `Section 4.2.1 (Daily)`, we have added a sentence stating the percentage of stations and grid points where an $M^{*}$ model was selected for the hydrological year as an example (16.0% and 12.7%, respectively).
+- In `Section 4.2.1 (Daily)`, we have added a sentence stating the percentage of stations and grid points where $M_0$, $M$, and $M^*$ models were selected for the hydrological year as an example (66.1%, 17.8%, and 16.0% for observed stations; 75.5%, 11.8%, and 12.7% for AROME, respectively).
 
 
 ## Comment 3: Rationale for the Two-Step Model Selection
 
 _Not clear to me why you use the 2-step procedure, why not simply choosing the model with the smallest p-value?_
 
-* **Response:** We agree that the rationale behind this selection procedure should be explained more clearly. The likelihood ratio test compares each non-stationary model $M_{j}$ ($j\geq 1$) to the stationary model $M_{0}$. However, models $M_{3}$ and $M_{3}^{*}$ (where both $\mu$ and $\sigma$ vary over time) have 2 degrees of freedom, whereas models $M_{1}/M_{1}^{*}$ and $M_{2}/M_{2}^{*}$ have only 1 degree of freedom. Choosing the model with the absolute smallest p-value across different degrees of freedom can bias the selection toward simpler models or lead to overfitting. Our 2-step procedure is designed to first test if a trend in both location and scale ($M_{3}$ or $M_{3}^{*}$) is statistically justified. If it is not, we look at whether a simpler trend in either location only ($M_{1}/M_{1}^{*}$) or scale only ($M_{2}/M_{2}^{*}$) is justified. This prevents overfitting and prioritizes a physically consistent representation of changing extremes (i.e., both parameters changing) only when statistically supported. We will add a clarifying paragraph to Section 3.3.2 to explain this rationale.
+* **Response:** We agree that the rationale behind this selection procedure should be explained more clearly. The likelihood ratio test compares each non-stationary model $M_{j}$ ($j\geq 1$) to the stationary model $M_{0}$. However, models $M_{3}$ and $M_{3}^{*}$ (where both $\mu$ and $\sigma$ vary over time) have 2 degrees of freedom, whereas models $M_{1}/M_{1}^{*}$ and $M_{2}/M_{2}^{*}$ have only 1 degree of freedom. Choosing the model with the absolute smallest p-value across different degrees of freedom can bias the selection toward simpler models or lead to overfitting. Our 2-step procedure is designed to first test if a trend in both location and scale ($M_{3}$ or $M_{3}^{*}$) is statistically justified. If it is not, we look at whether a simpler trend in either location only ($M_{1}/M_{1}^{*}$) or scale only ($M_{2}/M_{2}^{*}$) is justified. This prevents overfitting and prioritizes a physically consistent representation of changing extremes (i.e., both parameters changing) only when statistically supported.
 
 **Manuscript modifications:**
 
@@ -84,7 +106,7 @@ _Not clear to me why you use the 2-step procedure, why not simply choosing the m
 
 _I suggest to illustrate in the method section which evaluation metrics you used (e.g. ME, r) and for which variables other than 10-yr RL (e.g. frequency of wet days)_
 
-* **Response:** We agree. The subsection defining the agreement metrics (Pearson correlation $r$, Mean Error $ME$, and relative bias in %) and introducing all the evaluated variables (mean number of wet days, mean annual total precipitation, daily and hourly 10-year return levels) was indeed commented out in the draft. In the revised manuscript, we will restore and expand this subsection (Section 3.4) to explicitly state which metrics and variables are used before they appear in the results section.
+* **Response:** We agree. The subsection defining the agreement metrics (Pearson correlation $r$, Mean Error $ME$, and relative bias in %) and introducing all the evaluated variables (mean number of wet days, mean annual total precipitation, daily and hourly 10-year return levels) was indeed commented out in the draft.
 
 **Manuscript modifications:**
 
@@ -116,19 +138,19 @@ _I suggest to illustrate in the method section which evaluation metrics you used
 
 _I strongly suggest to add information on relative biases (also, in figures 4 and 5), because N mm/year could be small or big difference depending on the baseline!_
 
-* **Response:** We agree with the reviewer. Relative biases (expressed in %) are more informative for comparing regions with highly contrasted precipitation baselines, such as the dry Mediterranean coastal areas and wet mountainous regions. In the revised manuscript, we will calculate relative biases for annual cumulative precipitation and the daily/hourly 10-year return levels, discuss them in the text, and update Figures 4 and 5 (and the corresponding text in Section 4.1) to include relative bias information.
+* **Response:** We agree with the reviewer. Relative biases (expressed in %) are more informative for comparing regions with highly contrasted precipitation baselines, such as the dry Mediterranean coastal areas and wet mountainous regions.
 
 **Manuscript modifications:**
 
 - In `Section 3.3 (Assessing the agreement between AROME and the stations)`, we have defined the Relative Bias ($RB$, \%) metric to quantify systematic errors relative to the observed baselines.
 - In `Section 4.1 (Evaluation of the precipitation climatology of AROME)`, the climatology maps (Figure 4) have been updated to present the relative bias (in \%) in the third row instead of the absolute difference, and the caption has been updated accordingly.
-- In the same section, we have added a second panel to Figure 5 showing the seasonal evolution of the relative bias (in \%) for the four precipitation indices.
+- In the same section, we have added a second panel to Figures 6 showing the seasonal evolution of the relative bias (in \%) for the four precipitation indices.
 
 ## Comment 6: Presentation of Bias at the Hourly Scale
 
 _This seems mostly referring to spatial correlation; but also bias should be mentioned (e.g., underestimation at 1h)_
 
-* **Response:** We add revised this paragraph to explicitly mention the seasonal variations in bias, in addition to the spatial correlation. Specifically, we add highlighted the systematic underestimation of hourly extremes (1h 10-year return level) by AROME, which is particularly pronounced during the convective seasons (spring and summer).
+* **Response:** We have revised this paragraph to explicitly mention the seasonal variations in bias, in addition to the spatial correlation. Specifically, we have highlighted the systematic underestimation of hourly extremes (1h 10-year return level) by AROME, which is particularly pronounced during the convective seasons (spring and summer).
 
 **Manuscript modifications:**
 
@@ -142,13 +164,15 @@ _I suggest to substitute 3rd row or add a 4th row with relative biases. For all 
 
 * **Response:** We thank the reviewer for these suggestions, which significantly improve the readability of the maps.
 
-1. We have added a fourth row to the climatology maps (Figure 4) to present the relative bias (%) alongside the absolute difference in the third row, making the regional comparisons clearer while preserving the absolute magnitude information.
+**Manuscript modifications:**
 
-2. We have used a uniform dot size for all displayed stations so that larger dots do not obscure adjacent stations.
+1. In `Section 4.1 (Evaluation of the precipitation climatology of AROME)`, we have added a fourth row to the climatology maps (Figure 4) to present the relative bias (%) alongside the absolute difference in the third row, making the regional comparisons clearer while preserving the absolute magnitude information.
 
-3. For the climatology maps (Figure 4), we have modified the color scale so that a zero bias is represented by a clearly visible grey fill.
+2. In all map figures across the manuscript (Figure 4 in `Section 4.1`, Figures 6 and 7 in `Sections 4.2`/`4.3`, and the monthly trend maps in `Appendix C`), we have used a uniform dot size for all displayed stations so that larger dots do not obscure adjacent stations.
 
-4. For trend maps (Figures 6 and 7, and the monthly maps in Appendix C), we adopted the following display conventions (also requested by Reviewer #2, “choosing another marker”):
+3. In `Section 4.1 (Evaluation of the precipitation climatology of AROME)`, the color scale of the climatology maps (Figure 4) has been modified so that a zero bias is represented by a clearly visible grey fill.
+
+4. In the trend maps of `Section 4.2 (Spatial distribution of precipitation trends)`, `Section 4.3 (Seasonal variations of hourly trends)`, and the monthly maps in `Appendix C`, we adopted the following display conventions for station markers and grid cell masks:
 
 | Type | Display |
 |------|---------|
@@ -156,11 +180,6 @@ _I suggest to substitute 3rd row or add a 4th row with relative biases. For all 
 | **Significant ≈ 0** (stations) | Filled grey disk, dark outline |
 | **Significant coloured** (stations) | Trend colour on the map scale; **uniform marker size** |
 | **AROME grid** | Non-significant grid points **not displayed** |
-
-**Manuscript modifications:**
-
-- In `Section 4.1 (Evaluation of the precipitation climatology of AROME)`, the climatology maps (Figure 4) have been updated to present the absolute difference (mean error, $ME$) in the third row and the relative bias ($RB$, in %) in the fourth row. Station markers have uniform size; zero bias is shown as a clearly visible grey fill.
-- In `Section 4.2 (Spatial distribution of precipitation trends)` and `Section 4.3 (Seasonal variations of hourly trends)`, the trend maps (Figures 6 and 7, and Appendix C) follow the conventions in point 4 above: open circles (white fill, grey outline) for non-significant stations, filled grey for significant near-zero trends, coloured markers for significant trends (uniform size), and masked non-significant AROME grid cells.
 
 \clearpage
 
@@ -179,12 +198,12 @@ _*Figure 7 (hourly GEV trends, seasonal).* Same display conventions as Figure 6 
 
 \clearpage
 
-![](fig7.pdf){width=100%}
+![](fig7.pdf){width=70%}  
 _*Appendix C, Figure C1 (hourly GEV trends, monthly).* Same display conventions as Figures 6 and 7 for monthly hourly trends (1990–2022)._
 
 \clearpage
 
-## Comment 8: Seasonal Bias Synthesis (Figure 5)
+## Comment 8: Seasonal Bias Synthesis (Figures 6)
  
 _I suggest a second panel summarizing %biases for the 4 variables._
 
@@ -192,10 +211,10 @@ _I suggest a second panel summarizing %biases for the 4 variables._
 
 **Manuscript modifications:**
 
-- In `Section 4.1 (Evaluation of the precipitation climatology of AROME)`, Figure 5 (seasonal synthesis) has been updated to include a second panel (b) presenting the seasonal relative bias (in %) for the four precipitation indices, and the caption has been updated to describe both panels.
+- In `Section 4.1 (Evaluation of the precipitation climatology of AROME)`, Figures 6 (seasonal synthesis) has been updated to include a second panel (b) presenting the seasonal relative bias (in %) for the four precipitation indices, and the caption has been updated to describe both panels.
 
 ![](fig4.pdf){width=100%}
-_*Figure 5.* Seasonal synthesis of the climatological agreement between the AROME model and Météo-France stations for the four precipitation indices: (a) spatial Pearson correlation ($r$) and (b) relative bias ($RB$, in \%) depending on the season._
+_*Figures 6.* Seasonal synthesis of the climatological agreement between the AROME model and Météo-France stations for the four precipitation indices: (a) spatial Pearson correlation ($r$) and (b) relative bias ($RB$, in \%) depending on the season._
 
 ## Comment 9: Restructuring the Monthly Trend Mapping (Figure 8 & 9)
 
@@ -215,9 +234,9 @@ _I found this text a too qualitative, and all those maps in figure 8 not much re
 - In `Section 4.2.2 (Hourly)`, the section describing monthly trends has been rewritten to be more quantitative, referencing the new Figure 8 to detail the median trends, relative biases, and spatial correlations:
   
   > **Section 4.2.2 (Monthly refinement):**
-  > "The monthly analysis (Figure 8) further highlights the specificity of convective regimes and the strong temporal concentration of some signals. Figure 8a compares the monthly median GEV relative trends at Météo-France stations and in AROME (side-by-side subpanels). At the daily scale, station median trends remain moderate throughout the year, ranging from $-16.27\%$ in September to $+14.05\%$ in April/May. In contrast, station-based hourly GEV trends show far larger values concentrated in specific convective windows, with monthly medians reaching $+43.28\%$ in February, $+28.26\%$ in March, $+101.86\%$ in June, $+53.88\%$ in October, and $+30.09\%$ in December. AROME reproduces the positive sign of these monthly trend peaks but systematically underestimates their magnitude. For instance, in June, AROME simulates a median hourly GEV trend of $+17.70\%$ (against $+101.86\%$ for stations), and in February, it simulates $+11.46\%$ (against $+43.28\%$ for stations).
+  > "The monthly analysis (Figure 8) further highlights the specificity of convective regimes and the strong temporal concentration of some signals. Figure 8a compares the monthly median GEV relative trends at Météo-France stations and the corresponding AROME grid points (side-by-side subpanels). At the daily scale, station median trends remain moderate throughout the year, ranging from $-16.27\%$ in September to $+14.05\%$ in April/May. In contrast, station-based hourly GEV trends show far larger values concentrated in specific convective windows, with monthly medians reaching $+43.28\%$ in February, $+28.26\%$ in March, $+101.86\%$ in June, $+53.88\%$ in October, and $+30.09\%$ in December. AROME reproduces the positive sign of these monthly trend peaks but systematically underestimates their magnitude. For instance, in June, AROME simulates a median hourly GEV trend of $+17.70\%$ (against $+101.86\%$ for stations), and in February, it simulates $+11.46\%$ (against $+43.28\%$ for stations).
   >
-  > This systematic underestimation is reflected in the monthly relative biases ($RB$) between AROME and stations shown in Figure 8b, with large negative values at the hourly scale during convective months (e.g., $RB = -152.0\%$ in February, $RB = -64.7\%$ in March, and $RB = -137.5\%$ in June), whereas daily relative biases remain much smaller (e.g., $RB = -2.7\%$ in January and $RB = -43.7\%$ in March).
+  > This systematic underestimation is reflected in the monthly relative biases ($RB$) between the corresponding AROME grid points and stations shown in Figure 8b, with large negative values at the hourly scale during convective months (e.g., $RB = -152.0\%$ in February, $RB = -64.7\%$ in March, and $RB = -137.5\%$ in June), whereas daily relative biases remain much smaller (e.g., $RB = -2.7\%$ in January and $RB = -43.7\%$ in March).
   >
   > Finally, Figure 8c shows that spatial correlation ($r$) is consistently higher at the daily scale (peaking at $r = 0.62$ in December) than at the hourly scale. At the hourly scale, spatial correlations are extremely low or close to zero during the convective months (e.g., $r = 0.08$ in June, $r = 0.04$ in March, and $r = 0.02$ in May), reflecting the high local spatial variability of hourly trends. February stands out as the only month showing moderate spatial agreement ($r = 0.45$)."
 
@@ -229,7 +248,7 @@ _I found this text a too qualitative, and all those maps in figure 8 not much re
 \clearpage
 
 ![](fig8.pdf){width=100%}
-_*Figure 8.* Monthly GEV relative trend synthesis for both daily (1959–2022) and hourly (1990–2022) scales: **(a)** median GEV relative trend (%) at Météo-France stations (left) and AROME (right); **(b)** relative bias ($RB$, in %) between AROME and Météo-France stations; and **(c)** spatial correlation ($r$) of GEV relative trends. Values above each bar in panel (c) indicate the number of stations used in the calculation._
+_*Figure 8.* Monthly GEV relative trend synthesis for both daily (1959–2022) and hourly (1990–2022) scales, calculated only over locations with statistically significant trends at the stations (at the 10% level): **(a)** median GEV relative trend (%) at Météo-France stations (left) and corresponding AROME grid points (right); **(b)** relative bias ($RB$, in %) between the corresponding AROME grid points and Météo-France stations; and **(c)** spatial correlation ($r$) of GEV relative trends. Values above each bar in panel (c) indicate the number of significant stations used in the calculations. All statistics are evaluated at AROME grid points corresponding to these stations. _
 
 \clearpage
 
@@ -249,13 +268,13 @@ _Link this to your results. Should we expect even higher underestimation at hour
 
 _I think SMEV approach should also be mentioned (Marra et al. 2020 10.1029/2020gl090209) which has been also applied in both stationary mode for evaluation of short-run CPMs (Correa-Sanchez et al., 2025 [https://doi.org/10.1016/j.jhydrol.2025.133324](https://doi.org/10.1016/j.jhydrol.2025.133324)) and non-stationary mode on 90-yr CPM (Lompi et al., 2025 [https://doi.org/10.1016/j.adwatres.2025.105071](https://doi.org/10.1016/j.adwatres.2025.105071))_
 
-* **Response:** We thank the reviewer for pointing out these highly relevant references. We agree that the Simplified Metastasis Extreme Value (SMEV) distribution is a very valuable alternative to the GEV for short records and sub-daily extremes. We have added a discussion of the SMEV approach in the limitations section, citing the three recommended papers.
+* **Response:** We thank the reviewer for pointing out these highly relevant references. We agree that the Simplified Metastasis Extreme Value (SMEV) distribution is a very valuable alternative to the GEV for short records and sub-daily extremes. We have added a mention of the SMEV distribution in the limitations section, citing the three recommended papers.
 
 **Manuscript modifications:**
 
 - In `Section 5.1 (Limitations of the study)`, the paragraph discussing alternative extreme value approaches has been updated as follows:
 
-  > "To make the estimation more robust, other solutions include taking into account threshold exceedances within a generalized Pareto distribution (GPD) framework, or using a distribution modeling all precipitation values, such as the recent extended generalized Pareto distribution (Haruna et al., 2025), or using a neighborhood or region-of-influence approach (Blanchet et al., 2021) to reduce sampling bias by using more data. Alternatively, the Simplified Metastasis Extreme Value (SMEV) distribution (Marra et al., 2020) offers a promising framework for estimating sub-daily extremes from short records, and has been successfully applied to evaluate convection-permitting climate model simulations under both stationary (Correa-Sanchez et al., 2025) and non-stationary (Lompi et al., 2025) conditions."
+  > "To make the estimation more robust, other solutions include taking into account threshold exceedances within a generalized Pareto distribution (GPD) framework, or using a distribution modeling all precipitation values, such as the recent extended generalized Pareto distribution (Haruna et al., 2025) or the Simplified Metastasis Extreme Value (SMEV) distribution (Marra et al., 2020; Correa-Sanchez et al., 2025; Lompi et al., 2025), or using a neighborhood or region-of-influence approach (Blanchet et al., 2021) to reduce sampling bias by using more data."
 
 
 ### Minor Comments

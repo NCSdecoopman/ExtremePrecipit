@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import geopandas as gpd
 from scipy.stats import linregress
+from scipy.special import gamma
 from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm, to_hex
 
 def save_figure_atomically(fig, file_path, dpi=300, format=None):
@@ -26,15 +27,17 @@ def save_figure_atomically(fig, file_path, dpi=300, format=None):
         os.remove(file_path)
     os.rename(temp_path, file_path)
 
-def main():
-    # Paths (relative to repo root)
-    gev_path = 'data/gev/gev/observed/quotidien/hydro/gev_param_best_model.parquet'
-    maxima_dir = 'data/statisticals/statisticals/observed/quotidien'
-    postes_path = 'data/metadonnees/metadonnees/observed/postes_quotidien.csv'
-    depts_path = 'data/external/external/departements/depts.shp'
-    relief_path = 'data/external/external/niveaux/selection_courbes_niveau_france.shp'
-    output_dir = 'perso/v2_modifs/Figures'
-    os.makedirs(output_dir, exist_ok=True)
+def run_comparison(config, depts, coast, relief, output_dir):
+    mode = config['mode']
+    gev_path = config['gev_path']
+    maxima_dir = config['maxima_dir']
+    postes_path = config['postes_path']
+    max_col = config['max_col']
+    min_years = config['min_years']
+    year_range = config['year_range']
+    suffix = config['suffix']
+    
+    print(f"\n--- Running comparison for {mode} ---")
     
     # 1. Load data
     print("Loading GEV parameters...")
@@ -42,12 +45,12 @@ def main():
     
     print("Loading annual maxima...")
     dfs = []
-    for y in range(1960, 2023):
+    for y in year_range:
         p = os.path.join(maxima_dir, f"{y:04d}", "hydro.parquet")
         if os.path.exists(p):
-            dfs.append(pd.read_parquet(p, columns=['NUM_POSTE', 'max_mm_j', 'nan_ratio']).assign(year=y))
+            dfs.append(pd.read_parquet(p, columns=['NUM_POSTE', max_col, 'nan_ratio']).assign(year=y))
     maxima_df = pd.concat(dfs, ignore_index=True)
-    maxima_df = maxima_df[maxima_df['nan_ratio'] <= 0.10].dropna(subset=['max_mm_j'])
+    maxima_df = maxima_df[maxima_df['nan_ratio'] <= 0.10].dropna(subset=[max_col])
     
     print("Loading station coordinates...")
     postes_df = pd.read_csv(postes_path, usecols=['NUM_POSTE', 'lat', 'lon'])
@@ -57,7 +60,7 @@ def main():
     print("Calculating trends...")
     results = []
     for _, row in gev_df.iterrows():
-        poste = row['NUM_POSTE']
+        poste = str(row['NUM_POSTE'])
         model = row['model']
         mu0 = row['mu0']
         mu1 = row['mu1']
@@ -67,27 +70,35 @@ def main():
         
         # Station observations
         sub = maxima_df[maxima_df['NUM_POSTE'] == poste].sort_values('year')
-        if len(sub) < 50:
+        if len(sub) < min_years:
             continue
         
         years = sub['year'].values
-        vals = sub['max_mm_j'].values
+        vals = sub[max_col].values
         
         tmin, tmax = years.min(), years.max()
         has_break = '_break_year' in model
         
         # delta_year
         delta_year = (tmax - 1985) if has_break else (tmax - tmin)
+        if delta_year <= 0:
+            continue
         
-        # --- GEV-estimated RL2 Trend ---
-        T = 2
-        CT = (-np.log(1 - 1/T))**(-xi) - 1
-        gev_slope_decade = (mu1 + (sigma1/xi)*CT) * (10 / delta_year)
+        # --- GEV-estimated Mean Trend ---
+        # The mean of a GEV is E[X] = mu + (sigma/xi) * (gamma(1 - xi) - 1) for xi < 1, xi != 0.
+        # If xi = 0 (Gumbel limit), E[X] = mu + Euler_gamma * sigma.
+        euler_gamma = 0.5772156649015328
+        if abs(xi) > 1e-8:
+            C_mean = (gamma(1 - xi) - 1) / xi
+        else:
+            C_mean = euler_gamma
+            
+        gev_slope_decade = (mu1 + sigma1 * C_mean) * (10 / delta_year)
         
         t_tilde_start = -0.5
         t_tilde_end = 0.5
-        z_start = mu0 + mu1*t_tilde_start + (sigma0 + sigma1*t_tilde_start)/xi * CT
-        z_end = mu0 + mu1*t_tilde_end + (sigma0 + sigma1*t_tilde_end)/xi * CT
+        z_start = mu0 + mu1*t_tilde_start + (sigma0 + sigma1*t_tilde_start) * C_mean
+        z_end = mu0 + mu1*t_tilde_end + (sigma0 + sigma1*t_tilde_end) * C_mean
         gev_trend_pct = (z_end - z_start) / z_start * 100
         
         # --- Simple Linear Regression on Maxima ---
@@ -106,36 +117,15 @@ def main():
         })
         
     res_df = pd.DataFrame(results)
+    if res_df.empty:
+        print(f"No stations found with data for {mode}")
+        return
+        
     # Filter out Corsica from stations (historically starting with '20')
     res_df = res_df[~res_df['NUM_POSTE'].str.startswith(('20', '2A', '2B'))]
     
     res_df = res_df.merge(postes_df, on='NUM_POSTE', how='inner')
-    print(f"Computed comparison for {len(res_df)} stations (excluding Corsica).")
-    
-    # Load departments and filter Corsica
-    print("Loading departments map...")
-    depts = gpd.read_file(depts_path)
-    depts = depts[~depts['NUM_DEP'].isin(['2A', '2B'])]
-    depts = depts.set_crs("EPSG:27572").to_crs("EPSG:2154")
-    
-    # Build simplified metropolitan mask and coastline like in the paper
-    print("Constructing coastline outline...")
-    depts_simple = depts.copy()
-    depts_simple['geometry'] = depts_simple.geometry.simplify(500)
-    mask = depts_simple.union_all() if hasattr(depts_simple, 'union_all') else depts_simple.unary_union
-    
-    if mask.geom_type == "MultiPolygon":
-        polys = list(mask.geoms)
-    else:
-        polys = [mask]
-    exteriors = [poly.exterior for poly in polys]
-    coast = gpd.GeoSeries(exteriors, crs="EPSG:2154")
-    coast = coast[coast.length > 2000]
-    
-    # Load and clip relief contours
-    print("Loading and clipping relief contours...")
-    relief = gpd.read_file(relief_path).to_crs("EPSG:2154").clip(mask)
-    relief['geometry'] = relief.geometry.simplify(500)
+    print(f"Computed comparison for {len(res_df)} stations.")
     
     # Convert results to GeoDataFrame projected to Lambert 93
     stations_gdf = gpd.GeoDataFrame(
@@ -190,14 +180,16 @@ def main():
         ax.set_axis_off()
         ax.set_title(title)
 
+    title_label = "Daily" if mode == "daily" else "Hourly"
+    
     # ==========================================
     # 3. Figure A: 4-panel Overview
     # ==========================================
     print("Generating 4-panel overview figure...")
     fig, axs = plt.subplots(2, 2, figsize=(12, 11), dpi=300)
     
-    plot_style_map(axs[0, 0], stations_gdf, 'pct_full', '(a) Observed Annual Maxima Trend (%)')
-    plot_style_map(axs[0, 1], stations_gdf, 'gev_trend_pct', r'(b) GEV $\mathrm{RL}_2$ Trend (%)')
+    plot_style_map(axs[0, 0], stations_gdf, 'pct_full', f'(a) Observed Annual Maxima Trend (%, {title_label})')
+    plot_style_map(axs[0, 1], stations_gdf, 'gev_trend_pct', f'(b) GEV Mean Trend (%, {title_label})')
     
     # Shared colorbar for maps
     fig.subplots_adjust(hspace=0.25, wspace=0.15)
@@ -205,7 +197,7 @@ def main():
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm._A = []
     cbar = fig.colorbar(sm, cax=cbar_ax, orientation='horizontal')
-    cbar.set_label('Relative Trend over 1960–2022 (%)')
+    cbar.set_label('Relative Trend over 1960–2022 (%)' if mode == 'daily' else 'Relative Trend over 1990–2022 (%)')
     
     # --- Subplot (c): Scatter plot of absolute trends (mm/decade) ---
     ax_sc_abs = axs[1, 0]
@@ -223,7 +215,7 @@ def main():
     x_grid = np.linspace(lims_abs[0], lims_abs[1], 100)
     ax_sc_abs.plot(x_grid, intercept_fit + slope_fit*x_grid, color='#d62728', linestyle='-', linewidth=1.2, label='Linear Fit')
     ax_sc_abs.set_xlabel('Annual Maxima Linear Trend (mm/decade)')
-    ax_sc_abs.set_ylabel(r'GEV $\mathrm{RL}_2$ Trend (mm/decade)')
+    ax_sc_abs.set_ylabel('GEV Mean Trend (mm/decade)')
     ax_sc_abs.set_title('(c) Absolute Trends')
     ax_sc_abs.grid(True, linestyle=':', alpha=0.5)
     ax_sc_abs.set_xlim(lims_abs)
@@ -251,7 +243,7 @@ def main():
     x_grid_pct = np.linspace(lims_pct[0], lims_pct[1], 100)
     ax_sc_pct.plot(x_grid_pct, intercept_fit_pct + slope_fit_pct*x_grid_pct, color='#d62728', linestyle='-', linewidth=1.2, label='Linear Fit')
     ax_sc_pct.set_xlabel('Annual Maxima Linear Trend (%)')
-    ax_sc_pct.set_ylabel(r'GEV $\mathrm{RL}_2$ Trend (%)')
+    ax_sc_pct.set_ylabel('GEV Mean Trend (%)')
     ax_sc_pct.set_title(r'(d) Relative Trends')
     ax_sc_pct.grid(True, linestyle=':', alpha=0.5)
     ax_sc_pct.set_xlim(lims_pct)
@@ -263,8 +255,8 @@ def main():
                   bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8, edgecolor='none'),
                   fontsize=11, fontweight='bold')
     
-    save_figure_atomically(fig, os.path.join(output_dir, "comparison_maxima_gev.png"), dpi=300)
-    save_figure_atomically(fig, os.path.join(output_dir, "comparison_maxima_gev.pdf"), format='pdf')
+    save_figure_atomically(fig, os.path.join(output_dir, f"comparison_maxima_gev{suffix}.png"), dpi=300)
+    save_figure_atomically(fig, os.path.join(output_dir, f"comparison_maxima_gev{suffix}.pdf"), format='pdf')
     plt.close(fig)
     
     # ==========================================
@@ -273,16 +265,16 @@ def main():
     print("Generating maps-only figure...")
     fig_maps, axs_maps = plt.subplots(1, 2, figsize=(12, 6.5), dpi=300)
     
-    plot_style_map(axs_maps[0], stations_gdf, 'pct_full', '(a) Observed Annual Maxima Trend (%)')
-    plot_style_map(axs_maps[1], stations_gdf, 'gev_trend_pct', r'(b) GEV $\mathrm{RL}_2$ Trend (%)')
+    plot_style_map(axs_maps[0], stations_gdf, 'pct_full', f'(a) Observed Annual Maxima Trend (%, {title_label})')
+    plot_style_map(axs_maps[1], stations_gdf, 'gev_trend_pct', f'(b) GEV Mean Trend (%, {title_label})')
     
     fig_maps.subplots_adjust(bottom=0.18, wspace=0.05)
     cbar_ax_maps = fig_maps.add_axes([0.25, 0.08, 0.5, 0.03])
     cbar_maps = fig_maps.colorbar(sm, cax=cbar_ax_maps, orientation='horizontal')
-    cbar_maps.set_label('Relative Trend over 1960–2022 (%)')
+    cbar_maps.set_label('Relative Trend over 1960–2022 (%)' if mode == 'daily' else 'Relative Trend over 1990–2022 (%)')
     
-    save_figure_atomically(fig_maps, os.path.join(output_dir, "comparison_maxima_gev_maps.png"), dpi=300)
-    save_figure_atomically(fig_maps, os.path.join(output_dir, "comparison_maxima_gev_maps.pdf"), format='pdf')
+    save_figure_atomically(fig_maps, os.path.join(output_dir, f"comparison_maxima_gev_maps{suffix}.png"), dpi=300)
+    save_figure_atomically(fig_maps, os.path.join(output_dir, f"comparison_maxima_gev_maps{suffix}.pdf"), format='pdf')
     plt.close(fig_maps)
     
     # ==========================================
@@ -296,7 +288,7 @@ def main():
     ax_sc_abs.plot(lims_abs, lims_abs, color='#555555', linestyle='--', linewidth=1.0, label='1:1 Line')
     ax_sc_abs.plot(x_grid, intercept_fit + slope_fit*x_grid, color='#d62728', linestyle='-', linewidth=1.2, label='Linear Fit')
     ax_sc_abs.set_xlabel('Annual Maxima Linear Trend (mm/decade)')
-    ax_sc_abs.set_ylabel(r'GEV $\mathrm{RL}_2$ Trend (mm/decade)')
+    ax_sc_abs.set_ylabel('GEV Mean Trend (mm/decade)')
     ax_sc_abs.set_title('(a) Absolute Trends')
     ax_sc_abs.grid(True, linestyle=':', alpha=0.5)
     ax_sc_abs.set_xlim(lims_abs)
@@ -313,7 +305,7 @@ def main():
     ax_sc_pct.plot(lims_pct, lims_pct, color='#555555', linestyle='--', linewidth=1.0, label='1:1 Line')
     ax_sc_pct.plot(x_grid_pct, intercept_fit_pct + slope_fit_pct*x_grid_pct, color='#d62728', linestyle='-', linewidth=1.2, label='Linear Fit')
     ax_sc_pct.set_xlabel('Annual Maxima Linear Trend (%)')
-    ax_sc_pct.set_ylabel(r'GEV $\mathrm{RL}_2$ Trend (%)')
+    ax_sc_pct.set_ylabel('GEV Mean Trend (%)')
     ax_sc_pct.set_title(r'(b) Relative Trends')
     ax_sc_pct.grid(True, linestyle=':', alpha=0.5)
     ax_sc_pct.set_xlim(lims_pct)
@@ -325,11 +317,83 @@ def main():
                   bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8, edgecolor='none'),
                   fontsize=11, fontweight='bold')
     
-    save_figure_atomically(fig_sc, os.path.join(output_dir, "comparison_maxima_gev_scatter.png"), dpi=300)
-    save_figure_atomically(fig_sc, os.path.join(output_dir, "comparison_maxima_gev_scatter.pdf"), format='pdf')
+    save_figure_atomically(fig_sc, os.path.join(output_dir, f"comparison_maxima_gev_scatter{suffix}.png"), dpi=300)
+    save_figure_atomically(fig_sc, os.path.join(output_dir, f"comparison_maxima_gev_scatter{suffix}.pdf"), format='pdf')
     plt.close(fig_sc)
     
-    print("All figures saved successfully (excluding Corsica with shared size scale).")
+    print(f"All figures for {mode} saved successfully.")
+    print(f"Summary statistics for {mode}:")
+    print(f"  r_abs = {r_abs:.4f}")
+    print(f"  r_pct = {r_pct:.4f}")
+    print(f"  slope_fit_pct = {slope_fit_pct:.4f}")
+
+def main():
+    # Paths (relative to repo root)
+    depts_path = 'data/external/external/departements/depts.shp'
+    relief_path = 'data/external/external/niveaux/selection_courbes_niveau_france.shp'
+    output_dir = 'perso/v2_modifs/Figures'
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Load departments and filter Corsica
+    print("Loading departments map...")
+    depts = gpd.read_file(depts_path)
+    depts = depts[~depts['NUM_DEP'].isin(['2A', '2B'])]
+    depts = depts.set_crs("EPSG:27572").to_crs("EPSG:2154")
+    
+    # Build simplified metropolitan mask and coastline like in the paper
+    print("Constructing coastline outline...")
+    depts_simple = depts.copy()
+    depts_simple['geometry'] = depts_simple.geometry.simplify(500)
+    mask = depts_simple.union_all() if hasattr(depts_simple, 'union_all') else depts_simple.unary_union
+    
+    if mask.geom_type == "MultiPolygon":
+        polys = list(mask.geoms)
+    else:
+        polys = [mask]
+    exteriors = [poly.exterior for poly in polys]
+    coast = gpd.GeoSeries(exteriors, crs="EPSG:2154")
+    coast = coast[coast.length > 2000]
+    
+    # Load and clip relief contours
+    print("Loading and clipping relief contours...")
+    relief = gpd.read_file(relief_path).to_crs("EPSG:2154").clip(mask)
+    relief['geometry'] = relief.geometry.simplify(500)
+    
+    configs = [
+        {
+            'mode': 'daily',
+            'gev_path': 'data/gev/gev/observed/quotidien/hydro/gev_param_best_model.parquet',
+            'maxima_dir': 'data/statisticals/statisticals/observed/quotidien',
+            'postes_path': 'data/metadonnees/metadonnees/observed/postes_quotidien.csv',
+            'max_col': 'max_mm_j',
+            'min_years': 50,
+            'year_range': range(1960, 2023),
+            'suffix': '_daily'
+        },
+        {
+            'mode': 'hourly',
+            'gev_path': 'data/gev/gev/observed/horaire/hydro/gev_param_best_model.parquet',
+            'maxima_dir': 'data/statisticals/statisticals/observed/horaire',
+            'postes_path': 'data/metadonnees/metadonnees/observed/postes_horaire.csv',
+            'max_col': 'max_mm_h',
+            'min_years': 25,
+            'year_range': range(1990, 2023),
+            'suffix': '_hourly'
+        }
+    ]
+    
+    for config in configs:
+        run_comparison(config, depts, coast, relief, output_dir)
+        
+    # Also save the original filenames as daily to maintain compatibility if anything points to them directly
+    print("Saving compatibility symlinks or copies of daily figures...")
+    import shutil
+    shutil.copyfile(os.path.join(output_dir, "comparison_maxima_gev_maps_daily.png"), os.path.join(output_dir, "comparison_maxima_gev_maps.png"))
+    shutil.copyfile(os.path.join(output_dir, "comparison_maxima_gev_maps_daily.pdf"), os.path.join(output_dir, "comparison_maxima_gev_maps.pdf"))
+    shutil.copyfile(os.path.join(output_dir, "comparison_maxima_gev_scatter_daily.png"), os.path.join(output_dir, "comparison_maxima_gev_scatter.png"))
+    shutil.copyfile(os.path.join(output_dir, "comparison_maxima_gev_scatter_daily.pdf"), os.path.join(output_dir, "comparison_maxima_gev_scatter.pdf"))
+    
+    print("\nAll tasks completed successfully!")
 
 if __name__ == "__main__":
     main()

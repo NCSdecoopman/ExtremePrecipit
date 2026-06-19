@@ -29,7 +29,7 @@ As a sensitivity check, we computed relative trends in $RL_2$ and $RL_5$ using t
 
 We note that significance is assessed from the $RL_{10}$ trend uncertainty (10% level); the same 704 daily and 193 hourly stations are therefore flagged across return periods. This is conservative for $RL_2$ and $RL_5$, which are less noisy than $RL_{10}$ at the hourly scale. Together with the annual-maxima vs.\ $RL_2$ check in our response to Reviewer #1 ($r=0.88$ for relative trends across 1,558 daily stations), these results indicate that the trend maps (Figures 6 and 7) are not driven by GEV fitting artefacts or by the choice of a high return period alone.
 
-We retain $RL_{10}$ as the primary metric because it is a standard hydrological design threshold and because our daily (63-year) and hourly (33-year) records are sufficient for its estimation; $RL_2$ and $RL_5$ confirm the robustness of the detected spatial patterns. We present the lower-return-period maps here for the reviewer's assessment rather than as an additional manuscript appendix, to keep the main text focused.
+We retain $RL_{10}$ as the primary metric because it is a standard hydrological design threshold and because our daily (63-year) and hourly (33-year) records are sufficient for its estimation. In addition, using the same return period at both daily and hourly scales enables a direct and consistent comparison of the extreme trend characteristics between the two time resolutions. The results for $RL_2$ and $RL_5$ confirm the robustness of the detected spatial patterns. We present the lower-return-period maps here for the reviewer's assessment rather than as an additional manuscript appendix, to keep the main text focused.
 
 \clearpage
 
@@ -102,8 +102,8 @@ This keeps the station network visible on hourly maps (where only about one thir
 
 **Manuscript modifications:**
 
-- In `Figures 5, 6 and 7` (trend maps), we have changed the visualization according to the table above.
-- The caption of Figure 5 has been updated. Original caption: _"Relative GEV trends over 1959–2022 in the 10-year return level of daily precipitation [...]."_ Updated caption adds the display conventions (open circles for non-significant stations, filled grey for significant near-zero trends, coloured markers for significant trends, uniform size; non-significant AROME grid cells not displayed).
+- In `Figures 6 and 7` (trend maps), we have changed the visualization according to the table above.
+- The caption of Figures 6 has been updated. Original caption: _"Relative GEV trends over 1959–2022 in the 10-year return level of daily precipitation [...]."_ Updated caption adds the display conventions (open circles for non-significant stations, filled grey for significant near-zero trends, coloured markers for significant trends, uniform size; non-significant AROME grid cells not displayed).
 
 - The same changes have been applied to the captions of Figures 6 and 7 (hourly trends) and the monthly trend maps (Appendix C, Figure C1).
 
@@ -122,11 +122,11 @@ The Figure 4 caption has been updated for uniform marker size and zero-bias disp
 
 * **It can be confusing in the text with GEV models and Arome model, could consider naming one different.** 
 
-  _Response_: We agree. In the revised text, we refer to CNRM-AROME as the "climate model/simulation" and to the GEV models as "statistical models/distributions" to avoid any confusion.
+  _Response:_ We agree. In the revised text, we refer to CNRM-AROME as the "climate model", "simulation(s)", or "CP-RCM" to avoid any confusion, and have specifically replaced "AROME model" with "AROME simulations" in the results sections. We refer to the GEV models as "statistical models" or "statistical GEV distributions".
 
   **Manuscript modifications:**
   Throughout the manuscript, we have revised the terminology to prevent confusion between the climate model and the extreme value models. Specifically:
-  - We refer to CNRM-AROME as the "CP-RCM", "climate model", or "simulation".
+  - We refer to CNRM-AROME as the "CP-RCM", "climate model", or "simulation(s)", and have replaced "AROME model" with "AROME simulations" in the results sections.
   - We refer to GEV models ($M_0$ to $M_3^*$) as "statistical models" or "statistical GEV distributions".
 
 * **Too little font in Figure 8**
