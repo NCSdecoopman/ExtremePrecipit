@@ -1,0 +1,416 @@
+\begin{thebibliography}{56}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\urlprefix}{}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{https://doi.org/\discretionary{}{}{}#1}\else
+  \providecommand{\doi}{https://doi.org/\discretionary{}{}{}\begingroup
+  \urlstyle{rm}\Url}\fi
+
+\bibitem[{Ban et~al.(2021)Ban, Caillaud, Coppola, Pichelli, Sobolowski,
+  Adinolfi, Ahrens, Alias, Anders, Bastin, Belu{\v{s}}i{\'{c}}, Berthou,
+  Brisson, Cardoso, Chan, Christensen, Fern{\'a}ndez, Fita, Frisius,
+  Ga{\v{s}}parac, Giorgi, Goergen, Haugen, Hodnebrog, Kartsios, Katragkou,
+  Kendon, Keuler, Lavin-Gullon, Lenderink, Leutwyler, Lorenz, Maraun,
+  Mercogliano, Milovac, Panitz, Raffa, Remedio, Sch{\"a}r, Soares, Srnec,
+  Steensen, Stocchi, T{\"o}lle, Truhetz, Vergara-Temprado, de~Vries,
+  Warrach-Sagi, Wulfmeyer, and Zander}]{ban-etal-2021}
+Ban, N., Caillaud, C., Coppola, E., Pichelli, E., Sobolowski, S., Adinolfi, M.,
+  Ahrens, B., Alias, A., Anders, I., Bastin, S., Belu{\v{s}}i{\'{c}}, D.,
+  Berthou, S., Brisson, E., Cardoso, R.~M., Chan, S.~C., Christensen, O.~B.,
+  Fern{\'a}ndez, J., Fita, L., Frisius, T., Ga{\v{s}}parac, G., Giorgi, F.,
+  Goergen, K., Haugen, J.~E., Hodnebrog, {\O}., Kartsios, S., Katragkou, E.,
+  Kendon, E.~J., Keuler, K., Lavin-Gullon, A., Lenderink, G., Leutwyler, D.,
+  Lorenz, T., Maraun, D., Mercogliano, P., Milovac, J., Panitz, H.-J., Raffa,
+  M., Remedio, A.~R., Sch{\"a}r, C., Soares, P. M.~M., Srnec, L., Steensen,
+  B.~M., Stocchi, P., T{\"o}lle, M.~H., Truhetz, H., Vergara-Temprado, J.,
+  de~Vries, H., Warrach-Sagi, K., Wulfmeyer, V., and Zander, M.~J.: The first
+  multi-model ensemble of regional climate simulations at kilometer-scale
+  resolution, part I: evaluation of precipitation, Climate Dynamics, 57,
+  275--302, \doi{10.1007/s00382-021-05708-w}, 2021.
+
+\bibitem[{Berghald et~al.(2025)Berghald, Blanchet, Blanc, and
+  Penot}]{Berghald2025}
+Berghald, S., Blanchet, J., Blanc, A., and Penot, D.: Climatology and trends of
+  observed daily and hourly extreme precipitation in the French Alps, EGUsphere
+  [preprint], \doi{10.5194/egusphere-2025-3073}, preprint; Discussion started 3
+  July 2025, 2025.
+
+\bibitem[{Berthou et~al.(2020)Berthou, Kendon, Chan, Ban, Leutwyler, Sch{\"a}r,
+  and Fosser}]{berthou-etal-2020}
+Berthou, S., Kendon, E.~J., Chan, S.~C., Ban, N., Leutwyler, D., Sch{\"a}r, C.,
+  and Fosser, G.: Pan-European climate at convection-permitting scale: a model
+  intercomparison study, Climate Dynamics, 55, 35--59,
+  \doi{10.1007/s00382-018-4114-6}, 2020.
+
+\bibitem[{Blanc et~al.(2024)Blanc, Misset, Mainieri, and Llamas}]{Blanc2024}
+Blanc, A., Misset, C., Mainieri, R., and Llamas, B.: {R{\'e}tro-analyse de la
+  crue du torrent des Etan{\c{c}}ons du 21 juin 2024}, Tech. rep., RTM de
+  l'Is{\`e}re et D{\'e}partement Risques Naturels -- P{\^o}le RTM, 2024.
+
+\bibitem[{Blanchet and Creutin(2022)}]{blanchet-creutin-2022}
+Blanchet, J. and Creutin, J.-D.: Instrumental agreement and retrospective
+  analysis of trends in precipitation extremes in the French Mediterranean
+  Region, Environmental Research Letters, 17, 074\,011,
+  \doi{10.1088/1748-9326/ac7734}, 2022.
+
+\bibitem[{Blanchet et~al.(2018)Blanchet, Molini{\'e}, and
+  Touati}]{Blanchet2018}
+Blanchet, J., Molini{\'e}, G., and Touati, J.: Spatial analysis of trend in
+  extreme daily rainfall in southern France, Climate Dynamics, 51, 799--812,
+  \doi{10.1007/s00382-016-3122-7}, 2018.
+
+\bibitem[{Blanchet et~al.(2021)Blanchet, Blanc, and
+  Creutin}]{blanchet2021explaining}
+Blanchet, J., Blanc, A., and Creutin, J.-D.: Explaining recent trends in
+  extreme precipitation in the Southwestern Alps by changes in atmospheric
+  influences, Weather and Climate Extremes, 33, 100\,356,
+  \doi{10.1016/j.wace.2021.100356}, 2021.
+
+\bibitem[{Brousseau et~al.(2016)Brousseau, Seity, Ricard, and
+  L{\'e}ger}]{brousseau-etal-2016}
+Brousseau, P., Seity, Y., Ricard, D., and L{\'e}ger, J.: Improvement of the
+  forecast of convective activity from the AROME-France system, Quarterly
+  Journal of the Royal Meteorological Society, 142, 2231--2243,
+  \doi{https://doi.org/10.1002/qj.2822}, 2016.
+
+\bibitem[{Caillaud et~al.(2021)Caillaud, Somot, Alias, and
+  et~al.}]{Caillaud2021}
+Caillaud, C., Somot, S., Alias, A., and et~al.: Modelling Mediterranean heavy
+  precipitation events at climate scale: an object-oriented evaluation of the
+  CNRM-AROME convection-permitting regional climate model, Climate Dynamics,
+  56, 1717--1752, \doi{10.1007/s00382-020-05558-y}, 2021.
+
+\bibitem[{Caillaud et~al.(2026)Caillaud, Harader-Coustau, Alias, Casnin,
+  Chev{\'e}, Corneille, G{\'e}vaudan, Lemonsu, Le, Li, Monteiro, Machado,
+  Nabat, Noirot, Quenum, Somot, and Bador}]{caillaud-etal-2026}
+Caillaud, C., Harader-Coustau, E., Alias, A., Casnin, A., Chev{\'e}, M.,
+  Corneille, L., G{\'e}vaudan, M., Lemonsu, A., Le, H.-H., Li, S., Monteiro,
+  D., Machado, T., Nabat, P., Noirot, L., Quenum, G. M. L.~D., Somot, S., and
+  Bador, M.: Technical note : configuration and first evaluation of the
+  kilometre-scale regional climate model CNRM-AROME46t1,
+  \doi{10.5281/zenodo.18496665}, 2026.
+
+\bibitem[{Clapeyron(1834)}]{clapeyron1834}
+Clapeyron, {\'E}.: M{\'e}moire sur la puissance motrice de la chaleur, Journal
+  de l'{\'E}cole polytechnique, 23, 153--191,
+  \urlprefix\url{https://gallica.bnf.fr/ark:/12148/bpt6k4336792/f179.image},
+  disponible en ligne, p.~173, 1834.
+
+\bibitem[{Coles(2001)}]{coles2001introduction}
+Coles, S.: An Introduction to Statistical Modeling of Extreme Values, Springer
+  Series in Statistics, Springer, London, 2001.
+
+\bibitem[{Correa-S{\'a}nchez et~al.(2025)Correa-S{\'a}nchez, Dallan, Marra,
+  Fosser, and Borga}]{correa2025}
+Correa-S{\'a}nchez, N., Dallan, E., Marra, F., Fosser, G., and Borga, M.:
+  Orographic control on bias and uncertainty in extreme sub-daily precipitation
+  simulations from a convection-permitting ensemble, Journal of Hydrology, 659,
+  133\,324, \doi{10.1016/j.jhydrol.2025.133324}, 2025.
+
+\bibitem[{Cort{\'e}s-Hern{\'a}ndez et~al.(2024)Cort{\'e}s-Hern{\'a}ndez,
+  Caillaud, Bellon, Brisson, Alias, and Lucas-Picher}]{Cortes-Hernandez2024}
+Cort{\'e}s-Hern{\'a}ndez, V.~E., Caillaud, C., Bellon, G., Brisson, E., Alias,
+  A., and Lucas-Picher, P.: Evaluation of the convection permitting regional
+  climate model CNRM-AROME on the orographically complex island of Corsica,
+  Climate Dynamics, 62, 4673--4696, \doi{10.1007/s00382-024-07232-z}, 2024.
+
+\bibitem[{Da~Silva and Haerter(2025)}]{DaSilva2025}
+Da~Silva, N.~A. and Haerter, J.~O.: Super-Clausius--Clapeyron scaling of
+  extreme precipitation explained by shift from stratiform to convective rain
+  type, Nature Geoscience, 18, 382--388, \doi{10.1038/s41561-025-01686-4},
+  2025.
+
+\bibitem[{Dash and Maity(2023)}]{Dash2023}
+Dash, S. and Maity, R.: Unfolding unique features of precipitation-temperature
+  scaling across India, Atmospheric Research, 284, 106\,601,
+  \doi{https://doi.org/10.1016/j.atmosres.2022.106601}, 2023.
+
+\bibitem[{Decoopman(2026)}]{decoopman_zenodo_2026}
+Decoopman, N.: {ExtremePrecipit: version used for HESS submission}, Zenodo
+  [code], \doi{10.5281/zenodo.18788767}, 2026.
+
+\bibitem[{Dierickx et~al.(2025)Dierickx, Dewettinck, Van~Schaeybroeck, De~Cruz,
+  Caluwaerts, Termonia, and Van~de Vyver}]{dierickx-etal-2025}
+Dierickx, A., Dewettinck, W., Van~Schaeybroeck, B., De~Cruz, L., Caluwaerts,
+  S., Termonia, P., and Van~de Vyver, H.: EURO-SUPREME: sub-daily precipitation
+  extremes in the EURO-CORDEX ensemble, Earth System Science Data, 17,
+  6747--6762, \doi{10.5194/essd-17-6747-2025}, 2025.
+
+\bibitem[{Donat et~al.(2016)Donat, Lowry, Alexander, O'Gorman, and
+  Maher}]{Donat2016}
+Donat, M.~G., Lowry, A.~L., Alexander, L.~V., O'Gorman, P.~A., and Maher, N.:
+  More extreme precipitation in the world's dry and wet regions, Nature Climate
+  Change, 6, 508--513, \doi{10.1038/nclimate2941}, 2016.
+
+\bibitem[{Dura et~al.(2024)Dura, Evin, Favre, and Penot}]{hess-28-2579-2024}
+Dura, V., Evin, G., Favre, A.-C., and Penot, D.: Spatial variability in the
+  seasonal precipitation lapse rates in complex topographical regions --
+  application in France, Hydrology and Earth System Sciences, 28, 2579--2601,
+  \doi{10.5194/hess-28-2579-2024}, 2024.
+
+\bibitem[{Fosser et~al.(2024)Fosser, Gaetani, Kendon, Adinolfi, Ban,
+  Belu{\v{s}}i{\'c}, Caillaud, Careto, Coppola, Demory, de~Vries, Dobler,
+  Feldmann, Goergen, Lenderink, Pichelli, Sch{\"a}r, Soares, Somot, and
+  T{\"o}lle}]{Fosser2024}
+Fosser, G., Gaetani, M., Kendon, E.~J., Adinolfi, M., Ban, N.,
+  Belu{\v{s}}i{\'c}, D., Caillaud, C., Careto, J. A.~M., Coppola, E., Demory,
+  M.-E., de~Vries, H., Dobler, A., Feldmann, H., Goergen, K., Lenderink, G.,
+  Pichelli, E., Sch{\"a}r, C., Soares, P. M.~M., Somot, S., and T{\"o}lle,
+  M.~H.: Convection-permitting climate models offer more certain extreme
+  rainfall projections, npj Climate and Atmospheric Science, 7, 51,
+  \doi{10.1038/s41612-024-00600-w}, 2024.
+
+\bibitem[{Fumi{\`e}re et~al.(2020)Fumi{\`e}re, D{\'e}qu{\'e}, Nuissier, Somot,
+  Alias, Caillaud, Laurantin, and Seity}]{Fumiere2020}
+Fumi{\`e}re, Q., D{\'e}qu{\'e}, M., Nuissier, O., Somot, S., Alias, A.,
+  Caillaud, C., Laurantin, O., and Seity, Y.: Extreme rainfall in Mediterranean
+  France during the fall: added value of the CNRM-AROME Convection-Permitting
+  Regional Climate Model, Climate Dynamics, 55, 77--91,
+  \doi{10.1007/s00382-019-04898-8}, 2020.
+
+\bibitem[{Gibelin et~al.(2014)Gibelin, Dubuisson, Corre, Nathalie, Jourdain,
+  Laval, Piquemal, Mestre, Denneti{\`e}re, Desmidt, and
+  Tamburini}]{gibelin-etal-2014}
+Gibelin, A.-L., Dubuisson, B., Corre, L., Nathalie, D., Jourdain, S., Laval,
+  L., Piquemal, J.-M., Mestre, O., Denneti{\`e}re, D., Desmidt, S., and
+  Tamburini, A.: Evolution de la temp{\'e}rature en France depuis les
+  ann{\'e}es 1950 : Constitution d'un nouveau jeu de s{\'e}ries
+  homog{\'e}n{\'e}is{\'e}es de r{\'e}f{\'e}rence, La M{\'e}t{\'e}orologie, 8,
+  45, \doi{10.4267/2042/54336}, 2014.
+
+\bibitem[{Haruna et~al.(2024)Haruna, Blanchet, and Favre}]{haruna-etal-2024}
+Haruna, A., Blanchet, J., and Favre, A.-C.: Estimation of
+  Intensity-Duration-Area-Frequency Relationships Based on the Full Range of
+  Non-Zero Precipitation From Radar-Reanalysis Data, Water Resources Research,
+  60, e2023WR035\,902, \doi{https://doi.org/10.1029/2023WR035902},
+  e2023WR035902 2023WR035902, 2024.
+
+\bibitem[{Haruna et~al.(2025)Haruna, Blanchet, and Favre}]{haruna-etal-2025}
+Haruna, A., Blanchet, J., and Favre, A.-C.: Joint estimation of trend in bulk
+  and extreme daily precipitation in Switzerland, Weather and Climate Extremes,
+  48, 100\,769, \doi{https://doi.org/10.1016/j.wace.2025.100769}, 2025.
+
+\bibitem[{Hersbach et~al.(2020)Hersbach, Bell, Berrisford, Hirahara,
+  Hor{\'a}nyi, Mu{\~n}oz-Sabater, Nicolas, Peubey, Radu, Schepers, Simmons,
+  Soci, Abdalla, Abellan, Balsamo, Bechtold, Biavati, Bidlot, Bonavita,
+  De~Chiara, Dahlgren, Dee, Diamantakis, Dragani, Flemming, Forbes, Fuentes,
+  Geer, Haimberger, Healy, Hogan, H{\'o}lm, Janiskov{\'a}, Keeley, Laloyaux,
+  Lopez, Lupu, Radnoti, Rosnay, Rozum, Vamborg, Villaume, and
+  Th{\'e}paut}]{hersbach2020era5}
+Hersbach, H., Bell, B., Berrisford, P., Hirahara, S., Hor{\'a}nyi, A.,
+  Mu{\~n}oz-Sabater, J., Nicolas, J., Peubey, C., Radu, R., Schepers, D.,
+  Simmons, A., Soci, C., Abdalla, S., Abellan, X., Balsamo, G., Bechtold, P.,
+  Biavati, G., Bidlot, J., Bonavita, M., De~Chiara, G., Dahlgren, P., Dee, D.,
+  Diamantakis, M., Dragani, R., Flemming, J., Forbes, R., Fuentes, M., Geer,
+  A., Haimberger, L., Healy, S., Hogan, R.~J., H{\'o}lm, E., Janiskov{\'a}, M.,
+  Keeley, S., Laloyaux, P., Lopez, P., Lupu, C., Radnoti, G., Rosnay, P.,
+  Rozum, I., Vamborg, F., Villaume, S., and Th{\'e}paut, J.-N.: The ERA5 global
+  reanalysis, Quarterly Journal of the Royal Meteorological Society, 146,
+  1999--2049, \doi{10.1002/qj.3803}, 2020.
+
+\bibitem[{{IPCC}(2021)}]{IPCC2021}
+{IPCC}: Climate Change 2021: The Physical Science Basis, Cambridge University
+  Press, Cambridge, UK, \doi{10.1017/9781009157896}, contribution of Working
+  Group I to the Sixth Assessment Report of the Intergovernmental Panel on
+  Climate Change, 2021.
+
+\bibitem[{{IPCC}(2022)}]{IPCC_2022_WGIII}
+{IPCC}: Climate Change 2022: Mitigation of Climate Change. Contribution of
+  Working Group III to the Sixth Assessment Report of the Intergovernmental
+  Panel on Climate Change, Cambridge University Press, Cambridge, UK and New
+  York, NY, USA, \doi{10.1017/9781009157926}, 2022.
+
+\bibitem[{Lin et~al.(2022)Lin, Qian, Bechtold, Grell, Zhang, Zhu, Freitas,
+  Barnes, and Han}]{Lin08082022}
+Lin, J., Qian, T., Bechtold, P., Grell, G., Zhang, G.~J., Zhu, P., Freitas,
+  S.~R., Barnes, H., and Han, J.: Atmospheric Convection, Atmosphere-Ocean, 60,
+  422--476, \doi{10.1080/07055900.2022.2082915}, 2022.
+
+\bibitem[{Lompi et~al.(2025)Lompi, Marra, Deidda, Caporali, Borga, and
+  Dallan}]{lompi2025}
+Lompi, M., Marra, F., Deidda, R., Caporali, E., Borga, M., and Dallan, E.:
+  Non-stationary frequency analysis of long-term convection permitting
+  simulations reveals sub-daily extreme precipitation changes in
+  central-southern Europe, Advances in Water Resources, 205, 105\,071,
+  \doi{10.1016/j.advwatres.2025.105071}, 2025.
+
+\bibitem[{Lucas-Picher et~al.(2024{\natexlab{a}})Lucas-Picher, Brisson,
+  Caillaud, Alias, Nabat, Lemonsu, Poncet, Cort{\'e}s~Hernandez, Michau, Doury,
+  Monteiro, and Somot}]{lucaspicher-etal-2024}
+Lucas-Picher, P., Brisson, E., Caillaud, C., Alias, A., Nabat, P., Lemonsu, A.,
+  Poncet, N., Cort{\'e}s~Hernandez, V.~E., Michau, Y., Doury, A., Monteiro, D.,
+  and Somot, S.: Evaluation of the convection-permitting regional climate model
+  CNRM-AROME41t1 over Northwestern Europe, Climate Dynamics, 62, 4587--4615,
+  \doi{10.1007/s00382-022-06637-y}, 2024{\natexlab{a}}.
+
+\bibitem[{Lucas-Picher et~al.(2024{\natexlab{b}})Lucas-Picher, Brisson,
+  Caillaud et~al.}]{LucasPicher2024}
+Lucas-Picher, P., Brisson, E., Caillaud, C., et~al.: Evaluation of the
+  convection-permitting regional climate model CNRM-AROME41t1 over Northwestern
+  Europe, Climate Dynamics, 62, 4587--4615, \doi{10.1007/s00382-022-06637-y},
+  2024{\natexlab{b}}.
+
+\bibitem[{Marra et~al.(2020)Marra, Borga, and Morin}]{marra2020}
+Marra, F., Borga, M., and Morin, E.: A Unified Framework for Extreme Subdaily
+  Precipitation Frequency Analyses Based on Ordinary Events, Geophysical
+  Research Letters, 47, e2020GL090\,209, \doi{10.1029/2020GL090209}, 2020.
+
+\bibitem[{Masson(2000)}]{masson-2000}
+Masson, V.: A Physically-Based Scheme For The Urban Energy Budget In
+  Atmospheric Models, Boundary-Layer Meteorology, 94, 357--397,
+  \doi{10.1023/A:1002463829265}, 2000.
+
+\bibitem[{{M{\'e}t{\'e}o-France}(2024{\natexlab{a}})}]{MeteoFrance2024_episodesArdeches}
+{M{\'e}t{\'e}o-France}: {Bilan climatique de l'ann{\'e}e 2024 : France
+  hexagonale et Corse}, {Rapport}, {M{\'e}t{\'e}o-France},
+  \urlprefix\url{https://meteofrance.fr/sites/meteofrance.fr/files/files/editorial/Bilan_annee_2024_France_hexagonale-et-Corse.pdf},
+  2024{\natexlab{a}}.
+
+\bibitem[{{M{\'e}t{\'e}o-France}(2024{\natexlab{b}})}]{meteofrance2024}
+{M{\'e}t{\'e}o-France}: Donn{\'e}es d'observations m{\'e}t{\'e}orologiques
+  issues des stations synoptiques et climatologiques, Open Data on
+  data.gouv.fr,
+  \urlprefix\url{https://www.data.gouv.fr/fr/datasets/donnees-dobservations-meteorologiques-issues-des-stations-synoptiques-et-climatologiques/},
+  consult{\'e} en juillet 2025, 2024{\natexlab{b}}.
+
+\bibitem[{{M{\'e}t{\'e}o-France}(2025{\natexlab{a}})}]{MeteoFrance2025}
+{M{\'e}t{\'e}o-France}: {Retour sur les violents orages dans le sud du pays},
+  \url{https://meteofrance.com/actualites-et-dossiers/actualites/retour-sur-les-violents-orages-dans-le-sud-du-pays},
+  2025{\natexlab{a}}.
+
+\bibitem[{{M{\'e}t{\'e}o-France}(2025{\natexlab{b}})}]{MeteoFrance_COMEPHORE_dataGouv}
+{M{\'e}t{\'e}o-France}: R{\'e}analyses {COMEPHORE},
+  \urlprefix\url{https://www.data.gouv.fr/fr/datasets/reanalyses-comephore/},
+  cOMEPHORE (COmbinaison en vue de la Meilleure Estimation de la
+  Pr{\'e}cipitation HOraiRE) : r{\'e}analyse horaire des pr{\'e}cipitations par
+  fusion radars--pluviom{\`e}tres sur grille 1~km $\times$ 1~km couvrant la
+  France m{\'e}tropolitaine, disponible depuis 1997, 2025{\natexlab{b}}.
+
+\bibitem[{Molnar et~al.(2015)}]{molnar2015relation}
+Molnar, P. et~al.: Relation of intense rainstorm properties to temperature,
+  Hydrology and Earth System Sciences, 19, 1753--1766, 2015.
+
+\bibitem[{Nabat et~al.(2020)Nabat, Somot, Cassou, Mallet, Michou, Bouniol,
+  Decharme, Drug\'e, Roehrig, and Saint-Martin}]{nabat-etal-2020}
+Nabat, P., Somot, S., Cassou, C., Mallet, M., Michou, M., Bouniol, D.,
+  Decharme, B., Drug\'e, T., Roehrig, R., and Saint-Martin, D.: Modulation of
+  radiative aerosols effects by atmospheric circulation over the
+  Euro-Mediterranean region, Atmospheric Chemistry and Physics, 20, 8315--8349,
+  \doi{10.5194/acp-20-8315-2020}, 2020.
+
+\bibitem[{O'Gorman(2015)}]{ogorman2015contrasting}
+O'Gorman, P.~A.: Contrasting responses of mean and extreme precipitation to
+  climate change, Current Climate Change Reports, 1, 79--92,
+  \doi{10.1038/nature13625}, 2015.
+
+\bibitem[{O'Gorman and Muller(2010)}]{ogorman2010}
+O'Gorman, P.~A. and Muller, C.~J.: How closely do changes in surface and column
+  water vapor follow Clausius-Clapeyron scaling in climate change simulations?,
+  Environmental Research Letters, 5, 025\,207,
+  \doi{10.1088/1748-9326/5/2/025207}, 2010.
+
+\bibitem[{Pichelli et~al.(2021)Pichelli, Coppola, Sobolowski, Ban, Giorgi,
+  Stocchi, Alias, Belu{\v{s}}i{\'{c}}, Berthou, Caillaud, Cardoso, Chan,
+  Christensen, Dobler, de~Vries, Goergen, Kendon, Keuler, Lenderink, Lorenz,
+  Mishra, Panitz, Sch{\"a}r, Soares, Truhetz, and
+  Vergara-Temprado}]{pichelli-etal-2021}
+Pichelli, E., Coppola, E., Sobolowski, S., Ban, N., Giorgi, F., Stocchi, P.,
+  Alias, A., Belu{\v{s}}i{\'{c}}, D., Berthou, S., Caillaud, C., Cardoso,
+  R.~M., Chan, S., Christensen, O.~B., Dobler, A., de~Vries, H., Goergen, K.,
+  Kendon, E.~J., Keuler, K., Lenderink, G., Lorenz, T., Mishra, A.~N., Panitz,
+  H.-J., Sch{\"a}r, C., Soares, P. M.~M., Truhetz, H., and Vergara-Temprado,
+  J.: The first multi-model ensemble of regional climate simulations at
+  kilometer-scale resolution part 2: historical and future simulations of
+  precipitation, Climate Dynamics, 56, 3581--3602,
+  \doi{10.1007/s00382-021-05657-4}, 2021.
+
+\bibitem[{Poncet et~al.(2024)Poncet, Lucas-Picher, Tramblay, Thirel, Vergara,
+  Gourley, and Alias}]{poncet2024convection}
+Poncet, N., Lucas-Picher, P., Tramblay, Y., Thirel, G., Vergara, H., Gourley,
+  J., and Alias, A.: Does a convection-permitting regional climate model bring
+  new perspectives on the projection of Mediterranean floods?, Natural Hazards
+  and Earth System Sciences, 24, 1163--1183, \doi{10.5194/nhess-24-1163-2024},
+  2024.
+
+\bibitem[{Ribes et~al.(2019)Ribes, Thao, Vautard, Dubuisson, Somot, Colin,
+  Planton, and Soubeyroux}]{Ribes2019}
+Ribes, A., Thao, S., Vautard, R., Dubuisson, B., Somot, S., Colin, J., Planton,
+  S., and Soubeyroux, J.~M.: Observed increase in extreme daily rainfall in the
+  French Mediterranean, Climate Dynamics, 52, 1095--1114,
+  \doi{10.1007/s00382-018-4179-2}, 2019.
+
+\bibitem[{Sch{\"a}r et~al.(2020)Sch{\"a}r, Fuhrer, Arteaga, Ban, Charpilloz,
+  Girolamo, Hentgen, Hoefler, Lapillonne, Leutwyler, Osterried, Panosetti,
+  R{\"u}dis{\"u}hli, Schlemmer, Schulthess, Sprenger, Ubbiali, and
+  Wernli}]{KilometerScaleClimateModelsProspectsandChallenges}
+Sch{\"a}r, C., Fuhrer, O., Arteaga, A., Ban, N., Charpilloz, C., Girolamo,
+  S.~D., Hentgen, L., Hoefler, T., Lapillonne, X., Leutwyler, D., Osterried,
+  K., Panosetti, D., R{\"u}dis{\"u}hli, S., Schlemmer, L., Schulthess, T.~C.,
+  Sprenger, M., Ubbiali, S., and Wernli, H.: Kilometer-Scale Climate Models:
+  Prospects and Challenges, Bulletin of the American Meteorological Society,
+  101, E567 -- E587, \doi{10.1175/BAMS-D-18-0167.1}, 2020.
+
+\bibitem[{Schr{\"o}er and Kirchengast(2018)}]{Schroeer2018}
+Schr{\"o}er, K. and Kirchengast, G.: Sensitivity of extreme precipitation to
+  temperature: the variability of scaling factors from a regional to local
+  perspective, Climate Dynamics, 50, 3981--3994,
+  \doi{10.1007/s00382-017-3857-9}, 2018.
+
+\bibitem[{Seity et~al.(2011)Seity, Brousseau, Malardel, Hello, B{\'e}nard,
+  Bouttier, Lac, and Masson}]{seity-etal-2011}
+Seity, Y., Brousseau, P., Malardel, S., Hello, G., B{\'e}nard, P., Bouttier,
+  F., Lac, C., and Masson, V.: The AROME-France Convective-Scale Operational
+  Model, Monthly Weather Review, 139, 976 -- 991, \doi{10.1175/2010MWR3425.1},
+  2011.
+
+\bibitem[{Soubeyroux et~al.(2015)Soubeyroux, Neppel, Veysseire, Tramblay,
+  Carreau, and Gouget}]{Soubeyroux01022015}
+Soubeyroux, J.-M., Neppel, L., Veysseire, J.-M., Tramblay, Y., Carreau, J., and
+  Gouget, V.: Evolution des pr{\'e}cipitations extr{\^e}mes en France en
+  contexte de changement climatique, La Houille Blanche, 101, 27--33,
+  \doi{10.1051/lhb/2015004}, 2015.
+
+\bibitem[{Soubeyroux et~al.(2025)Soubeyroux, Bernus, Dubuisson, Drouin, Madec,
+  Rousset, Samaco{\"i}ts, Schneider, Tardy, Tocquer, Corre, Morin, Ribes,
+  Somot, Chapnik, and Regimbeau}]{soubeyroux:hal-04991790}
+Soubeyroux, J.-M., Bernus, S., Dubuisson, B., Drouin, A., Madec, T., Rousset,
+  F., Samaco{\"i}ts, R., Schneider, M., Tardy, M., Tocquer, F., Corre, L.,
+  Morin, S., Ribes, A., Somot, S., Chapnik, B., and Regimbeau, M.: {{\`A} quel
+  climat s'adapter en France selon la TRACC ? partie 2}, Tech. rep.,
+  {Meteo-France}, \urlprefix\url{https://hal.science/hal-04991790}, 2025.
+
+\bibitem[{Steensen et~al.(2025)Steensen, Myhre, Hodnebrog, and
+  Alterskj{\ae}r}]{steensen-etal-2025}
+Steensen, B.~M., Myhre, G., Hodnebrog, {\O}., and Alterskj{\ae}r, K.: How
+  climate models reproduce the observed increase in extreme precipitation over
+  Europe, PLOS Climate, 4, 1--14, \doi{10.1371/journal.pclm.0000442}, 2025.
+
+\bibitem[{Trenberth et~al.(2003)Trenberth, Dai, Rasmussen, and
+  Parsons}]{trenberth2003}
+Trenberth, K.~E., Dai, A., Rasmussen, R.~M., and Parsons, D.~B.: The Changing
+  Character of Precipitation, Bulletin of the American Meteorological Society,
+  84, 1205--1217, \doi{10.1175/BAMS-84-9-1205}, 2003.
+
+\bibitem[{Westra et~al.(2013)Westra, Alexander, and Zwiers}]{westra2013}
+Westra, S., Alexander, L.~V., and Zwiers, F.~W.: Global Increasing Trends in
+  Annual Maximum Daily Precipitation, Journal of Climate, 26, 3904--3918,
+  \doi{10.1175/JCLI-D-12-00502.1}, 2013.
+
+\bibitem[{{World Meteorological Organization (WMO)}(2025)}]{wmo2024}
+{World Meteorological Organization (WMO)}: State of the Global Climate 2024,
+  \url{https://public.wmo.int/en/our-mandate/climate/wmo-statement-state-of-global-climate},
+  consult{\'e} le 15 octobre 2025, 2025.
+
+\bibitem[{Zeder and Fischer(2020)}]{Zeder2020}
+Zeder, J. and Fischer, E.~M.: Observed extreme precipitation trends and scaling
+  in Central Europe, Weather and Climate Extremes, 29, 100\,266,
+  \doi{https://doi.org/10.1016/j.wace.2020.100266}, 2020.
+
+\bibitem[{Zeder and Fischer(2024)}]{Zeder2024}
+Zeder, J. and Fischer, E.~M.: Decadal to centennial extreme precipitation
+  disaster gaps --- Long-term variability and implications for extreme value
+  modelling, Weather and Climate Extremes, 43, 100\,636,
+  \doi{https://doi.org/10.1016/j.wace.2023.100636}, 2024.
+
+\end{thebibliography}
