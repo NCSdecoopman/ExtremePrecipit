@@ -114,74 +114,74 @@ def assemble(arome: Path, stations: Path, legend: Path, output: Path) -> str:
 
 print("Starting fig7 assembly...")
 trend_pluie_jan = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jan/mod_signif_norast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jan/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jan/mod_signif_rast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jan/obs_signif_rast.svg",
 "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_jan.svg",
 )
 trend_pluie_fev = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/fev/mod_signif_norast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/fev/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/fev/mod_signif_rast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/fev/obs_signif_rast.svg",
 "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_fev.svg",
 )
 trend_pluie_mar = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mar/mod_signif_norast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mar/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mar/mod_signif_rast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mar/obs_signif_rast.svg",
 "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_mar.svg",
 )
 trend_pluie_avr = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/avr/mod_signif_norast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/avr/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/avr/mod_signif_rast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/avr/obs_signif_rast.svg",
 "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_avr.svg",
 )
 trend_pluie_mai = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mai/mod_signif_norast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mai/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mai/mod_signif_rast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mai/obs_signif_rast.svg",
 "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_mai.svg",
 )
 trend_pluie_jui = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jui/mod_signif_norast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jui/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jui/mod_signif_rast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jui/obs_signif_rast.svg",
 "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_jui.svg",
 )
 trend_pluie_juill = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/juill/mod_signif_norast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/juill/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/juill/mod_signif_rast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/juill/obs_signif_rast.svg",
 "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_juill.svg",
 )
 trend_pluie_aou = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/aou/mod_signif_norast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/aou/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/aou/mod_signif_rast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/aou/obs_signif_rast.svg",
 "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_aou.svg",
 )
 trend_pluie_sep = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/sep/mod_signif_norast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/sep/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/sep/mod_signif_rast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/sep/obs_signif_rast.svg",
 "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_sep.svg",
 )
 trend_pluie_oct = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/oct/mod_signif_norast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/oct/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/oct/mod_signif_rast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/oct/obs_signif_rast.svg",
 "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_oct.svg",
 )
 trend_pluie_nov = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/nov/mod_signif_norast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/nov/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/nov/mod_signif_rast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/nov/obs_signif_rast.svg",
 "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_nov.svg",
 )
 trend_pluie_dec = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/dec/mod_signif_norast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/dec/obs_signif_norast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/dec/mod_signif_rast.svg",
+"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/dec/obs_signif_rast.svg",
 "../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_dec.svg",
 )

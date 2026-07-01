@@ -129,23 +129,23 @@ def assemble(arome: Path, output: Path) -> str:
     return str(output)
 
 trend_horaire_reduce_pluie_hydro = assemble(
-  "../outputs/maps/gev_z_T_p/horaire_reduce/compare_5/sat_90.0/hydro/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire_reduce/compare_5/sat_90.0/hydro/mod_signif_rast.svg",
   "figures/trend_horaire_reduce_pluie_hydro.svg"
 )
 trend_horaire_reduce_pluie_ond = assemble(
-  "../outputs/maps/gev_z_T_p/horaire_reduce/compare_5/sat_90.0/ond/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire_reduce/compare_5/sat_90.0/ond/mod_signif_rast.svg",
   "figures/trend_horaire_reduce_pluie_ond.svg"
 )
 trend_horaire_reduce_pluie_jfm = assemble(
-  "../outputs/maps/gev_z_T_p/horaire_reduce/compare_5/sat_90.0/jfm/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire_reduce/compare_5/sat_90.0/jfm/mod_signif_rast.svg",
   "figures/trend_horaire_reduce_pluie_jfm.svg"
 )
 trend_horaire_reduce_pluie_amj = assemble(
-  "../outputs/maps/gev_z_T_p/horaire_reduce/compare_5/sat_90.0/amj/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire_reduce/compare_5/sat_90.0/amj/mod_signif_rast.svg",
   "figures/trend_horaire_reduce_pluie_amj.svg"
 )
 trend_horaire_reduce_pluie_jas = assemble(
-  "../outputs/maps/gev_z_T_p/horaire_reduce/compare_5/sat_90.0/jas/mod_signif_norast.svg",
+  "../outputs/maps/gev_z_T_p/horaire_reduce/compare_5/sat_90.0/jas/mod_signif_rast.svg",
   "figures/trend_horaire_reduce_pluie_jas.svg"
 )
 ```

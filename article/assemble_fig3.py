@@ -118,7 +118,7 @@ combined = combined_metrics_df("metrics.csv")
 combined_nr = combined_metrics_df("metrics.csv", Path("../outputs_nr10"))
 
 # Largeur cible des légendes diff/rdiff (ticks sur 4 car. + ylabel), en unités viewBox.
-_LEGEND_SLOT_W = 210.0
+_LEGEND_SLOT_W = 600.0
 
 
 def _standard_legend_path(legend: Path) -> Path:
@@ -160,13 +160,35 @@ def assemble_un(carte: Path, legend: Path, output: Path) -> str:
         raise ValueError("Hauteur nulle detectee.")
     scale_leg = h_map / h_leg
     h_leg_scaled = h_leg * scale_leg
-    slot_w_scaled = _LEGEND_SLOT_W * scale_leg
-    width = w_map + slot_w_scaled
-    height = h_map
+    w_leg_scaled = w_leg * scale_leg
+    
+    # Calculate width_std (standard figure width with standard legend)
     legend_std = _standard_legend_path(legend)
+    w_leg_std, h_leg_std = _dims(fromfile(str(legend_std)))
+    scale_leg_std = (1.5 * h_map) / h_leg_std
+    width_std = w_map + w_leg_std * scale_leg_std
+    
+    # Calculate minimum width required to fit the legend without overlap or truncation (with 5px safety margin on the right)
+    min_width = w_map + w_leg_scaled + 5.0
+    
+    # Use the max of both to keep the canvas width (and thus map size scaling in Quarto) as close to standard as possible
+    width = max(width_std, min_width)
+    height = h_map
+    
     ref_frac = _ref_colorbar_frac(w_map, h_map, legend_std)
     cb_x = _colorbar_x_in_legend(legend)
+    
+    # Theoretical aligned position of the colorbar
     x_leg = ref_frac * width - cb_x * scale_leg
+    
+    # Adjust x_leg if it causes the legend to extend beyond the right edge of the canvas (leaving a 5px margin)
+    if x_leg + w_leg_scaled > width - 5.0:
+        x_leg = width - 5.0 - w_leg_scaled
+        
+    # Ensure x_leg does not overlap the map on the left
+    if x_leg < w_map:
+        x_leg = w_map
+        
     canvas = SVGFigure(f"{width}px", f"{height}px")
     canvas.root.set("viewBox", f"0 0 {width} {height}")
     root_map = fig_map.getroot()
@@ -186,67 +208,67 @@ def assemble_un(carte: Path, legend: Path, output: Path) -> str:
 print("Starting assembly...")
 
 jour_pluie = assemble_vertical(
-  Path("../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/mod_norast.svg"),
-  Path("../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_norast.svg"),
+  Path("../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/mod_rast.svg"),
+  Path("../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_rast.svg"),
   Path("../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/legend.svg"),
   Path("figures/jour_pluie.svg")
 )
 mean_pluie_jour = assemble_vertical(
-  Path("../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/mod_norast.svg"),
-  Path("../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_norast.svg"),
+  Path("../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/mod_rast.svg"),
+  Path("../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_rast.svg"),
   Path("../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/legend.svg"),
   Path("figures/mean_pluie_jour.svg")
 )
 nr_pluie_jour = assemble_vertical(
-  Path("../outputs_nr10/maps/gev_zTpa/quotidien/compare_1/sat_99.0/hydro/mod_norast.svg"),
-  Path("../outputs_nr10/maps/gev_zTpa/quotidien/compare_1/sat_99.0/hydro/obs_norast.svg"),
+  Path("../outputs_nr10/maps/gev_zTpa/quotidien/compare_1/sat_99.0/hydro/mod_rast.svg"),
+  Path("../outputs_nr10/maps/gev_zTpa/quotidien/compare_1/sat_99.0/hydro/obs_rast.svg"),
   Path("../outputs_nr10/maps/gev_zTpa/quotidien/compare_1/sat_99.0/legend.svg"),
   Path("figures/nr_pluie_jour.svg")
 )
 nr_pluie_horaire = assemble_vertical(
-  Path("../outputs_nr10/maps/gev_zTpa/horaire/compare_1/sat_99.0/hydro/mod_norast.svg"),
-  Path("../outputs_nr10/maps/gev_zTpa/horaire/compare_1/sat_99.0/hydro/obs_norast.svg"),
+  Path("../outputs_nr10/maps/gev_zTpa/horaire/compare_1/sat_99.0/hydro/mod_rast.svg"),
+  Path("../outputs_nr10/maps/gev_zTpa/horaire/compare_1/sat_99.0/hydro/obs_rast.svg"),
   Path("../outputs_nr10/maps/gev_zTpa/horaire/compare_1/sat_99.0/legend.svg"),
   Path("figures/nr_pluie_horaire.svg")
 )
 jour_pluie_diff = assemble_un(
-  Path("../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_norast_diff.svg"),
+  Path("../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_rast_diff.svg"),
   Path("../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/legend_diff.svg"),
   Path("figures/jour_pluie_diff.svg")
 )
 mean_pluie_jour_diff = assemble_un(
-  Path("../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_norast_diff.svg"),
+  Path("../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_rast_diff.svg"),
   Path("../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/legend_diff.svg"),
   Path("figures/mean_pluie_jour_diff.svg")
 )
 nr_pluie_jour_diff = assemble_un(
-  Path("../outputs_nr10/maps/gev_zTpa/quotidien/compare_1/sat_99.0/hydro/obs_norast_diff.svg"),
+  Path("../outputs_nr10/maps/gev_zTpa/quotidien/compare_1/sat_99.0/hydro/obs_rast_diff.svg"),
   Path("../outputs_nr10/maps/gev_zTpa/quotidien/compare_1/sat_99.0/legend_diff.svg"),
   Path("figures/nr_pluie_jour_diff.svg")
 )
 nr_pluie_horaire_diff = assemble_un(
-  Path("../outputs_nr10/maps/gev_zTpa/horaire/compare_1/sat_99.0/hydro/obs_norast_diff.svg"),
+  Path("../outputs_nr10/maps/gev_zTpa/horaire/compare_1/sat_99.0/hydro/obs_rast_diff.svg"),
   Path("../outputs_nr10/maps/gev_zTpa/horaire/compare_1/sat_99.0/legend_diff.svg"),
   Path("figures/nr_pluie_horaire_diff.svg")
 )
 
 jour_pluie_rdiff = assemble_un(
-  Path("../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_norast_rdiff.svg"),
+  Path("../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_rast_rdiff.svg"),
   Path("../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/legend_rdiff.svg"),
   Path("figures/jour_pluie_rdiff.svg")
 )
 mean_pluie_jour_rdiff = assemble_un(
-  Path("../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_norast_rdiff.svg"),
+  Path("../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_rast_rdiff.svg"),
   Path("../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/legend_rdiff.svg"),
   Path("figures/mean_pluie_jour_rdiff.svg")
 )
 nr_pluie_jour_rdiff = assemble_un(
-  Path("../outputs_nr10/maps/gev_zTpa/quotidien/compare_1/sat_99.0/hydro/obs_norast_rdiff.svg"),
+  Path("../outputs_nr10/maps/gev_zTpa/quotidien/compare_1/sat_99.0/hydro/obs_rast_rdiff.svg"),
   Path("../outputs_nr10/maps/gev_zTpa/quotidien/compare_1/sat_99.0/legend_rdiff.svg"),
   Path("figures/nr_pluie_jour_rdiff.svg")
 )
 nr_pluie_horaire_rdiff = assemble_un(
-  Path("../outputs_nr10/maps/gev_zTpa/horaire/compare_1/sat_99.0/hydro/obs_norast_rdiff.svg"),
+  Path("../outputs_nr10/maps/gev_zTpa/horaire/compare_1/sat_99.0/hydro/obs_rast_rdiff.svg"),
   Path("../outputs_nr10/maps/gev_zTpa/horaire/compare_1/sat_99.0/legend_rdiff.svg"),
   Path("figures/nr_pluie_horaire_rdiff.svg")
 )

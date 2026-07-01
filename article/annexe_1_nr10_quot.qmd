@@ -237,8 +237,8 @@ echelle = "quotidien"
 # Assemblage
 for s in seasons:
     base = Path(f"../outputs_nr10/maps/gev_zTpa/{echelle}/{comp}/{sat}")
-    assemble_vertical(base/s/"mod_norast.svg", base/s/"obs_norast.svg", base/"legend.svg", Path(f"figures/nr10_{echelle}_{s}.svg"))
-    assemble_un(base/s/"obs_norast_diff.svg", base/"legend_diff.svg", Path(f"figures/nr10_{echelle}_{s}_diff.svg"))
+    assemble_vertical(base/s/"mod_rast.svg", base/s/"obs_rast.svg", base/"legend.svg", Path(f"figures/nr10_{echelle}_{s}.svg"))
+    assemble_un(base/s/"obs_rast_diff.svg", base/"legend_diff.svg", Path(f"figures/nr10_{echelle}_{s}_diff.svg"))
 
 # Macros
 macros = ""

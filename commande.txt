@@ -1,0 +1,45 @@
+# Racine du repo
+Set-Location "c:\Users\nicod\Documents\GitHub\ExtremePrecipit"
+
+# --- 1. Cartes sources (pipeline modifié : non-signif masqués, zéro sig en gris, taille uniforme) ---
+
+# Fig. 5 — quotidien, RL10, sat 99 %
+uv run python -m src.pipelines.pipeline_generate_outputs `
+  --data_type gev --col_calculate z_T_p --echelle quotidien `
+  --season hydro ond jfm amj jas --sat 99.0
+
+# Fig. 6 — horaire, saisons, sat 90 %
+uv run python -m src.pipelines.pipeline_generate_outputs `
+  --data_type gev --col_calculate z_T_p --echelle horaire `
+  --season hydro ond jfm amj jas --sat 90.0
+
+# Fig. 7 — horaire, mois, sat 90 %
+uv run python -m src.pipelines.pipeline_generate_outputs `
+  --data_type gev --col_calculate z_T_p --echelle horaire `
+  --season jan fev mar avr mai jui juill aou sep oct nov dec --sat 90.0
+
+# --- 2. Assemblage PDF des figures (Quarto) ---
+
+Set-Location "c:\Users\nicod\Documents\GitHub\ExtremePrecipit\article"
+
+quarto render fig5.qmd
+quarto render fig6.qmd
+quarto render fig7.qmd
+
+# --- 3. Copie vers perso/v2_modifs ---
+
+Copy-Item fig5.pdf "..\perso\v2_modifs\fig5.pdf" -Force
+Copy-Item fig6.pdf "..\perso\v2_modifs\fig6.pdf" -Force
+Copy-Item fig7.pdf "..\perso\v2_modifs\fig7.pdf" -Force
+
+# (optionnel, si dossier Figures utilisé ailleurs)
+Copy-Item fig5.pdf "..\perso\v2_modifs\Figures\fig5.pdf" -Force -ErrorAction SilentlyContinue
+Copy-Item fig6.pdf "..\perso\v2_modifs\Figures\fig6.pdf" -Force -ErrorAction SilentlyContinue
+Copy-Item fig7.pdf "..\perso\v2_modifs\Figures\fig7.pdf" -Force -ErrorAction SilentlyContinue
+
+# --- 4. Réponses reviewers (PDF avec fig5/6/7 embarquées) ---
+
+Set-Location "c:\Users\nicod\Documents\GitHub\ExtremePrecipit\perso\v2_modifs"
+
+quarto render response_to_anonymous_r1.qmd
+quarto render response_to_anonymous_r2.qmd

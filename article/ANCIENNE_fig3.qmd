@@ -230,53 +230,53 @@ def assemble_un(carte: Path, legend: Path, output: Path) -> str:
 
 
 # jour_pluie = assemble_vertical(
-#   "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/mod_norast.svg",
-#   "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_norast.svg",
+#   "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/mod_rast.svg",
+#   "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_rast.svg",
 #   "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/legend.svg",
 #   "figures/jour_pluie.svg"
 # )
 
 # mean_pluie_jour = assemble_vertical(
-#   "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/mod_norast.svg",
-#   "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_norast.svg",
+#   "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/mod_rast.svg",
+#   "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_rast.svg",
 #   "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/legend.svg",
 #   "figures/mean_pluie_jour.svg"
 # )
 
 # mean_max_pluie_jour = assemble_vertical(
-#   "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/hydro/mod_norast.svg",
-#   "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/hydro/obs_norast.svg",
+#   "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/hydro/mod_rast.svg",
+#   "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/hydro/obs_rast.svg",
 #   "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/legend.svg",
 #   "figures/mean-max_pluie_jour.svg"
 # )
 
 # mean_max_pluie_horaire = assemble_vertical(
-#   "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/hydro/mod_norast.svg",
-#   "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/hydro/obs_norast.svg",
+#   "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/hydro/mod_rast.svg",
+#   "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/hydro/obs_rast.svg",
 #   "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/legend.svg",
 #   "figures/mean-max_pluie_horaire.svg"
 # )
 
 # jour_pluie_diff = assemble_un(
-#   "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_norast_diff.svg",
+#   "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/hydro/obs_rast_diff.svg",
 #   "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/legend_diff.svg",
 #   "figures/jour_pluie_diff.svg"
 # )
 
 # mean_pluie_jour_diff = assemble_un(
-#   "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_norast_diff.svg",
+#   "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/hydro/obs_rast_diff.svg",
 #   "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/legend_diff.svg",
 #   "figures/mean_pluie_jour_diff.svg"
 # )
 
 # mean_max_pluie_jour_diff = assemble_un(
-#   "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/hydro/obs_norast_diff.svg",
+#   "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/hydro/obs_rast_diff.svg",
 #   "../outputs/maps/stats_mean-max/quotidien/compare_9/sat_99.0/legend_diff.svg",
 #   "figures/mean-max_pluie_jour_diff.svg"
 # )
 
 # mean_max_pluie_horaire_diff = assemble_un(
-#   "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/hydro/obs_norast_diff.svg",
+#   "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/hydro/obs_rast_diff.svg",
 #   "../outputs/maps/stats_mean-max/horaire/compare_9/sat_99.0/legend_diff.svg",
 #   "figures/mean-max_pluie_horaire_diff.svg"
 # )

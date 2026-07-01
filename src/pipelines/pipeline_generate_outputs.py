@@ -492,7 +492,7 @@ def generate_maps(
         norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
 
     # 8. Map export
-    modes = {"rast": 0, "norast": 1}
+    modes = {"rast": 5.5, "norast": -1}
 
     if val_col == "model":
         TRANSFO = { 
@@ -546,7 +546,7 @@ def generate_maps(
                 ax=ax,
                 edgecolor="black",
                 linewidth=0.6,
-                zorder=1,
+                zorder=2,
             )
 
 
@@ -581,7 +581,7 @@ def generate_maps(
                     gdf_plot = gdf_o
 
                 if not gdf_nonsig.empty:
-                    gdf_nonsig.plot(ax=ax, zorder=2, **kw_hollow)
+                    gdf_nonsig.plot(ax=ax, zorder=3, **kw_hollow)
 
                 if not gdf_plot.empty:
                     # split near-zero vs non-zero among significant stations only
@@ -608,29 +608,29 @@ def generate_maps(
 
                     if not gdf_zero.empty:
                         if obs_facecolor is None:
-                            gdf_zero.plot(ax=ax, color="#808080", zorder=3, **kw_zero)
+                            gdf_zero.plot(ax=ax, color="#808080", zorder=4, **kw_zero)
                         else:
-                            gdf_zero.plot(ax=ax, color=obs_facecolor, zorder=3, **kw_zero)
+                            gdf_zero.plot(ax=ax, color=obs_facecolor, zorder=4, **kw_zero)
 
                     if not gdf_nonzero.empty:
                         if obs_facecolor is None:
                             gdf_nonzero.plot(
                                 ax=ax, column=val_col, cmap=cmap, norm=norm,
-                                zorder=4, **kw_nonzero,
+                                zorder=5, **kw_nonzero,
                             )
                         else:
                             gdf_nonzero.plot(
-                                ax=ax, color=obs_facecolor, zorder=4, **kw_nonzero,
+                                ax=ax, color=obs_facecolor, zorder=5, **kw_nonzero,
                             )
 
 
             # Relief
-            relief.plot(ax=ax, color=relief_color, linewidth=relief_linewidth, alpha=0.8, zorder=5)
+            relief.plot(ax=ax, color=relief_color, linewidth=relief_linewidth, alpha=0.8, zorder=6)
 
             ax.set_axis_off()
             ax.set_rasterization_zorder(z)
 
-            if mode == "rast":
+            if False:
                 sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
                 sm.set_array([])
 
@@ -668,8 +668,8 @@ def generate_maps(
 
             subdir = dir_path / title.lower() 
             subdir.mkdir(parents=True, exist_ok=True)
-            fig.savefig(subdir / f"{name_file}.svg", format="svg", bbox_inches="tight", pad_inches=0)
-            fig.savefig(subdir / f"{name_file}.pdf", format="pdf", bbox_inches="tight", pad_inches=0)
+            fig.savefig(subdir / f"{name_file}.svg", format="svg", bbox_inches="tight", pad_inches=0, dpi=180)
+            fig.savefig(subdir / f"{name_file}.pdf", format="pdf", bbox_inches="tight", pad_inches=0, dpi=180)
             plt.close(fig)
             logger.info(subdir / f"{name_file}.svg")
 

@@ -16,7 +16,7 @@
 %% -----------------------------------------------------------------
 \NeedsTeXFormat{LaTeX2e}[1995/12/01]
 \ProvidesClass{copernicus}
-    [2025/10/30 10.1.30 Copernicus papers]
+    [2026/02/03 10.1.31 Copernicus papers]
 \frenchspacing
 \clubpenalty10000
 \widowpenalty10000
@@ -127,9 +127,14 @@
                               \def\specialp@perstring{Editorial note}%
                               \@noreftrue
                               \AtEndOfClass{%
-                                \edef\@journalnameabbreviation{\@journalnameabbreviation\space Discuss.}%
-                                \expandafter\jurl@splitter\@journalurl\@nil
-                                \edef\@journalurl{\jurl@first-discuss.net}}}
+                                \def\@tempa{https://egusphere.copernicus.org}%
+                                \ifx\@journalurl\@tempa
+                                \else
+                                  \edef\@journalnameabbreviation{\@journalnameabbreviation\space Discuss.}%
+                                  \expandafter\jurl@splitter\@journalurl\@nil
+                                  \edef\@journalurl{\jurl@first-discuss.net}%
+                                \fi
+                              }}
 \newif\if@preface%ask Lupino
 \DeclareOption{preface}  {\@prefacetrue}
 \DeclareOption{forHTML}  {\@forHTMLtrue}
@@ -683,7 +688,7 @@
     \def\@mpfn{footnote}%
     \let\thempfn=\thefootnote
     \renewcommand\@makefntext[1]{\parindent1em\noindent\@makefnmark##1}%
-    {\LARGE\bfseries\cop@titlemathversion\@title\par}%
+    {\LARGE\bfseries\if@sansserifface\mathversion{sansbold}\else\mathversion{bold}\fi\@title\par}%
     \if@noauthor
     \else
       {\large
@@ -715,7 +720,7 @@
                \hsize\linewidth
                \@maketitle@setup
                \centering
-               \center{\LARGE\bfseries\if@sansserifface\sffamily\fi\cop@titlemathversion\color{textcol}%
+               \center{\LARGE\bfseries\if@sansserifface\sffamily\mathversion{sansbold}\else\mathversion{bold}\fi\color{textcol}%
                        \ifx\specialp@perstring\@undefined\else\textit{{\specialp@perstring} to}\break``\fi
                        \@title
                        \ifx\specialp@perstring\@undefined
@@ -784,7 +789,7 @@
           \vspace*{36mm}%
           {\@maketitle@setup
            \raggedright
-           {\LARGE\bfseries\if@sansserifface\sffamily\fi\cop@titlemathversion\color{textcol}%
+           {\LARGE\bfseries\if@sansserifface\sffamily\mathversion{sansbold}\else\mathversion{bold}\fi\color{textcol}%
             \ifx\specialp@perstring\@undefined\else\textit{{\specialp@perstring} to}\break``\fi
             \@title
             \ifx\specialp@perstring\@undefined
@@ -856,7 +861,7 @@
           \vspace*{36mm}%
           {\@maketitle@setup
            \raggedright
-           {\LARGE\bfseries\if@sansserifface\sffamily\fi\cop@titlemathversion\color{textcol}%
+           {\LARGE\bfseries\if@sansserifface\if@sansserifface\sffamily\fi\mathversion{sansbold}\else\mathversion{bold}\fi\color{textcol}%
             \ifx\specialp@perstring\@undefined\else\textit{{\specialp@perstring} to}\break``\fi
             \@title
             \ifx\specialp@perstring\@undefined
@@ -961,7 +966,7 @@
     \fi
     \vskip13.6\p@
     \raggedright
-    {\huge\bfseries\cop@titlemathversion%
+    {\huge\bfseries\mathversion{bold}%
      \ifx\specialp@perstring\@undefined\else{\large\specialp@perstring\space to\\}``\fi
      \@title
      \ifx\specialp@perstring\@undefined\else''\\[1mm]\large\@journalnameabbreviation, \@msnumber, \@pyear\fi
@@ -990,7 +995,7 @@
     \def\section{\@dolinesectrue\@startsection{section}{1}{\z@}
       {-3.5ex\@plus-1ex\@minus-0.2ex}
       {\if@secline2.3ex\else2.3ex\@plus0.2ex\fi}
-      {\raggedright\normalsize\sffamily\bfseries\cop@titlemathversion\upshape\noindent\color{textcol}}}
+      {\raggedright\normalsize\sffamily\bfseries\mathversion{sansbold}\upshape\noindent\color{textcol}}}
     \def\subsection{\@dolinesectrue\@startsection{subsection}{2}{\z@}
       {\if@secline-3ex\@plus-1ex\@minus-0.2ex\else-3.25ex\@plus-1ex\@minus-0.2ex\fi}
       {\if@secline1.25ex\else1.5ex\@plus0.2ex\fi}
@@ -1003,29 +1008,29 @@
     \def\section{\@dolinesectrue\@startsection{section}{1}{\z@}
       {-2em\@plus-1ex\@minus-.2ex}
       {\if@secline1.15em\else1em\@plus.2ex\fi}
-      {\raggedright\normalfont\normalsize\bfseries\cop@titlemathversion}}
+      {\raggedright\normalfont\normalsize\bfseries\mathversion{bold}}}
     \def\subsection{\@dolinesectrue\@startsection{subsection}{2}{\z@}
       {-1em\@plus-0.25ex\@minus-.2ex}
       {\if@secline1.15em\else1em\@plus.2ex\fi}
-      {\raggedright\normalfont\normalsize\bfseries\cop@titlemathversion}}
+      {\raggedright\normalfont\normalsize\bfseries\mathversion{bold}}}
     \def\subsubsection{\@dolinesectrue\@startsection{subsubsection}{3}{\z@}
       {-1em\@plus-0.25ex\@minus-.2ex}
       {\if@secline1.15em\else1em\@plus.2ex\fi}
-      {\raggedright\normalsize\normalfont\bfseries\cop@titlemathversion}}
+      {\raggedright\normalsize\normalfont\bfseries\mathversion{bold}}}
   \fi%final
 \else%discussions
   \def\section{\@dolinesectrue\@startsection{section}{1}{\z@}
     {-2em\@plus-1ex\@minus-.2ex}
     {1em\@plus.2ex}
-    {\raggedright\normalfont\normalsize\bfseries\cop@titlemathversion}}
+    {\raggedright\normalfont\normalsize\bfseries\mathversion{bold}}}
   \def\subsection{\@dolinesectrue\@startsection{subsection}{2}{\z@}
     {-1em\@plus-0.25ex\@minus-.2ex}
     {1em\@plus.2ex}
-    {\raggedright\normalfont\normalsize\bfseries\cop@titlemathversion}}
+    {\raggedright\normalfont\normalsize\bfseries\mathversion{bold}}}
   \def\subsubsection{\@dolinesectrue\@startsection{subsubsection}{3}{\z@}
     {-1em\@plus-0.25ex\@minus-.2ex}
     {1em\@plus.2ex}
-    {\raggedright\normalfont\normalsize\bfseries\cop@titlemathversion}}
+    {\raggedright\normalfont\normalsize\bfseries\mathversion{bold}}}
 \fi
 \def\@startsection#1#2#3#4#5#6{%
   \gdef\cur@secdepth{#2}%
@@ -1320,16 +1325,14 @@
 \RequirePackage[T5,T3,T1]{fontenc}
 \RequirePackage[warn]{textcomp}
 \RequirePackage{fontawesome5}
-\ifluatex
-  \newcommand*{\faicon}[1]{{\csname faicon@#1\endcsname}}
-  \input{fontawesomesymbols-generic.tex}
-  \DeclareRobustCommand\FAone{\fontencoding{U}\fontfamily{fontawesomeone}\selectfont}
-  \DeclareRobustCommand\FAtwo{\fontencoding{U}\fontfamily{fontawesometwo}\selectfont}
-  \DeclareRobustCommand\FAthree{\fontencoding{U}\fontfamily{fontawesomethree}\selectfont}
-  \input{fontawesomesymbols-pdftex.tex}
-  \renewcommand{\faHourglass}[1][]{\faicon{hourglass\if\relax\detokenize{#1}\relax\else-#1\fi}}
-  \renewcommand{\faBattery}[1][4]{\faicon{battery-#1}}
-\fi
+\newcommand*{\faicon}[1]{{\csname faicon@#1\endcsname}}
+\input{fontawesomesymbols-generic.tex}
+\DeclareRobustCommand\FAone{\fontencoding{U}\fontfamily{fontawesomeone}\selectfont}
+\DeclareRobustCommand\FAtwo{\fontencoding{U}\fontfamily{fontawesometwo}\selectfont}
+\DeclareRobustCommand\FAthree{\fontencoding{U}\fontfamily{fontawesomethree}\selectfont}
+\input{fontawesomesymbols-pdftex.tex}
+\renewcommand{\faHourglass}[1][]{\faicon{hourglass\if\relax\detokenize{#1}\relax\else-#1\fi}}
+\renewcommand{\faBattery}[1][4]{\faicon{battery-#1}}
 \usepackage{upquote}%% #7510
 \usepackage{regexpatch}
 \def\active@text@prime{\ifin@texttt\textquotesingle\else'\fi}
@@ -1373,8 +1376,6 @@
     \fi
     }{}%
 \fi
-\newcommand\cop@titlemathversion{%
-  \if@sansserifface\mathversion{sansbold}\fi}
 \def\cmrng{{\fontfamily{cmr}\selectfont\ng}}
 \let\old@classoptionslist\@classoptionslist
 \preto\@classoptionslist{english,}
@@ -2482,7 +2483,7 @@
                }\\[1mm]%
              \fi
              \rule{0.8\panelwidth}{1.1pt}\\[1mm]
-             {\bfseries\cop@titlemathversion%
+             {\bfseries\mathversion{bold}%
               \leavevmode\null
               \ifx\firstruntit@utput\@undefined
                 \global\let\firstruntit@utput\relax
@@ -2815,7 +2816,7 @@
                \hspace\labelsep
                \if@stage@final
                  \if@sansserifface
-                   \sffamily\bfseries\cop@titlemathversion\textcolor{textcol}{####1.}%
+                   \sffamily\bfseries\mathversion{sansbold}\textcolor{textcol}{####1.}%
                  \else
                    \itshape####1.%
                  \fi
