@@ -227,7 +227,7 @@ def assemble_un(carte: Path, legend: Path, output: Path) -> str:
     return str(output)
 
 
-combined_nr = combined_metrics_df("metrics.csv")
+from metrics_utils import load_metrics_csv, season_row
 
 seasons = ["ond", "jfm", "amj", "jas"]
 sat = "sat_99.0"
@@ -240,13 +240,14 @@ for s in seasons:
     assemble_vertical(base/s/"mod_rast.svg", base/s/"obs_rast.svg", base/"legend.svg", Path(f"figures/nr10_{echelle}_{s}.svg"))
     assemble_un(base/s/"obs_rast_diff.svg", base/"legend_diff.svg", Path(f"figures/nr10_{echelle}_{s}_diff.svg"))
 
+combined_nr = load_metrics_csv(f"../outputs_nr10/maps/gev_zTpa/{echelle}/{comp}/{sat}/metrics.csv")
+
 # Macros
 macros = ""
 for s in seasons:
-    row = combined_nr[(combined_nr["echelle"] == echelle) & (combined_nr["season"] == s) & (combined_nr["col_calculate"] == "zTpa")]
-    if not row.empty:
-        r, n, me, d = float(row.iloc[0]["r"]), int(row.iloc[0]["n"]), float(row.iloc[0]["me"]), float(row.iloc[0]["delta"])
-        macros += rf"\newcommand{{\r{s.upper()}}}{{{r:.2f}}}\newcommand{{\n{s.upper()}}}{{{n:d}}}\newcommand{{\me{s.upper()}}}{{{me:+.2f}}}\newcommand{{\d{s.upper()}}}{{{d:+.2f}}}" + "\n"
+    row = season_row(combined_nr, s)
+    r, n, me, d = float(row["r"]), int(row["n"]), float(row["me"]), float(row["delta"])
+    macros += rf"\newcommand{{\r{s.upper()}}}{{{r:.2f}}}\newcommand{{\n{s.upper()}}}{{{n:d}}}\newcommand{{\me{s.upper()}}}{{{me:+.2f}}}\newcommand{{\d{s.upper()}}}{{{d:+.2f}}}" + "\n"
 
 with open("macros_nr10_h.tex", "w") as f: f.write(macros)
 ```

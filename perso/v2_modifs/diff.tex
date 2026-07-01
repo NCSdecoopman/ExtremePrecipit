@@ -1,66 +1,62 @@
 \documentclass[hess, manuscript]{copernicus}
 %DIF LATEXDIFF DIFFERENCE FILE
 %DIF DEL ../v1_1_preprint/main.tex   Wed Jun 10 10:27:29 2026
-%DIF ADD main.tex                    Tue Jun 30 22:34:14 2026
-
-% --- Encodage, langue, fontes ---
-%DIF 4-8d4
+%DIF ADD final/main.tex              Wed Jul  1 23:09:38 2026
+%DIF < 
+%DIF < % --- Encodage, langue, fontes ---
 %DIF < \ifPDFTeX
 %DIF <   \usepackage[english]{babel}
 %DIF < \else
 %DIF <   \babelprovide[main,import]{english}
 %DIF < \fi
-%DIF -------
-
-% --- Mise en page, microtypographie ---
-% \usepackage[margin=1.5cm]{geometry}
-\usepackage{microtype}
-\setlength{\parindent}{0pt}
-\setlength{\parskip}{6pt}
-\usepackage{ragged2e}
-\usepackage[percent]{overpic} % coordonnées en %
-
-% --- Maths ---
-\usepackage{amsmath}
-\ifPDFTeX
-  \usepackage{amssymb}
-\fi
-
-% --- Sections non numérotées (style mémo/rapport court) ---
-%DIF 25d20
+%DIF < 
+%DIF < % --- Mise en page, microtypographie ---
+%DIF < % \usepackage[margin=1.5cm]{geometry}
+%DIF < \usepackage{microtype}
+%DIF < \setlength{\parindent}{0pt}
+%DIF < \setlength{\parskip}{6pt}
+%DIF < \usepackage{ragged2e}
+%DIF < \usepackage[percent]{overpic} % coordonnées en %
+%DIF < 
+%DIF < % --- Maths ---
+%DIF < \usepackage{amsmath}
+%DIF < \ifPDFTeX
+%DIF <   \usepackage{amssymb}
+%DIF < \fi
+%DIF < 
+%DIF < % --- Sections non numérotées (style mémo/rapport court) ---
 %DIF < %\setcounter{secnumdepth}{3}
-%DIF -------
-
-% --- Couleurs, figures, tableaux ---
-\usepackage{xcolor}
-\usepackage{graphicx}
-\usepackage{booktabs,longtable,tabularx,multirow}
-\usepackage{float}
-\usepackage{caption}
-\usepackage{subcaption}
-
-% --- Liens et URLs ---
-\usepackage{xurl}
-\usepackage{hyperref}
-
-% --- Bibliographie (Style Copernicus) ---
-\usepackage[authoryear]{natbib}
-\bibliographystyle{copernicus}
-
-% --- Compat Pandoc/Quarto ---
-\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
-
-% --- Numéros de lignes (optionnel) ---
-% \usepackage{setspace}
-% \doublespacing
-
-% --- DEBUT ---
+%DIF < 
+%DIF < % --- Couleurs, figures, tableaux ---
+%DIF < \usepackage{xcolor}
+%DIF < \usepackage{graphicx}
+%DIF < \usepackage{booktabs,longtable,tabularx,multirow}
+%DIF < \usepackage{float}
+%DIF < \usepackage{caption}
+%DIF < \usepackage{subcaption}
+%DIF < 
+%DIF < % --- Liens et URLs ---
+%DIF < \usepackage{xurl}
+%DIF < \usepackage{hyperref}
+%DIF < 
+%DIF < % --- Bibliographie (Style Copernicus) ---
+%DIF < \usepackage[authoryear]{natbib}
+%DIF < \bibliographystyle{copernicus}
+%DIF < 
+%DIF < % --- Compat Pandoc/Quarto ---
+%DIF < \providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+%DIF < 
+%DIF < % --- Numéros de lignes (optionnel) ---
+%DIF < % \usepackage{setspace}
+%DIF < % \doublespacing
+%DIF < 
+%DIF < % --- DEBUT ---
 %DIF PREAMBLE EXTENSION ADDED BY LATEXDIFF
 %DIF UNDERLINE PREAMBLE %DIF PREAMBLE
 \RequirePackage[normalem]{ulem} %DIF PREAMBLE
 \RequirePackage{color}\definecolor{RED}{rgb}{1,0,0}\definecolor{BLUE}{rgb}{0,0,1} %DIF PREAMBLE
-\providecommand{\DIFaddtex}[1]{{\protect\color{blue}\uwave{#1}}} %DIF PREAMBLE
-\providecommand{\DIFdeltex}[1]{{\protect\color{red}\sout{#1}}} %DIF PREAMBLE
+\providecommand{\DIFadd}[1]{{\protect\color{blue}\uwave{#1}}} %DIF PREAMBLE
+\providecommand{\DIFdel}[1]{{\protect\color{red}\sout{#1}}} %DIF PREAMBLE
 %DIF SAFE PREAMBLE %DIF PREAMBLE
 \providecommand{\DIFaddbegin}{} %DIF PREAMBLE
 \providecommand{\DIFaddend}{} %DIF PREAMBLE
@@ -75,55 +71,6 @@
 \providecommand{\DIFaddendFL}{} %DIF PREAMBLE
 \providecommand{\DIFdelbeginFL}{} %DIF PREAMBLE
 \providecommand{\DIFdelendFL}{} %DIF PREAMBLE
-%DIF HYPERREF PREAMBLE %DIF PREAMBLE
-\providecommand{\DIFadd}[1]{\texorpdfstring{\DIFaddtex{#1}}{#1}} %DIF PREAMBLE
-\providecommand{\DIFdel}[1]{\texorpdfstring{\DIFdeltex{#1}}{}} %DIF PREAMBLE
-\providecommand{\DIFscaledelfig}{0.5}
-%DIF HIGHLIGHTGRAPHICS PREAMBLE %DIF PREAMBLE
-\RequirePackage{settobox} %DIF PREAMBLE
-\RequirePackage{letltxmacro} %DIF PREAMBLE
-\newsavebox{\DIFdelgraphicsbox} %DIF PREAMBLE
-\newlength{\DIFdelgraphicswidth} %DIF PREAMBLE
-\newlength{\DIFdelgraphicsheight} %DIF PREAMBLE
-% store original definition of \includegraphics %DIF PREAMBLE
-\LetLtxMacro{\DIFOincludegraphics}{\includegraphics} %DIF PREAMBLE
-\providecommand{\DIFaddincludegraphics}[2][]{{\color{blue}\fbox{\DIFOincludegraphics[#1]{#2}}}} %DIF PREAMBLE
-\providecommand{\DIFdelincludegraphics}[2][]{% %DIF PREAMBLE
-\sbox{\DIFdelgraphicsbox}{\DIFOincludegraphics[#1]{#2}}% %DIF PREAMBLE
-\settoboxwidth{\DIFdelgraphicswidth}{\DIFdelgraphicsbox} %DIF PREAMBLE
-\settoboxtotalheight{\DIFdelgraphicsheight}{\DIFdelgraphicsbox} %DIF PREAMBLE
-\scalebox{\DIFscaledelfig}{% %DIF PREAMBLE
-\parbox[b]{\DIFdelgraphicswidth}{\usebox{\DIFdelgraphicsbox}\\[-\baselineskip] \rule{\DIFdelgraphicswidth}{0em}}\llap{\resizebox{\DIFdelgraphicswidth}{\DIFdelgraphicsheight}{% %DIF PREAMBLE
-\setlength{\unitlength}{\DIFdelgraphicswidth}% %DIF PREAMBLE
-\begin{picture}(1,1)% %DIF PREAMBLE
-\thicklines\linethickness{2pt} %DIF PREAMBLE
-{\color[rgb]{1,0,0}\put(0,0){\framebox(1,1){}}}% %DIF PREAMBLE
-{\color[rgb]{1,0,0}\put(0,0){\line( 1,1){1}}}% %DIF PREAMBLE
-{\color[rgb]{1,0,0}\put(0,1){\line(1,-1){1}}}% %DIF PREAMBLE
-\end{picture}% %DIF PREAMBLE
-}\hspace*{3pt}}} %DIF PREAMBLE
-} %DIF PREAMBLE
-\LetLtxMacro{\DIFOaddbegin}{\DIFaddbegin} %DIF PREAMBLE
-\LetLtxMacro{\DIFOaddend}{\DIFaddend} %DIF PREAMBLE
-\LetLtxMacro{\DIFOdelbegin}{\DIFdelbegin} %DIF PREAMBLE
-\LetLtxMacro{\DIFOdelend}{\DIFdelend} %DIF PREAMBLE
-\DeclareRobustCommand{\DIFaddbegin}{\DIFOaddbegin \let\includegraphics\DIFaddincludegraphics} %DIF PREAMBLE
-\DeclareRobustCommand{\DIFaddend}{\DIFOaddend \let\includegraphics\DIFOincludegraphics} %DIF PREAMBLE
-\DeclareRobustCommand{\DIFdelbegin}{\DIFOdelbegin \let\includegraphics\DIFdelincludegraphics} %DIF PREAMBLE
-\DeclareRobustCommand{\DIFdelend}{\DIFOaddend \let\includegraphics\DIFOincludegraphics} %DIF PREAMBLE
-\LetLtxMacro{\DIFOaddbeginFL}{\DIFaddbeginFL} %DIF PREAMBLE
-\LetLtxMacro{\DIFOaddendFL}{\DIFaddendFL} %DIF PREAMBLE
-\LetLtxMacro{\DIFOdelbeginFL}{\DIFdelbeginFL} %DIF PREAMBLE
-\LetLtxMacro{\DIFOdelendFL}{\DIFdelendFL} %DIF PREAMBLE
-\DeclareRobustCommand{\DIFaddbeginFL}{\DIFOaddbeginFL \let\includegraphics\DIFaddincludegraphics} %DIF PREAMBLE
-\DeclareRobustCommand{\DIFaddendFL}{\DIFOaddendFL \let\includegraphics\DIFOincludegraphics} %DIF PREAMBLE
-\DeclareRobustCommand{\DIFdelbeginFL}{\DIFOdelbeginFL \let\includegraphics\DIFdelincludegraphics} %DIF PREAMBLE
-\DeclareRobustCommand{\DIFdelendFL}{\DIFOaddendFL \let\includegraphics\DIFOincludegraphics} %DIF PREAMBLE
-%DIF AMSMATHULEM PREAMBLE %DIF PREAMBLE
-\makeatletter %DIF PREAMBLE
-\let\sout@orig\sout %DIF PREAMBLE
-\renewcommand{\sout}[1]{\ifmmode\text{\sout@orig{\ensuremath{#1}}}\else\sout@orig{#1}\fi} %DIF PREAMBLE
-\makeatother %DIF PREAMBLE
 %DIF COLORLISTINGS PREAMBLE %DIF PREAMBLE
 \RequirePackage{listings} %DIF PREAMBLE
 \RequirePackage{color} %DIF PREAMBLE
@@ -143,6 +90,8 @@
 \lstset{extendedchars=\true,inputencoding=utf8}
 
 %DIF END PREAMBLE EXTENSION ADDED BY LATEXDIFF
+
+\graphicspath{{final/}}
 
 \begin{document}
 \title{Climatology and trends of extreme precipitation in France: evaluation of an explicit-convection regional climate model}
@@ -269,18 +218,20 @@ aims at addressing this gap.
 In order to evaluate the CNRM-AROME model, this study uses precipitation data from Météo-France stations
 \citep{meteofrance2024} at daily (1959--2022) and hourly (1990--2022) time
 steps. There is a strong contrast between daily and hourly observational records available in France. Daily stations provide long, dense time series: more than half of the 8,198 daily records have over 40 years of data with limited missing values, and several exceed 60 years. In contrast, hourly stations remain much shorter: most of the 2,315 hourly stations offer only 15-30 years of data, reflecting the later deployment of automatic networks. This disparity underscores why long-term trends in sub-daily extremes have been little studied in France so far.  
-%Figure 1 shows the number of stations maintained by Météo-France as well as the length of the series at different timestep. As illustrated in this figure, there is a strong contrast between daily and hourly observational records available in France. Daily stations (left) provide long, dense time series: more than half of the 8 198 stations have over 40 years of data with limited missing values, and several exceed 60 years. In contrast, hourly stations (right) remain much shorter: most of the 2 315 stations offer only 15--30 years of reliable data, reflecting the later deployment of automatic networks. This disparity underscores why long-term trends in sub-daily extremes are more difficult to detect than at the daily scale. 
+%DIF < Figure 1 shows the number of stations maintained by Météo-France as well as the length of the series at different timestep. As illustrated in this figure, there is a strong contrast between daily and hourly observational records available in France. Daily stations (left) provide long, dense time series: more than half of the 8 198 stations have over 40 years of data with limited missing values, and several exceed 60 years. In contrast, hourly stations (right) remain much shorter: most of the 2 315 stations offer only 15--30 years of reliable data, reflecting the later deployment of automatic networks. This disparity underscores why long-term trends in sub-daily extremes are more difficult to detect than at the daily scale. 
 
 Station selection is based on two criteria: at each station, we compute the proportion of missing data for each year/season/month. A year/season/month is considered as missing if it contains more than 10\% of missing values. Then only the stations with at least the required number of nonmissing years/seasons/months are retained: 50 years for the daily station (1959--2022) and 25 years for the hourly stations (1990--2022). Subsequent
 analyses are restricted to this subset of stations and years/seasons/months. These criteria, applied over the complete hydrological reference period, lead us to select 1,583 daily stations and 574 hourly stations.
 
 \subsection{CNRM-AROME model}\label{arome-model}
 
-%The convection-permitting RCM CNRM-AROME model (hereafter referred to as AROME), forced by the ERA5 reanalysis, provides
-%gap-free hourly precipitation data from 1959 to 2022 at a 2.5 km resolution over
-%the western Europe and northwestern Mediterranean region in Figure~\ref{fig:map_domain}. This results %in 87,536 regularly spaced grid cells over metropolitan France.
+%DIF < The convection-permitting RCM CNRM-AROME model (hereafter referred to as AROME), forced by the ERA5 reanalysis, provides
+%DIF < gap-free hourly precipitation data from 1959 to 2022 at a 2.5 km resolution over
+%DIF < the western Europe and northwestern Mediterranean region in Figure~\ref{fig:map_domain}. This results %in 87,536 regularly spaced grid cells over metropolitan France.
+\DIFdelbegin %DIFDELCMD < 
 
-CNRM-AROME model (hereafter referred to as AROME) is the Convection-Permitting Regional Climate Model (CP-RCM) developped at CNRM (Centre National de Recherches Météorologiques). Based on the limited-area mesoscale AROME model \citep{seity-etal-2011} used for National Weather Prediction at Météo-France since 2008, AROME is also used in climate mode since 2014 \citep{Caillaud2021,lucaspicher-etal-2024}.
+%DIFDELCMD < %%%
+\DIFdelend CNRM-AROME model (hereafter referred to as AROME) is the Convection-Permitting Regional Climate Model (CP-RCM) developped at CNRM (Centre National de Recherches Météorologiques). Based on the limited-area mesoscale AROME model \citep{seity-etal-2011} used for National Weather Prediction at Météo-France since 2008, AROME is also used in climate mode since 2014 \citep{Caillaud2021,lucaspicher-etal-2024}.
 AROME combines the non-hydrostatic dynamical ALADIN bi-spectral core and physical parameterisations coming from the research model Meso-NH. At the kilometer-scale resolution, deep convection is no longer a sub-grid process but shallow convection still need to be parametrised. A new version of AROME is used in this study, with improvements mainly concerning surface schemes. Over the nature tiles, the soil is modelled by 14 soil layers instead of 3 in the previous version and 3 vegetation types are now taken into account, whereas only one was chosen previously, allowing a better representation of sub-grid heterogeneities. A new version of the snow model enables 12 snow layers (instead of one in the previous version). Over town, the existing Town Energy Balance (TEB) \citep{masson-2000} now allows for gardens within the urban canyon and is complemented by a building energy module that takes heating and air conditioning into account.
 
 The studied simulation is a 63-year AROME evaluation simulation from 1959 to 2022 directly driven by the ERA5 global reanalysis \citep{hersbach2020era5} at 2.5 km resolution. This simulation is performed over the domain ALPX-3, covering extended metropolitan France (cf. Figure~\ref{fig:map_domain}). The domain includes 687 $\times$ 847 grid-points, approximatively 1,700 km $\times$ 2,100 km, with 87,536 regularly spaced grid cells over metropolitan France. The evaluation simulation is directly driven at the domain boundaries by the ERA5 reanalysis at \DIFdelbegin \DIFdel{50 }\DIFdelend \DIFaddbegin \DIFadd{\(\sim\)31~}\DIFaddend km every hour. The sea surface temperatures (SSTs) are also given by the ERA5 reanalysis at 30 km resolution. Aerosols are monthly evolving and \DIFdelbegin \DIFdel{come from }\DIFdelend \DIFaddbegin \DIFadd{vary from year to year, taken from }\DIFaddend the ALDERA reanalysis, a CNRM-ALADIN simulation at 12 km driven by ERA5 with an interactive aerosol scheme \DIFdelbegin \DIFdel{\mbox{%DIFAUXCMD
@@ -289,8 +240,7 @@ The studied simulation is a 63-year AROME evaluation simulation from 1959 to 202
 \citep{nabat-etal-2020}}\hskip0pt%DIFAUXCMD
 . Greenhouse gases also evolve }\DIFaddend annually.
 
-More information on the model version and the evaluation simulation can be found 
-%in Quenum et al. in prep and 
+More information on the model version and the evaluation simulation can be found %DIF < in Quenum et al. in prep and 
 in the technical note of \cite{caillaud-etal-2026}.
 
 \begin{figure}
@@ -663,7 +613,7 @@ AROME only partially reproduces these hourly-scale patterns. Across all seasons,
 However, the simulated trends are often weaker by a factor of two and display inconsistent spatial localization compared to observations, as reflected by the very low spatial correlations for some }\DIFdelend \DIFaddbegin \DIFadd{AROME simulates a median hourly GEV trend of $+17.70\%$ (against $+101.86\%$ for stations), and in February, it simulates $+11.46\%$ (against $+43.28\%$ for stations).
 }
 
-\DIFadd{This systematic underestimation is reflected in the monthly mean errors ($ME$) between the stations and the corresponding AROME grid points shown in Figure~\ref{fig:correlation_trend}b, with large negative values at the hourly scale during convective }\DIFaddend months (e.g.\DIFdelbegin \DIFdel{\ $r = 0.08$ in June)}\DIFdelend \DIFaddbegin \DIFadd{, $ME = -41.6\%$ in February, $ME = -13.6\%$ in March, and $ME = -82.2\%$ in June), whereas daily mean errors remain much smaller (e.g., $ME = 0.2\%$ in January and $ME = 4.3\%$ in March)}\DIFaddend .
+\DIFadd{This systematic underestimation is reflected in the monthly mean errors ($ME$) between the stations and the corresponding AROME grid points shown in Figure~\ref{fig:correlation_trend}b, with large negative values at the hourly scale during convective }\DIFaddend months (e.g.\DIFdelbegin \DIFdel{\ $r = 0.08$ in June)}\DIFdelend \DIFaddbegin \DIFadd{, $ME = -75.6\%$ in February, $ME = -182.0\%$ in March, and $ME = -136.1\%$ in June), whereas daily mean errors remain much smaller (e.g., $ME = -0.9\%$ in January and $ME = 3.1\%$ in March)}\DIFaddend .
 
 \DIFdelbegin %DIFDELCMD < \begin{figure}[htp]
 %DIFDELCMD < \centering
@@ -799,7 +749,7 @@ Unlike the daily scale, no national mapping of hourly 10-year return-level trend
 %DIFDELCMD < %%%
 \DIFdelend Over 1990-2022, trend magnitudes in hourly extremes frequently reach $\pm 50\%$ and can exceed +100\%, with strong seasonal dependence. Coherent monthly signals emerge nonetheless: February trends in the Rhône Valley, March trends along the western Mediterranean arc, November increases in the eastern Mediterranean arc, and widespread June increases across most of France. These patterns, though noisier than daily trends, are robust in the sense that they are not produced by a single year (Figure \ref{ann:comparaison_trend}). This indicates the start of an emerging trend in hourly extremes even within the constraints of a relatively short observational period.
 
-AROME reproduces part of the \DIFaddbegin \DIFadd{seasonal }\DIFaddend structure of these hourly \DIFdelbegin \DIFdel{signals -- particularly it concords in }\DIFdelend \DIFaddbegin \DIFadd{signals---concurring on }\DIFaddend the months associated with enhanced extreme \DIFdelbegin \DIFdel{activity---- but does not }\DIFdelend \DIFaddbegin \DIFadd{activity (Figure~\ref{fig:correlation_trend}a)---but fails to }\DIFaddend capture their spatial organization \DIFdelbegin \DIFdel{nor magnitude. Model-observation correlations remain low or near zero for most seasons and months, and the model substantially underestimates the amplitude of station-based trends. Even where stations show widespread enhancements (e.g.\ February, March}\DIFdelend \DIFaddbegin \DIFadd{and magnitude. The model systematically underestimates the magnitude of positive hourly GEV trends, leading to a much larger underestimation of relative trends at hourly than at daily scale (e.g., $ME = -82.2\%$ vs. $-2.8\%$ in June, see Fig.~\ref{fig:correlation_trend}a,b). Furthermore, hourly spatial correlations remain close to zero for most convective months (e.g.}\DIFaddend , \DIFdelbegin \DIFdel{June), AROME simulates much weaker and spatially inconsistent changes}\DIFdelend \DIFaddbegin \DIFadd{$r = 0.08$ in June and $r = 0.04$ in March, see Figure~\ref{fig:correlation_trend}c), reflecting shifts in the simulated convective precipitation zones, especially in mountain regions (such as the Massif Central and the Alps) where summer convective activity dominates}\DIFaddend . Part of this \DIFdelbegin \DIFdel{was expected: the }\DIFdelend trend magnitude underestimation is consistent with the \DIFdelbegin \DIFdel{strong }\DIFdelend underestimation of temperature trends in AROME \DIFdelbegin \DIFdel{. It is also partly due to the mismatch between point-scale raingauge measurements and 2.5 x 2.5 km AROME grid box averages. Inconsistencies in the trend spatial localization were also expected since AROME runs freely on the domain without data assimilation. Thus, depending on the weather situations - and particularly for the convective months - precipitation zones can be shifted. 
+AROME reproduces part of the \DIFaddbegin \DIFadd{seasonal }\DIFaddend structure of these hourly \DIFdelbegin \DIFdel{signals -- particularly it concords in }\DIFdelend \DIFaddbegin \DIFadd{signals---concurring on }\DIFaddend the months associated with enhanced extreme \DIFdelbegin \DIFdel{activity---- but does not }\DIFdelend \DIFaddbegin \DIFadd{activity (Figure~\ref{fig:correlation_trend}a)---but fails to }\DIFaddend capture their spatial organization \DIFdelbegin \DIFdel{nor magnitude. Model-observation correlations remain low or near zero for most seasons and months, and the model substantially underestimates the amplitude of station-based trends. Even where stations show widespread enhancements (e.g.\ February, March}\DIFdelend \DIFaddbegin \DIFadd{and magnitude. The model systematically underestimates the magnitude of positive hourly GEV trends, leading to a much larger underestimation of relative trends at hourly than at daily scale (e.g., $ME = -136.1\%$ vs. $-1.4\%$ in June, see Fig.~\ref{fig:correlation_trend}a,b). Furthermore, hourly spatial correlations remain close to zero for most convective months (e.g.}\DIFaddend , \DIFdelbegin \DIFdel{June), AROME simulates much weaker and spatially inconsistent changes}\DIFdelend \DIFaddbegin \DIFadd{$r = 0.08$ in June and $r = 0.04$ in March, see Figure~\ref{fig:correlation_trend}c), reflecting shifts in the simulated convective precipitation zones, especially in mountain regions (such as the Massif Central and the Alps) where summer convective activity dominates}\DIFaddend . Part of this \DIFdelbegin \DIFdel{was expected: the }\DIFdelend trend magnitude underestimation is consistent with the \DIFdelbegin \DIFdel{strong }\DIFdelend underestimation of temperature trends in AROME \DIFdelbegin \DIFdel{. It is also partly due to the mismatch between point-scale raingauge measurements and 2.5 x 2.5 km AROME grid box averages. Inconsistencies in the trend spatial localization were also expected since AROME runs freely on the domain without data assimilation. Thus, depending on the weather situations - and particularly for the convective months - precipitation zones can be shifted. 
 }\DIFdelend \DIFaddbegin \DIFadd{(Figure~\ref{fig:trend_tempe}). 
 }\DIFaddend 
 
@@ -848,7 +798,8 @@ This work is the result of N. Decoopman's Master thesis in collaboration between
 
 %DIFDELCMD < %%%
 %DIF < \bibliographystyle{copernicus}
-\DIFdelend \bibliography{references.bib}
+\DIFdelend \DIFaddbegin \bibliographystyle{copernicus}
+\DIFaddend \bibliography{final/references}
 
 %DIF < \section{Annexes}\label{annexes}
 \DIFdelbegin %DIFDELCMD < 
@@ -857,12 +808,14 @@ This work is the result of N. Decoopman's Master thesis in collaboration between
 %DIF < \clearpage 
 \DIFdelend \appendix
 %DIF <  Définit la numérotation comme LettreDeSection + Numéro (ex: A1, B1)
-\DIFaddbegin \clearpage
-\DIFaddend \renewcommand{\thefigure}{\thesection\arabic{figure}}
+\DIFdelbegin %DIFDELCMD < \renewcommand{\thefigure}{\thesection\arabic{figure}}
+%DIFDELCMD < %%%
+\DIFdelend 
 
 \section{10-year return level of precipitation}
-\setcounter{figure}{0} 
+\DIFdelbegin %DIFDELCMD < \setcounter{figure}{0} %%%
 %DIF <  Réinitialise le compteur pour l'annexe A
+\DIFdelend 
 
 \begin{figure}[H]
     \centering
@@ -893,30 +846,32 @@ This work is the result of N. Decoopman's Master thesis in collaboration between
 %DIFDELCMD < 
 
 %DIFDELCMD < %%%
-\DIFdelend \DIFaddbegin \clearpage
-\DIFaddend \section{Robustness of trends when discarding the overall maxima}
+\DIFdelend \section{Robustness of trends when discarding the overall maxima}
 
-\begin{figure}[htp]
-\centering
+\DIFdelbegin %DIFDELCMD < \begin{figure}[htp]
+%DIFDELCMD < %%%
+\DIFdelendFL \DIFaddbeginFL \begin{figure}[H]
+\DIFaddendFL \centering
     \DIFdelbeginFL %DIFDELCMD < \includegraphics[width=\textwidth]{fig9.pdf}
 %DIFDELCMD <     %%%
 %DIF < \captionsetup{type=figure}
     %DIF < \setcounter{figure}{9}% prochaine légende = Figure 9
     \DIFdelendFL \DIFaddbeginFL \includegraphics[width=\textwidth]{figb1.pdf}
     \DIFaddendFL \caption{Relative trends over the last thirty years ending in 2022 (\%) in the 10-year return level of hourly precipitation for Météo-France stations when considering the complete series (left) and when discarding the overall maximum (right). Only the the stations with significant trends (for the complete series) are used. The numbers written above each month indicate the Pearson correlation (r) between trends of the complete series and trends of the series without the overall maximum.}\label{ann:comparaison_trend}
-\DIFaddbeginFL \end{figure}
+\end{figure}
 
-\clearpage
-\section{\DIFadd{Monthly trend maps of hourly extremes}}
-\setcounter{figure}{0}
+\DIFaddbegin \section{\DIFadd{Monthly trend maps of hourly extremes}}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.7\textwidth]{figc1.pdf}
-    \caption{\DIFaddFL{Relative monthly trends over 1990--2022 (\%) in the 10-year return level of hourly precipitation for AROME (left) and Météo-France stations (right). Display conventions: non-significant stations as open circles (white fill); significant trends close to zero as filled grey (dark outline); significant non-zero trends coloured on the map scale (uniform marker size); non-significant AROME grid cells not displayed. Metrics ($r$, $n$, $ME$) are computed on significant trends only.}}\label{ann:monthly_trend_maps}
-\DIFaddendFL \end{figure}
+\begingroup
+\centering
+\includegraphics[width=\linewidth,height=0.83\textheight,keepaspectratio]{figc1.pdf}
+\captionof{figure}{Relative monthly trends over 1990--2022 (\%) in the 10-year return level of hourly precipitation for AROME (left) and Météo-France stations (right). Display conventions: non-significant stations as open circles (white fill); significant trends close to zero as filled grey (dark outline); significant non-zero trends coloured on the map scale (uniform marker size); non-significant AROME grid cells not displayed. Metrics ($r$, $n$, $ME$) are computed on significant trends only.}\label{ann:monthly_trend_maps}
+\par
+\endgroup
 
-\noappendix    
-\clearpage
+\DIFaddend \noappendix
+\DIFdelbegin %DIFDELCMD < \clearpage
+%DIFDELCMD < %%%
+\DIFdelend 
 
 \end{document}

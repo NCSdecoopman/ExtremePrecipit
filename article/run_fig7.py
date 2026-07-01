@@ -52,30 +52,7 @@ def _dims(fig) -> Tuple[float, float]:
     w, h = fig.get_size()
     return _to_px(w), _to_px(h)
 
-def combined_metrics_df(name_file: str):
-    base_dir = Path("../outputs_nr10")
-    csv_paths = list(base_dir.rglob(name_file))
-    frames = []
-    for path in csv_paths:
-        try:
-            df = pd.read_csv(path)
-            df["source"] = str(path.relative_to(base_dir))
-            frames.append(df)
-        except Exception as exc:
-            sys.stderr.write(f"Warning: ignored file {path}: {exc}\n")
-    if not frames:
-        raise SystemExit("No metrics.csv found!")
-    combined = pd.concat(frames, ignore_index=True)
-    mask_q = combined["source"].str.contains("quotidien_reduce", na=False)
-    combined.loc[mask_q & (combined["echelle"] == "quotidien"), "echelle"] = "quotidien_reduce"
-    mask_h = combined["source"].str.contains("horaire_reduce", na=False)
-    combined.loc[mask_h & (combined["echelle"] == "horaire"), "echelle"] = "horaire_reduce"
-    return combined
-
-combined = combined_metrics_df("metrics.csv")
-combined_signif = combined_metrics_df("metrics_signif.csv")
-combined_signif["col_calculate"] = combined_signif["col_calculate"].astype(str) + "_signif"
-combined_all = pd.concat([combined, combined_signif], ignore_index=True)
+from metrics_utils import load_metrics_csv
 
 def assemble(arome: Path, stations: Path, legend: Path, output: Path) -> str:
     fig_arome = fromfile(str(arome))
@@ -114,171 +91,96 @@ def assemble(arome: Path, stations: Path, legend: Path, output: Path) -> str:
 
 print("Starting fig7 assembly...")
 trend_pluie_jan = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jan/mod_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jan/obs_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jan/mod_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jan/obs_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_jan.svg",
 )
 trend_pluie_fev = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/fev/mod_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/fev/obs_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/fev/mod_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/fev/obs_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_fev.svg",
 )
 trend_pluie_mar = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mar/mod_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mar/obs_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mar/mod_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mar/obs_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_mar.svg",
 )
 trend_pluie_avr = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/avr/mod_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/avr/obs_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/avr/mod_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/avr/obs_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_avr.svg",
 )
 trend_pluie_mai = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mai/mod_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mai/obs_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mai/mod_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/mai/obs_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_mai.svg",
 )
 trend_pluie_jui = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jui/mod_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jui/obs_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jui/mod_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/jui/obs_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_jui.svg",
 )
 trend_pluie_juill = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/juill/mod_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/juill/obs_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/juill/mod_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/juill/obs_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_juill.svg",
 )
 trend_pluie_aou = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/aou/mod_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/aou/obs_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/aou/mod_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/aou/obs_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_aou.svg",
 )
 trend_pluie_sep = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/sep/mod_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/sep/obs_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/sep/mod_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/sep/obs_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_sep.svg",
 )
 trend_pluie_oct = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/oct/mod_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/oct/obs_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/oct/mod_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/oct/obs_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_oct.svg",
 )
 trend_pluie_nov = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/nov/mod_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/nov/obs_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/nov/mod_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/nov/obs_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_nov.svg",
 )
 trend_pluie_dec = assemble(
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/dec/mod_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/dec/obs_signif_rast.svg",
-"../outputs/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/dec/mod_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/dec/obs_signif_rast.svg",
+"../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/legend_signif.svg",
 "figures/trend_horaire_pluie_dec.svg",
 )
 
-df_trend_pluie_jan = combined_all.loc[
-(combined_all["echelle"] == "horaire")
-& (combined_all["season"] == "jan")
-& (combined_all["col_calculate"] == "z_T_p_signif"),
-["n", "r", "me", "delta"],
-]
-df_trend_pluie_fev = combined_all.loc[
-(combined_all["echelle"] == "horaire")
-& (combined_all["season"] == "fev")
-& (combined_all["col_calculate"] == "z_T_p_signif"),
-["n", "r", "me", "delta"],
-]
-df_trend_pluie_mar = combined_all.loc[
-(combined_all["echelle"] == "horaire")
-& (combined_all["season"] == "mar")
-& (combined_all["col_calculate"] == "z_T_p_signif"),
-["n", "r", "me", "delta"],
-]
-df_trend_pluie_avr = combined_all.loc[
-(combined_all["echelle"] == "horaire")
-& (combined_all["season"] == "avr")
-& (combined_all["col_calculate"] == "z_T_p_signif"),
-["n", "r", "me", "delta"],
-]
-df_trend_pluie_mai = combined_all.loc[
-(combined_all["echelle"] == "horaire")
-& (combined_all["season"] == "mai")
-& (combined_all["col_calculate"] == "z_T_p_signif"),
-["n", "r", "me", "delta"],
-]
-df_trend_pluie_jui = combined_all.loc[
-(combined_all["echelle"] == "horaire")
-& (combined_all["season"] == "jui")
-& (combined_all["col_calculate"] == "z_T_p_signif"),
-["n", "r", "me", "delta"],
-]
-df_trend_pluie_juill = combined_all.loc[
-(combined_all["echelle"] == "horaire")
-& (combined_all["season"] == "juill")
-& (combined_all["col_calculate"] == "z_T_p_signif"),
-["n", "r", "me", "delta"],
-]
-df_trend_pluie_aou = combined_all.loc[
-(combined_all["echelle"] == "horaire")
-& (combined_all["season"] == "aou")
-& (combined_all["col_calculate"] == "z_T_p_signif"),
-["n", "r", "me", "delta"],
-]
-df_trend_pluie_sep = combined_all.loc[
-(combined_all["echelle"] == "horaire")
-& (combined_all["season"] == "sep")
-& (combined_all["col_calculate"] == "z_T_p_signif"),
-["n", "r", "me", "delta"],
-]
-df_trend_pluie_oct = combined_all.loc[
-(combined_all["echelle"] == "horaire")
-& (combined_all["season"] == "oct")
-& (combined_all["col_calculate"] == "z_T_p_signif"),
-["n", "r", "me", "delta"],
-]
-df_trend_pluie_nov = combined_all.loc[
-(combined_all["echelle"] == "horaire")
-& (combined_all["season"] == "nov")
-& (combined_all["col_calculate"] == "z_T_p_signif"),
-["n", "r", "me", "delta"],
-]
-df_trend_pluie_dec = combined_all.loc[
-(combined_all["echelle"] == "horaire")
-& (combined_all["season"] == "dec")
-& (combined_all["col_calculate"] == "z_T_p_signif"),
-["n", "r", "me", "delta"],
-]
+metrics_h = load_metrics_csv("../outputs_nr10/maps/gev_z_T_p/horaire/compare_12/sat_90.0/metrics_signif.csv")
 
-def _first_vals(df):
-    if df.empty:
-        raise ValueError("Empty DataFrame for this filter.")
-    r = float(df["r"].iloc[0].item())
-    n = int(df["n"].iloc[0].item())
-    me = float(df["me"].iloc[0].item())
-    return r, n, me
+def _month_metrics(season: str):
+    row = metrics_h.loc[metrics_h["season"] == season].iloc[0]
+    return float(row["r"]), int(row["n"]), float(row["me"])
 
-r_jan, n_jan, me_jan = _first_vals(df_trend_pluie_jan)
-r_fev, n_fev, me_fev = _first_vals(df_trend_pluie_fev)
-r_mar, n_mar, me_mar = _first_vals(df_trend_pluie_mar)
-r_avr, n_avr, me_avr = _first_vals(df_trend_pluie_avr)
-r_mai, n_mai, me_mai = _first_vals(df_trend_pluie_mai)
-r_jun, n_jun, me_jun = _first_vals(df_trend_pluie_jui)
-r_jul, n_jul, me_jul = _first_vals(df_trend_pluie_juill)
-r_aug, n_aug, me_aug = _first_vals(df_trend_pluie_aou)
-r_sep, n_sep, me_sep = _first_vals(df_trend_pluie_sep)
-r_oct, n_oct, me_oct = _first_vals(df_trend_pluie_oct)
-r_nov, n_nov, me_nov = _first_vals(df_trend_pluie_nov)
-r_dec, n_dec, me_dec = _first_vals(df_trend_pluie_dec)
+r_jan, n_jan, me_jan = _month_metrics("jan")
+r_fev, n_fev, me_fev = _month_metrics("fev")
+r_mar, n_mar, me_mar = _month_metrics("mar")
+r_avr, n_avr, me_avr = _month_metrics("avr")
+r_mai, n_mai, me_mai = _month_metrics("mai")
+r_jun, n_jun, me_jun = _month_metrics("jui")
+r_jul, n_jul, me_jul = _month_metrics("juill")
+r_aug, n_aug, me_aug = _month_metrics("aou")
+r_sep, n_sep, me_sep = _month_metrics("sep")
+r_oct, n_oct, me_oct = _month_metrics("oct")
+r_nov, n_nov, me_nov = _month_metrics("nov")
+r_dec, n_dec, me_dec = _month_metrics("dec")
 
 macros = rf"""
 \newcommand{{\rJAN}}{{{r_jan:.2f}}}

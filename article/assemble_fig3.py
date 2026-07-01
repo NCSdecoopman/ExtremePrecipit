@@ -95,28 +95,6 @@ def assemble_vertical(arome: Path, stations: Path, legend: Path, output: Path) -
     render_pdf_with_svglib(output, Path(pdf_path))
     return str(output)
 
-def combined_metrics_df(name_file: str, base_dir: Path = Path("../outputs")):
-    csv_paths = list(base_dir.rglob(name_file))
-    frames = []
-    for path in csv_paths:
-        try:
-            df = pd.read_csv(path)
-            df["source"] = str(path.relative_to(base_dir))
-            frames.append(df)
-        except Exception as exc:
-            sys.stderr.write(f"Fichier ignore {path}: {exc}\n")
-    if not frames:
-        raise SystemExit("Aucun metrics.csv trouve !")
-    combined = pd.concat(frames, ignore_index=True)
-    mask_q = combined["source"].str.contains("quotidien_reduce", na=False)
-    combined.loc[mask_q & (combined["echelle"] == "quotidien"), "echelle"] = "quotidien_reduce"
-    mask_h = combined["source"].str.contains("horaire_reduce", na=False)
-    combined.loc[mask_h & (combined["echelle"] == "horaire"), "echelle"] = "horaire_reduce"
-    return combined
-
-combined = combined_metrics_df("metrics.csv")
-combined_nr = combined_metrics_df("metrics.csv", Path("../outputs_nr10"))
-
 # Largeur cible des légendes diff/rdiff (ticks sur 4 car. + ylabel), en unités viewBox.
 _LEGEND_SLOT_W = 600.0
 
@@ -273,19 +251,20 @@ nr_pluie_horaire_rdiff = assemble_un(
   Path("figures/nr_pluie_horaire_rdiff.svg")
 )
 
-df_jour_pluie = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "numday"), ["n", "r", "me", "delta"]]
-df_mean_pluie_jour = combined.loc[(combined["echelle"] == "quotidien") & (combined["season"] == "hydro") & (combined["col_calculate"] == "mean"), ["n", "r", "me", "delta"]]
-r_jp  = float(df_jour_pluie["r"].iloc[0]);  n_jp  = int(df_jour_pluie["n"].iloc[0])
-r_mpj = float(df_mean_pluie_jour["r"].iloc[0]); n_mpj = int(df_mean_pluie_jour["n"].iloc[0])
-me_jp  = float(df_jour_pluie["me"].iloc[0]);  d_jp  = float(df_jour_pluie["delta"].iloc[0])
-me_mpj = float(df_mean_pluie_jour["me"].iloc[0]); d_mpj = float(df_mean_pluie_jour["delta"].iloc[0])
+from metrics_utils import read_map_metrics
 
-df_jour_nr = combined_nr.loc[(combined_nr["echelle"] == "quotidien") & (combined_nr["season"] == "hydro") & (combined_nr["col_calculate"] == "zTpa"), ["n", "r", "me", "delta"]]
-df_horaire_nr = combined_nr.loc[(combined_nr["echelle"] == "horaire") & (combined_nr["season"] == "hydro") & (combined_nr["col_calculate"] == "zTpa"), ["n", "r", "me", "delta"]]
-r_jn  = float(df_jour_nr["r"].iloc[0]);  n_jn  = int(df_jour_nr["n"].iloc[0])
-r_hn = float(df_horaire_nr["r"].iloc[0]); n_hn= int(df_horaire_nr["n"].iloc[0])
-me_jn  = float(df_jour_nr["me"].iloc[0]); me_hn = float(df_horaire_nr["me"].iloc[0])
-d_jn     = float(df_jour_nr["delta"].iloc[0]); d_hn  = float(df_horaire_nr["delta"].iloc[0])
+r_jp, n_jp, me_jp, d_jp = read_map_metrics(
+    "../outputs/maps/stats_numday/quotidien/compare_1/sat_99.9/metrics.csv", "hydro"
+)
+r_mpj, n_mpj, me_mpj, d_mpj = read_map_metrics(
+    "../outputs/maps/stats_mean/quotidien/compare_1/sat_99.0/metrics.csv", "hydro"
+)
+r_jn, n_jn, me_jn, d_jn = read_map_metrics(
+    "../outputs_nr10/maps/gev_zTpa/quotidien/compare_1/sat_99.0/metrics.csv", "hydro"
+)
+r_hn, n_hn, me_hn, d_hn = read_map_metrics(
+    "../outputs_nr10/maps/gev_zTpa/horaire/compare_1/sat_99.0/metrics.csv", "hydro"
+)
 
 macros = rf"""
 \newcommand{{\rJourPluie}}{{{r_jp:.2f}}}

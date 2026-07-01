@@ -73,20 +73,36 @@ base_dir = Path("../outputs_nr10")
 if not base_dir.exists():
     base_dir = Path("outputs_nr10")
 
-daily_path = base_dir / "maps/gev_z_T_p/quotidien/compare_12/sat_99.0/metrics_signif.csv"
+outputs_base = Path("../outputs")
+if not outputs_base.exists():
+    outputs_base = Path("outputs")
+
+daily_me_path = outputs_base / "maps/gev_z_T_p/quotidien/compare_12/sat_99.0/metrics_signif.csv"
+daily_trend_path = base_dir / "maps/gev_z_T_p/quotidien/compare_12/sat_99.0/metrics_signif.csv"
 hourly_path = base_dir / "maps/gev_z_T_p/horaire/compare_12/sat_90.0/metrics_signif.csv"
 
-df_daily = pd.read_csv(daily_path)
+df_daily_me = pd.read_csv(daily_me_path)
+df_daily_trend = pd.read_csv(daily_trend_path)
 df_hourly = pd.read_csv(hourly_path)
+
+daily_obs_col, daily_mod_col = "mean_obs", "mean_mod"
+hourly_obs_col, hourly_mod_col = "median_obs", "median_mod"
 
 months_fr = ["jan", "fev", "mar", "avr", "mai", "jui", "juill", "aou", "sep", "oct", "nov", "dec"]
 months_en = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 
-df_daily["season"] = df_daily["season"].str.lower()
+df_daily_me["season"] = df_daily_me["season"].str.lower()
+df_daily_trend["season"] = df_daily_trend["season"].str.lower()
 df_hourly["season"] = df_hourly["season"].str.lower()
 
-df_daily = df_daily.set_index("season").reindex(months_fr).reset_index()
+df_daily_me = df_daily_me.set_index("season").reindex(months_fr).reset_index()
+df_daily_trend = df_daily_trend.set_index("season").reindex(months_fr).reset_index()
 df_hourly = df_hourly.set_index("season").reindex(months_fr).reset_index()
+df_daily = df_daily_me.merge(
+    df_daily_trend[["season", daily_obs_col, daily_mod_col]],
+    on="season",
+    how="left",
+)
 
 x = np.arange(len(months_en))
 width_2 = 0.35
@@ -110,8 +126,8 @@ ax2 = fig.add_subplot(gs[1, :])
 ax3 = fig.add_subplot(gs[2, :])
 
 # Panel (a): Stations | AROME
-ax_stations.bar(x - 0.5 * width_a, df_daily["mean_obs"], width=width_a, color=COLOR_DAILY)
-ax_stations.bar(x + 0.5 * width_a, df_hourly["mean_obs"], width=width_a, color=COLOR_HOURLY)
+ax_stations.bar(x - 0.5 * width_a, df_daily[daily_obs_col].fillna(0), width=width_a, color=COLOR_DAILY)
+ax_stations.bar(x + 0.5 * width_a, df_hourly[hourly_obs_col], width=width_a, color=COLOR_HOURLY)
 ax_stations.set_ylabel("Median GEV relative trend (%)")
 ax_stations.set_ylim(-50, 115)
 style_y_axis(ax_stations, show_left_labels=True, show_right_labels=False)
@@ -124,8 +140,8 @@ ax_stations.text(
     fontsize=11,
 )
 
-ax_arome.bar(x - 0.5 * width_a, df_daily["mean_mod"], width=width_a, color=COLOR_DAILY)
-ax_arome.bar(x + 0.5 * width_a, df_hourly["mean_mod"], width=width_a, color=COLOR_HOURLY)
+ax_arome.bar(x - 0.5 * width_a, df_daily[daily_mod_col].fillna(0), width=width_a, color=COLOR_DAILY)
+ax_arome.bar(x + 0.5 * width_a, df_hourly[hourly_mod_col], width=width_a, color=COLOR_HOURLY)
 style_y_axis(ax_arome, show_left_labels=False, show_right_labels=True)
 ax_arome.yaxis.tick_right()
 style_panel_a_xaxis(ax_arome, show_month_labels=True)

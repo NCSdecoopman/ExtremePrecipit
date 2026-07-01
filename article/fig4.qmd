@@ -39,38 +39,20 @@ plt.rcParams.update({
     'ytick.labelsize': 9
 })
 
-def combined_metrics_df(name_file: str, base_dir: Path = Path("../outputs")):
-    csv_paths = list(base_dir.rglob(name_file))
+from metrics_utils import load_metrics_csv
 
-    frames = []
-    for path in csv_paths:
-        try:
-            df = pd.read_csv(path)
-            df["source"] = str(path.relative_to(base_dir))  # garder la provenance
-            frames.append(df)
-        except Exception as exc:                             # CSV illisible
-            print(f"⚠️  Fichier ignoré {path}: {exc}")
+def load_compare_metrics(base_dir: Path, rel_path: str) -> pd.DataFrame:
+    df = load_metrics_csv(base_dir / rel_path)
+    df["season"] = df["season"].str.lower()
+    return df
 
-    if not frames:
-        raise SystemExit("Aucun metrics.csv trouvé !")
-
-    # Concaténation puis export
-    combined = pd.concat(frames, ignore_index=True)
-
-    # --- harmonisation des échelles ---
-    # cas quotidien_reduce
-    mask_q = combined["source"].str.contains("quotidien_reduce", na=False)
-    combined.loc[mask_q & (combined["echelle"] == "quotidien"), "echelle"] = "quotidien_reduce"
-
-    # cas horaire_reduce
-    mask_h = combined["source"].str.contains("horaire_reduce", na=False)
-    combined.loc[mask_h & (combined["echelle"] == "horaire"), "echelle"] = "horaire_reduce"
-
-    return combined
-
-combined_stats = combined_metrics_df("metrics.csv")
-combined_nr = combined_metrics_df("metrics.csv", Path("../outputs_nr10"))
-combined = pd.concat([combined_stats, combined_nr], ignore_index=True)
+frames = [
+    load_compare_metrics(Path("../outputs"), "maps/stats_numday/quotidien/compare_1/sat_99.9/metrics.csv"),
+    load_compare_metrics(Path("../outputs"), "maps/stats_mean/quotidien/compare_1/sat_99.0/metrics.csv"),
+    load_compare_metrics(Path("../outputs_nr10"), "maps/gev_zTpa/quotidien/compare_5/sat_99.0/metrics.csv"),
+    load_compare_metrics(Path("../outputs_nr10"), "maps/gev_zTpa/horaire/compare_5/sat_90.0/metrics.csv"),
+]
+combined = pd.concat(frames, ignore_index=True)
 
 def plot_4bars_by_season(
     df: pd.DataFrame,

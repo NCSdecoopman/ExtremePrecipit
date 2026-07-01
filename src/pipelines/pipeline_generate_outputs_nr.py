@@ -946,12 +946,14 @@ def generate_scatter(
             logger.info(season_dir / "scatter.svg")
 
             # ----- METRICS -----
-            me = np.median(x - y)
+            me = np.mean(x - y)
             corr = np.corrcoef(x, y)[0, 1] if len(x) > 1 else np.nan
             n = len(x)
-            mean_mod = obs_vs_mod.select(pl.col("AROME").median()).item()
-            mean_obs = obs_vs_mod.select(pl.col("Station").median()).item()
-            delta = me / np.median([mean_mod, mean_obs])*100
+            mean_mod = obs_vs_mod.select(pl.col("AROME").mean()).item()
+            mean_obs = obs_vs_mod.select(pl.col("Station").mean()).item()
+            median_mod = obs_vs_mod.select(pl.col("AROME").median()).item()
+            median_obs = obs_vs_mod.select(pl.col("Station").median()).item()
+            delta = me / np.mean([mean_mod, mean_obs])*100
 
             metrics.append({
                 "echelle": echelle,
@@ -962,7 +964,9 @@ def generate_scatter(
                 "me": me,
                 "delta": delta,
                 "mean_mod": mean_mod,
-                "mean_obs": mean_obs
+                "mean_obs": mean_obs,
+                "median_mod": median_mod,
+                "median_obs": median_obs,
             })
 
 

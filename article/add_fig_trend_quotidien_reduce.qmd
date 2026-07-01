@@ -205,30 +205,27 @@ trend_pluie_jas = assemble(
   "figures/trend_pluie_jas_qr.svg"
 )
 
-echelle_target = "quotidien_reduce"
-df_trend_pluie_hydro = combined_all.loc[(combined_all["echelle"] == echelle_target) & (combined_all["season"] == "hydro") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
-df_trend_pluie_ond = combined_all.loc[(combined_all["echelle"] == echelle_target) & (combined_all["season"] == "ond") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
-df_trend_pluie_jfm = combined_all.loc[(combined_all["echelle"] == echelle_target) & (combined_all["season"] == "jfm") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
-df_trend_pluie_amj = combined_all.loc[(combined_all["echelle"] == echelle_target) & (combined_all["season"] == "amj") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
-df_trend_pluie_jas = combined_all.loc[(combined_all["echelle"] == echelle_target) & (combined_all["season"] == "jas") & (combined_all["col_calculate"] == "z_T_p_signif"), ["n", "r", "me", "delta"]]
+from metrics_utils import load_metrics_csv, season_row
+
+metrics_trend = load_metrics_csv(
+    "../outputs/maps/gev_z_T_p/quotidien_reduce/compare_5/sat_99.0/metrics_signif.csv"
+)
+
+def _season_metrics(season: str):
+    row = season_row(metrics_trend, season)
+    return float(row["r"]), int(row["n"]), float(row["me"])
 ```
 
 ```{python}
 #| include: false
-def _first_vals(df):
-    if df.empty:
-        return np.nan, 0, np.nan
-    # .item() évite les objets numpy scalaires
-    r = float(df["r"].iloc[0].item())
-    n = int(df["n"].iloc[0].item())
-    me = float(df["me"].iloc[0].item())
-    return r, n, me
+def _first_vals(season: str):
+    return _season_metrics(season)
 
-r_ond, n_ond, me_ond = _first_vals(df_trend_pluie_ond)
-r_jfm, n_jfm, me_jfm = _first_vals(df_trend_pluie_jfm)
-r_amj, n_amj, me_amj = _first_vals(df_trend_pluie_amj)
-r_jas, n_jas, me_jas = _first_vals(df_trend_pluie_jas)
-r_hyd, n_hyd, me_hyd = _first_vals(df_trend_pluie_hydro)
+r_ond, n_ond, me_ond = _first_vals("ond")
+r_jfm, n_jfm, me_jfm = _first_vals("jfm")
+r_amj, n_amj, me_amj = _first_vals("amj")
+r_jas, n_jas, me_jas = _first_vals("jas")
+r_hyd, n_hyd, me_hyd = _first_vals("hydro")
 
 macros = rf"""
 \newcommand{{\rOND}}{{{r_ond:.2f}}}
