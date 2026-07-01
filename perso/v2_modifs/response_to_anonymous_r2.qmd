@@ -1,6 +1,11 @@
 ---
 title: "Response to Anonymous Referee #2"
 format: pdf
+crossref:
+  fig-prefix: "Response Figure"
+  fig-title: "Response Figure"
+  tbl-prefix: "Response Table"
+  tbl-title: "Response Table"
 ---
 
 **Manuscript Title:** Climatology and trends of extreme precipitation in France: evaluation of an explicit-convection regional climate model
@@ -19,7 +24,7 @@ _There is a 10-year return period chosen for both daily and hourly data, even th
 
 * **Response:** We thank the reviewer for this comment. We agree that estimating a 10-year return level ($RL_{10}$) at the hourly scale from a 33-year series (1990–2022) is more uncertain than at lower return periods, because each hourly annual maximum carries less information about the tail of the distribution.
 
-As a sensitivity check, we computed relative trends in $RL_2$ and $RL_5$ using the same non-stationary GEV models and the same 1992–2022 trend window as for $RL_{10}$ (@fig-rl-daily, @fig-rl-hourly). Quantitative comparisons (hydrological year, all stations with a selected GEV model) show that the **spatial patterns are robust to the choice of return period**, while trend **magnitudes** increase with $T$, as expected for higher quantiles:
+As a sensitivity check, we computed relative trends in $RL_2$ and $RL_5$ using the same non-stationary GEV models and the same 1992–2022 trend window as for $RL_{10}$ (@fig-rl-daily and @fig-rl-hourly). Quantitative comparisons (hydrological year, all stations with a selected GEV model) show that the spatial patterns are robust to the choice of return period, while trend magnitudes increase with $T$, as expected for higher quantiles:
 
 **Daily (1,583 stations; 704 with significant $RL_{10}$ trends, 44.5%).** Among significant stations, pairwise Pearson correlations of relative trends are $r=0.99$ between $RL_5$ and $RL_{10}$, $r=0.86$ between $RL_2$ and $RL_{10}$, and $r=0.92$ between $RL_2$ and $RL_5$. Median absolute trends are similar across return periods (9.3%, 10.9%, and 11.3% for $RL_2$, $RL_5$, and $RL_{10}$, respectively). The same regional signals appear on all three maps—notably positive trends in the southern Alps and Mediterranean arc, and weaker or negative trends in parts of western France—with $RL_5$ virtually indistinguishable from $RL_{10}$ at the national scale.
 
@@ -27,17 +32,17 @@ As a sensitivity check, we computed relative trends in $RL_2$ and $RL_5$ using t
 
 **AROME** shows the same behaviour: $r=0.99$ between $RL_5$ and $RL_{10}$ trends (daily and hourly, significant grid points) and $r=0.83$–$0.86$ between $RL_2$ and $RL_{10}$, consistent with the station-based analysis.
 
-We note that significance is assessed from the $RL_{10}$ trend uncertainty (10% level); the same 704 daily and 193 hourly stations are therefore flagged across return periods. This is conservative for $RL_2$ and $RL_5$, which are less noisy than $RL_{10}$ at the hourly scale. Together with the annual-maxima vs.\ $RL_2$ check in our response to Reviewer #1 ($r=0.88$ for relative trends across 1,558 daily stations), these results indicate that the trend maps (Figures 6 and 7) are not driven by GEV fitting artefacts or by the choice of a high return period alone.
+We note that significance is assessed from the $RL_{10}$ trend uncertainty (10% level); the same 704 daily and 193 hourly stations are therefore flagged across return periods. This is conservative for $RL_2$ and $RL_5$, which are less noisy than $RL_{10}$ at the hourly scale. Together with the mean annual-maxima check in our response to Reviewer #1 ($r=0.88$ for relative trends across 1,558 daily stations), these results indicate that the trend maps (Figures 6 and 7) are not driven by GEV fitting artefacts or by the choice of a high return period alone.
 
-We retain $RL_{10}$ as the primary metric because it is a standard hydrological design threshold and because our daily (63-year) and hourly (33-year) records are sufficient for its estimation. In addition, using the same return period at both daily and hourly scales enables a direct and consistent comparison of the extreme trend characteristics between the two time resolutions. The results for $RL_2$ and $RL_5$ confirm the robustness of the detected spatial patterns. We present the lower-return-period maps here for the reviewer's assessment rather than as an additional manuscript appendix, to keep the main text focused.
-
-\clearpage
-
-![Relative GEV trends of $\mathrm{RL}_2$ (first row) and $\mathrm{RL}_5$ (second row) for daily precipitation (hydrological year): columns are AROME (left) and Météo-France stations (right), with a separate colour scale for each row. Same display conventions as Figures 6 and 7: open circles for non-significant stations ; filled grey for significant near-zero trends; coloured markers for significant trends (uniform size); non-significant AROME grid cells not displayed.](Figures/rl2_rl5_trends_daily.png){#fig-rl-daily width=95%}
+We retain $RL_{10}$ as the primary metric because it is true extreme and because our daily (63-year) and hourly (33-year) records are sufficient for its estimation. In addition, using the same return period at both daily and hourly scales enables a direct and consistent comparison of the extreme trend characteristics between the two time resolutions. The results for $RL_2$ and $RL_5$ confirm the robustness of the detected spatial patterns. We present the lower-return-period maps here for the reviewer's assessment rather than as an additional manuscript appendix, to keep the main text focused.
 
 \clearpage
 
-![Relative GEV trends of $\mathrm{RL}_2$ (first row) and $\mathrm{RL}_5$ (second row) for hourly precipitation (hydrological year): columns are AROME (left) and Météo-France stations (right), with a separate colour scale for each row. Same display conventions as Figures 6 and 7: open circles for non-significant stations ; filled grey for significant near-zero trends; coloured markers for significant trends (uniform size); non-significant AROME grid cells not displayed.](Figures/rl2_rl5_trends_hourly.png){#fig-rl-hourly width=95%}
+![Relative GEV trends (%) of $\mathrm{RL}_2$ (first row) and $\mathrm{RL}_5$ (second row) for daily precipitation (hydrological year): columns are AROME (left) and Météo-France stations (right), with a separate colour scale for each row. Display conventions: open circles for non-significant stations ; filled grey for significant near-zero trends; coloured markers for significant trends (uniform size); non-significant AROME grid cells not displayed.](Figures/rl2_rl5_trends_daily.png){#fig-rl-daily width=95%}
+
+\clearpage
+
+![Relative GEV trends (%) of $\mathrm{RL}_2$ (first row) and $\mathrm{RL}_5$ (second row) for hourly precipitation (hydrological year): columns are AROME (left) and Météo-France stations (right), with a separate colour scale for each row. Display conventions: open circles for non-significant stations ; filled grey for significant near-zero trends; coloured markers for significant trends (uniform size); non-significant AROME grid cells not displayed.](Figures/rl2_rl5_trends_hourly.png){#fig-rl-hourly width=95%}
 
 \clearpage
 
@@ -45,7 +50,7 @@ We retain $RL_{10}$ as the primary metric because it is a standard hydrological 
 
 - In `Section 3.2.3 (Trend in return level)`, we have added the justification for using the 10-year return level as the main indicator, while noting the consistency with lower return periods:
 
-  > _"In this study, we focus on the 10-year return level ($\mathrm{RL}_{10}$) as the primary metric for extreme precipitation, as it represents a standard design threshold in hydrology. Our daily series (63 years) and hourly series (33 years) provide sufficient data for its robust estimation. As a sensitivity check, trends in $\mathrm{RL}_{2}$ and $\mathrm{RL}_{5}$ show the same regional patterns as $\mathrm{RL}_{10}$ (daily: $r=0.86$–$0.99$ among significant stations; hourly: $r=0.79$–$0.98$), confirming that the detected signals are robust and not driven by GEV fitting uncertainty."_
+  > _"In this study, we focus on the 10-year return level ($\mathrm{RL}_{10}$) as the primary metric for extreme precipitation. Our daily series (63 years) and hourly series (33 years) provide sufficient data for its robust estimation. As a sensitivity check, trends in $\mathrm{RL}_{2}$ and $\mathrm{RL}_{5}$ show the same regional patterns as $\mathrm{RL}_{10}$ (daily: $r=0.86$–$0.99$ among significant stations; hourly: $r=0.79$–$0.98$), confirming that the detected signals are robust and not driven by GEV fitting uncertainty."_
 
 
 ### Comment 2: Introduction & Physical Processes
@@ -107,7 +112,7 @@ This keeps the station network visible on hourly maps (where only about one thir
 
 - The same changes have been applied to the captions of Figures 6 and 7 (hourly trends) and the monthly trend maps (Appendix C, Figure C1).
 
-The Figure 4 caption has been updated for uniform marker size and zero-bias display; captions for Figures 6 and 7 and Appendix C describe the significance conventions above. The revised maps are shown in our response to Reviewer #1 (Comment 7): Figure 4 (climatology) and Figures 6 and 7 (trends).
+The Figure 3 caption has been updated for uniform marker size and zero-bias display; captions for Figures 5 and 6 and Appendix C, Figure C1 describe the significance conventions above. The revised maps are shown in our response to Reviewer #1 (Comment 7): Figure 3 (climatology) and Figures 5 and 6 (trends).
 
 ## Minor Comments
 

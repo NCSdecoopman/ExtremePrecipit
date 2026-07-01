@@ -40,10 +40,16 @@ def style_y_axis(ax, show_left_labels=True, show_right_labels=False):
     )
 
 
-def style_panel_a_xaxis(ax, show_month_labels=True):
+def style_panel_a_xaxis(ax, show_month_labels=True, rotation=45):
     ax.set_xlim(-0.5, len(months_en) - 0.5)
     ax.set_xticks(x)
-    ax.set_xticklabels(months_en if show_month_labels else [], fontsize=8, rotation=45, ha="right")
+    ha = "center" if rotation == 0 else "right"
+    ax.set_xticklabels(
+        months_en if show_month_labels else [],
+        fontsize=8,
+        rotation=rotation,
+        ha=ha,
+    )
     ax.xaxis.set_major_locator(mticker.FixedLocator(x))
     ax.tick_params(axis="x", which="major", length=3)
 
@@ -130,22 +136,19 @@ ax_arome.text(
     fontsize=11,
 )
 
-# Panel (b): Relative bias (RB)
-rb_min = min(df_daily["delta"].min(), df_hourly["delta"].min())
-rb_max = max(df_daily["delta"].max(), df_hourly["delta"].max())
-ax2.bar(x - 0.5 * width_2, df_daily["delta"], width=width_2, color=COLOR_DAILY)
-ax2.bar(x + 0.5 * width_2, df_hourly["delta"], width=width_2, color=COLOR_HOURLY)
-ax2.set_ylabel("Relative bias (RB) (%)")
-ax2.set_ylim(rb_min - 20, rb_max + 20)
-ax2.yaxis.set_major_locator(mticker.MultipleLocator(100))
-ax2.yaxis.set_minor_locator(mticker.MultipleLocator(25))
+# Panel (b): Mean error (ME) between relative trends
+me_min = min(df_daily["me"].min(), df_hourly["me"].min())
+me_max = max(df_daily["me"].max(), df_hourly["me"].max())
+ax2.bar(x - 0.5 * width_2, df_daily["me"], width=width_2, color=COLOR_DAILY)
+ax2.bar(x + 0.5 * width_2, df_hourly["me"], width=width_2, color=COLOR_HOURLY)
+ax2.set_ylabel("Mean error (ME) (%)")
+ax2.set_ylim(me_min - 20, me_max + 20)
+ax2.yaxis.set_major_locator(mticker.MultipleLocator(25))
+ax2.yaxis.set_minor_locator(mticker.MultipleLocator(5))
 ax2.grid(axis="y", which="major", linestyle="--", alpha=0.8)
 ax2.grid(axis="y", which="minor", linestyle=":", alpha=0.5)
-ax2.set_title("(b) Relative bias between AROME and Météo-France stations", loc="left")
-ax2.set_xlim(-0.5, len(months_en) - 0.5)
-ax2.set_xticks(x)
-ax2.set_xticklabels([])
-ax2.xaxis.set_major_locator(mticker.FixedLocator(x))
+ax2.set_title("(b) Mean error (ME) between AROME and Météo-France stations", loc="left")
+style_panel_a_xaxis(ax2, show_month_labels=True, rotation=0)
 
 # Panel (c): Spatial correlation (r)
 bars_daily = ax3.bar(x - 0.5 * width_2, df_daily["r"], width=width_2, color=COLOR_DAILY)
@@ -158,7 +161,7 @@ ax3.yaxis.set_major_locator(mticker.MultipleLocator(0.1))
 ax3.yaxis.set_minor_locator(mticker.MultipleLocator(0.02))
 ax3.grid(axis="y", which="major", linestyle="--", alpha=0.8)
 ax3.grid(axis="y", which="minor", linestyle=":", alpha=0.5)
-ax3.set_title("(c) Monthly spatial correlation of GEV trends", loc="left")
+ax3.set_title("(c) Monthly spatial correlation of GEV relative trends", loc="left")
 ax3.set_xlim(-0.5, len(months_en) - 0.5)
 ax3.set_xticks(x)
 ax3.set_xticklabels(months_en)

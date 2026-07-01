@@ -1,3 +1,4 @@
+import re
 import sys
 import os
 from pathlib import Path
@@ -8,6 +9,19 @@ from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF
 import numpy as np
 import pandas as pd
+
+def render_pdf_with_svglib(svg_path: Path, pdf_path: Path) -> None:
+    content = svg_path.read_text(encoding="utf-8")
+    import re
+    cleaned = re.sub(r'<!DOCTYPE[^>]*>', '', content)
+    temp_svg = svg_path.parent / (svg_path.name + "_temp_cleaned.svg")
+    temp_svg.write_text(cleaned, encoding="utf-8")
+    try:
+        drawing = svg2rlg(str(temp_svg))
+        renderPDF.drawToFile(drawing, str(pdf_path))
+    finally:
+        if temp_svg.exists():
+            temp_svg.unlink()
 
 def _to_px(value: str | None) -> float:
     if not value:
@@ -78,9 +92,7 @@ def assemble_vertical(arome: Path, stations: Path, legend: Path, output: Path) -
     canvas.save(str(output))
     pdf_path = str(output)[:-4] + ".pdf"
     
-    # Render using svglib
-    drawing = svg2rlg(str(output))
-    renderPDF.drawToFile(drawing, pdf_path)
+    render_pdf_with_svglib(output, Path(pdf_path))
     return str(output)
 
 def combined_metrics_df(name_file: str, base_dir: Path = Path("../outputs")):
@@ -108,6 +120,37 @@ combined_nr = combined_metrics_df("metrics.csv", Path("../outputs_nr10"))
 # Largeur cible des légendes diff/rdiff (ticks sur 4 car. + ylabel), en unités viewBox.
 _LEGEND_SLOT_W = 210.0
 
+
+def _standard_legend_path(legend: Path) -> Path:
+    name = legend.name
+    if name.endswith("_rdiff.svg"):
+        return legend.with_name(name.replace("_rdiff.svg", ".svg"))
+    if name.endswith("_diff.svg"):
+        return legend.with_name(name.replace("_diff.svg", ".svg"))
+    return legend
+
+
+def _colorbar_x_in_legend(legend: Path) -> float:
+    text = legend.read_text(encoding="utf-8")
+    xs = re.findall(
+        r'x="([\d.]+)" y="[\d.]+" style="stroke: #000000; stroke-width: 0.8"',
+        text,
+    )
+    if not xs:
+        raise ValueError(f"Ticks de colorbar introuvables dans {legend}")
+    return float(xs[0])
+
+
+def _ref_colorbar_frac(w_maps: float, h_arome: float, legend_std: Path) -> float:
+    """Fraction horizontale de la colorbar, identique a assemble_vertical."""
+    w_leg, h_leg = _dims(fromfile(str(legend_std)))
+    scale_leg = (1.5 * h_arome) / h_leg
+    cb_x = _colorbar_x_in_legend(legend_std)
+    cb_abs = w_maps + cb_x * scale_leg
+    total_w = w_maps + w_leg * scale_leg
+    return cb_abs / total_w
+
+
 def assemble_un(carte: Path, legend: Path, output: Path) -> str:
     fig_map = fromfile(str(carte))
     fig_leg = fromfile(str(legend))
@@ -116,11 +159,14 @@ def assemble_un(carte: Path, legend: Path, output: Path) -> str:
     if h_map == 0 or h_leg == 0:
         raise ValueError("Hauteur nulle detectee.")
     scale_leg = h_map / h_leg
-    w_leg_scaled = w_leg * scale_leg
     h_leg_scaled = h_leg * scale_leg
     slot_w_scaled = _LEGEND_SLOT_W * scale_leg
-    width = w_map + max(slot_w_scaled, w_leg_scaled)
+    width = w_map + slot_w_scaled
     height = h_map
+    legend_std = _standard_legend_path(legend)
+    ref_frac = _ref_colorbar_frac(w_map, h_map, legend_std)
+    cb_x = _colorbar_x_in_legend(legend)
+    x_leg = ref_frac * width - cb_x * scale_leg
     canvas = SVGFigure(f"{width}px", f"{height}px")
     canvas.root.set("viewBox", f"0 0 {width} {height}")
     root_map = fig_map.getroot()
@@ -128,16 +174,14 @@ def assemble_un(carte: Path, legend: Path, output: Path) -> str:
     root_leg.scale(scale_leg, scale_leg)
     root_map.moveto(0, 0)
     y_leg = max(0, (h_map - h_leg_scaled) / 2.0)
-    x_leg = w_map + max(0.0, slot_w_scaled - w_leg_scaled)
     root_leg.moveto(x_leg, y_leg)
     canvas.append([root_map, root_leg])
     os.makedirs(os.path.dirname(str(output)), exist_ok=True)
     canvas.save(str(output))
     
-    # Render using svglib
-    drawing = svg2rlg(str(output))
-    renderPDF.drawToFile(drawing, str(output)[:-4] + ".pdf")
+    render_pdf_with_svglib(output, Path(str(output)[:-4] + ".pdf"))
     return str(output)
+
 
 print("Starting assembly...")
 
