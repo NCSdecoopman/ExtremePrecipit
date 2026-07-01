@@ -513,7 +513,6 @@ This work is the result of N. Decoopman's Master thesis in collaboration between
 \bibliography{references.bib}
 
 \appendix
-\clearpage
 
 \section{10-year return level of precipitation}
 
@@ -529,25 +528,23 @@ This work is the result of N. Decoopman's Master thesis in collaboration between
     \caption{10-year return level of hourly precipitation of the AROME simulations (first row), Météo-France stations (second row), and the AROME--Station difference (third row), with the spatial correlation between the stations and their closest grid points ($r$), the bias ($ME$) and the number of stations compared (n). The statistics are derived from daily data from 1990 to 2022. The contour lines show the 400 and 800 m isolines. To ease visualization, colour scales are symmetrically saturated above the 99th percentile.}\label{ann:map_trend_hourly}
 \end{figure}
 
-\clearpage
 \section{Robustness of trends when discarding the overall maxima}
 
-\begin{figure}[htp]
+\begin{figure}[H]
 \centering
     \includegraphics[width=\textwidth]{figb1.pdf}
     \caption{Relative trends over the last thirty years ending in 2022 (\%) in the 10-year return level of hourly precipitation for Météo-France stations when considering the complete series (left) and when discarding the overall maximum (right). Only the the stations with significant trends (for the complete series) are used. The numbers written above each month indicate the Pearson correlation (r) between trends of the complete series and trends of the series without the overall maximum.}\label{ann:comparaison_trend}
 \end{figure}
 
-\clearpage
 \section{Monthly trend maps of hourly extremes}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.7\textwidth]{figc1.pdf}
-    \caption{Relative monthly trends over 1990--2022 (\%) in the 10-year return level of hourly precipitation for AROME (left) and Météo-France stations (right). Display conventions: non-significant stations as open circles (white fill); significant trends close to zero as filled grey (dark outline); significant non-zero trends coloured on the map scale (uniform marker size); non-significant AROME grid cells not displayed. Metrics ($r$, $n$, $ME$) are computed on significant trends only.}\label{ann:monthly_trend_maps}
-\end{figure}
+\begingroup
+\centering
+\includegraphics[width=\linewidth,height=0.83\textheight,keepaspectratio]{figc1.pdf}
+\captionof{figure}{Relative monthly trends over 1990--2022 (\%) in the 10-year return level of hourly precipitation for AROME (left) and Météo-France stations (right). Display conventions: non-significant stations as open circles (white fill); significant trends close to zero as filled grey (dark outline); significant non-zero trends coloured on the map scale (uniform marker size); non-significant AROME grid cells not displayed. Metrics ($r$, $n$, $ME$) are computed on significant trends only.}\label{ann:monthly_trend_maps}
+\par
+\endgroup
 
-\noappendix    
-\clearpage
+\noappendix
 
 \end{document}
