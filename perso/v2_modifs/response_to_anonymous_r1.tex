@@ -882,6 +882,12 @@ stations will be corrected? What do you mean with ``heterogeneity''?}
   underestimation of hourly extremes is even larger than reported. We
   have also replaced the term ``heterogeneity'' with ``inhomogeneities''
   and clarified its meaning (non-climatic shifts) and potential impact.
+  In addition, we note that part of the model underestimation may be
+  related to the 2.5 km horizontal resolution of AROME: Brousseau et
+  al.~(2016, \url{https://doi.org/10.1002/qj.2822}) showed that
+  increasing the resolution to 1.3 km leads to a better representation
+  of maximum precipitation intensities, with less pronounced
+  underestimation.
 \end{itemize}
 
 \textbf{Manuscript modifications:}
@@ -900,10 +906,14 @@ stations will be corrected? What do you mean with ``heterogeneity''?}
   high-intensity, short-duration convective events), correcting for
   these errors would increase the observed extreme values. Consequently,
   the model's underestimation of hourly extremes is likely even larger
-  than what we report here. Furthermore, station time series can also
-  exhibit some inhomogeneities (non-climatic shifts in the time series
-  caused by changes in station location, environment, or sensor types
-  over decades), which could introduce local artificial trend
+  than what we report here. Part of this underestimation may also stem
+  from the 2.5 km horizontal resolution of AROME: Brousseau et
+  al.~(2016) showed that increasing the resolution to 1.3 km results in
+  a better representation of maximum precipitation intensities, with
+  less pronounced underestimation. Furthermore, station time series can
+  also exhibit some inhomogeneities (non-climatic shifts in the time
+  series caused by changes in station location, environment, or sensor
+  types over decades), which could introduce local artificial trend
   components, although the data used here have been quality-controlled
   by Météo-France.''
   \end{quote}
@@ -1032,12 +1042,14 @@ mode on 90-yr CPM (Lompi et al., 2025
   \begin{itemize}
   \tightlist
   \item
-    \textbf{Response:} We have corrected this discrepancy to ensure
-    consistency throughout the manuscript.
+    \textbf{Response:} We thank the reviewer for noting this apparent
+    inconsistency. Our hindcast uses ERA5 boundary forcing at 50 km,
+    whereas the native horizontal resolution of ERA5 is
+    \textasciitilde31 km. We have clarified this in Sections 1 and 2.2.
   \item
-    \textbf{Manuscript modifications:} In \texttt{Section\ 2.2}, we have
-    changed ``50 km'' to ``\textasciitilde31 km'' to correctly reflect
-    the native resolution of the ERA5 forcing data.
+    \textbf{Manuscript modifications:} In \texttt{Sections\ 1} and
+    \texttt{2.2}, we now state that the simulation is forced by ERA5 at
+    50 km (native ERA5 resolution \textasciitilde31 km).
   \end{itemize}
 \item
   \textbf{Lines 126-128. I wonder if this should be placed in the

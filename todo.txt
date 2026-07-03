@@ -1,5 +1,19 @@
-# 1. Générer le fichier LaTeX de différences (sans --flatten : évite la corruption de la biblio)
-docker run --rm -v "${pwd}:/work" -w /work/perso/v2_modifs texlive/texlive:latest sh -c "latexdiff ../v1_1_preprint/main.tex final/main.tex > diff.tex"
+# Depuis la racine du dépôt (PowerShell) : cd C:\Users\nicod\Documents\GitHub\ExtremePrecipit
 
-# 2. Compiler diff.tex (figures/biblio dans final/ via graphicspath + final/references)
-docker run --rm -v "${pwd}:/work" -w /work/perso/v2_modifs texlive/texlive:latest latexmk -pdf -interaction=nonstopmode diff.tex
+# 1. Générer diff.tex (sans --flatten : évite la corruption de la biblio)
+docker run --rm -v "${PWD}:/work" -w /work/perso/v2_modifs texlive/texlive:latest sh -c "latexdiff ../v1_1_preprint/main.tex final/main.tex > diff.tex"
+
+# 1b. Post-traitement : figures et biblio dans final/
+$diff = Get-Content perso/v2_modifs/diff.tex -Raw
+$diff = $diff.Replace('\bibliography{references.bib}', '\bibliography{final/references.bib}')
+$diff = $diff.Replace('\begin{document}', "\graphicspath{{final/}}`n\begin{document}")
+# latexdiff laisse parfois des \ref supprimés actifs dans \DIFdel (ex. fig:map_monthly_trend)
+$diff = $diff -replace '\\DIFdelbegin\s*\\DIFdel\{\\ref\{fig:map_monthly_trend\}\}\\DIFdelend\s*\\DIFaddbegin\s*\\DIFadd\{\\ref\{fig:correlation_trend\}\}\\DIFaddend', '\\DIFaddbegin \\DIFadd{\\ref{fig:correlation_trend}}\\DIFaddend'
+Set-Content perso/v2_modifs/diff.tex $diff -NoNewline
+
+# 2. Compiler diff.tex
+docker run --rm -v "${PWD}:/work" -w /work/perso/v2_modifs texlive/texlive:latest latexmk -pdf -interaction=nonstopmode diff.tex
+
+# Alternative locale (MiKTeX) si Docker indisponible — nécessite Perl pour latexdiff :
+# latexdiff perso/v1_1_preprint/main.tex perso/v2_modifs/final/main.tex > perso/v2_modifs/diff.tex
+# (puis étape 1b et) Push-Location perso/v2_modifs; latexmk -pdf -interaction=nonstopmode diff.tex; Pop-Location

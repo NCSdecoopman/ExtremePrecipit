@@ -78,6 +78,8 @@ _Figure 2 and Figure 3: How much of the temperature trend could be caused by aer
 
 * **Response:** We would like to clarify that aerosols are **not** kept constant in this AROME simulation: they are monthly evolving and vary from year to year, taken from the ALDERA reanalysis (which uses an interactive aerosol scheme to capture historical variations, including the peak pollution in the 1980s and subsequent solar dimming/brightening, as described by Nabat et al. 2020). Green House Gases also evolve annually. In the revised manuscript, we have made this clearer in Section 2.2 and Section 5.1.1 (Discussion).
 
+Regarding the origin of the weaker simulated temperature trend, we do not attribute it to the ERA5 boundary forcing, which reproduces observed temperature trends well over France. More plausible internal model limitations include the model's sensitivity to radiative forcings, the absence of interactive vegetation (vegetation properties are prescribed and do not evolve with climate), and the use of a time-invariant land use/land cover map over the 63-year simulation period.
+
 **Manuscript modifications:**
 
 - In `Section 2.2 (CNRM-AROME model)` (line 183), the existing sentence _"Aerosols are monthly evolving and come from the ALDERA reanalysis, a CNRM-ALADIN simulation at 12 km driven by ERA5 with an interactive aerosol scheme (Nabat et al., 2020). Green House Gases are evolving annually."_ already states this. We have expanded it to explicitly mention the peak pollution and dimming/brightening:
@@ -86,7 +88,7 @@ _Figure 2 and Figure 3: How much of the temperature trend could be caused by aer
 
 - In `Section 5.1 (Limitations of the study)`, after the existing paragraph on temperature trends (line 207: _"It should be noted that temperature trends [...] the magnitude of the trends we can detect."_), we have added:
 
-  > _"The weaker simulated temperature trend suggests that either the model's sensitivity to radiative forcings or the boundary conditions provided by ERA5 lead to a dampened warming signal in France compared to observations. Since aerosols and greenhouse gases evolve realistically in this simulation (Section 2.2), the temperature trend underestimation likely stems from the model's internal sensitivity or from the driving reanalysis."_
+  > _"The weaker simulated temperature trend suggests an internal dampening of the warming signal in France compared to observations. Since aerosols and greenhouse gases evolve realistically in this simulation (Section~2.2) and ERA5 reproduces observed temperature trends well, the underestimation likely stems from the model's internal sensitivity to radiative forcings, the absence of interactive vegetation, and/or the lack of temporal evolution of the land use/land cover map."_
 
 
 
@@ -118,12 +120,18 @@ The Figure 3 caption has been updated for uniform marker size and zero-bias disp
 
 * **Why choose the hydrological year? The study itself does not take into account snowpack, and in addition the convective extreme precipitation can come in summer that in this study is over the start of the hydrological year (JAS, where summer usually is considered as JJA). This should be justified more.** 
 
-  _Response:_ The choice of the hydrological year (September 1 to August 31) is standard in French climatology and hydrology, especially when studying extremes. The most intense extreme precipitation events in France, particularly the Mediterranean episodes ("episodes"), occur during autumn (September to November). Using a standard calendar year (January to December) risks splitting a single autumn convective season or grouping two distinct autumn seasons into the same year, which violates the independence assumption of annual maxima. Starting the year on September 1 ensures that the entire autumn convective season is kept intact within a single year. We have added this explanation to the methodology section to justify our choice.
+  _Response:_ We thank the reviewer for this comment, which highlights an important distinction between two levels of our analysis.
+
+  For **annual maxima** (hydrological year, September to August), the September start is motivated by the need to keep the autumn Mediterranean convective season intact within a single block, as required for the independence assumption of annual maxima GEV modeling. This choice is standard in French climatology and hydrology when studying annual extremes.
+
+  For **seasonal** analyses, we follow the conventional hydrological-season partition used in French hydrology: OND, JFM, AMJ, and JAS (three-month blocks aligned with the hydrological calendar). This differs from meteorological seasons (e.g., JJA for summer). We acknowledge that **JAS** therefore mixes late-summer convective activity (July–August) with early-autumn Mediterranean episodes (September), and does not correspond to meteorological summer. This is a limitation of the seasonal breakdown, not an inconsistency with the annual choice: the hydrological-year definition addresses block independence for annual maxima, whereas the seasonal partition is a separate convention for sub-annual aggregation.
+
+  To avoid conflating these distinct convective regimes, we also provide **monthly** analyses (Figures and Appendix), which allow summer (June–August) and autumn (September–November) signals to be examined separately. We have clarified this distinction in the methodology section.
 
   **Manuscript modifications:**
-  In `Section 3 (Methodology)`, after the definition of the time periods (line 219: _"The evaluation is conducted over [...] and month."_), we have added the following justification:
+  In `Section 3 (Methodology)`, after the definition of seasons and the hydrological year, we have added the following clarification:
 
-  > _"The hydrological year (September to August) is used instead of the calendar year, which is standard in French climatology and hydrology. This choice is motivated by the fact that the most intense extreme precipitation events in France, particularly Mediterranean episodes (e.g., Cévenol events), occur during autumn (September–November). Using a calendar year would risk splitting these autumn events across two years, violating the block-independence assumption required for annual maxima GEV modeling."_
+  > _"The hydrological year (September to August) is used for annual maxima instead of the calendar year, which is standard in French climatology and hydrology. This choice is motivated by the fact that the most intense extreme precipitation events in France, particularly Mediterranean episodes (e.g., Cévenol events), occur during autumn (September–November). Using a calendar year would risk splitting these autumn events across two years, violating the block-independence assumption required for annual maxima GEV modeling. Seasonal analyses follow the conventional hydrological-season partition (OND, JFM, AMJ, JAS), which differs from meteorological seasons: JAS groups late-summer and early-autumn activity and therefore does not correspond to meteorological summer (JJA). Monthly analyses are provided to examine summer and autumn convective regimes separately."_
 
 * **It can be confusing in the text with GEV models and Arome model, could consider naming one different.** 
 

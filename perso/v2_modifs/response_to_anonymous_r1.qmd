@@ -241,13 +241,13 @@ _*Article Figure 7.* Monthly GEV relative trend synthesis for both daily (1959�
 
 _Link this to your results. Should we expect even higher underestimation at hourly scale by the model, if undercatch errors for stations will be corrected? What do you mean with "heterogeneity"?_
 
-* **Response:** We agree. We have added a discussion linking the rain gauge undercatch to the model underestimation, showing that correcting for undercatch would likely mean that the model's underestimation of hourly extremes is even larger than reported. We have also replaced the term "heterogeneity" with "inhomogeneities" and clarified its meaning (non-climatic shifts) and potential impact.
+* **Response:** We agree. We have added a discussion linking the rain gauge undercatch to the model underestimation, showing that correcting for undercatch would likely mean that the model's underestimation of hourly extremes is even larger than reported. We have also replaced the term "heterogeneity" with "inhomogeneities" and clarified its meaning (non-climatic shifts) and potential impact. In addition, we note that part of the model underestimation may be related to the 2.5 km horizontal resolution of AROME: Brousseau et al. (2016, [https://doi.org/10.1002/qj.2822](https://doi.org/10.1002/qj.2822)) showed that increasing the resolution to 1.3 km leads to a better representation of maximum precipitation intensities, with less pronounced underestimation.
 
 **Manuscript modifications:**
 
 - In `Section 5.1.2 (Limitations of the study)`, the paragraph discussing rain gauge limitations has been updated as follows:
 
-  > "First, station precipitation measurements are frequently affected by undercatch errors, which are particularly pronounced in cold and mountainous regions with strong winds. Because undercatch typically leads to an underestimation of actual precipitation (especially for high-intensity, short-duration convective events), correcting for these errors would increase the observed extreme values. Consequently, the model's underestimation of hourly extremes is likely even larger than what we report here. Furthermore, station time series can also exhibit some inhomogeneities (non-climatic shifts in the time series caused by changes in station location, environment, or sensor types over decades), which could introduce local artificial trend components, although the data used here have been quality-controlled by Météo-France."
+  > "First, station precipitation measurements are frequently affected by undercatch errors, which are particularly pronounced in cold and mountainous regions with strong winds. Because undercatch typically leads to an underestimation of actual precipitation (especially for high-intensity, short-duration convective events), correcting for these errors would increase the observed extreme values. Consequently, the model's underestimation of hourly extremes is likely even larger than what we report here. Part of this underestimation may also stem from the 2.5 km horizontal resolution of AROME: Brousseau et al. (2016) showed that increasing the resolution to 1.3 km results in a better representation of maximum precipitation intensities, with less pronounced underestimation. Furthermore, station time series can also exhibit some inhomogeneities (non-climatic shifts in the time series caused by changes in station location, environment, or sensor types over decades), which could introduce local artificial trend components, although the data used here have been quality-controlled by Météo-France."
 
 ### Comment 11: Introduction of the SMEV Approach
 
@@ -285,8 +285,8 @@ _I think SMEV approach should also be mentioned (Marra et al. 2020 10.1029/2020g
   * **Manuscript modifications:** In `Section 1`, we have updated the text to: "conducting multi-decadal hindcasts is computationally challenging for CPMs, which makes our 63-year simulation particularly valuable".
 
 * **Line 121. 50km? you mentioned 25-31 km at line 79** 
-  * **Response:** We have corrected this discrepancy to ensure consistency throughout the manuscript.
-  * **Manuscript modifications:** In `Section 2.2`, we have changed "50 km" to "~31 km" to correctly reflect the native resolution of the ERA5 forcing data.
+  * **Response:** We thank the reviewer for noting this apparent inconsistency. Our hindcast uses ERA5 boundary forcing at 50 km, whereas the native horizontal resolution of ERA5 is ~31 km. We have clarified this in Sections 1 and 2.2.
+  * **Manuscript modifications:** In `Sections 1` and `2.2`, we now state that the simulation is forced by ERA5 at 50 km (native ERA5 resolution ~31 km).
 
 * **Lines 126-128. I wonder if this should be placed in the discussion (and a smaller figure, considering the simplicity of its information)** 
   * **Response:** We agree. We have moved the temperature trend comparison section and Figure 2 to the Discussion section.
