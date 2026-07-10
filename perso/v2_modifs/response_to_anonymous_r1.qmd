@@ -245,7 +245,7 @@ _Link this to your results. Should we expect even higher underestimation at hour
 
 **Manuscript modifications:**
 
-- In `Section 5.1.2 (Limitations of the study)`, the paragraph discussing rain gauge limitations has been updated as follows:
+- In `Section 5.1.2 (Data)`, the paragraph discussing rain gauge limitations has been updated as follows:
 
   > "First, station precipitation measurements are frequently affected by undercatch errors, which are particularly pronounced in cold and mountainous regions with strong winds. Because undercatch typically leads to an underestimation of actual precipitation (especially for high-intensity, short-duration convective events), correcting for these errors would increase the observed extreme values. Consequently, the model's underestimation of hourly extremes is likely even larger than what we report here. Part of this underestimation may also stem from the 2.5 km horizontal resolution of AROME: Brousseau et al. (2016) showed that increasing the resolution to 1.3 km results in a better representation of maximum precipitation intensities, with less pronounced underestimation. Furthermore, station time series can also exhibit some inhomogeneities (non-climatic shifts in the time series caused by changes in station location, environment, or sensor types over decades), which could introduce local artificial trend components, although the data used here have been quality-controlled by Météo-France."
 
@@ -257,7 +257,7 @@ _I think SMEV approach should also be mentioned (Marra et al. 2020 10.1029/2020g
 
 **Manuscript modifications:**
 
-- In `Section 5.1 (Limitations of the study)`, the paragraph discussing alternative extreme value approaches has been updated as follows:
+- In `Section 5.1.2 (Data)`, the paragraph discussing alternative extreme value approaches has been updated as follows:
 
   > "To make the estimation more robust, other solutions include taking into account threshold exceedances within a generalized Pareto distribution (GPD) framework, or using a distribution modeling all precipitation values, such as the recent extended generalized Pareto distribution (Haruna et al., 2025) or the Simplified Metastasis Extreme Value (SMEV) distribution (Marra et al., 2020; Correa-Sanchez et al., 2025; Lompi et al., 2025), or using a neighborhood or region-of-influence approach (Blanchet et al., 2021) to reduce sampling bias by using more data."
 
@@ -265,8 +265,8 @@ _I think SMEV approach should also be mentioned (Marra et al. 2020 10.1029/2020g
 ### Minor Comments
 
 * **Line 11 (and 395). "added value" ... with respect to what?** 
-  * **Response:** We agree. We have clarified that the "added value" is relative to traditional, coarser-resolution regional climate models (RCMs) with parameterized convection.
-  * **Manuscript modifications:** In `Section 1` and `Section 5.2`, we have added "relative to coarser regional climate models with parameterized convection".
+  * **Response:** We agree. Since this paper does not perform a direct comparison with coarser regional climate models, we have rephrased "added value" to "value" (or "clear value") in both the Abstract and the Conclusion (Section 6) to focus on the model's usefulness for studying extremes rather than framing it as a relative added value.
+  * **Manuscript modifications:** In the Abstract and Conclusion (Section 6), the text has been corrected to refer to the "value" of the explicit-convection model.
 
 * **Line 19. What does it mean "under calm conditions"?** 
   * **Response:** We agree. We have rephrased this term to be physically precise.
@@ -318,7 +318,7 @@ _I think SMEV approach should also be mentioned (Marra et al. 2020 10.1029/2020g
 
 * **Line 345. Where? Same regions where you find underestimation?** 
   * **Response:** We have specified that this mismatch occurs primarily in regions dominated by summer convective activity.
-  * **Manuscript modifications:** In `Section 5.1.2`, we have added: "especially in mountain regions (such as the Massif Central and the Alps) where summer convective activity dominates".
+  * **Manuscript modifications:** In `Section 5.3.2`, we have added: "especially in mountain regions (such as the Massif Central and the Alps) where summer convective activity dominates".
 
 * **Line 366. Is this really an issue at daily scale? How? I think it could lower the absolute values, not clearly the temporal trend. (same consideration for line 382-383)** 
   * **Response:** We agree. Grid-box smoothing lowers the absolute intensity values but should not affect relative temporal trends. We have corrected the text to remove grid-box smoothing as an explanation for relative trend underestimation.

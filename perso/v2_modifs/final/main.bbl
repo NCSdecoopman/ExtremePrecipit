@@ -1,4 +1,4 @@
-\begin{thebibliography}{55}
+\begin{thebibliography}{57}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \providecommand{\urlprefix}{}
@@ -29,12 +29,19 @@ Ban, N., Caillaud, C., Coppola, E., Pichelli, E., Sobolowski, S., Adinolfi, M.,
   resolution, part I: evaluation of precipitation, Climate Dynamics, 57,
   275--302, \doi{10.1007/s00382-021-05708-w}, 2021.
 
-\bibitem[{Berghald et~al.(2025)Berghald, Blanchet, Blanc, and
+\bibitem[{Berghald et~al.(2025{\natexlab{a}})Berghald, Blanchet, Blanc, and
   Penot}]{Berghald2025}
 Berghald, S., Blanchet, J., Blanc, A., and Penot, D.: Climatology and trends of
   observed daily and hourly extreme precipitation in the French Alps, EGUsphere
   [preprint], \doi{10.5194/egusphere-2025-3073}, preprint; Discussion started 3
-  July 2025, 2025.
+  July 2025, 2025{\natexlab{a}}.
+
+\bibitem[{Berghald et~al.(2025{\natexlab{b}})Berghald, Blanchet, Blanc, and
+  Penot}]{berghald-etal-2025}
+Berghald, S., Blanchet, J., Blanc, A., and Penot, D.: Climatology and trends of
+  observed daily and hourly extreme precipitation in the French Alps,
+  EGUsphere, 2025, 1--35, \doi{10.5194/egusphere-2025-3073},
+  2025{\natexlab{b}}.
 
 \bibitem[{Berthou et~al.(2020)Berthou, Kendon, Chan, Ban, Leutwyler, Sch{\"a}r,
   and Fosser}]{berthou-etal-2020}
@@ -190,6 +197,13 @@ Haruna, A., Blanchet, J., and Favre, A.-C.: Estimation of
 Haruna, A., Blanchet, J., and Favre, A.-C.: Joint estimation of trend in bulk
   and extreme daily precipitation in Switzerland, Weather and Climate Extremes,
   48, 100\,769, \doi{https://doi.org/10.1016/j.wace.2025.100769}, 2025.
+
+\bibitem[{Haruna et~al.(2026)Haruna, Blanchet, Evin, and
+  Paquet}]{haruna-etal-2026}
+Haruna, A., Blanchet, J., Evin, G., and Paquet, E.: Regional hotspots and
+  contrasts in the trends of mean and extreme daily precipitation in France,
+  Journal of Hydrology: Regional Studies, 65, 103\,378,
+  \doi{https://doi.org/10.1016/j.ejrh.2026.103378}, 2026.
 
 \bibitem[{Hersbach et~al.(2020)Hersbach, Bell, Berrisford, Hirahara,
   Hor{\'a}nyi, Mu{\~n}oz-Sabater, Nicolas, Peubey, Radu, Schepers, Simmons,
